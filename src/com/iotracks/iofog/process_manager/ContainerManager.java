@@ -77,7 +77,7 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, "creating container");
 			String hostName = "";
 			if (!element.isRootHostAccess())
-				hostName = "iofog:" + Orchestrator.getInetAddress().getHostAddress();
+				hostName = "iofabric:" + Orchestrator.getInetAddress().getHostAddress();
 			String id = docker.createContainer(element, hostName);
 			element.setContainerId(id);
 			element.setContainerIpAddress(docker.getContainerIpAddress(id));
