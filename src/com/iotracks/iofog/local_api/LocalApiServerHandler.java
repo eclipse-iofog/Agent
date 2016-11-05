@@ -9,10 +9,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.iotracks.iofog.element.Element;

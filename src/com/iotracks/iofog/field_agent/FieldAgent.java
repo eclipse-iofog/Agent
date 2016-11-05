@@ -36,8 +36,8 @@ import com.iotracks.iofog.message_bus.MessageBus;
 import com.iotracks.iofog.process_manager.ProcessManager;
 import com.iotracks.iofog.status_reporter.StatusReporter;
 import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Orchestrator;
 import com.iotracks.iofog.utils.Constants.ControllerStatus;
+import com.iotracks.iofog.utils.Orchestrator;
 import com.iotracks.iofog.utils.configuration.Configuration;
 import com.iotracks.iofog.utils.logging.LoggingService;
 

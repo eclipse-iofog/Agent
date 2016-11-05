@@ -6,8 +6,8 @@ import java.util.Map;
 import com.iotracks.iofog.element.ElementManager;
 import com.iotracks.iofog.status_reporter.StatusReporter;
 import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Orchestrator;
 import com.iotracks.iofog.utils.Constants.ModulesStatus;
+import com.iotracks.iofog.utils.Orchestrator;
 import com.iotracks.iofog.utils.logging.LoggingService;
 
 /**

@@ -586,8 +586,8 @@ public final class Configuration {
 				"Instance ID               : " + ((instanceId != null && !instanceId.equals("")) ? instanceId : "not provisioned") + "\n" + 
 						"IP Address                : " + ipAddress + "\n" + 
 						"Network Interface         : " + networkInterface + "\n" + 
-						"ioFog Controller          : " + controllerUrl + "\n" + 
-						"ioFog Certificate         : " + controllerCert + "\n" + 
+						"ioFog Controller       : " + controllerUrl + "\n" + 
+						"ioFog Certificate      : " + controllerCert + "\n" + 
 						"Docker URL                : " + dockerUrl + "\n" + 
 						String.format("Disk Usage Limit          : %.2f GiB\n", diskLimit) + 
 						"Message Storage Directory : " + diskDirectory + "\n" + 

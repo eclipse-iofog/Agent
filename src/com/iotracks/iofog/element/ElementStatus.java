@@ -31,11 +31,11 @@ public class ElementStatus {
 		this.memoryUsage = memoryUsage;
 	}
 
-	public com.iotracks.iofog.utils.Constants.ElementState getStatus() {
+	public Constants.ElementState getStatus() {
 		return status;
 	}
 
-	public void setStatus(com.iotracks.iofog.utils.Constants.ElementState status) {
+	public void setStatus(Constants.ElementState status) {
 		this.status = status;
 	}
 

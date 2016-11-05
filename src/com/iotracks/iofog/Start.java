@@ -39,7 +39,7 @@ public class Start {
 	private static ClientSessionFactory sf = null;
 
 	/**
-	 * check if another instance of ioFog is running
+	 * check if another instance of iofog is running
 	 *
 	 * @return boolean
 	 */
@@ -67,7 +67,7 @@ public class Start {
 	 */
 	private static void sendCommandlineParameters(String... args) {
 		if (args[0].equals("stop")) {
-			System.out.println("Stopping ioFog service...");
+			System.out.println("Stopping iofog service...");
 			System.out.flush();
 		}
 
@@ -200,7 +200,7 @@ public class Start {
 			}
 
 			if (args[0].equals("start")) {
-				System.out.println("ioFog is already running.");
+				System.out.println("iofog is already running.");
 				sf.close();
 				System.exit(1);
 			}
@@ -214,7 +214,7 @@ public class Start {
 			System.out.flush();
 			System.exit(0);
 		} else if (!args[0].equals("start")) {
-				System.out.println("ioFog is not running.");
+				System.out.println("iofog is not running.");
 				System.out.flush();
 				System.exit(1);
 		}
