@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -14,7 +14,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;

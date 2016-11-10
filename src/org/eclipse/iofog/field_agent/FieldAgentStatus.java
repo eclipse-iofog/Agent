@@ -1,7 +1,7 @@
-package com.iotracks.iofog.field_agent;
+package org.eclipse.iofog.field_agent;
 
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ControllerStatus;
 
 /**
  * represents Field Agent status

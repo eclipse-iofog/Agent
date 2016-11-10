@@ -1,4 +1,4 @@
-package com.iotracks.iofog;
+package org.eclipse.iofog;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.iofog.command_line.CommandLineParser;
+import org.eclipse.iofog.supervisor.Supervisor;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.configuration.ConfigurationItemException;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientMessage;
@@ -26,13 +32,6 @@ import org.hornetq.api.core.client.ClientSessionFactory;
 import org.hornetq.api.core.client.HornetQClient;
 import org.hornetq.api.core.client.ServerLocator;
 import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
-
-import com.iotracks.iofog.command_line.CommandLineParser;
-import com.iotracks.iofog.supervisor.Supervisor;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.configuration.ConfigurationItemException;
-import com.iotracks.iofog.utils.logging.LoggingService;
 
 public class Start {
 

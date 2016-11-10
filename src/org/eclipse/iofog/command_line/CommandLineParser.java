@@ -1,4 +1,4 @@
-package com.iotracks.iofog.command_line;
+package org.eclipse.iofog.command_line;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,11 +6,11 @@ import java.util.Map.Entry;
 
 import javax.json.JsonObject;
 
-import com.iotracks.iofog.field_agent.FieldAgent;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * to parse command-line parameters 

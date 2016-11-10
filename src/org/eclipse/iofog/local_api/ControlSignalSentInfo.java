@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 /**
  * Unacknowledged control signals with the try count.

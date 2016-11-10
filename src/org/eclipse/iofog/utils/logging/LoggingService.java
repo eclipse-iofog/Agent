@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils.logging;
+package org.eclipse.iofog.utils.logging;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +19,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
 
 /**
  * sets up and starts logging

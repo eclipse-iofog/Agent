@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;

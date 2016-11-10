@@ -1,4 +1,4 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -8,11 +8,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.utils.BytesUtil;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.utils.BytesUtil;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * archives received {@link Message} from {@link Element}

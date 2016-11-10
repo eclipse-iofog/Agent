@@ -1,11 +1,11 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import com.iotracks.iofog.utils.BytesUtil;
+import org.eclipse.iofog.utils.BytesUtil;
 
 /**
  * represents IOMessage

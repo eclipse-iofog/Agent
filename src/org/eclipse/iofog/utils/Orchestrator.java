@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils;
+package org.eclipse.iofog.utils;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -38,8 +38,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-
-import com.iotracks.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.configuration.Configuration;
 
 /**
  * provides methods for IOFog controller

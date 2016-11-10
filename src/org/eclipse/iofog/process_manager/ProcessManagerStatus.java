@@ -1,4 +1,4 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,12 +7,12 @@ import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.element.ElementStatus;
-import com.iotracks.iofog.element.Registry;
-import com.iotracks.iofog.utils.Constants.DockerStatus;
-import com.iotracks.iofog.utils.Constants.LinkStatus;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.ElementStatus;
+import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.utils.Constants.DockerStatus;
+import org.eclipse.iofog.utils.Constants.LinkStatus;
 
 /**
  * represents Process Manager status

@@ -1,4 +1,4 @@
-package com.iotracks.iofog.field_agent;
+package org.eclipse.iofog.field_agent;
 
 import java.io.File;
 import java.io.FileReader;
@@ -26,20 +26,20 @@ import javax.net.ssl.SSLHandshakeException;
 
 import javax.ws.rs.ForbiddenException;
 
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.element.PortMapping;
-import com.iotracks.iofog.element.Registry;
-import com.iotracks.iofog.element.Route;
-import com.iotracks.iofog.local_api.LocalApi;
-import com.iotracks.iofog.message_bus.MessageBus;
-import com.iotracks.iofog.process_manager.ProcessManager;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ControllerStatus;
-import com.iotracks.iofog.utils.Orchestrator;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.PortMapping;
+import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.local_api.LocalApi;
+import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.util.internal.StringUtil;
 
@@ -661,8 +661,8 @@ public class FieldAgent {
 			float logLimit = Float.parseFloat(configs.getString("loglimit"));
 			String logDirectory = configs.getString("logdirectory");
 			int logFileCount = Integer.parseInt(configs.getString("logfilecount"));
-			int statusUpdateFreq = configs.getInt("poststatusfreq");
-			int getChangesFreq = configs.getInt("getchangesfreq");
+			int statusUpdateFreq = Integer.parseInt(configs.getString("poststatusfreq"));
+			int getChangesFreq = Integer.parseInt(configs.getString("getchangesfreq"));
 
 			Map<String, Object> instanceConfig = new HashMap<>();
 

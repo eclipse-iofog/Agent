@@ -1,7 +1,7 @@
-package com.iotracks.iofog.supervisor;
+package org.eclipse.iofog.supervisor;
 
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ModulesStatus;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ModulesStatus;
 
 /**
  * represents Supervisor status

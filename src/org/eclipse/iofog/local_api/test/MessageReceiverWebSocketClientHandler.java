@@ -1,9 +1,8 @@
-package com.iotracks.iofog.local_api.test;
+package org.eclipse.iofog.local_api.test;
 
 import org.bouncycastle.util.Arrays;
-
-import com.iotracks.iofog.message_bus.Message;
-import com.iotracks.iofog.utils.BytesUtil;
+import org.eclipse.iofog.message_bus.Message;
+import org.eclipse.iofog.utils.BytesUtil;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;

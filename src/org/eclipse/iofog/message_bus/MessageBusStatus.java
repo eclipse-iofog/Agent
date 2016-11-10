@@ -1,4 +1,4 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
 import java.util.HashMap;
 import java.util.Map;

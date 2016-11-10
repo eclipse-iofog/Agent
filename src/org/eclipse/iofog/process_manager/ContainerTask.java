@@ -1,4 +1,4 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 

@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils.configuration;
+package org.eclipse.iofog.utils.configuration;
 
 public class ConfigurationItemException extends Exception {
 

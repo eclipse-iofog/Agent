@@ -1,13 +1,12 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientMessage;
-
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.local_api.MessageCallback;
 
 /**
  * receiver {@link Element}

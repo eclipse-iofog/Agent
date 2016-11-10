@@ -1,14 +1,15 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
+
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ElementState;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.element.Registry;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Orchestrator;
-import com.iotracks.iofog.utils.Constants.ElementState;
-import com.iotracks.iofog.utils.logging.LoggingService;
 
 /**
  * provides methods to manage Docker containers
@@ -77,7 +78,7 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, "creating container");
 			String hostName = "";
 			if (!element.isRootHostAccess())
-				hostName = "iofabric:" + Orchestrator.getInetAddress().getHostAddress();
+				hostName = Orchestrator.getInetAddress().getHostAddress();
 			String id = docker.createContainer(element, hostName);
 			element.setContainerId(id);
 			element.setContainerIpAddress(docker.getContainerIpAddress(id));

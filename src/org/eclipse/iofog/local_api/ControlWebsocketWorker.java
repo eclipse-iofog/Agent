@@ -1,9 +1,9 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import java.util.Map;
 
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

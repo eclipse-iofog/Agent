@@ -1,14 +1,14 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import org.hornetq.api.core.HornetQException;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.core.client.ClientConsumer;
@@ -28,11 +28,6 @@ import org.hornetq.core.server.HornetQServers;
 import org.hornetq.core.server.JournalType;
 import org.hornetq.core.settings.impl.AddressFullMessagePolicy;
 import org.hornetq.core.settings.impl.AddressSettings;
-
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
 
 /**
  * HornetQ server

@@ -1,4 +1,4 @@
-package com.iotracks.iofog.resource_consumption_manager;
+package org.eclipse.iofog.resource_consumption_manager;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,14 +7,11 @@ import java.io.FilenameFilter;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * Resource Consumption Manager module

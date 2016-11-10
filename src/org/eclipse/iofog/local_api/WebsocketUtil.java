@@ -1,10 +1,10 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.channel.ChannelHandlerContext;
 

@@ -1,4 +1,4 @@
-package com.iotracks.iofog.element;
+package org.eclipse.iofog.element;
 
 /**
  * represents registries

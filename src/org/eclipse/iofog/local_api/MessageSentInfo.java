@@ -1,6 +1,6 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
-import com.iotracks.iofog.message_bus.Message;
+import org.eclipse.iofog.message_bus.Message;
 
 /**
  * Unacknowledged message with the try count.

@@ -1,8 +1,8 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
 
 import java.util.Comparator;
 
-import com.iotracks.iofog.process_manager.ContainerTask.Tasks;
+import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
 
 public class TaskComparator implements Comparator<ContainerTask> {
 

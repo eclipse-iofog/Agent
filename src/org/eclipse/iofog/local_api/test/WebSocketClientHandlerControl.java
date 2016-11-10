@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api.test;
+package org.eclipse.iofog.local_api.test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

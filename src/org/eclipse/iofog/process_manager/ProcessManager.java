@@ -1,22 +1,23 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
 
 import java.util.List;
 import java.util.PriorityQueue;
 
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.ElementStatus;
+import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.Constants.ElementState;
+import org.eclipse.iofog.utils.Constants.LinkStatus;
+import org.eclipse.iofog.utils.Constants.ModulesStatus;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import com.github.dockerjava.api.model.Container;
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.element.ElementStatus;
-import com.iotracks.iofog.element.Registry;
-import com.iotracks.iofog.process_manager.ContainerTask.Tasks;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ControllerStatus;
-import com.iotracks.iofog.utils.Constants.ElementState;
-import com.iotracks.iofog.utils.Constants.LinkStatus;
-import com.iotracks.iofog.utils.Constants.ModulesStatus;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
 
 /**
  * Process Manager module
@@ -31,7 +32,7 @@ public class ProcessManager {
 	private PriorityQueue<ContainerTask> tasks;
 	public static Boolean updated = true;
 	private Object containersMonitorLock = new Object();
-	private Object checkTasksLock = new Object();
+//	private Object checkTasksLock = new Object();
 	private DockerUtil docker;
 	private ContainerManager containerManager;
 	private static ProcessManager instance;

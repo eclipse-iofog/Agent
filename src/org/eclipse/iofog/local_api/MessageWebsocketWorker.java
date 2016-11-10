@@ -1,12 +1,12 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import java.util.Map;
 
-import com.iotracks.iofog.message_bus.Message;
-import com.iotracks.iofog.message_bus.MessageBus;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.BytesUtil;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.message_bus.Message;
+import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.BytesUtil;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,7 +21,7 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 public class MessageWebsocketWorker implements Runnable{
 	private final String MODULE_NAME = "Local API";
 	private static final Byte OPCODE_MSG = 0xD;
-	private static int count = 0;
+//	private static int count = 0;
 	
 	/**
 	 * Initiating message sending for the unacknowledged messages
@@ -62,7 +62,7 @@ public class MessageWebsocketWorker implements Runnable{
 	 * @return void
 	 */
 	private void sendRealTimeMessage(ChannelHandlerContext ctx){
-		count++;
+//		count++;
 		MessageSentInfo messageContextAndCount = WebSocketMap.unackMessageSendingMap.get(ctx);
 		int tryCount = messageContextAndCount.getSendTryCount();
 		Message message = messageContextAndCount.getMessage();

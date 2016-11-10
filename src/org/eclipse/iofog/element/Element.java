@@ -1,8 +1,8 @@
-package com.iotracks.iofog.element;
-
-import com.iotracks.iofog.utils.Constants;
+package org.eclipse.iofog.element;
 
 import java.util.List;
+
+import org.eclipse.iofog.utils.Constants;
 
 /**
  * represents IOElements

@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -12,10 +12,10 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

@@ -1,19 +1,20 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.ElementStatus;
+import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ElementState;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import com.github.dockerjava.api.model.Container;
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.element.ElementStatus;
-import com.iotracks.iofog.element.Registry;
-import com.iotracks.iofog.process_manager.ContainerTask.Tasks;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Orchestrator;
-import com.iotracks.iofog.utils.Constants.ElementState;
-import com.iotracks.iofog.utils.logging.LoggingService;
 
 public class FogContainer {
 	private String containerId = "";
@@ -125,7 +126,7 @@ public class FogContainer {
 			docker.pullImage(element.getImageName());
 			LoggingService.logInfo(MODULE_NAME, String.format("pulled \"%s\"", element.getImageName()));
 
-			String hostName = "iofabric:" + Orchestrator.getInetAddress().getHostAddress();
+			String hostName = Orchestrator.getInetAddress().getHostAddress();
 			containerId = docker.createContainer(element, hostName);
 			element.setContainerId(containerId);
 			element.setContainerIpAddress(docker.getContainerIpAddress(containerId));

@@ -1,9 +1,8 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
+import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.MessageHandler;
-
-import com.iotracks.iofog.local_api.MessageCallback;
 
 /**
  * listener for real-time receiving

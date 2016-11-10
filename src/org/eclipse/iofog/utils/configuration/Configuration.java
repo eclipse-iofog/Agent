@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils.configuration;
+package org.eclipse.iofog.utils.configuration;
 
 import java.io.File;
 import java.net.NetworkInterface;
@@ -16,16 +16,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import com.iotracks.iofog.field_agent.FieldAgent;
-import com.iotracks.iofog.message_bus.MessageBus;
-import com.iotracks.iofog.process_manager.ProcessManager;
-import com.iotracks.iofog.resource_consumption_manager.ResourceConsumptionManager;
-import com.iotracks.iofog.utils.Orchestrator;
-import com.iotracks.iofog.utils.logging.LoggingService;
 
 /**
  * holds IOFog instance configuration

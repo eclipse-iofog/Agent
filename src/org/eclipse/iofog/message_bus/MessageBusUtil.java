@@ -1,12 +1,12 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.Route;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 public class MessageBusUtil {
 

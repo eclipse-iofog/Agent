@@ -1,4 +1,4 @@
-package com.iotracks.iofog.status_reporter;
+package org.eclipse.iofog.status_reporter;
 
 /**
  * represent Status Reporter status

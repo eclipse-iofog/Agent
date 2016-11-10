@@ -1,19 +1,19 @@
-package com.iotracks.iofog.supervisor;
+package org.eclipse.iofog.supervisor;
 
 import java.lang.Thread.State;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.iotracks.iofog.field_agent.FieldAgent;
-import com.iotracks.iofog.local_api.LocalApi;
-import com.iotracks.iofog.message_bus.MessageBus;
-import com.iotracks.iofog.process_manager.ProcessManager;
-import com.iotracks.iofog.resource_consumption_manager.ResourceConsumptionManager;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ModulesStatus;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.local_api.LocalApi;
+import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ModulesStatus;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * Supervisor module

@@ -1,14 +1,14 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.iotracks.iofog.element.ElementManager;
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ModulesStatus;
-import com.iotracks.iofog.utils.Orchestrator;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ModulesStatus;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * Local api point of start using iofog. 

@@ -1,6 +1,6 @@
-package com.iotracks.iofog.element;
+package org.eclipse.iofog.element;
 
-import com.iotracks.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants;
 
 /**
  * represents IOElement status

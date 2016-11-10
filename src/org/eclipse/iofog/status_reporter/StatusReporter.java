@@ -1,4 +1,4 @@
-package com.iotracks.iofog.status_reporter;
+package org.eclipse.iofog.status_reporter;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -6,15 +6,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.iotracks.iofog.field_agent.FieldAgentStatus;
-import com.iotracks.iofog.local_api.LocalApiStatus;
-import com.iotracks.iofog.message_bus.MessageBusStatus;
-import com.iotracks.iofog.process_manager.ProcessManagerStatus;
-import com.iotracks.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
-import com.iotracks.iofog.supervisor.SupervisorStatus;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ControllerStatus;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.field_agent.FieldAgentStatus;
+import org.eclipse.iofog.local_api.LocalApiStatus;
+import org.eclipse.iofog.message_bus.MessageBusStatus;
+import org.eclipse.iofog.process_manager.ProcessManagerStatus;
+import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
+import org.eclipse.iofog.supervisor.SupervisorStatus;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * Status Reporter module

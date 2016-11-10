@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils.logging;
+package org.eclipse.iofog.utils.logging;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

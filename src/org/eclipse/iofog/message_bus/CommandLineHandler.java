@@ -1,10 +1,9 @@
-package com.iotracks.iofog.message_bus;
+package org.eclipse.iofog.message_bus;
 
+import org.eclipse.iofog.command_line.CommandLineParser;
 import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.MessageHandler;
-
-import com.iotracks.iofog.command_line.CommandLineParser;
 
 /**
  * listener for command-line communications

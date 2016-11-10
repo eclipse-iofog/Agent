@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api;
+package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
 
@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
-import com.iotracks.iofog.status_reporter.StatusReporter;
-import com.iotracks.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

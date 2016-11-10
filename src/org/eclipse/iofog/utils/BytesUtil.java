@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils;
+package org.eclipse.iofog.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

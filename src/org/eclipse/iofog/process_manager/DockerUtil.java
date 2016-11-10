@@ -1,6 +1,5 @@
-package com.iotracks.iofog.process_manager;
+package org.eclipse.iofog.process_manager;
 
-import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -15,6 +14,15 @@ import java.util.TimeZone;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementStatus;
+import org.eclipse.iofog.element.PortMapping;
+import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ElementState;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -33,14 +41,7 @@ import com.github.dockerjava.api.model.RestartPolicy;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.iotracks.iofog.element.Element;
-import com.iotracks.iofog.element.ElementStatus;
-import com.iotracks.iofog.element.PortMapping;
-import com.iotracks.iofog.element.Registry;
-import com.iotracks.iofog.utils.Constants;
-import com.iotracks.iofog.utils.Constants.ElementState;
-import com.iotracks.iofog.utils.configuration.Configuration;
-import com.iotracks.iofog.utils.logging.LoggingService;
+
 import io.netty.util.internal.StringUtil;
 
 /**
@@ -443,7 +444,7 @@ public class DockerUtil {
 				portBindings.bind(internal, external);
 				exposedPorts.add(internal);
 			});
-		String[] extraHosts = { host };
+		String[] extraHosts = { "iofabric:" + host, "iofog:" + host };
 		
 		Map<String, String> containerLogConfig = new HashMap<String, String>();
 		int logFiles = 1; 
@@ -462,8 +463,6 @@ public class DockerUtil {
 				.withEnv("SELFNAME=" + element.getElementId())
 				.withName(element.getElementId())
 				.withRestartPolicy(restartPolicy);
-//		if (element.getImageName().startsWith("iotracks/catalog:core-networking"))
-//			cmd = cmd.withMemoryLimit(256 * Constants.MiB);
 		if (StringUtil.isNullOrEmpty(host))
 			cmd = cmd.withNetworkMode("host").withPrivileged(true);
 		else

@@ -1,4 +1,4 @@
-package com.iotracks.iofog.resource_consumption_manager;
+package org.eclipse.iofog.resource_consumption_manager;
 
 /**
  * represents Resource Consumption Manager status 

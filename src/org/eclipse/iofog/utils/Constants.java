@@ -1,4 +1,4 @@
-package com.iotracks.iofog.utils;
+package org.eclipse.iofog.utils;
 
 import java.io.PrintStream;
 
@@ -29,7 +29,7 @@ public class Constants {
 		NOT_PROVISIONED, BROKEN, OK
 	}
 	
-	public static final String VERSION = "1.29";
+	public static final String VERSION = "1.30";
 	
 	public static final int NUMBER_OF_MODULES = 6;
 

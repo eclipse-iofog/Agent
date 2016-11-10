@@ -1,4 +1,4 @@
-package com.iotracks.iofog.local_api.test;
+package org.eclipse.iofog.local_api.test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -10,7 +10,7 @@ import java.util.Base64;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import com.iotracks.iofog.message_bus.Message;
+import org.eclipse.iofog.message_bus.Message;
 
 public class RestPublishTest {
 	private int count;
