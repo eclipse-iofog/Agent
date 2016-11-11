@@ -1,7 +1,8 @@
 package org.eclipse.iofog.process_manager;
 
+import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
+import java.util.Queue;
 
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
@@ -29,7 +30,7 @@ public class ProcessManager {
 	
 	private final String MODULE_NAME = "Process Manager";
 	private ElementManager elementManager;
-	private PriorityQueue<ContainerTask> tasks;
+	private Queue<ContainerTask> tasks;
 	public static Boolean updated = true;
 	private Object containersMonitorLock = new Object();
 //	private Object checkTasksLock = new Object();
@@ -263,7 +264,8 @@ public class ProcessManager {
 			docker.connect();
 		} catch (Exception e) {}
 
-		tasks = new PriorityQueue<>(new TaskComparator());
+//		tasks = new PriorityQueue<>(new TaskComparator());
+		tasks = new LinkedList<>();
 		elementManager = ElementManager.getInstance();
 		containerManager = new ContainerManager();
 		

@@ -48,10 +48,8 @@ public class CommandLineParser {
 		if (args[0].equals("version") || args[0].equals("--version") || args[0].equals("-v")) {
 			result.append("ioFog " + Constants.VERSION);
 			result.append("\nCopyright (C) 2016 iotracks, inc.");
-			result.append("\nLicense ######### http://iotracks.com/license");
-			result.append(
-					"\nThis is open-source software with a commercial license: your usage is free until you use it in production commercially.");
-			result.append("\nThere is NO WARRANTY, to the extent permitted by law.");
+			result.append("\nEclipse ioFog is provided under the Eclipse Public License (EPL)");
+			result.append("\nhttps://www.eclipse.org/legal/epl-v10.html");
 
 			return result.toString();
 		}
@@ -231,8 +229,9 @@ public class CommandLineParser {
 				"                 -cf <#seconds>          Set the get changes frequency\n" + 
 				"\n" + 
 				"\n" + 
-				"Report bugs to: kilton@iotracks.com\n" + 
-				"ioFog home page: http://iotracks.com");
+				"Report bugs to: bugs@iotracks.com\n" + 
+				"ioFog home page: http://iofog.com\n" +
+				"For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 
 		return help.toString();
 	}
