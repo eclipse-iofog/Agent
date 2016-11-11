@@ -84,7 +84,7 @@ public class Orchestrator {
 	public JsonObject provision(String key) throws Exception {
 		JsonObject result = null;
 		try {
-			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Constants.getFogType());
+			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Constants.FOG_TYPE);
 		} catch (Exception e) {
 			throw e;
 		} 

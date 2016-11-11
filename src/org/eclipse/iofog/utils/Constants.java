@@ -68,11 +68,7 @@ public class Constants {
 
 	public static int SET_SYSTEM_TIME_FREQ_SECONDS = 60;
 	
-	public static int getFogType() {
-		if (osArch.equals("arm"))
-			return 2;
-		else
-			return 1;
-	}
+	public static int FOG_TYPE = osArch.equals("arm") ? 2 : 1;
+	
 }
 
