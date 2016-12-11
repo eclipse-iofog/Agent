@@ -466,7 +466,7 @@ public class DockerUtil {
 		if (StringUtil.isNullOrEmpty(host))
 			cmd = cmd.withNetworkMode("host").withPrivileged(true);
 		else
-			cmd = cmd.withExtraHosts(extraHosts);
+			cmd = cmd.withExtraHosts(extraHosts).withPrivileged(true);
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
