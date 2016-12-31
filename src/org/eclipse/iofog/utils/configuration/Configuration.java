@@ -20,6 +20,7 @@ import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
@@ -198,7 +199,7 @@ public final class Configuration {
 
 		Transformer transformer = TransformerFactory.newInstance().newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		StreamResult result = new StreamResult(new File("/etc/iofog/config.xml"));
+		StreamResult result = new StreamResult(new File(Constants.CONFIG_DIR));
 		DOMSource source = new DOMSource(configFile);
 		transformer.transform(source, result);
 	}
@@ -395,7 +396,7 @@ public final class Configuration {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 
-		configFile = builder.parse("/etc/iofog/config.xml");
+		configFile = builder.parse(Constants.CONFIG_DIR);
 		configFile.getDocumentElement().normalize();
 
 		NodeList nodes = configFile.getElementsByTagName("config");
@@ -428,7 +429,7 @@ public final class Configuration {
 	        DOMSource source = new DOMSource(configFile);
 	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	        Transformer transformer = transformerFactory.newTransformer();
-	        StreamResult result = new StreamResult("/etc/iofog/config.xml");
+	        StreamResult result = new StreamResult(Constants.CONFIG_DIR);
 	        transformer.transform(source, result);
 		}
 		try {
@@ -442,7 +443,7 @@ public final class Configuration {
 	        DOMSource source = new DOMSource(configFile);
 	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	        Transformer transformer = transformerFactory.newTransformer();
-	        StreamResult result = new StreamResult("/etc/iofog/config.xml");
+	        StreamResult result = new StreamResult(Constants.CONFIG_DIR);
 	        transformer.transform(source, result);
 		}
 	}
@@ -504,7 +505,7 @@ public final class Configuration {
 			logDiskDirectory = File.separatorChar + logDiskDirectory; 
 		if (logDiskDirectory.charAt(logDiskDirectory.length() - 1) != File.separatorChar)
 			logDiskDirectory += File.separatorChar;
-		Configuration.logDiskDirectory = logDiskDirectory;
+		Configuration.logDiskDirectory = Constants.SNAP + logDiskDirectory;
 	}
 
 	public static void setAccessToken(String accessToken) {
@@ -528,7 +529,7 @@ public final class Configuration {
 	}
 
 	public static void setControllerCert(String controllerCert) {
-		Configuration.controllerCert = controllerCert;
+		Configuration.controllerCert = Constants.SNAP + controllerCert;
 	}
 
 	public static void setNetworkInterface(String networkInterface) {
@@ -552,7 +553,7 @@ public final class Configuration {
 			diskDirectory = File.separatorChar + diskDirectory; 
 		if (diskDirectory.charAt(diskDirectory.length() - 1) != File.separatorChar)
 			diskDirectory += File.separatorChar;
-		Configuration.diskDirectory = diskDirectory;
+		Configuration.diskDirectory = Constants.SNAP + diskDirectory;
 	}
 
 	public static void setCpuLimit(float cpuLimit) throws Exception {

@@ -115,7 +115,7 @@ public class Start {
 	 * creates and grants permission to daemon files directory
 	 */
 	private static void setupEnvironment() {
-		final File daemonFilePath = new File("/var/run/iofog");
+		final File daemonFilePath = new File(Constants.VAR_RUN);
 		if (!daemonFilePath.exists()) {
 			try {
 				daemonFilePath.mkdirs();
@@ -143,7 +143,7 @@ public class Start {
 			System.out.println(e.getMessage());
 			System.exit(1);
 		} catch (Exception e) {
-			System.out.println("error accessing /etc/iofog/config.xml");
+			System.out.println("error accessing " + Constants.CONFIG_DIR);
 			System.exit(1);
 		}
 	}
