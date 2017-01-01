@@ -70,7 +70,7 @@ public class Constants {
 	
 	public static int FOG_TYPE = osArch.equals("arm") ? 2 : 1;
 	
-	public static String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP_DATA") : "";
+	public static String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
 	public static String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
 	public static String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
 	public static String CONFIG_DIR = SNAP + "/etc/iofog/config.xml";

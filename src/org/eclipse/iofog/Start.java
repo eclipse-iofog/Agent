@@ -186,12 +186,13 @@ public class Start {
 		}
 	}
 
-	public static void main(String[] args) throws ParseException {		
-		System.out.println(Configuration.getLogDiskDirectory());
+	public static void main(String[] args) throws ParseException {	
 		System.out.println(Constants.CONFIG_DIR);
 		System.out.println(Constants.VAR_RUN);
 		
 		loadConfiguration();
+
+		System.out.println(Configuration.getLogDiskDirectory());
 
 		setupEnvironment();
 		
