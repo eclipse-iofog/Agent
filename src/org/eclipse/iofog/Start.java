@@ -127,6 +127,8 @@ public class Start {
 				Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
 				Files.setPosixFilePermissions(daemonFilePath.toPath(), perms);
 			} catch (Exception e) {
+				System.out.println("unable to set up environment: " + e.getMessage());
+				System.exit(1);
 			}
 		}
 
@@ -185,10 +187,6 @@ public class Start {
 	}
 
 	public static void main(String[] args) throws ParseException {
-		for (String arg : args) {
-			System.out.println(arg);
-		}
-		
 		loadConfiguration();
 
 		System.out.println(Configuration.getLogDiskDirectory());
