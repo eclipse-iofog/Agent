@@ -200,8 +200,6 @@ public class Start {
 
 		setupEnvironment();
 		
-		System.out.println("AFTER SETUP");
-
 		if (args == null || args.length == 0)
 			args = new String[] { "help" };
 
@@ -237,6 +235,8 @@ public class Start {
 			System.exit(1);
 		}
 			
+		System.out.println("BEFORE LOG");
+
 		startLoggingService();
 
 		System.out.println("AFTER LOG");
