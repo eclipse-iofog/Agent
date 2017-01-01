@@ -124,12 +124,12 @@ public class Start {
 			try {
 				daemonFilePath.mkdirs();
 
-				UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-				final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-				Files.getFileAttributeView(daemonFilePath.toPath(), PosixFileAttributeView.class,
-						LinkOption.NOFOLLOW_LINKS).setGroup(group);
-				Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-				Files.setPosixFilePermissions(daemonFilePath.toPath(), perms);
+//				UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
+//				final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
+//				Files.getFileAttributeView(daemonFilePath.toPath(), PosixFileAttributeView.class,
+//						LinkOption.NOFOLLOW_LINKS).setGroup(group);
+//				Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
+//				Files.setPosixFilePermissions(daemonFilePath.toPath(), perms);
 			} catch (Exception e) {
 				System.out.println("unable to set up environment: " + e.getMessage());
 				System.exit(1);
