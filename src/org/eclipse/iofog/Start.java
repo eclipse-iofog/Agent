@@ -187,6 +187,9 @@ public class Start {
 	}
 
 	public static void main(String[] args) throws ParseException {
+		System.out.println(System.getenv("SNAP_DATA"));
+		System.out.println(System.getenv("SNAP_COMMON"));
+		
 		loadConfiguration();
 
 		System.out.println(Configuration.getLogDiskDirectory());
