@@ -55,7 +55,7 @@ public final class Configuration {
 	private static int getChangesFreq;
 	private static Map<String, Object> defaultConfig;
 	
-	public static boolean debugging = false;
+	public static boolean debugging = true;
 	
 
 	static {
