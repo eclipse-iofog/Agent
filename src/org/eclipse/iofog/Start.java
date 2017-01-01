@@ -185,7 +185,9 @@ public class Start {
 	}
 
 	public static void main(String[] args) throws ParseException {
-		System.out.println(args);
+		for (String arg : args) {
+			System.out.println(arg);
+		}
 		
 		loadConfiguration();
 
