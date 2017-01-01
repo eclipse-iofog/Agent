@@ -103,6 +103,7 @@ public class Orchestrator {
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 		    while (networkInterfaces.hasMoreElements()) {
 		        NetworkInterface networkInterface = networkInterfaces.nextElement();
+		        System.out.println(networkInterface.getName());
 		        if (networkInterface.getName().equals(eth)) {
 		        	Enumeration<InetAddress> ipAddresses = networkInterface.getInetAddresses();
 		        	while (ipAddresses.hasMoreElements()) {
