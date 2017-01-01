@@ -505,7 +505,7 @@ public final class Configuration {
 			logDiskDirectory = File.separatorChar + logDiskDirectory; 
 		if (logDiskDirectory.charAt(logDiskDirectory.length() - 1) != File.separatorChar)
 			logDiskDirectory += File.separatorChar;
-		Configuration.logDiskDirectory = Constants.SNAP + logDiskDirectory;
+		Configuration.logDiskDirectory = Constants.SNAP_COMMON + logDiskDirectory;
 	}
 
 	public static void setAccessToken(String accessToken) {
@@ -529,7 +529,7 @@ public final class Configuration {
 	}
 
 	public static void setControllerCert(String controllerCert) {
-		Configuration.controllerCert = Constants.SNAP + controllerCert;
+		Configuration.controllerCert = Constants.SNAP_COMMON + controllerCert;
 	}
 
 	public static void setNetworkInterface(String networkInterface) {
@@ -553,7 +553,7 @@ public final class Configuration {
 			diskDirectory = File.separatorChar + diskDirectory; 
 		if (diskDirectory.charAt(diskDirectory.length() - 1) != File.separatorChar)
 			diskDirectory += File.separatorChar;
-		Configuration.diskDirectory = Constants.SNAP + diskDirectory;
+		Configuration.diskDirectory = Constants.SNAP_COMMON + diskDirectory;
 	}
 
 	public static void setCpuLimit(float cpuLimit) throws Exception {
