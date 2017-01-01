@@ -185,12 +185,13 @@ public class Start {
 	}
 
 	public static void main(String[] args) throws ParseException {
-		System.out.println(Constants.SNAP);
-		System.out.println(System.getenv());
-		
 		loadConfiguration();
 
+		System.out.println(Configuration.getLogDiskDirectory());
+		
 		setupEnvironment();
+		
+		System.out.println("AFTER SETUP");
 
 		if (args == null || args.length == 0)
 			args = new String[] { "help" };
@@ -228,6 +229,8 @@ public class Start {
 		}
 			
 		startLoggingService();
+
+		System.out.println("AFTER LOG");
 
 		outToNull();
 
