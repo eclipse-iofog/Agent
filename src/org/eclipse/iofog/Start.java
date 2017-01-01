@@ -186,14 +186,13 @@ public class Start {
 		}
 	}
 
-	public static void main(String[] args) throws ParseException {
-		System.out.println(System.getenv("SNAP_DATA"));
-		System.out.println(System.getenv("SNAP_COMMON"));
+	public static void main(String[] args) throws ParseException {		
+		System.out.println(Configuration.getLogDiskDirectory());
+		System.out.println(Constants.CONFIG_DIR);
+		System.out.println(Constants.VAR_RUN);
 		
 		loadConfiguration();
 
-		System.out.println(Configuration.getLogDiskDirectory());
-		
 		setupEnvironment();
 		
 		System.out.println("AFTER SETUP");
