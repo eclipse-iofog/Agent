@@ -185,6 +185,8 @@ public class Start {
 	}
 
 	public static void main(String[] args) throws ParseException {
+		System.out.println(args);
+		
 		loadConfiguration();
 
 		System.out.println(Configuration.getLogDiskDirectory());
