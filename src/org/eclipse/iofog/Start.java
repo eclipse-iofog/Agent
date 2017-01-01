@@ -185,6 +185,9 @@ public class Start {
 	}
 
 	public static void main(String[] args) throws ParseException {
+		System.out.println(Constants.SNAP);
+		System.out.println(System.getenv());
+		
 		loadConfiguration();
 
 		setupEnvironment();
