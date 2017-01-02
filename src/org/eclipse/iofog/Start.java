@@ -43,7 +43,6 @@ public class Start {
 	 * @return boolean
 	 */
 	private static boolean isAnotherInstanceRunning() {
-		System.out.println("another instance");
 		Map<String, Object> connectionParams = new HashMap<>();
 		connectionParams.put("port", 55555);
 		connectionParams.put("host", "localhost");
@@ -53,11 +52,9 @@ public class Start {
 		try {
 			sf = serverLocator.createSessionFactory();
 		} catch (Exception e) {
-			System.out.println("\tno");
 			return false;
 		}
 
-		System.out.println("\tyes");
 		return true;
 	}
 
@@ -118,7 +115,6 @@ public class Start {
 	 * creates and grants permission to daemon files directory
 	 */
 	private static void setupEnvironment() {
-		System.out.println("setup");
 		final File daemonFilePath = new File(Constants.VAR_RUN);
 		if (!daemonFilePath.exists()) {
 			try {
@@ -135,7 +131,6 @@ public class Start {
 				System.exit(1);
 			}
 		}
-		System.out.println("setup done!");
 	}
 
 	/**
@@ -190,13 +185,8 @@ public class Start {
 		}
 	}
 
-	public static void main(String[] args) throws ParseException {	
-		System.out.println(Constants.CONFIG_DIR);
-		System.out.println(Constants.VAR_RUN);
-		
+	public static void main(String[] args) throws ParseException {			
 		loadConfiguration();
-
-		System.out.println(Configuration.getLogDiskDirectory());
 
 		setupEnvironment();
 		
@@ -235,11 +225,7 @@ public class Start {
 			System.exit(1);
 		}
 			
-		System.out.println("BEFORE LOG");
-
 		startLoggingService();
-
-		System.out.println("AFTER LOG");
 
 		outToNull();
 
