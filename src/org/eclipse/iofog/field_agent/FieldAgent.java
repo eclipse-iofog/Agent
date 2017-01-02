@@ -51,7 +51,7 @@ import io.netty.util.internal.StringUtil;
  */
 public class FieldAgent {
 	private final String MODULE_NAME = "Field Agent";
-	private final String filesPath = "/etc/iofog/";
+	private final String filesPath = Constants.SNAP_COMMON + "/etc/iofog/";
 
 	private Orchestrator orchestrator;
 	private long lastGetChangesList;
