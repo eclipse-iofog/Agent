@@ -73,7 +73,7 @@ public class Constants {
 	public static String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
 	public static String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
 	public static String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
-	public static String CONFIG_DIR = SNAP + "/etc/iofog/config.xml";
+	public static String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";
 	
 	
 }

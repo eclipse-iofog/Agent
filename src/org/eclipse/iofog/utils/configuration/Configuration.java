@@ -529,7 +529,7 @@ public final class Configuration {
 	}
 
 	public static void setControllerCert(String controllerCert) {
-		Configuration.controllerCert = Constants.SNAP + controllerCert;
+		Configuration.controllerCert = Constants.SNAP_COMMON + controllerCert;
 	}
 
 	public static void setNetworkInterface(String networkInterface) {
