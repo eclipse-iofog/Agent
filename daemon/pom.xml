@@ -1,10 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+	<parent>
+		<groupId>org.eclipse</groupId>
+		<artifactId>iofog</artifactId>
+		<version>0.51</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.eclipse</groupId>
 	<artifactId>iofog-daemon</artifactId>
-	<version>0.51</version>
+
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -14,7 +20,6 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.3</version>
 				<configuration>
-					<outputDirectory>${project.basedir}/../target</outputDirectory>
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
@@ -29,7 +34,6 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.basedir}/../target</outputDirectory>
 							<archive>
 								<manifest>
 									<mainClass>org.eclipse.iofog.Daemon</mainClass>
@@ -39,6 +43,28 @@
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
 							<finalName>iofog-daemon</finalName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.4.3</version>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/../target</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target</directory>
+									<filtering>false</filtering>
+								</resource>
+							</resources>
 						</configuration>
 					</execution>
 				</executions>
