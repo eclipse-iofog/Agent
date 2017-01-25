@@ -64,7 +64,7 @@ public class Constants {
 
 	public static final long GET_USAGE_DATA_FREQ_SECONDS = osArch.equals("arm") ? 20 : 5;
 
-	public static final String DOCKER_API_VERSION = osArch.equals("arm") ? "1.22" : "1.23";
+	public static final String DOCKER_API_VERSION = osArch.equals("arm") ? "1.22" : "1.24";
 
 	public static int SET_SYSTEM_TIME_FREQ_SECONDS = 60;
 	
