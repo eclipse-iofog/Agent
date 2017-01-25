@@ -199,17 +199,21 @@ public class DockerUtil {
 		}
 		LoggingService.logInfo(MODULE_NAME, "logging in to registry");
 		try {
-			DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-					.withApiVersion(Constants.DOCKER_API_VERSION)
+			DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
 					.withDockerHost(Configuration.getDockerUrl())
 					.withRegistryUsername(registry.getUserName())
 					.withRegistryPassword(registry.getPassword())
 					.withRegistryEmail(registry.getUserEmail())
-					.withRegistryUrl(registry.getUrl())
-					.build();
+					.withRegistryUrl(registry.getUrl());
+
+			if (!Constants.DOCKER_API_VERSION.isEmpty()) {
+				configBuilder = configBuilder.withApiVersion(Constants.DOCKER_API_VERSION);
+			}
+
+			DockerClientConfig config = configBuilder.build();
 
 			dockerClient = DockerClientBuilder.getInstance(config).build();
-			dockerClient.authCmd().exec();
+//			dockerClient.authCmd().exec();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "login failed - " + e.getMessage());
 			throw e;
