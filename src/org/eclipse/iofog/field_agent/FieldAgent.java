@@ -26,11 +26,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 import javax.ws.rs.ForbiddenException;
 
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.element.PortMapping;
-import org.eclipse.iofog.element.Registry;
-import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -498,6 +494,20 @@ public class FieldAgent {
 					}
 				}
 				element.setPortMappings(pms);
+				if(container.containsKey("volumemappings")) {
+					JsonArray volumeMappingObj = container.getJsonArray("volumemappings");
+					List<VolumeMapping> vms = null;
+					if (volumeMappingObj.size() > 0) {
+						vms = new ArrayList<>(volumeMappingObj.size());
+						for (int j = 0; j < volumeMappingObj.size(); j++) {
+							JsonObject volumeMapping = volumeMappingObj.getJsonObject(j);
+							vms.add(new VolumeMapping(volumeMapping.getString("hostdestination"),
+									volumeMapping.getString("containerdestination"),
+									volumeMapping.getString("accessmode")));
+						}
+					}
+					element.setVolumeMappings(vms);
+				}
 				elements.add(element);
 				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
 			}

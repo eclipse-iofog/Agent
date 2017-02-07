@@ -22,6 +22,7 @@ public class Element {
 	private boolean rebuild;
 	private boolean rootHostAccess;
 	private long logSize;
+    private List<VolumeMapping> volumeMappings;
 
 	public Element(String elementId, String imageName) {
 		this.elementId = elementId;
@@ -119,5 +120,13 @@ public class Element {
 	public void setLogSize(long logSize) {
 		this.logSize = logSize;
 	}
+
+    public List<VolumeMapping> getVolumeMappings() {
+        return volumeMappings;
+    }
+
+    public void setVolumeMappings(List<VolumeMapping> volumeMappings) {
+        this.volumeMappings = volumeMappings;
+    }
 
 }

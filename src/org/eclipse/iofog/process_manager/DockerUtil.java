@@ -15,6 +15,7 @@ import java.util.TimeZone;
 import javax.json.Json;
 import javax.json.JsonObject;
 
+import com.github.dockerjava.api.model.*;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.PortMapping;
@@ -30,14 +31,7 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.command.PullImageCmd;
-import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Container.Port;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Image;
-import com.github.dockerjava.api.model.Info;
-import com.github.dockerjava.api.model.LogConfig;
-import com.github.dockerjava.api.model.Ports;
-import com.github.dockerjava.api.model.RestartPolicy;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -444,6 +438,22 @@ public class DockerUtil {
 				portBindings.bind(internal, external);
 				exposedPorts.add(internal);
 			});
+		List<Volume> volumes = new ArrayList<>();
+		List<Bind> volumeBindings = new ArrayList<>();
+		if(element.getVolumeMappings() != null) {
+			element.getVolumeMappings().forEach(volumeMapping -> {
+			    Volume volume = new Volume(volumeMapping.getHostDestination());
+				volumes.add(volume);
+				AccessMode accessMode;
+				if (volumeMapping.getAccessMode().equals("ro")) {
+					accessMode = AccessMode.ro;
+				} else {
+					accessMode = AccessMode.DEFAULT;
+				}
+				Bind volumeBind = new Bind(volumeMapping.getContainerDestination(), volume, accessMode);
+				volumeBindings.add(volumeBind);
+			});
+		}
 		String[] extraHosts = { "iofabric:" + host, "iofog:" + host };
 		
 		Map<String, String> containerLogConfig = new HashMap<String, String>();
@@ -463,6 +473,11 @@ public class DockerUtil {
 				.withEnv("SELFNAME=" + element.getElementId())
 				.withName(element.getElementId())
 				.withRestartPolicy(restartPolicy);
+		if(element.getVolumeMappings() != null) {
+			cmd = cmd
+					.withVolumes(volumes.toArray(new Volume[volumes.size()]))
+					.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
+		}
 		if (StringUtil.isNullOrEmpty(host))
 			cmd = cmd.withNetworkMode("host").withPrivileged(true);
 		else
