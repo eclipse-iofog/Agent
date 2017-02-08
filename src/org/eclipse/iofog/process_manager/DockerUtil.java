@@ -16,6 +16,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.PortMapping;
@@ -31,7 +32,6 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.command.PullImageCmd;
-import com.github.dockerjava.api.model.Container.Port;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -74,7 +74,7 @@ public class DockerUtil {
 			return 0;
 		
 		StatsCallback statsCallback = new StatsCallback(); 
-		dockerClient.statsCmd().withContainerId(containerId).exec(statsCallback);
+		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
 		while (!statsCallback.gotStats()) {
 			try {
 				Thread.sleep(50);
@@ -96,7 +96,7 @@ public class DockerUtil {
 			return 0;
 		
 		StatsCallback statsCallback = new StatsCallback(); 
-		dockerClient.statsCmd().withContainerId(containerId).exec(statsCallback);
+		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
 		while (!statsCallback.gotStats()) {
 			try {
 				Thread.sleep(2);
@@ -111,7 +111,7 @@ public class DockerUtil {
 		} catch (InterruptedException e) {}
 
 		statsCallback.reset();
-		dockerClient.statsCmd().withContainerId(containerId).exec(statsCallback);
+		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
 		while (!statsCallback.gotStats()) {
 			try {
 				Thread.sleep(2);
@@ -148,9 +148,10 @@ public class DockerUtil {
 	 * @throws Exception
 	 */
 	public void connect() throws Exception {
-		DockerClientConfig config = DockerClientConfig.createDefaultConfigBuilder()
-				.withVersion(Constants.DOCKER_API_VERSION)
-				.withUri(Configuration.getDockerUrl())
+
+		DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+				.withApiVersion(Constants.DOCKER_API_VERSION)
+				.withDockerHost(Configuration.getDockerUrl())
 				.build();
 
 		dockerClient = DockerClientBuilder.getInstance(config).build();
@@ -198,13 +199,13 @@ public class DockerUtil {
 		}
 		LoggingService.logInfo(MODULE_NAME, "logging in to registry");
 		try {
-			DockerClientConfig config = DockerClientConfig.createDefaultConfigBuilder()
-					.withVersion(Constants.DOCKER_API_VERSION)
-					.withUri(Configuration.getDockerUrl())
-					.withUsername(registry.getUserName())
-					.withPassword(registry.getPassword())
-					.withEmail(registry.getUserEmail())
-					.withServerAddress(registry.getUrl())
+			DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+					.withApiVersion(Constants.DOCKER_API_VERSION)
+					.withDockerHost(Configuration.getDockerUrl())
+					.withRegistryUsername(registry.getUserName())
+					.withRegistryPassword(registry.getPassword())
+					.withRegistryEmail(registry.getUserEmail())
+					.withRegistryUrl(registry.getUrl())
 					.build();
 
 			dockerClient = DockerClientBuilder.getInstance(config).build();
@@ -338,7 +339,7 @@ public class DockerUtil {
 		try {
 			ContainerState status = dockerClient.inspectContainerCmd(id).exec().getState();
 			ElementStatus result = new ElementStatus();
-			if (status.isRunning()) {
+			if (status.getRunning()) {
 				result.setStartTime(getStartedTime(status.getStartedAt()));
 				result.setCpuUsage(0);
 				result.setMemoryUsage(0);
@@ -434,7 +435,7 @@ public class DockerUtil {
 		if (element.getPortMappings() != null)
 			element.getPortMappings().forEach(mapping -> {
 				ExposedPort internal = ExposedPort.tcp(Integer.parseInt(mapping.getInside()));
-				Ports.Binding external = Ports.Binding(Integer.parseInt(mapping.getOutside()));
+				Ports.Binding external = Ports.Binding.bindPort(Integer.parseInt(mapping.getOutside()));
 				portBindings.bind(internal, external);
 				exposedPorts.add(internal);
 			});
@@ -444,14 +445,14 @@ public class DockerUtil {
 			element.getVolumeMappings().forEach(volumeMapping -> {
 			    Volume volume = new Volume(volumeMapping.getHostDestination());
 				volumes.add(volume);
-				AccessMode accessMode;
-				if (volumeMapping.getAccessMode().equals("ro")) {
-					accessMode = AccessMode.ro;
-				} else {
-					accessMode = AccessMode.DEFAULT;
-				}
-				Bind volumeBind = new Bind(volumeMapping.getContainerDestination(), volume, accessMode);
-				volumeBindings.add(volumeBind);
+				volumeBindings.add( new Bind(
+								volumeMapping.getContainerDestination(),
+								volume,
+								AccessMode.valueOf(volumeMapping.getAccessMode()),
+								SELContext.fromString(volumeMapping.getSelContextMode()),
+								volumeMapping.getNocopy(),
+								PropagationMode.fromString(volumeMapping.getPropagationMode())
+						));
 			});
 		}
 		String[] extraHosts = { "iofabric:" + host, "iofog:" + host };
@@ -467,7 +468,7 @@ public class DockerUtil {
 		
 		CreateContainerCmd cmd = dockerClient.createContainerCmd(element.getImageName())
 				.withLogConfig(containerLog)
-				.withCpuset("0")
+				.withCpusetCpus("0")
 				.withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
 				.withPortBindings(portBindings)
 				.withEnv("SELFNAME=" + element.getElementId())
@@ -498,7 +499,7 @@ public class DockerUtil {
 		Container container = getContainer(element.getElementId());
 		if (container == null)
 			return false;
-		Port[] containerPorts = container.getPorts();
+		ContainerPort[] containerPorts = container.getPorts();
 		
 		if (elementPorts == null && containerPorts == null)
 			return true;
@@ -511,7 +512,7 @@ public class DockerUtil {
 		
 		for (PortMapping elementPort : elementPorts) {
 			boolean found = false;
-			for (Port containerPort : containerPorts)
+			for (ContainerPort containerPort : containerPorts)
 				if (containerPort.getPrivatePort().toString().equals(elementPort.getInside()))
 					if (containerPort.getPublicPort().toString().equals(elementPort.getOutside())) {
 						found = true;

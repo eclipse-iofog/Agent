@@ -503,7 +503,10 @@ public class FieldAgent {
 							JsonObject volumeMapping = volumeMappingObj.getJsonObject(j);
 							vms.add(new VolumeMapping(volumeMapping.getString("hostdestination"),
 									volumeMapping.getString("containerdestination"),
-									volumeMapping.getString("accessmode")));
+									volumeMapping.getString("accessmode"),
+									volumeMapping.getString("propagationmode"),
+									volumeMapping.getString("selcontextmode"),
+									volumeMapping.getBoolean("nocopy")));
 						}
 					}
 					element.setVolumeMappings(vms);
