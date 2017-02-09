@@ -443,16 +443,15 @@ public class DockerUtil {
 		List<Bind> volumeBindings = new ArrayList<>();
 		if(element.getVolumeMappings() != null) {
 			element.getVolumeMappings().forEach(volumeMapping -> {
-			    Volume volume = new Volume(volumeMapping.getHostDestination());
+			    Volume volume = new Volume(volumeMapping.getContainerDestination());
 				volumes.add(volume);
-				volumeBindings.add( new Bind(
-								volumeMapping.getContainerDestination(),
-								volume,
-								AccessMode.valueOf(volumeMapping.getAccessMode()),
-								SELContext.fromString(volumeMapping.getSelContextMode()),
-								volumeMapping.getNocopy(),
-								PropagationMode.fromString(volumeMapping.getPropagationMode())
-						));
+                AccessMode accessMode;
+                try {
+                    accessMode = AccessMode.valueOf(volumeMapping.getAccessMode());
+                } catch (Exception e) {
+                    accessMode = AccessMode.DEFAULT;
+                }
+                volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
 			});
 		}
 		String[] extraHosts = { "iofabric:" + host, "iofog:" + host };
