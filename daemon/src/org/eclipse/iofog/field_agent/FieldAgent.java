@@ -3,6 +3,7 @@ package org.eclipse.iofog.field_agent;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -495,7 +496,10 @@ public class FieldAgent {
 				}
 				element.setPortMappings(pms);
 				if(container.containsKey("volumemappings")) {
-					JsonArray volumeMappingObj = container.getJsonArray("volumemappings");
+					JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
+					JsonObject object = jsonReader.readObject();
+
+					JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
 					List<VolumeMapping> vms = null;
 					if (volumeMappingObj.size() > 0) {
 						vms = new ArrayList<>(volumeMappingObj.size());
