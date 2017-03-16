@@ -1,15 +1,5 @@
-package org.eclipse.iofog;
-
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-
 /*******************************************************************************
- * Copyright (c) 2016 Iotracks, Inc.
+ * Copyright (c) 2016, 2017 Iotracks, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,6 +10,17 @@ import java.text.ParseException;
  *   Kilton Hopkins
  *   Ashita Nagar
  *******************************************************************************/
+package org.eclipse.iofog;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+
+
 
 public class Client {
 
