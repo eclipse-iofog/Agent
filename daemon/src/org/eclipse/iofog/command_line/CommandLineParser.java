@@ -241,9 +241,9 @@ public class CommandLineParser {
 				"                                         that the software is allowed to use\\n" + 
 				"                 -dl <dir>               Set the directory to use for disk\\n" + 
 				"                                         storage\\n" + 
-				"                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" + 
-				"                                         the software is allowed to use for\\n" + 
-				"                                         messages\\n" + 
+				"                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory\\n" +
+				"                                         that the software is allowed to use\\n" +
+				"                                         for messages\\n" +
 				"                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\\n" + 
 				"                                         time that the software is allowed\\n" + 
 				"                                         to use\\n" + 
@@ -265,8 +265,9 @@ public class CommandLineParser {
 				"                                         split the log storage limit\\n" + 
 				"                 -sf <#seconds>          Set the status update frequency\\n" + 
 				"                 -cf <#seconds>          Set the get changes frequency\\n" +
-				"                 -idc <on/off>           Set the mode on which any not registered\\n " +
-				"										  docker container will be shutted down\\n" +
+				"                 -idc <on/off>           Set the mode on which any not\\n" +
+				"										  registered docker container will be\\n" +
+				"										  shutted down\\n" +
 				"\\n" + 
 				"\\n" + 
 				"Report bugs to: bugs@iotracks.com\\n" + 

@@ -8,10 +8,25 @@
  * Contributors:
  * Saeid Baghbidi
  * Kilton Hopkins
- *  Ashita Nagar
+ * Ashita Nagar
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
+import io.netty.util.internal.StringUtil;
+import org.eclipse.iofog.element.*;
+import org.eclipse.iofog.local_api.LocalApi;
+import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
+import javax.json.*;
+import javax.net.ssl.SSLHandshakeException;
+import javax.ws.rs.ForbiddenException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,33 +39,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-import javax.net.ssl.SSLHandshakeException;
-
-import javax.ws.rs.ForbiddenException;
-
-import org.eclipse.iofog.element.*;
-import org.eclipse.iofog.local_api.LocalApi;
-import org.eclipse.iofog.message_bus.MessageBus;
-import org.eclipse.iofog.process_manager.ProcessManager;
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Orchestrator;
-import org.eclipse.iofog.utils.Constants.ControllerStatus;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
-
-import io.netty.util.internal.StringUtil;
+import java.util.*;
 
 /**
  * Field Agent module
@@ -59,8 +48,10 @@ import io.netty.util.internal.StringUtil;
  *
  */
 public class FieldAgent {
+
 	private final String MODULE_NAME = "Field Agent";
 	private final String filesPath = Constants.SNAP_COMMON + "/etc/iofog/";
+	private static final String ISOLATED_DOCKER_CONTAINER_PROPERTY = "isolateddockercontainer";
 
 	private Orchestrator orchestrator;
 	private long lastGetChangesList;
@@ -159,7 +150,7 @@ public class FieldAgent {
 					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
 						LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
 					else
-						verficationFailed();
+						verificationFailed();
 					continue;
 				}
 				LoggingService.logInfo(MODULE_NAME, "verified");
@@ -182,7 +173,7 @@ public class FieldAgent {
 					connected = false;
 				}
 			} catch (CertificateException | SSLHandshakeException e) {
-				verficationFailed();
+				verificationFailed();
 			} catch (Exception e) {
 				connected = false;
 			}
@@ -194,7 +185,7 @@ public class FieldAgent {
 	 * certificate is not verified
 	 * 
 	 */
-	private void verficationFailed() {
+	private void verificationFailed() {
 		connected = false;
 		LoggingService.logWarning(MODULE_NAME, "controller certificate verification failed");
 		if (!notProvisioned())
@@ -222,7 +213,7 @@ public class FieldAgent {
 					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
 						LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
 					else
-						verficationFailed();
+						verificationFailed();
 					continue;
 				}
 
@@ -235,7 +226,7 @@ public class FieldAgent {
 					if (!result.getString("status").equals("ok"))
 						throw new Exception("error from fog controller");
 				} catch (CertificateException|SSLHandshakeException e) {
-					verficationFailed();
+					verificationFailed();
 					continue;
 				} catch (Exception e) {
 					LoggingService.logWarning(MODULE_NAME, "unable to get changes : " + e.getMessage());
@@ -284,13 +275,7 @@ public class FieldAgent {
 			return;
 		}
 
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		checkConnectionToController(fromFile);
 
 		String filename = "registries.json";
 		try {
@@ -325,7 +310,7 @@ public class FieldAgent {
 			}
 			elementManager.setRegistries(registries);
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get registries : " + e.getMessage());
 		}
@@ -344,13 +329,7 @@ public class FieldAgent {
 			return;
 		}
 
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		checkConnectionToController(fromFile);
 
 		String filename = "configs.json";
 		try {
@@ -379,7 +358,7 @@ public class FieldAgent {
 			}
 			elementManager.setConfigs(cfg);
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get elements config : " + e.getMessage());
 		}
@@ -398,13 +377,7 @@ public class FieldAgent {
 			return;
 		}
 
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		checkConnectionToController(fromFile);
 
 		String filename = "routes.json";
 		try {
@@ -440,7 +413,7 @@ public class FieldAgent {
 			}
 			elementManager.setRoutes(r);
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get routing" + e.getMessage());
 		}
@@ -459,13 +432,7 @@ public class FieldAgent {
 			return;
 		}
 
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		checkConnectionToController(fromFile);
 
 		String filename = "elements.json";
 		try {
@@ -529,7 +496,7 @@ public class FieldAgent {
 			}
 			elementManager.setElements(elements);
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get containers list" + e.getMessage());
 		}
@@ -553,7 +520,7 @@ public class FieldAgent {
 				return true;
 			}
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.BROKEN);
 			LoggingService.logWarning(MODULE_NAME, e.getMessage());
@@ -660,13 +627,7 @@ public class FieldAgent {
 			return;
 		}
 
-		if (controllerNotConnected()) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		checkConnectionToController(false);
 
 		if (initialization) {
 			postFogConfig();
@@ -689,6 +650,7 @@ public class FieldAgent {
 			int logFileCount = Integer.parseInt(configs.getString("logfilecount"));
 			int statusUpdateFreq = Integer.parseInt(configs.getString("poststatusfreq"));
 			int getChangesFreq = Integer.parseInt(configs.getString("getchangesfreq"));
+			boolean isolatedDockerContainers = !configs.getString(ISOLATED_DOCKER_CONTAINER_PROPERTY).equals("off");
 
 			Map<String, Object> instanceConfig = new HashMap<>();
 
@@ -725,11 +687,14 @@ public class FieldAgent {
 			if (Configuration.getGetChangesFreq() != getChangesFreq)
 				instanceConfig.put("cf", getChangesFreq);
 
+			if (Configuration.isIsolatedDockerContainers() != isolatedDockerContainers)
+				instanceConfig.put("idc", isolatedDockerContainers ? "on" : "off");
+
 			if (!instanceConfig.isEmpty())
 				Configuration.setConfig(instanceConfig, false);
 
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
 		}
@@ -747,13 +712,7 @@ public class FieldAgent {
 			return;
 		}
 
-		if (controllerNotConnected()) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		checkConnectionToController(false);
 
 		try {
 			Map<String, Object> postParams = new HashMap<>();
@@ -768,12 +727,13 @@ public class FieldAgent {
 			postParams.put("logfilecount", Configuration.getLogFileCount());
 			postParams.put("poststatusfreq", Configuration.getStatusUpdateFreq());
 			postParams.put("getchangesfreq", Configuration.getGetChangesFreq());
+			postParams.put(ISOLATED_DOCKER_CONTAINER_PROPERTY, Configuration.isIsolatedDockerContainers() ? "on" : "off");
 
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
 			if (!result.getString("status").equals("ok"))
 				throw new Exception("error from fog controller");
 		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
+			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to post fog config : " + e.getMessage());
 		}
@@ -822,7 +782,7 @@ public class FieldAgent {
 		} catch (Exception e) {
 			
 			if (e instanceof CertificateException || e instanceof SSLHandshakeException) {
-				verficationFailed();
+				verificationFailed();
 				provisioningResult = Json.createObjectBuilder()
 						.add("status", "failed")
 						.add("errormessage", "Certificate error")
@@ -876,7 +836,7 @@ public class FieldAgent {
 			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
 				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
 			else
-				verficationFailed();
+				verificationFailed();
 			return "\nFailure - not connected to controller";
 		}
 
@@ -926,6 +886,16 @@ public class FieldAgent {
 
 		new Thread(pingController, "FieldAgent : Ping").start();
 		new Thread(getChangesList, "FieldAgent : GetChangesList").start();
-		new Thread(postStatus, "FieldAgent : PostStaus").start();
+		new Thread(postStatus, "FieldAgent : PostStatus").start();
+	}
+
+	private void checkConnectionToController(boolean fromFile) throws Exception {
+		if (controllerNotConnected() && !fromFile) {
+			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
+				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
+			else
+				verificationFailed();
+			return;
+		}
 	}
 }

@@ -21,6 +21,7 @@ import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -42,7 +43,22 @@ import java.util.*;
  */
 public final class Configuration {
 
+	private static final String CONFIG_INSTANCE_ID = "instance_id";
+	private static final String CONFIG_ACCESS_TOKEN = "access_token";
 	private static final String CONFIG_ISOLATED_DOCKER_CONTAINER = "isolated_docker_container";
+	private static final String CONFIG_DISK_CONSUMPTION_LIMIT = "disk_consumption_limit";
+	private static final String CONFIG_DISK_DIRECTORY = "disk_directory";
+	private static final String CONFIG_MEMORY_CONSUMPTION_LIMIT = "memory_consumption_limit";
+	private static final String CONFIG_PROCESSOR_CONSUMPTION_LIMIT = "processor_consumption_limit";
+	private static final String CONFIG_CONTROLLER_URL = "controller_url";
+	private static final String CONFIG_CONTROLLER_CERT = "controller_cert";
+	private static final String CONFIG_DOCKER_URL = "docker_url";
+	private static final String CONFIG_NETWORK_INTERFACE = "network_interface";
+	private static final String CONFIG_LOG_DISK_CONSUMPTION_LIMIT = "log_disk_consumption_limit";
+	private static final String CONFIG_LOG_DISK_DIRECTORY = "log_disk_directory";
+	private static final String CONFIG_LOG_FILE_COUNT = "log_file_count";
+	private static final String CONFIG_STATUS_UPDATE_FREQ = "status_update_freq";
+	private static final String CONFIG_GET_CHANGES_FREQ = "get_changes_freq";
 
 	private static Element configElement;
 	private static Document configFile;
@@ -122,13 +138,7 @@ public final class Configuration {
 	 * @throws ConfigurationItemException
 	 */
 	private static String getNode(String name) throws ConfigurationItemException {
-		NodeList nodes = configElement.getElementsByTagName(name);
-		if (nodes.getLength() != 1) {
-			
-			throw new ConfigurationItemException("<" + name + "> item not found or defined more than once");
-		}
-
-		return nodes.item(0).getTextContent();
+		return getFirstNodeByTagName(name).getTextContent();
 	}
 
 	/**
@@ -139,14 +149,24 @@ public final class Configuration {
 	 * @throws ConfigurationItemException
 	 */
 	private static void setNode(String name, String content) throws ConfigurationItemException {
+		getFirstNodeByTagName(name).setTextContent(content);
+	}
 
+	/**
+	 * return first XML node from list of nodes found based on provided tag name
+	 *
+	 * @param name - node name
+	 * @return Node object
+	 * @throws ConfigurationItemException
+	 */
+	private static Node getFirstNodeByTagName(String name) throws ConfigurationItemException {
 		NodeList nodes = configFile.getElementsByTagName(name);
 
-		if (nodes.getLength() != 1)
+		if (nodes.getLength() != 1) {
 			throw new ConfigurationItemException("<" + name + "> item not found or defined more than once");
+		}
 
-		nodes.item(0).setTextContent(content);
-
+		return nodes.item(0);
 	}
 
 	public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters) throws ConfigurationItemException{
@@ -155,52 +175,51 @@ public final class Configuration {
 
 		for(String option : parameters){
 			switch (option) {
-			case "d":
-				result.put(option, getNode("disk_consumption_limit"));
-				break;
-			case "dl":
-				result.put(option, getNode("disk_directory"));
-				break;
-			case "m":
-				result.put(option, getNode("memory_consumption_limit"));
-				break;
-			case "p":
-				result.put(option, getNode("processor_consumption_limit"));
-				break;
-			case "a":
-				result.put(option, getNode("controller_url"));
-				break;
-			case "ac":
-				result.put(option, getNode("controller_cert"));
-				break;
-			case "c":
-				result.put(option, getNode("docker_url"));
-				break;
-			case "n":
-				result.put(option, getNode("network_interface"));
-				break;
-			case "l":
-				result.put(option, getNode("log_disk_consumption_limit"));
-				break;
-			case "ld":
-				result.put(option, getNode("log_disk_directory"));
-				break;
-			case "lc":
-				result.put(option, getNode("log_file_count"));
-				break;
-			case "sf":
-				result.put(option, getNode("status_update_freq"));
-				break;
-			case "cf":
-				result.put(option, getNode("get_changes_freq"));
-				break;
-			case "idc":
-				result.put(option, getNode(CONFIG_ISOLATED_DOCKER_CONTAINER));
-				break;
-			default:
-				throw new ConfigurationItemException("Invalid parameter -" + option);
-			}
-
+				case "d":
+					result.put(option, getNode(CONFIG_DISK_CONSUMPTION_LIMIT));
+					break;
+				case "dl":
+					result.put(option, getNode(CONFIG_DISK_DIRECTORY));
+					break;
+				case "m":
+					result.put(option, getNode(CONFIG_MEMORY_CONSUMPTION_LIMIT));
+					break;
+				case "p":
+					result.put(option, getNode(CONFIG_PROCESSOR_CONSUMPTION_LIMIT));
+					break;
+				case "a":
+					result.put(option, getNode(CONFIG_CONTROLLER_URL));
+					break;
+				case "ac":
+					result.put(option, getNode(CONFIG_CONTROLLER_CERT));
+					break;
+				case "c":
+					result.put(option, getNode(CONFIG_DOCKER_URL));
+					break;
+				case "n":
+					result.put(option, getNode(CONFIG_NETWORK_INTERFACE));
+					break;
+				case "l":
+					result.put(option, getNode(CONFIG_LOG_DISK_CONSUMPTION_LIMIT));
+					break;
+				case "ld":
+					result.put(option, getNode(CONFIG_LOG_DISK_DIRECTORY));
+					break;
+				case "lc":
+					result.put(option, getNode(CONFIG_LOG_FILE_COUNT));
+					break;
+				case "sf":
+					result.put(option, getNode(CONFIG_STATUS_UPDATE_FREQ));
+					break;
+				case "cf":
+					result.put(option, getNode(CONFIG_GET_CHANGES_FREQ));
+					break;
+				case "idc":
+					result.put(option, getNode(CONFIG_ISOLATED_DOCKER_CONTAINER));
+					break;
+				default:
+					throw new ConfigurationItemException("Invalid parameter -" + option);
+				}
 		}
 
 		return result;
@@ -260,13 +279,13 @@ public final class Configuration {
 					messageMap.put(option, "Disk limit range must be 1 to 1048576 GB"); break;
 				} 				
 				setDiskLimit(Float.parseFloat(value));
-				setNode("disk_consumption_limit", value);
+				setNode(CONFIG_DISK_CONSUMPTION_LIMIT, value);
 				break;
 				
 			case "dl":
 				value = addSeparator(value);
 				setDiskDirectory(value);
-				setNode("disk_directory", value);
+				setNode(CONFIG_DISK_DIRECTORY, value);
 				break;
 			case "m":
 				try{
@@ -278,7 +297,7 @@ public final class Configuration {
 					messageMap.put(option, "Memory limit range must be 128 to 1048576 MB"); break;
 				} 	
 				setMemoryLimit(Float.parseFloat(value));
-				setNode("memory_consumption_limit", value);
+				setNode(CONFIG_MEMORY_CONSUMPTION_LIMIT, value);
 				break;
 			case "p":
 				try{
@@ -290,23 +309,23 @@ public final class Configuration {
 					messageMap.put(option, "CPU limit range must be 5% to 100%"); break;
 				} 	
 				setCpuLimit(Float.parseFloat(value));
-				setNode("processor_consumption_limit", value);
+				setNode(CONFIG_PROCESSOR_CONSUMPTION_LIMIT, value);
 				break;
 			case "a":
-				setNode("controller_url", value);
+				setNode(CONFIG_CONTROLLER_URL, value);
 				setControllerUrl(value);
 				break;
 			case "ac":
-				setNode("controller_cert", value);
+				setNode(CONFIG_CONTROLLER_CERT, value);
 				setControllerCert(value);
 				break;
 			case "c":
-				setNode("docker_url", value);
+				setNode(CONFIG_DOCKER_URL, value);
 				setDockerUrl(value);
 				break;
 			case "n":
 				if (defaults || isValidNetworkInterface(value.trim())) {
-					setNode("network_interface", value);
+					setNode(CONFIG_NETWORK_INTERFACE, value);
 					setNetworkInterface(value);
 				} else {
 					messageMap.put(option, "Invalid network interface"); break;
@@ -321,12 +340,12 @@ public final class Configuration {
 				if(Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 1024){
 					messageMap.put(option, "Log disk limit range must be 0.5 to 1024 GB"); break;
 				}
-				setNode("log_disk_consumption_limit", value);
+				setNode(CONFIG_LOG_DISK_CONSUMPTION_LIMIT, value);
 				setLogDiskLimit(Float.parseFloat(value));
 				break;
 			case "ld":
 				value = addSeparator(value);
-				setNode("log_disk_directory", value);
+				setNode(CONFIG_LOG_DISK_DIRECTORY, value);
 				setLogDiskDirectory(value);
 				break;
 			case "lc":
@@ -338,7 +357,7 @@ public final class Configuration {
 				if(Integer.parseInt(value) < 1 || Integer.parseInt(value) > 100){
 					messageMap.put(option, "Log file count range must be 1 to 100"); break;
 				}
-				setNode("log_file_count", value);
+				setNode(CONFIG_LOG_FILE_COUNT, value);
 				setLogFileCount(Integer.parseInt(value));
 				break;
 			case "sf":
@@ -350,7 +369,7 @@ public final class Configuration {
 				if(Integer.parseInt(value) < 1){
 					messageMap.put(option, "Status update frequency must be greater than 1"); break;
 				}
-				setNode("status_update_freq", value);
+				setNode(CONFIG_STATUS_UPDATE_FREQ, value);
 				setStatusUpdateFreq(Integer.parseInt(value));
 				break;
 			case "cf":
@@ -362,7 +381,7 @@ public final class Configuration {
 				if(Integer.parseInt(value) < 1){
 					messageMap.put(option, "Get changes frequency must be greater than 1"); break;
 				}
-				setNode("get_changes_freq", value);
+				setNode(CONFIG_GET_CHANGES_FREQ, value);
 				setGetChangesFreq(Integer.parseInt(value));
 				break;
 			case "idc":
@@ -431,24 +450,24 @@ public final class Configuration {
 		}
 		configElement = (Element) nodes.item(0);
 
-		setInstanceId(getNode("instance_id"));
-		setAccessToken(getNode("access_token"));
-		setControllerUrl(getNode("controller_url"));
-		setControllerCert(getNode("controller_cert"));
-		setNetworkInterface(getNode("network_interface"));
-		setDockerUrl(getNode("docker_url"));
-		setDiskLimit(Float.parseFloat(getNode("disk_consumption_limit")));
-		setDiskDirectory(getNode("disk_directory"));
-		setMemoryLimit(Float.parseFloat(getNode("memory_consumption_limit")));
-		setCpuLimit(Float.parseFloat(getNode("processor_consumption_limit")));
-		setLogDiskDirectory(getNode("log_disk_directory"));
-		setLogDiskLimit(Float.parseFloat(getNode("log_disk_consumption_limit")));
-		setLogFileCount(Integer.parseInt(configElement.getElementsByTagName("log_file_count").item(0).getTextContent()));
+		setInstanceId(getNode(CONFIG_INSTANCE_ID));
+		setAccessToken(getNode(CONFIG_ACCESS_TOKEN));
+		setControllerUrl(getNode(CONFIG_CONTROLLER_URL));
+		setControllerCert(getNode(CONFIG_CONTROLLER_CERT));
+		setNetworkInterface(getNode(CONFIG_NETWORK_INTERFACE));
+		setDockerUrl(getNode(CONFIG_DOCKER_URL));
+		setDiskLimit(Float.parseFloat(getNode(CONFIG_DISK_CONSUMPTION_LIMIT)));
+		setDiskDirectory(getNode(CONFIG_DISK_DIRECTORY));
+		setMemoryLimit(Float.parseFloat(getNode(CONFIG_MEMORY_CONSUMPTION_LIMIT)));
+		setCpuLimit(Float.parseFloat(getNode(CONFIG_PROCESSOR_CONSUMPTION_LIMIT)));
+		setLogDiskDirectory(getNode(CONFIG_LOG_DISK_DIRECTORY));
+		setLogDiskLimit(Float.parseFloat(getNode(CONFIG_LOG_DISK_CONSUMPTION_LIMIT)));
+		setLogFileCount(Integer.parseInt(configElement.getElementsByTagName(CONFIG_LOG_FILE_COUNT).item(0).getTextContent()));
 		try {
-			setGetChangesFreq(Integer.parseInt(getNode("get_changes_freq")));
+			setGetChangesFreq(Integer.parseInt(getNode(CONFIG_GET_CHANGES_FREQ)));
 		} catch (Exception e) {
 			setGetChangesFreq(20);
-			Element el = configFile.createElement("get_changes_freq");
+			Element el = configFile.createElement(CONFIG_GET_CHANGES_FREQ);
 			el.appendChild(configFile.createTextNode("20"));
 			configElement.appendChild(el);
 			
@@ -459,10 +478,10 @@ public final class Configuration {
 	        transformer.transform(source, result);
 		}
 		try {
-			setStatusUpdateFreq(Integer.parseInt(getNode("status_update_freq")));
+			setStatusUpdateFreq(Integer.parseInt(getNode("CONFIG_STATUS_UPDATE_FREQ")));
 		} catch (Exception e) {
 			setStatusUpdateFreq(10);
-			Element el = configFile.createElement("status_update_freq");
+			Element el = configFile.createElement(CONFIG_STATUS_UPDATE_FREQ);
 			el.appendChild(configFile.createTextNode("10"));
 			configElement.appendChild(el);
 			
@@ -537,14 +556,14 @@ public final class Configuration {
 
 	public static void setAccessToken(String accessToken) {
 		try {
-			setNode("access_token", accessToken);
+			setNode(CONFIG_ACCESS_TOKEN, accessToken);
 		} catch (Exception e){}
 		Configuration.accessToken = accessToken;
 	}
 
 	public static void setInstanceId(String instanceId) {
 		try {
-			setNode("instance_id", instanceId);
+			setNode(CONFIG_INSTANCE_ID, instanceId);
 		} catch (Exception e){}
 		Configuration.instanceId = instanceId;
 	}
