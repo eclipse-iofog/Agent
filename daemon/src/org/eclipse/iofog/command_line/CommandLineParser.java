@@ -12,17 +12,18 @@
  *******************************************************************************/
 package org.eclipse.iofog.command_line;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.json.JsonObject;
-
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import javax.json.JsonObject;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import static java.util.Arrays.asList;
 
 /**
  * to parse command-line parameters 
@@ -31,6 +32,37 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  *
  */
 public class CommandLineParser {
+
+	private static final String CMD_START = "start";
+	private static final String CMD_STOP = "stop";
+	private static final String[] CMD_HELP = {"help", "--help", "-h", "-?"};
+	private static final String[] CMD_VERSION = {"version", "--version", "-v"};
+	private static final String CMD_STATUS = "status";
+	private static final String CMD_INFO = "info";
+	private static final String CMD_PROVISION = "provision";
+	private static final String CMD_DEPROVISION = "deprovision";
+	private static final String CMD_CONFIG = "config";
+	private static final String CMD_CONFIG_DEFAULTS = "defaults";
+	private static final String CMD_CONFIG_DISK_SPACE_LIMIT = "-d";
+	private static final String CMD_CONFIG_DIRECTORY_STORAGE = "-dl";
+	private static final String CMD_CONFIG_RAM = "-m";
+	private static final String CMD_CONFIG_CPU = "-c";
+	private static final String CMD_CONFIG_FOG_CONTROLLER_URI = "-a";
+	private static final String CMD_CONFIG_CERTIFICATE_PATH = "-ac";
+	private static final String CMD_CONFIG_DOCKER_DAEMON_ADDRESS = "-c";
+	private static final String CMD_CONFIG_NETWORK = "-n";
+	private static final String CMD_CONFIG_LOG_LIMIT = "-l";
+	private static final String CMD_CONFIG_LOG_DIRECTORY = "-ld";
+	private static final String CMD_CONFIG_LOG_FILES_NUMBER = "-lc";
+	private static final String CMD_CONFIG_STATUS_UPDATE_FREQUENCY = "-sf";
+	private static final String CMD_CONFIG_GET_CHANGES_FREQUENCY = "-cf";
+	private static final String CMD_CONFIG_ISOLATE_DOCKER_CONTAINERS = "-idc";
+
+	private static final String[] CMD_CONFIG_ARGS = { CMD_CONFIG_DISK_SPACE_LIMIT, CMD_CONFIG_DIRECTORY_STORAGE,
+			CMD_CONFIG_RAM, CMD_CONFIG_CPU, CMD_CONFIG_FOG_CONTROLLER_URI, CMD_CONFIG_CERTIFICATE_PATH,
+			CMD_CONFIG_DOCKER_DAEMON_ADDRESS, CMD_CONFIG_NETWORK, CMD_CONFIG_LOG_LIMIT, CMD_CONFIG_LOG_DIRECTORY,
+			CMD_CONFIG_LOG_FILES_NUMBER, CMD_CONFIG_STATUS_UPDATE_FREQUENCY, CMD_CONFIG_GET_CHANGES_FREQUENCY,
+			CMD_CONFIG_ISOLATE_DOCKER_CONTAINERS};
 
 	/**
 	 * parse command-line parameters 
@@ -43,21 +75,21 @@ public class CommandLineParser {
 		String[] args = command.split(" ");
 		StringBuilder result = new StringBuilder();
 
-		if (args[0].equals("stop")) {
+		if (CMD_STOP.equals(args[0])) {
 			System.setOut(Constants.systemOut);
 			System.exit(0);
 		}
 
-		if (args[0].equals("start")) {
+		if (CMD_START.equals(args[0])) {
 			return "";
 		}
 
-		if (args[0].equals("help") || args[0].equals("--help") || args[0].equals("-h") || args[0].equals("-?")) {
+		if (asList(CMD_HELP).contains(args[0])) {
 			result.append(showHelp());
 			return result.toString();
 		}
 
-		if (args[0].equals("version") || args[0].equals("--version") || args[0].equals("-v")) {
+		if (asList(CMD_VERSION).contains(args[0])) {
 			result.append("ioFog " + Constants.VERSION);
 			result.append("\\nCopyright (C) 2016 iotracks, inc.");
 			result.append("\\nEclipse ioFog is provided under the Eclipse Public License (EPL)");
@@ -66,11 +98,11 @@ public class CommandLineParser {
 			return result.toString();
 		}
 
-		if (args[0].equals("status")) {
+		if (CMD_STATUS.equals(args[0])) {
 			return StatusReporter.getStatusReport();
 		}
 
-		if (args[0].equals("deprovision")) {
+		if (CMD_DEPROVISION.equals(args[0])) {
 			result.append("Deprovisioning from controller...");
 			try {
 				result.append(FieldAgent.getInstance().deProvision());
@@ -79,13 +111,13 @@ public class CommandLineParser {
 			return result.toString().replace("\n", "\\n");
 		}
 
-		if (args[0].equals("info")) {
+		if (CMD_INFO.equals(args[0])) {
 			result.append(Configuration.getConfigReport());
 
 			return result.toString();
 		}
 
-		if (args[0].equals("provision")) {
+		if (CMD_PROVISION.equals(args[0])) {
 			if (args.length < 2) {
 				return showHelp();
 			}
@@ -104,49 +136,43 @@ public class CommandLineParser {
 			return result.toString();
 		}
 
-		if (args[0].equals("config")) {
+		if (CMD_CONFIG.equals(args[0])) {
+
 			if (args.length == 1) {
 				return showHelp();
 			}
 			
 			if (args.length == 2) {
-				if (args[1].equals("defaults")) {
+				if (CMD_CONFIG_DEFAULTS.equals(args[1])) {
 					try {
 						Configuration.resetToDefault();
 					} catch (Exception e) {
 						return "Error resetting configuration.";
 					}
 					return "Configuration has been reset to its defaults.";
-				} else if  (!args[1].equals("-ac"))
+				} else if (!CMD_CONFIG_CERTIFICATE_PATH.equals(args[1]))
 					return showHelp();
 			}
 
 			Map<String, Object> config = new HashMap<>();
 			int i = 1;
 			while (i < args.length) {
-				if (args.length - i < 2 && !args[i].equals("-ac"))
+				if (args.length - i < 2 && !args[i].equals(CMD_CONFIG_CERTIFICATE_PATH))
 					return showHelp();
-				if (!args[i].equals("-d") && !args[i].equals("-dl") && !args[i].equals("-m") && !args[i].equals("-p")
-						&& !args[i].equals("-a") && !args[i].equals("-ac") && !args[i].equals("-c")
-						&& !args[i].equals("-sf") && !args[i].equals("-cf")
-						&& !args[i].equals("-n") && !args[i].equals("-l") && !args[i].equals("-ld") && !args[i].equals("-lc"))
+				if (!asList(CMD_CONFIG_ARGS).contains(args[i]))
 					return showHelp();
 
-				String option = args[i].substring(1);
 				String value = "";
-				if(option.equals("ac") && args.length == 2){
+				if(CMD_CONFIG_CERTIFICATE_PATH.equals(args[i]) && args.length == 2){
 					value = ""; i += 1; 
 				}
-				else if(option.equals("ac") && ((args[i+1].equals("-d") || args[i+1].equals("-dl") || args[i+1].equals("-m") || args[i+1].equals("-p")
-						|| args[i+1].equals("-a") || args[i+1].equals("-ac") || args[i+1].equals("-c")
-						|| args[i+1].equals("-sf") || args[i+1].equals("-cf")
-						|| args[i+1].equals("-n") || args[i+1].equals("-l") || args[i+1].equals("-ld") || args[i+1].equals("-lc")))){
+				else if(CMD_CONFIG_CERTIFICATE_PATH.equals(args[i]) && asList(CMD_CONFIG_ARGS).contains(args[i+1])){
 					value = ""; i += 1; 
 				}
-				else{ value = args[i + 1];
-					i += 2;
+				else{
+					value = args[i + 1]; i += 2;
 				}
-				config.put(option, value);
+				config.put(args[i].substring(1), value);
 			}
 
 			try {
@@ -238,7 +264,9 @@ public class CommandLineParser {
 				"                 -lc <#log files>        Set the number of log files to evenly\\n" + 
 				"                                         split the log storage limit\\n" + 
 				"                 -sf <#seconds>          Set the status update frequency\\n" + 
-				"                 -cf <#seconds>          Set the get changes frequency\\n" + 
+				"                 -cf <#seconds>          Set the get changes frequency\\n" +
+				"                 -idc <on/off>           Set the mode on which any not registered\\n " +
+				"										  docker container will be shutted down\\n" +
 				"\\n" + 
 				"\\n" + 
 				"Report bugs to: bugs@iotracks.com\\n" + 

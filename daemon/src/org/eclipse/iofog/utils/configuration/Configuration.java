@@ -12,22 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.configuration;
 
-import java.io.File;
-import java.net.NetworkInterface;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -39,6 +23,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.net.NetworkInterface;
+import java.util.*;
+
 /**
  * holds IOFog instance configuration
  * 
@@ -46,6 +41,8 @@ import org.w3c.dom.NodeList;
  *
  */
 public final class Configuration {
+
+	private static final String CONFIG_ISOLATED_DOCKER_CONTAINER = "isolated_docker_container";
 
 	private static Element configElement;
 	private static Document configFile;
@@ -65,6 +62,7 @@ public final class Configuration {
 	private static int logFileCount;
 	private static int statusUpdateFreq;
 	private static int getChangesFreq;
+	private static boolean isolatedDockerContainers;
 	private static Map<String, Object> defaultConfig;
 	
 	public static boolean debugging = false;
@@ -85,8 +83,17 @@ public final class Configuration {
 		defaultConfig.put("lc", "10");
 		defaultConfig.put("sf", "10");
 		defaultConfig.put("cf", "20");
+		defaultConfig.put("idc", "on");
 	}
-	
+
+	public static boolean isIsolatedDockerContainers() {
+		return isolatedDockerContainers;
+	}
+
+	public static void setIsolatedDockerContainers(boolean isolatedDockerContainers) {
+		Configuration.isolatedDockerContainers = isolatedDockerContainers;
+	}
+
 	public static int getStatusUpdateFreq() {
 		return statusUpdateFreq;
 	}
@@ -186,6 +193,9 @@ public final class Configuration {
 				break;
 			case "cf":
 				result.put(option, getNode("get_changes_freq"));
+				break;
+			case "idc":
+				result.put(option, getNode(CONFIG_ISOLATED_DOCKER_CONTAINER));
 				break;
 			default:
 				throw new ConfigurationItemException("Invalid parameter -" + option);
@@ -355,6 +365,10 @@ public final class Configuration {
 				setNode("get_changes_freq", value);
 				setGetChangesFreq(Integer.parseInt(value));
 				break;
+			case "idc":
+				setNode(CONFIG_ISOLATED_DOCKER_CONTAINER, value);
+				setIsolatedDockerContainers(!value.equals("off"));
+				break;
 			default:
 				throw new ConfigurationItemException("Invalid parameter -" + option);
 			}
@@ -373,8 +387,8 @@ public final class Configuration {
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
 		try {
-			Enumeration<NetworkInterface> networkInterfacs = NetworkInterface.getNetworkInterfaces();
-	        for (NetworkInterface networkInterface : Collections.list(networkInterfacs)) {
+			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+	        for (NetworkInterface networkInterface : Collections.list(networkInterfaces)) {
 	        	if (networkInterface.getName().equalsIgnoreCase(eth))
 	        		return true;
 	        }
@@ -458,6 +472,7 @@ public final class Configuration {
 	        StreamResult result = new StreamResult(Constants.CONFIG_DIR);
 	        transformer.transform(source, result);
 		}
+		setIsolatedDockerContainers(!getNode(CONFIG_ISOLATED_DOCKER_CONTAINER).equals("off"));
 	}
 
 	public static String getAccessToken() {
@@ -595,21 +610,22 @@ public final class Configuration {
 
 		StringBuilder result = new StringBuilder();
 		result.append(
-						"Instance ID               : " + ((instanceId != null && !instanceId.equals("")) ? instanceId : "not provisioned") + "\\n" + 
-						"IP Address                : " + ipAddress + "\\n" + 
-						"Network Interface         : " + networkInterface + "\\n" + 
-						"ioFog Controller          : " + controllerUrl + "\\n" + 
-						"ioFog Certificate         : " + controllerCert + "\\n" + 
-						"Docker URL                : " + dockerUrl + "\\n" + 
-						String.format("Disk Usage Limit          : %.2f GiB\\n", diskLimit) + 
-						"Message Storage Directory : " + diskDirectory + "\\n" + 
-						String.format("Memory RAM Limit          : %.2f MiB\\n", memoryLimit) + 
-						String.format("CPU Usage Limit           : %.2f%%\\n", cpuLimit) + 
-						String.format("Log Disk Limit            : %.2f GiB\\n", logDiskLimit) + 
-						"Status Update Frequency   : " + statusUpdateFreq + "\\n" + 
-						"Get Changes Frequency     : " + getChangesFreq + "\\n" + 
-						"Log File Directory        : " + logDiskDirectory + "\\n" + 
-						String.format("Log Rolling File Count    : %d", logFileCount));
+						"Instance ID               		 : " + ((instanceId != null && !instanceId.equals("")) ? instanceId : "not provisioned") + "\\n" +
+						"IP Address                		 : " + ipAddress + "\\n" +
+						"Network Interface         		 : " + networkInterface + "\\n" +
+						"ioFog Controller          		 : " + controllerUrl + "\\n" +
+						"ioFog Certificate         		 : " + controllerCert + "\\n" +
+						"Docker URL                		 : " + dockerUrl + "\\n" +
+						String.format("Disk Usage Limit           	 : %.2f GiB\\n", diskLimit) +
+						"Message Storage Directory 		 : " + diskDirectory + "\\n" +
+						String.format("Memory RAM Limit           	 : %.2f MiB\\n", memoryLimit) +
+						String.format("CPU Usage Limit           	 : %.2f%%\\n", cpuLimit) +
+						String.format("Log Disk Limit            	 : %.2f GiB\\n", logDiskLimit) +
+						"Status Update Frequency    	 : " + statusUpdateFreq + "\\n" +
+						"Get Changes Frequency     		 : " + getChangesFreq + "\\n" +
+						"Log File Directory              : " + logDiskDirectory + "\\n" +
+						String.format("Log Rolling File Count    	 : %d", logFileCount) + "\\n" +
+						"Isolated Docker Containers Mode : " + (isolatedDockerContainers ? "on" : "off"));
 		return result.toString();
 	}
 

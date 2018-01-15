@@ -12,10 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
+import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
@@ -30,7 +27,9 @@ import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import com.github.dockerjava.api.model.Container;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * Process Manager module
@@ -132,8 +131,8 @@ public class ProcessManager {
 					for (Container container : containers) {
 						Element element = elementManager.getElementById(container.getNames()[0].substring(1));
 
-						// element does not exist, remove container
-						if (element == null) {
+						// If element is not registered and Isolated Docker Container Mode is ON -> remove container
+						if (element == null && Configuration.isIsolatedDockerContainers()) {
 							addTask(new ContainerTask(Tasks.REMOVE, container.getId()));
 							continue;
 						}
