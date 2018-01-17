@@ -147,7 +147,10 @@ public class Client {
 				+ "                 -lc <#log files>        Set the number of log files to evenly\n"
 				+ "                                         split the log storage limit\n"
 				+ "                 -sf <#seconds>          Set the status update frequency\n"
-				+ "                 -cf <#seconds>          Set the get changes frequency\n" + "\n" + "\n"
+				+ "                 -cf <#seconds>          Set the get changes frequency\n"
+				+ "                 -idc <on/off>           Set the mode on which any not\\n"
+				+ "										  	registered docker container will be\\n"
+				+ "										  	shutted down\\n" + "\n" + "\n"
 				+ "Report bugs to: bugs@iotracks.com\n" + "ioFog home page: http://iofog.com\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 
