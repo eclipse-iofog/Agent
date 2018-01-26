@@ -13,6 +13,7 @@
 package org.eclipse.iofog.field_agent;
 
 import io.netty.util.internal.StringUtil;
+import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -41,17 +42,23 @@ import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
 
+import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
+import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
+import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
+import static org.eclipse.iofog.utils.Constants.FIELD_AGENT;
+import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
+import static org.eclipse.iofog.utils.Constants.VERSION;
+
 /**
  * Field Agent module
  * 
  * @author saeid
  *
  */
-public class FieldAgent {
+public class FieldAgent implements IOFogModule {
 
 	private final String MODULE_NAME = "Field Agent";
-	private final String filesPath = Constants.SNAP_COMMON + "/etc/iofog/";
-	private static final String ISOLATED_DOCKER_CONTAINER_PROPERTY = "isolateddockercontainer";
+	private final String filesPath = SNAP_COMMON + "/etc/iofog/";
 
 	private Orchestrator orchestrator;
 	private long lastGetChangesList;
@@ -63,6 +70,16 @@ public class FieldAgent {
 	private FieldAgent() {
 		lastGetChangesList = 0;
 		initialization = true;
+	}
+
+	@Override
+	public int getModuleIndex() {
+		return FIELD_AGENT;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
 	}
 
 	public static FieldAgent getInstance() {
@@ -102,7 +119,7 @@ public class FieldAgent {
 		result.put("elementmessagecounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerElement());
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
 		result.put("lastcommandtime", StatusReporter.getFieldAgentStatus().getLastCommandTime());
-		result.put("version", Constants.VERSION);
+		result.put("version", VERSION);
 
 		return result;
 	}
@@ -113,7 +130,10 @@ public class FieldAgent {
 	 * @return	boolean
 	 */
 	private boolean notProvisioned() {
-		return StatusReporter.getFieldAgentStatus().getContollerStatus().equals(ControllerStatus.NOT_PROVISIONED);
+		boolean notProvisioned = StatusReporter.getFieldAgentStatus().getContollerStatus().equals(NOT_PROVISIONED);
+		if(notProvisioned)
+			logWarning("not provisioned");
+		return notProvisioned;
 	}
 
 	/**
@@ -123,7 +143,7 @@ public class FieldAgent {
 	 * @throws	Exception
 	 */
 	private boolean controllerNotConnected() throws Exception {
-		return !StatusReporter.getFieldAgentStatus().getContollerStatus().equals(ControllerStatus.OK) && !ping(); 
+		return !StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping();
 	}
 
 	/**
@@ -132,31 +152,26 @@ public class FieldAgent {
 	 */
 	private final Runnable postStatus = () -> {
 		while (true) {
-			LoggingService.logInfo(MODULE_NAME, "start posting");
+			logInfo("start posting");
 			Map<String, Object> status = getFogStatus();
 			if (Configuration.debugging) {
-				LoggingService.logInfo(MODULE_NAME, status.toString());
+				logInfo(status.toString());
 			}
 			try {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "post status");
+				logInfo("post status");
 				//				if (notProvisioned()) {
 				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
 				//					continue;
 				//				}
-				if (controllerNotConnected()) {
-					connected = false;
-					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-						LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-					else
-						verificationFailed();
+				connected = checkConnectionToController(false);
+				if(!connected)
 					continue;
-				}
-				LoggingService.logInfo(MODULE_NAME, "verified");
+				logInfo("verified");
 
 				try {
-					LoggingService.logInfo(MODULE_NAME, "sending...");
+					logInfo("sending...");
 					JsonObject result = orchestrator.doCommand("status", null, status);
 					if (!result.getString("status").equals("ok")){
 						throw new Exception("error from fog controller");
@@ -169,7 +184,7 @@ public class FieldAgent {
 				} catch(ForbiddenException je){
 						deProvision();
 				} catch (Exception e) {
-					LoggingService.logWarning(MODULE_NAME, "unable to send status : " + e.getMessage());
+					logWarning("unable to send status : " + e.getMessage());
 					connected = false;
 				}
 			} catch (CertificateException | SSLHandshakeException e) {
@@ -187,7 +202,7 @@ public class FieldAgent {
 	 */
 	private void verificationFailed() {
 		connected = false;
-		LoggingService.logWarning(MODULE_NAME, "controller certificate verification failed");
+		logWarning("controller certificate verification failed");
 		if (!notProvisioned())
 			StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.BROKEN);
 		StatusReporter.setFieldAgentStatus().setControllerVerified(false);
@@ -203,24 +218,15 @@ public class FieldAgent {
 			try {
 				Thread.sleep(Configuration.getGetChangesFreq() * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "get changes list");
-				if (notProvisioned()) {
-					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-					continue;
-				}
-
-				if (controllerNotConnected()) {
-					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-						LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-					else
-						verificationFailed();
+				logInfo("get changes list");
+				if (notProvisioned() || checkConnectionToController(false)) {
 					continue;
 				}
 
 				Map<String, Object> queryParams = new HashMap<>();
 				queryParams.put("timestamp", lastGetChangesList);
 
-				JsonObject result = null;
+				JsonObject result;
 				try {
 					result = orchestrator.doCommand("changes", queryParams, null);
 					if (!result.getString("status").equals("ok"))
@@ -229,7 +235,7 @@ public class FieldAgent {
 					verificationFailed();
 					continue;
 				} catch (Exception e) {
-					LoggingService.logWarning(MODULE_NAME, "unable to get changes : " + e.getMessage());
+					logWarning("unable to get changes : " + e.getMessage());
 					continue;
 				}
 
@@ -269,17 +275,14 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	public void loadRegistries(boolean fromFile) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "get registries");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
+		logInfo("get registries");
+		if (notProvisioned() || checkConnectionToController(fromFile)) {
 			return;
 		}
 
-		checkConnectionToController(fromFile);
-
 		String filename = "registries.json";
 		try {
-			JsonArray registriesList = null;
+			JsonArray registriesList;
 			if (fromFile) {
 				registriesList = readFile(filesPath + filename);
 				if (registriesList == null) {
@@ -302,7 +305,7 @@ public class FieldAgent {
 				result.setUrl(registry.getString("url"));
 				result.setSecure(registry.getBoolean("secure"));
 				result.setCertificate(registry.getString("certificate"));
-				result.setRequiersCertificate(registry.getBoolean("requirescert"));
+				result.setRequiresCertificate(registry.getBoolean("requirescert"));
 				result.setUserName(registry.getString("username"));
 				result.setPassword(registry.getString("password"));
 				result.setUserEmail(registry.getString("useremail"));
@@ -312,7 +315,7 @@ public class FieldAgent {
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get registries : " + e.getMessage());
+			logWarning("unable to get registries : " + e.getMessage());
 		}
 	}
 
@@ -323,17 +326,17 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	private void loadElementsConfig(boolean fromFile) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "get elemets config");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
+		logInfo("get elemets config");
+		if (notProvisioned() ) {
 			return;
 		}
 
-		checkConnectionToController(fromFile);
+		if(checkConnectionToController(fromFile))
+			return;
 
 		String filename = "configs.json";
 		try {
-			JsonArray configs = null;
+			JsonArray configs;
 			if (fromFile) {
 				configs = readFile(filesPath + filename);
 				if (configs == null) {
@@ -360,7 +363,7 @@ public class FieldAgent {
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get elements config : " + e.getMessage());
+			logWarning("unable to get elements config : " + e.getMessage());
 		}
 	}
 
@@ -371,17 +374,14 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	private void loadRoutes(boolean fromFile) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "get routes");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
+		logInfo("get routes");
+		if (notProvisioned() || checkConnectionToController(fromFile)) {
 			return;
 		}
 
-		checkConnectionToController(fromFile);
-
 		String filename = "routes.json";
 		try {
-			JsonArray routes = null;
+			JsonArray routes;
 			if (fromFile) {
 				routes = readFile(filesPath + filename);
 				if (routes == null) {
@@ -415,7 +415,7 @@ public class FieldAgent {
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get routing" + e.getMessage());
+			logWarning("unable to get routing" + e.getMessage());
 		}
 	}
 
@@ -426,17 +426,14 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	private void loadElementsList(boolean fromFile) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "get elements");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
+		logInfo("get elements");
+		if (notProvisioned() || checkConnectionToController(fromFile)) {
 			return;
 		}
 
-		checkConnectionToController(fromFile);
-
 		String filename = "elements.json";
 		try {
-			JsonArray containers = null;
+			JsonArray containers;
 			if (fromFile) {
 				containers = readFile(filesPath + filename);
 				if (containers == null) {
@@ -498,7 +495,7 @@ public class FieldAgent {
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get containers list" + e.getMessage());
+			logWarning("unable to get containers list" + e.getMessage());
 		}
 	}
 
@@ -509,13 +506,12 @@ public class FieldAgent {
 	 */
 	private boolean ping() throws Exception {
 		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
 			return false;
 		}
 
 		try {
 			if (orchestrator.ping()) {
-				StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.OK);
+				StatusReporter.setFieldAgentStatus().setContollerStatus(OK);
 				StatusReporter.setFieldAgentStatus().setControllerVerified(true);
 				return true;
 			}
@@ -523,7 +519,7 @@ public class FieldAgent {
 			verificationFailed();
 		} catch (Exception e) {
 			StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.BROKEN);
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			logWarning(e.getMessage());
 		}
 		return false;
 	}
@@ -537,7 +533,7 @@ public class FieldAgent {
 		while (true) {
 			try {
 				Thread.sleep(Constants.PING_CONTROLLER_FREQ_SECONDS * 1000);
-				LoggingService.logInfo(MODULE_NAME, "ping controller");
+				logInfo("ping controller");
 				ping();
 			} catch (Exception e) {}
 		}
@@ -621,74 +617,76 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	private void getFogConfig() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "get fog config");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
+		logInfo("get fog config");
+		if (notProvisioned() || checkConnectionToController(false)) {
 			return;
 		}
-
-		checkConnectionToController(false);
 
 		if (initialization) {
 			postFogConfig();
 			return;
 		}
+
 		try {
 			JsonObject result = orchestrator.doCommand("config", null, null);
 			if (!result.getString("status").equals("ok"))
 				throw new Exception("error from fog controller");
 
 			JsonObject configs = result.getJsonObject("config");
-			String networkInterface = configs.getString("networkinterface");
-			String dockerUrl = configs.getString("dockerurl");
-			float diskLimit = Float.parseFloat(configs.getString("disklimit"));
-			String diskDirectory = configs.getString("diskdirectory");
-			float memoryLimit = Float.parseFloat(configs.getString("memorylimit"));
-			float cpuLimit = Float.parseFloat(configs.getString("cpulimit"));
-			float logLimit = Float.parseFloat(configs.getString("loglimit"));
-			String logDirectory = configs.getString("logdirectory");
-			int logFileCount = Integer.parseInt(configs.getString("logfilecount"));
-			int statusUpdateFreq = Integer.parseInt(configs.getString("poststatusfreq"));
-			int getChangesFreq = Integer.parseInt(configs.getString("getchangesfreq"));
-			boolean isolatedDockerContainers = !configs.getString(ISOLATED_DOCKER_CONTAINER_PROPERTY).equals("off");
+			String networkInterface = configs.getString(NETWORK_INTERFACE.getJsonProperty());
+			String dockerUrl = configs.getString(DOCKER_URL.getJsonProperty());
+			float diskLimit = Float.parseFloat(configs.getString(DISK_CONSUMPTION_LIMIT.getJsonProperty()));
+			String diskDirectory = configs.getString(DISK_DIRECTORY.getJsonProperty());
+			float memoryLimit = Float.parseFloat(configs.getString(MEMORY_CONSUMPTION_LIMIT.getJsonProperty()));
+			float cpuLimit = Float.parseFloat(configs.getString(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty()));
+			float logLimit = Float.parseFloat(configs.getString(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()));
+			String logDirectory = configs.getString(LOG_DISK_DIRECTORY.getJsonProperty());
+			int logFileCount = Integer.parseInt(configs.getString(LOG_FILE_COUNT.getJsonProperty()));
+			int statusUpdateFreq = Integer.parseInt(configs.getString(STATUS_UPDATE_FREQ.getJsonProperty()));
+			int getChangesFreq = Integer.parseInt(configs.getString(GET_CHANGES_FREQ.getJsonProperty()));
+			String isolatedDockerContainerValue = configs.getString(ISOLATED_DOCKER_CONTAINER.getJsonProperty());
+			boolean isIsolatedDockerContainer = !isolatedDockerContainerValue.equals("off");
 
 			Map<String, Object> instanceConfig = new HashMap<>();
 
 			if (!Configuration.getNetworkInterface().equals(networkInterface))
-				instanceConfig.put("n", networkInterface);
+				instanceConfig.put(NETWORK_INTERFACE.getCommandName(), networkInterface);
 
 			if (!Configuration.getDockerUrl().equals(dockerUrl))
-				instanceConfig.put("c", dockerUrl);
+				instanceConfig.put(DOCKER_URL.getCommandName(), dockerUrl);
 
 			if (Configuration.getDiskLimit() != diskLimit)
-				instanceConfig.put("d", diskLimit);
+				instanceConfig.put(DISK_CONSUMPTION_LIMIT.getCommandName(), diskLimit);
 
 			if (!Configuration.getDiskDirectory().equals(diskDirectory))
-				instanceConfig.put("dl", diskDirectory);
+				instanceConfig.put(DISK_DIRECTORY.getCommandName(), diskDirectory);
 
 			if (Configuration.getMemoryLimit() != memoryLimit)
-				instanceConfig.put("m", memoryLimit);
+				instanceConfig.put(MEMORY_CONSUMPTION_LIMIT.getCommandName(), memoryLimit);
 
 			if (Configuration.getCpuLimit() != cpuLimit)
-				instanceConfig.put("p", cpuLimit);
+				instanceConfig.put(PROCESSOR_CONSUMPTION_LIMIT.getCommandName(), cpuLimit);
 
 			if (Configuration.getLogDiskLimit() != logLimit)
-				instanceConfig.put("l", logLimit);
+				instanceConfig.put(LOG_DISK_CONSUMPTION_LIMIT.getCommandName(), logLimit);
 
 			if (!Configuration.getLogDiskDirectory().equals(logDirectory))
-				instanceConfig.put("ld", logDirectory);
+				instanceConfig.put(LOG_DISK_DIRECTORY.getCommandName(), logDirectory);
 
 			if (Configuration.getLogFileCount() != logFileCount)
-				instanceConfig.put("lc", logFileCount);
+				instanceConfig.put(LOG_FILE_COUNT.getCommandName(), logFileCount);
 
 			if (Configuration.getStatusUpdateFreq() != statusUpdateFreq)
-				instanceConfig.put("sf", statusUpdateFreq);
+				instanceConfig.put(STATUS_UPDATE_FREQ.getCommandName(), statusUpdateFreq);
 
 			if (Configuration.getGetChangesFreq() != getChangesFreq)
-				instanceConfig.put("cf", getChangesFreq);
+				instanceConfig.put(GET_CHANGES_FREQ.getCommandName(), getChangesFreq);
 
-			if (Configuration.isIsolatedDockerContainers() != isolatedDockerContainers)
-				instanceConfig.put("idc", isolatedDockerContainers ? "on" : "off");
+			System.out.println("FieldAgent : isIsolatedDockerContainer = " + isIsolatedDockerContainer);
+			System.out.println("FieldAgent : isolatedDockerContainerValue = " + isolatedDockerContainerValue);
+			System.out.println("FieldAgent : Configuration.isIsolatedDockerContainers = " + Configuration.isIsolatedDockerContainers());
+			if (Configuration.isIsolatedDockerContainers() != isIsolatedDockerContainer)
+				instanceConfig.put(ISOLATED_DOCKER_CONTAINER.getCommandName(), isolatedDockerContainerValue);
 
 			if (!instanceConfig.isEmpty())
 				Configuration.setConfig(instanceConfig, false);
@@ -696,7 +694,7 @@ public class FieldAgent {
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
+			logWarning("unable to get fog config : " + e.getMessage());
 		}
 	}
 
@@ -706,28 +704,25 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	public void postFogConfig() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "post fog config");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
+		logInfo("post fog config");
+		if (notProvisioned() || checkConnectionToController(false)) {
 			return;
 		}
 
-		checkConnectionToController(false);
-
 		try {
 			Map<String, Object> postParams = new HashMap<>();
-			postParams.put("networkinterface", Configuration.getNetworkInterface());
-			postParams.put("dockerurl", Configuration.getDockerUrl());
-			postParams.put("disklimit", Configuration.getDiskLimit());
-			postParams.put("diskdirectory", Configuration.getDiskDirectory());
-			postParams.put("memorylimit", Configuration.getMemoryLimit());
-			postParams.put("cpulimit", Configuration.getCpuLimit());
-			postParams.put("loglimit", Configuration.getLogDiskLimit());
-			postParams.put("logdirectory", Configuration.getLogDiskDirectory());
-			postParams.put("logfilecount", Configuration.getLogFileCount());
-			postParams.put("poststatusfreq", Configuration.getStatusUpdateFreq());
-			postParams.put("getchangesfreq", Configuration.getGetChangesFreq());
-			postParams.put(ISOLATED_DOCKER_CONTAINER_PROPERTY, Configuration.isIsolatedDockerContainers() ? "on" : "off");
+			postParams.put(NETWORK_INTERFACE.getJsonProperty(), Configuration.getNetworkInterface());
+			postParams.put(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl());
+			postParams.put(DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getDiskLimit());
+			postParams.put(DISK_DIRECTORY.getJsonProperty(), Configuration.getDiskDirectory());
+			postParams.put(MEMORY_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getMemoryLimit());
+			postParams.put(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getCpuLimit());
+			postParams.put(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getLogDiskLimit());
+			postParams.put(LOG_DISK_DIRECTORY.getJsonProperty(), Configuration.getLogDiskDirectory());
+			postParams.put(LOG_FILE_COUNT.getJsonProperty(), Configuration.getLogFileCount());
+			postParams.put(STATUS_UPDATE_FREQ.getJsonProperty(), Configuration.getStatusUpdateFreq());
+			postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
+			postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
 
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
 			if (!result.getString("status").equals("ok"))
@@ -735,7 +730,7 @@ public class FieldAgent {
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to post fog config : " + e.getMessage());
+			logWarning("unable to post fog config : " + e.getMessage());
 		}
 	}
 
@@ -749,7 +744,7 @@ public class FieldAgent {
 	 * @return String
 	 */
 	public JsonObject provision(String key) {
-		LoggingService.logInfo(MODULE_NAME, "provisioning");
+		logInfo("provisioning");
 		JsonObject provisioningResult = null;
 		
 		try {
@@ -764,7 +759,7 @@ public class FieldAgent {
 //				deProvision();
 
 			if (provisioningResult.getString("status").equals("ok")) { 
-				StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.OK);
+				StatusReporter.setFieldAgentStatus().setContollerStatus(OK);
 				Configuration.setInstanceId(provisioningResult.getString("id"));
 				Configuration.setAccessToken(provisioningResult.getString("token"));
 				try {
@@ -789,7 +784,7 @@ public class FieldAgent {
 						.build();
 			} else {
 //				StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.NOT_PROVISIONED);
-				LoggingService.logWarning(MODULE_NAME, "provisioning failed - " + e.getMessage());
+				logWarning("provisioning failed - " + e.getMessage());
 				
 				if (e instanceof ConnectException) {
 					StatusReporter.setFieldAgentStatus().setControllerVerified(true);
@@ -826,21 +821,16 @@ public class FieldAgent {
 	 * @throws Exception
 	 */
 	public String deProvision() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "deprovisioning");
+		logInfo("deprovisioning");
 		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
 			return "\nFailure - not provisioned";
 		}
 
-		if (controllerNotConnected()) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verificationFailed();
+		if (checkConnectionToController(false)) {
 			return "\nFailure - not connected to controller";
 		}
 
-		StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.NOT_PROVISIONED);
+		StatusReporter.setFieldAgentStatus().setContollerStatus(NOT_PROVISIONED);
 		Configuration.setInstanceId("");
 		Configuration.setAccessToken("");
 		try {
@@ -870,7 +860,7 @@ public class FieldAgent {
 	public void start() throws Exception {
 
 		if (StringUtil.isNullOrEmpty(Configuration.getInstanceId())	|| StringUtil.isNullOrEmpty(Configuration.getAccessToken()))
-			StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.NOT_PROVISIONED);
+			StatusReporter.setFieldAgentStatus().setContollerStatus(NOT_PROVISIONED);
 
 		elementManager = ElementManager.getInstance();
 		orchestrator = new Orchestrator();
@@ -889,13 +879,15 @@ public class FieldAgent {
 		new Thread(postStatus, "FieldAgent : PostStatus").start();
 	}
 
-	private void checkConnectionToController(boolean fromFile) throws Exception {
+	private boolean checkConnectionToController(boolean fromFile) throws Exception {
 		if (controllerNotConnected() && !fromFile) {
 			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
+				logWarning("connection to controller has broken");
 			else
 				verificationFailed();
-			return;
+			return false;
 		}
+		return true;
 	}
+
 }

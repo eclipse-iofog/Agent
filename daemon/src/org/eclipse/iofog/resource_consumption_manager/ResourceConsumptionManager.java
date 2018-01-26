@@ -12,6 +12,10 @@
  *******************************************************************************/
 package org.eclipse.iofog.resource_consumption_manager;
 
+import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.configuration.Configuration;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -20,10 +24,8 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
+import static org.eclipse.iofog.utils.Constants.GET_USAGE_DATA_FREQ_SECONDS;
+import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 
 /**
  * Resource Consumption Manager module
@@ -31,13 +33,29 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class ResourceConsumptionManager {
+public class ResourceConsumptionManager implements IOFogModule {
+
 	private String MODULE_NAME = "Resource Consumption Manager";
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
-	
-	private ResourceConsumptionManager() {}
-	
+
+	/**
+	 * Private constructor - to prevent creation of class instance
+	 */
+	private ResourceConsumptionManager() {
+		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
+	}
+
+	@Override
+	public int getModuleIndex() {
+		return RESOURCE_CONSUMPTION_MANAGER;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
+	}
+
 	public static ResourceConsumptionManager getInstance() {
 		if (instance == null) {
 			synchronized (ResourceConsumptionManager.class) {
@@ -57,9 +75,9 @@ public class ResourceConsumptionManager {
 	private Runnable getUsageData = () -> {
 		while (true) {
 			try {
-				Thread.sleep(Constants.GET_USAGE_DATA_FREQ_SECONDS * 1000);
+				Thread.sleep(GET_USAGE_DATA_FREQ_SECONDS * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "get usage data");
+				logInfo("get usage data");
 
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();
@@ -226,7 +244,7 @@ public class ResourceConsumptionManager {
 
 		new Thread(getUsageData, "ResourceConsumptionManager : GetUsageData").start();
 
-		LoggingService.logInfo(MODULE_NAME, "started");
+		logInfo("started");
 	}
 
 }

@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import java.util.List;
-
 import org.eclipse.iofog.utils.Constants;
+
+import java.util.List;
 
 /**
  * represents IOElements
@@ -109,14 +109,6 @@ public class Element {
 		this.lastUpdated = lastUpdated;
 	}
 	
-	@Override
-	public boolean equals(Object e) {
-		if (e == null)
-			return false;
-		Element element = (Element) e;
-		return this.elementId.equals(element.getElementId());
-	}
-
 	public boolean isRootHostAccess() {
 		return rootHostAccess;
 	}
@@ -140,5 +132,18 @@ public class Element {
     public void setVolumeMappings(List<VolumeMapping> volumeMappings) {
         this.volumeMappings = volumeMappings;
     }
+
+	@Override
+	public boolean equals(Object e) {
+		if (e == null)
+			return false;
+		Element element = (Element) e;
+		return this.elementId.equals(element.getElementId());
+	}
+
+	@Override
+	public int hashCode() {
+		return elementId.hashCode();
+	}
 
 }

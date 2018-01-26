@@ -44,8 +44,7 @@ public class Client {
 	/**
 	 * send command-line parameters to ioFog daemon
 	 * 
-	 * @param args
-	 *            - parameters
+	 * @param args - parameters
 	 *
 	 */
 	private static boolean sendCommandlineParameters(String... args) {
@@ -159,7 +158,7 @@ public class Client {
 
 	private static String version() {
 		StringBuilder result = new StringBuilder();
-		result.append("ioFog 0.51");
+		result.append("ioFog 0.53");
 		result.append("\nCopyright (C) 2016 iotracks, inc.");
 		result.append("\nEclipse ioFog is provided under the Eclipse Public License (EPL)");
 		result.append("\nhttps://www.eclipse.org/legal/epl-v10.html");

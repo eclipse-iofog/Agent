@@ -12,20 +12,23 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
+import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.element.Route;
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ModulesStatus;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
+import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
+import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
 
 /**
  * Message Bus module
@@ -33,7 +36,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class MessageBus {
+public class MessageBus implements IOFogModule {
 	
 	private final String MODULE_NAME = "Message Bus";
 
@@ -47,8 +50,22 @@ public class MessageBus {
 	private Object updateLock = new Object();
 	
 	private long lastSpeedTime, lastSpeedMessageCount;
-	
+
+	/**
+	 * Private constructor - to prevent creation of class instance
+	 */
 	private MessageBus() {
+		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
+	}
+
+	@Override
+	public int getModuleIndex() {
+		return MESSAGE_BUS;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
 	}
 	
 	public static MessageBus getInstance() {
@@ -144,7 +161,7 @@ public class MessageBus {
 			try {
 				Thread.sleep(Constants.SPEED_CALCULATION_FREQ_MINUTES * 60 * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "calculating message processing speed");
+				logInfo("calculating message processing speed");
 
 				long now = System.currentTimeMillis();
 				long msgs = StatusReporter.getMessageBusStatus().getProcessedMessages();
@@ -166,23 +183,23 @@ public class MessageBus {
 			try {
 				Thread.sleep(5000);
 
-				LoggingService.logInfo(MODULE_NAME, "check message bus server status");
+				logInfo("check message bus server status");
 				if (!messageBusServer.isServerActive()) {
-					LoggingService.logWarning(MODULE_NAME, "server is not active. restarting...");
+					logWarning("server is not active. restarting...");
 					stop();
 					try {
 						messageBusServer.startServer();
-						LoggingService.logInfo(MODULE_NAME, "server restarted");
+						logInfo("server restarted");
 						init();
 					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME, "server restart failed --> " + e.getMessage());
+						logWarning("server restart failed --> " + e.getMessage());
 					}
 				}
 
 				publishers.entrySet().forEach(entry -> {
 					String publisher = entry.getKey();
 					if (messageBusServer.isProducerClosed(publisher)) {
-						LoggingService.logWarning(MODULE_NAME, "producer module for " + publisher + " stopped. restarting...");
+						logWarning("producer module for " + publisher + " stopped. restarting...");
 						entry.getValue().close();
 						Route route = routes.get(publisher);
 						if (route.equals(null) || route.getReceivers() == null || route.getReceivers().size() == 0) {
@@ -191,9 +208,9 @@ public class MessageBus {
 							try {
 								messageBusServer.createProducer(publisher);
 								publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
-								LoggingService.logInfo(MODULE_NAME, "producer module restarted");
+								logInfo("producer module restarted");
 							} catch (Exception e) {
-								LoggingService.logWarning(MODULE_NAME, "unable to restart producer module for " + publisher + " --> " + e.getMessage());
+								logWarning("unable to restart producer module for " + publisher + " --> " + e.getMessage());
 							}
 						}
 					}
@@ -202,14 +219,14 @@ public class MessageBus {
 				receivers.entrySet().forEach(entry -> {
 					String receiver = entry.getKey();
 					if (messageBusServer.isConsumerClosed(receiver)) {
-						LoggingService.logWarning(MODULE_NAME, "consumer module for " + receiver + " stopped. restarting...");
+						logWarning("consumer module for " + receiver + " stopped. restarting...");
 						entry.getValue().close();
 						try {
 							messageBusServer.createCosumer(receiver);
 							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
-							LoggingService.logInfo(MODULE_NAME, "consumer module restarted");
+							logInfo("consumer module restarted");
 						} catch (Exception e) {
-							LoggingService.logWarning(MODULE_NAME, "unable to restart consumer module for " + receiver + " --> " + e.getMessage());
+							logWarning("unable to restart consumer module for " + receiver + " --> " + e.getMessage());
 						}
 					}
 				});
@@ -301,18 +318,18 @@ public class MessageBus {
 		
 		messageBusServer = new MessageBusServer();
 		try {
-			LoggingService.logInfo(MODULE_NAME, "STARTING MESSAGE BUS SERVER");
+			logInfo("STARTING MESSAGE BUS SERVER");
 			messageBusServer.startServer();
 			messageBusServer.initialize();
 		} catch (Exception e) {
 			try {
 				messageBusServer.stopServer();
 			} catch (Exception e1) {}
-			LoggingService.logWarning(MODULE_NAME, "unable to start message bus server --> " + e.getMessage());
-			StatusReporter.setSupervisorStatus().setModuleStatus(Constants.MESSAGE_BUS, ModulesStatus.STOPPED);
+			logWarning("unable to start message bus server --> " + e.getMessage());
+			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
 		
-		LoggingService.logInfo(MODULE_NAME, "MESSAGE BUS SERVER STARTED");
+		logInfo("MESSAGE BUS SERVER STARTED");
 		init();
 
 		new Thread(calculateSpeed, "MessageBus : CalculateSpeed").start();

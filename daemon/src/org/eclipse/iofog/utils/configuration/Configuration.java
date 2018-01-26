@@ -12,11 +12,11 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.configuration;
 
+import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
@@ -35,6 +35,16 @@ import java.io.File;
 import java.net.NetworkInterface;
 import java.util.*;
 
+import static java.io.File.separatorChar;
+import static java.lang.String.format;
+import static java.util.Arrays.stream;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang.StringUtils.rightPad;
+import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
+import static org.eclipse.iofog.utils.CmdProperties.*;
+import static org.eclipse.iofog.utils.Constants.CONFIG_DIR;
+import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
+
 /**
  * holds IOFog instance configuration
  * 
@@ -43,22 +53,10 @@ import java.util.*;
  */
 public final class Configuration {
 
+	private static final String MODULE_NAME = "Configuration";
+
 	private static final String CONFIG_INSTANCE_ID = "instance_id";
 	private static final String CONFIG_ACCESS_TOKEN = "access_token";
-	private static final String CONFIG_ISOLATED_DOCKER_CONTAINER = "isolated_docker_container";
-	private static final String CONFIG_DISK_CONSUMPTION_LIMIT = "disk_consumption_limit";
-	private static final String CONFIG_DISK_DIRECTORY = "disk_directory";
-	private static final String CONFIG_MEMORY_CONSUMPTION_LIMIT = "memory_consumption_limit";
-	private static final String CONFIG_PROCESSOR_CONSUMPTION_LIMIT = "processor_consumption_limit";
-	private static final String CONFIG_CONTROLLER_URL = "controller_url";
-	private static final String CONFIG_CONTROLLER_CERT = "controller_cert";
-	private static final String CONFIG_DOCKER_URL = "docker_url";
-	private static final String CONFIG_NETWORK_INTERFACE = "network_interface";
-	private static final String CONFIG_LOG_DISK_CONSUMPTION_LIMIT = "log_disk_consumption_limit";
-	private static final String CONFIG_LOG_DISK_DIRECTORY = "log_disk_directory";
-	private static final String CONFIG_LOG_FILE_COUNT = "log_file_count";
-	private static final String CONFIG_STATUS_UPDATE_FREQ = "status_update_freq";
-	private static final String CONFIG_GET_CHANGES_FREQ = "get_changes_freq";
 
 	private static Element configElement;
 	private static Document configFile;
@@ -86,20 +84,7 @@ public final class Configuration {
 
 	static {
 		defaultConfig = new HashMap<>();
-		defaultConfig.put("d", "50");
-		defaultConfig.put("dl", "/var/lib/iofog/");
-		defaultConfig.put("m", "4096");
-		defaultConfig.put("p", "80");
-		defaultConfig.put("a", "https://iotracks.com/api/v2/");
-		defaultConfig.put("ac", "/etc/iofog/cert.crt");
-		defaultConfig.put("c", "unix:///var/run/docker.sock");
-		defaultConfig.put("n", "eth0");
-		defaultConfig.put("l", "10");
-		defaultConfig.put("ld", "/var/log/iofog/");
-		defaultConfig.put("lc", "10");
-		defaultConfig.put("sf", "10");
-		defaultConfig.put("cf", "20");
-		defaultConfig.put("idc", "on");
+		stream(values()).forEach(cmdParam -> defaultConfig.put(cmdParam.getCommandName(), cmdParam.getDefaultValue()));
 	}
 
 	public static boolean isIsolatedDockerContainers() {
@@ -174,52 +159,12 @@ public final class Configuration {
 		HashMap<String, String> result = new HashMap<String, String>();
 
 		for(String option : parameters){
-			switch (option) {
-				case "d":
-					result.put(option, getNode(CONFIG_DISK_CONSUMPTION_LIMIT));
-					break;
-				case "dl":
-					result.put(option, getNode(CONFIG_DISK_DIRECTORY));
-					break;
-				case "m":
-					result.put(option, getNode(CONFIG_MEMORY_CONSUMPTION_LIMIT));
-					break;
-				case "p":
-					result.put(option, getNode(CONFIG_PROCESSOR_CONSUMPTION_LIMIT));
-					break;
-				case "a":
-					result.put(option, getNode(CONFIG_CONTROLLER_URL));
-					break;
-				case "ac":
-					result.put(option, getNode(CONFIG_CONTROLLER_CERT));
-					break;
-				case "c":
-					result.put(option, getNode(CONFIG_DOCKER_URL));
-					break;
-				case "n":
-					result.put(option, getNode(CONFIG_NETWORK_INTERFACE));
-					break;
-				case "l":
-					result.put(option, getNode(CONFIG_LOG_DISK_CONSUMPTION_LIMIT));
-					break;
-				case "ld":
-					result.put(option, getNode(CONFIG_LOG_DISK_DIRECTORY));
-					break;
-				case "lc":
-					result.put(option, getNode(CONFIG_LOG_FILE_COUNT));
-					break;
-				case "sf":
-					result.put(option, getNode(CONFIG_STATUS_UPDATE_FREQ));
-					break;
-				case "cf":
-					result.put(option, getNode(CONFIG_GET_CHANGES_FREQ));
-					break;
-				case "idc":
-					result.put(option, getNode(CONFIG_ISOLATED_DOCKER_CONTAINER));
-					break;
-				default:
-					throw new ConfigurationItemException("Invalid parameter -" + option);
-				}
+			CommandLineConfigParam cmdOption = getCommandByName(option)
+					.orElseThrow(() -> new ConfigurationItemException("Invalid parameter -" + option));
+			String value = getNode(cmdOption.getXmlTag());
+			LoggingService.logInfo(MODULE_NAME, "method : getOldNodeValuesForParameters, " +
+					cmdOption.getXmlTag() + " = " + value);
+			result.put(cmdOption.getCommandName(), value/*getNode(cmdOption.getXmlTag())*/);
 		}
 
 		return result;
@@ -240,7 +185,7 @@ public final class Configuration {
 
 		Transformer transformer = TransformerFactory.newInstance().newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		StreamResult result = new StreamResult(new File(Constants.CONFIG_DIR));
+		StreamResult result = new StreamResult(new File(CONFIG_DIR));
 		DOMSource source = new DOMSource(configFile);
 		transformer.transform(source, result);
 	}
@@ -257,141 +202,142 @@ public final class Configuration {
 				
 		for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
 			String option = command.getKey();
+			CommandLineConfigParam cmdOption = CommandLineConfigParam.getCommandByName(option).get();
 			String value = command.getValue().toString();
 			
 			if(value.startsWith("+")) value = value.substring(1);
 			
-			if(option == null || value == null || value.trim() == "" || option.trim() == ""){
-				if(!option.equals("ac")){
+			if(cmdOption == null || option == null || value == null || value.trim() == "" || option.trim() == ""){
+				if(!option.equals(CONTROLLER_CERT.getCommandName())){
 					messageMap.put("Parameter error", "Command or value is invalid"); break;
 				}
 			}
 			
-			switch (option) {
-			case "d":
-				try{
-					Float.parseFloat(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				
-				if(Float.parseFloat(value) < 1 || Float.parseFloat(value) > 1048576){
-					messageMap.put(option, "Disk limit range must be 1 to 1048576 GB"); break;
-				} 				
-				setDiskLimit(Float.parseFloat(value));
-				setNode(CONFIG_DISK_CONSUMPTION_LIMIT, value);
-				break;
-				
-			case "dl":
-				value = addSeparator(value);
-				setDiskDirectory(value);
-				setNode(CONFIG_DISK_DIRECTORY, value);
-				break;
-			case "m":
-				try{
-					Float.parseFloat(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				if(Float.parseFloat(value) < 128 || Float.parseFloat(value) > 1048576){
-					messageMap.put(option, "Memory limit range must be 128 to 1048576 MB"); break;
-				} 	
-				setMemoryLimit(Float.parseFloat(value));
-				setNode(CONFIG_MEMORY_CONSUMPTION_LIMIT, value);
-				break;
-			case "p":
-				try{
-					Float.parseFloat(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				if(Float.parseFloat(value) < 5 || Float.parseFloat(value) > 100){
-					messageMap.put(option, "CPU limit range must be 5% to 100%"); break;
-				} 	
-				setCpuLimit(Float.parseFloat(value));
-				setNode(CONFIG_PROCESSOR_CONSUMPTION_LIMIT, value);
-				break;
-			case "a":
-				setNode(CONFIG_CONTROLLER_URL, value);
-				setControllerUrl(value);
-				break;
-			case "ac":
-				setNode(CONFIG_CONTROLLER_CERT, value);
-				setControllerCert(value);
-				break;
-			case "c":
-				setNode(CONFIG_DOCKER_URL, value);
-				setDockerUrl(value);
-				break;
-			case "n":
-				if (defaults || isValidNetworkInterface(value.trim())) {
-					setNode(CONFIG_NETWORK_INTERFACE, value);
-					setNetworkInterface(value);
-				} else {
-					messageMap.put(option, "Invalid network interface"); break;
-				}
-				break;
-			case "l":
-				try{
-					Float.parseFloat(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				if(Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 1024){
-					messageMap.put(option, "Log disk limit range must be 0.5 to 1024 GB"); break;
-				}
-				setNode(CONFIG_LOG_DISK_CONSUMPTION_LIMIT, value);
-				setLogDiskLimit(Float.parseFloat(value));
-				break;
-			case "ld":
-				value = addSeparator(value);
-				setNode(CONFIG_LOG_DISK_DIRECTORY, value);
-				setLogDiskDirectory(value);
-				break;
-			case "lc":
-				try{
-					Integer.parseInt(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				if(Integer.parseInt(value) < 1 || Integer.parseInt(value) > 100){
-					messageMap.put(option, "Log file count range must be 1 to 100"); break;
-				}
-				setNode(CONFIG_LOG_FILE_COUNT, value);
-				setLogFileCount(Integer.parseInt(value));
-				break;
-			case "sf":
-				try{
-					Integer.parseInt(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				if(Integer.parseInt(value) < 1){
-					messageMap.put(option, "Status update frequency must be greater than 1"); break;
-				}
-				setNode(CONFIG_STATUS_UPDATE_FREQ, value);
-				setStatusUpdateFreq(Integer.parseInt(value));
-				break;
-			case "cf":
-				try{
-					Integer.parseInt(value);
-				}catch(Exception e){
-					messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
-				}
-				if(Integer.parseInt(value) < 1){
-					messageMap.put(option, "Get changes frequency must be greater than 1"); break;
-				}
-				setNode(CONFIG_GET_CHANGES_FREQ, value);
-				setGetChangesFreq(Integer.parseInt(value));
-				break;
-			case "idc":
-				setNode(CONFIG_ISOLATED_DOCKER_CONTAINER, value);
-				setIsolatedDockerContainers(!value.equals("off"));
-				break;
-			default:
-				throw new ConfigurationItemException("Invalid parameter -" + option);
-			}
+			switch (cmdOption) {
+				case DISK_CONSUMPTION_LIMIT:
+					try{
+						Float.parseFloat(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
 
+					if(Float.parseFloat(value) < 1 || Float.parseFloat(value) > 1048576){
+						messageMap.put(option, "Disk limit range must be 1 to 1048576 GB"); break;
+					}
+					setDiskLimit(Float.parseFloat(value));
+					setNode(DISK_CONSUMPTION_LIMIT.getXmlTag(), value);
+					break;
+
+				case DISK_DIRECTORY:
+					value = addSeparator(value);
+					setDiskDirectory(value);
+					setNode(DISK_DIRECTORY.getXmlTag(), value);
+					break;
+				case MEMORY_CONSUMPTION_LIMIT:
+					try{
+						Float.parseFloat(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
+					if(Float.parseFloat(value) < 128 || Float.parseFloat(value) > 1048576){
+						messageMap.put(option, "Memory limit range must be 128 to 1048576 MB"); break;
+					}
+					setMemoryLimit(Float.parseFloat(value));
+					setNode(MEMORY_CONSUMPTION_LIMIT.getXmlTag(), value);
+					break;
+				case PROCESSOR_CONSUMPTION_LIMIT:
+					try{
+						Float.parseFloat(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
+					if(Float.parseFloat(value) < 5 || Float.parseFloat(value) > 100){
+						messageMap.put(option, "CPU limit range must be 5% to 100%"); break;
+					}
+					setCpuLimit(Float.parseFloat(value));
+					setNode(PROCESSOR_CONSUMPTION_LIMIT.getXmlTag(), value);
+					break;
+				case CONTROLLER_URL:
+					setNode(CONTROLLER_URL.getXmlTag(), value);
+					setControllerUrl(value);
+					break;
+				case CONTROLLER_CERT:
+					setNode(CONTROLLER_CERT.getXmlTag(), value);
+					setControllerCert(value);
+					break;
+				case DOCKER_URL:
+					setNode(DOCKER_URL.getXmlTag(), value);
+					setDockerUrl(value);
+					break;
+				case NETWORK_INTERFACE:
+					if (defaults || isValidNetworkInterface(value.trim())) {
+						setNode(NETWORK_INTERFACE.getXmlTag(), value);
+						setNetworkInterface(value);
+					} else {
+						messageMap.put(option, "Invalid network interface"); break;
+					}
+					break;
+				case LOG_DISK_CONSUMPTION_LIMIT:
+					try{
+						Float.parseFloat(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
+					if(Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 1024){
+						messageMap.put(option, "Log disk limit range must be 0.5 to 1024 GB"); break;
+					}
+					setNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag(), value);
+					setLogDiskLimit(Float.parseFloat(value));
+					break;
+				case LOG_DISK_DIRECTORY:
+					value = addSeparator(value);
+					setNode(LOG_DISK_DIRECTORY.getXmlTag(), value);
+					setLogDiskDirectory(value);
+					break;
+				case LOG_FILE_COUNT:
+					try{
+						Integer.parseInt(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
+					if(Integer.parseInt(value) < 1 || Integer.parseInt(value) > 100){
+						messageMap.put(option, "Log file count range must be 1 to 100"); break;
+					}
+					setNode(LOG_FILE_COUNT.getXmlTag(), value);
+					setLogFileCount(Integer.parseInt(value));
+					break;
+				case STATUS_UPDATE_FREQ:
+					try{
+						Integer.parseInt(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
+					if(Integer.parseInt(value) < 1){
+						messageMap.put(option, "Status update frequency must be greater than 1"); break;
+					}
+					setNode(STATUS_UPDATE_FREQ.getXmlTag(), value);
+					setStatusUpdateFreq(Integer.parseInt(value));
+					break;
+				case GET_CHANGES_FREQ:
+					try{
+						Integer.parseInt(value);
+					}catch(Exception e){
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					}
+					if(Integer.parseInt(value) < 1){
+						messageMap.put(option, "Get changes frequency must be greater than 1"); break;
+					}
+					setNode(GET_CHANGES_FREQ.getXmlTag(), value);
+					setGetChangesFreq(Integer.parseInt(value));
+					break;
+				case ISOLATED_DOCKER_CONTAINER:
+					LoggingService.logInfo(MODULE_NAME, "method : setConfig, isolated_docker_container = " + value);
+					setNode(ISOLATED_DOCKER_CONTAINER.getXmlTag(), value);
+					setIsolatedDockerContainers(!value.equals("off"));
+					break;
+				default:
+					throw new ConfigurationItemException("Invalid parameter -" + option);
+				}
 		}
 		saveConfigUpdates();
 		
@@ -424,10 +370,10 @@ public final class Configuration {
 	 * @return directory containing file separator at the end 
 	 */
 	private static String addSeparator(String value) {
-		if (value.charAt(value.length() - 1) == File.separatorChar)
+		if (value.charAt(value.length() - 1) == separatorChar)
 			return value;
 		else
-			return value + File.separatorChar;
+			return value + separatorChar;
 	}
 
 	
@@ -441,7 +387,7 @@ public final class Configuration {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 
-		configFile = builder.parse(Constants.CONFIG_DIR);
+		configFile = builder.parse(CONFIG_DIR);
 		configFile.getDocumentElement().normalize();
 
 		NodeList nodes = configFile.getElementsByTagName("config");
@@ -452,46 +398,49 @@ public final class Configuration {
 
 		setInstanceId(getNode(CONFIG_INSTANCE_ID));
 		setAccessToken(getNode(CONFIG_ACCESS_TOKEN));
-		setControllerUrl(getNode(CONFIG_CONTROLLER_URL));
-		setControllerCert(getNode(CONFIG_CONTROLLER_CERT));
-		setNetworkInterface(getNode(CONFIG_NETWORK_INTERFACE));
-		setDockerUrl(getNode(CONFIG_DOCKER_URL));
-		setDiskLimit(Float.parseFloat(getNode(CONFIG_DISK_CONSUMPTION_LIMIT)));
-		setDiskDirectory(getNode(CONFIG_DISK_DIRECTORY));
-		setMemoryLimit(Float.parseFloat(getNode(CONFIG_MEMORY_CONSUMPTION_LIMIT)));
-		setCpuLimit(Float.parseFloat(getNode(CONFIG_PROCESSOR_CONSUMPTION_LIMIT)));
-		setLogDiskDirectory(getNode(CONFIG_LOG_DISK_DIRECTORY));
-		setLogDiskLimit(Float.parseFloat(getNode(CONFIG_LOG_DISK_CONSUMPTION_LIMIT)));
-		setLogFileCount(Integer.parseInt(configElement.getElementsByTagName(CONFIG_LOG_FILE_COUNT).item(0).getTextContent()));
+		setControllerUrl(getNode(CONTROLLER_URL.getXmlTag()));
+		setControllerCert(getNode(CONTROLLER_CERT.getXmlTag()));
+		setNetworkInterface(getNode(NETWORK_INTERFACE.getXmlTag()));
+		setDockerUrl(getNode(DOCKER_URL.getXmlTag()));
+		setDiskLimit(Float.parseFloat(getNode(DISK_CONSUMPTION_LIMIT.getXmlTag())));
+		setDiskDirectory(getNode(DISK_DIRECTORY.getXmlTag()));
+		setMemoryLimit(Float.parseFloat(getNode(MEMORY_CONSUMPTION_LIMIT.getXmlTag())));
+		setCpuLimit(Float.parseFloat(getNode(PROCESSOR_CONSUMPTION_LIMIT.getXmlTag())));
+		setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY.getXmlTag()));
+		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag())));
+		//setLogFileCount(Integer.parseInt(configElement.getElementsByTagName(CONFIG_LOG_FILE_COUNT).item(0).getTextContent()));
+		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT.getXmlTag())));
 		try {
-			setGetChangesFreq(Integer.parseInt(getNode(CONFIG_GET_CHANGES_FREQ)));
+			setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ.getXmlTag())));
 		} catch (Exception e) {
 			setGetChangesFreq(20);
-			Element el = configFile.createElement(CONFIG_GET_CHANGES_FREQ);
-			el.appendChild(configFile.createTextNode("20"));
-			configElement.appendChild(el);
-			
-	        DOMSource source = new DOMSource(configFile);
-	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	        Transformer transformer = transformerFactory.newTransformer();
-	        StreamResult result = new StreamResult(Constants.CONFIG_DIR);
-	        transformer.transform(source, result);
+			createConfigProperty(GET_CHANGES_FREQ);
 		}
 		try {
-			setStatusUpdateFreq(Integer.parseInt(getNode("CONFIG_STATUS_UPDATE_FREQ")));
+			setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ.getXmlTag())));
 		} catch (Exception e) {
 			setStatusUpdateFreq(10);
-			Element el = configFile.createElement(CONFIG_STATUS_UPDATE_FREQ);
-			el.appendChild(configFile.createTextNode("10"));
-			configElement.appendChild(el);
-			
-	        DOMSource source = new DOMSource(configFile);
-	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	        Transformer transformer = transformerFactory.newTransformer();
-	        StreamResult result = new StreamResult(Constants.CONFIG_DIR);
-	        transformer.transform(source, result);
+			createConfigProperty(STATUS_UPDATE_FREQ);
 		}
-		setIsolatedDockerContainers(!getNode(CONFIG_ISOLATED_DOCKER_CONTAINER).equals("off"));
+		try {
+			setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER.getXmlTag()).equals("off"));
+		} catch (Exception e) {
+			setIsolatedDockerContainers(true);
+			createConfigProperty(ISOLATED_DOCKER_CONTAINER);
+		}
+	}
+
+	// this code will be triggered in case of iofog updated (not newly installed) and add new option for config
+	private static void createConfigProperty(CommandLineConfigParam cmdParam) throws Exception {
+		Element el = configFile.createElement(cmdParam.getXmlTag());
+		el.appendChild(configFile.createTextNode(cmdParam.getDefaultValue()));
+		configElement.appendChild(el);
+
+		DOMSource source = new DOMSource(configFile);
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = transformerFactory.newTransformer();
+		StreamResult result = new StreamResult(CONFIG_DIR);
+		transformer.transform(source, result);
 	}
 
 	public static String getAccessToken() {
@@ -547,11 +496,11 @@ public final class Configuration {
 	}
 
 	public static void setLogDiskDirectory(String logDiskDirectory) {
-		if (logDiskDirectory.charAt(0) != File.separatorChar)
-			logDiskDirectory = File.separatorChar + logDiskDirectory; 
-		if (logDiskDirectory.charAt(logDiskDirectory.length() - 1) != File.separatorChar)
-			logDiskDirectory += File.separatorChar;
-		Configuration.logDiskDirectory = Constants.SNAP_COMMON + logDiskDirectory;
+		if (logDiskDirectory.charAt(0) != separatorChar)
+			logDiskDirectory = separatorChar + logDiskDirectory;
+		if (logDiskDirectory.charAt(logDiskDirectory.length() - 1) != separatorChar)
+			logDiskDirectory += separatorChar;
+		Configuration.logDiskDirectory = SNAP_COMMON + logDiskDirectory;
 	}
 
 	public static void setAccessToken(String accessToken) {
@@ -575,7 +524,7 @@ public final class Configuration {
 	}
 
 	public static void setControllerCert(String controllerCert) {
-		Configuration.controllerCert = Constants.SNAP_COMMON + controllerCert;
+		Configuration.controllerCert = SNAP_COMMON + controllerCert;
 	}
 
 	public static void setNetworkInterface(String networkInterface) {
@@ -595,11 +544,11 @@ public final class Configuration {
 	}
 
 	public static void setDiskDirectory(String diskDirectory) {
-		if (diskDirectory.charAt(0) != File.separatorChar)
-			diskDirectory = File.separatorChar + diskDirectory; 
-		if (diskDirectory.charAt(diskDirectory.length() - 1) != File.separatorChar)
-			diskDirectory += File.separatorChar;
-		Configuration.diskDirectory = Constants.SNAP_COMMON + diskDirectory;
+		if (diskDirectory.charAt(0) != separatorChar)
+			diskDirectory = separatorChar + diskDirectory;
+		if (diskDirectory.charAt(diskDirectory.length() - 1) != separatorChar)
+			diskDirectory += separatorChar;
+		Configuration.diskDirectory = SNAP_COMMON + diskDirectory;
 	}
 
 	public static void setCpuLimit(float cpuLimit) throws Exception {
@@ -628,24 +577,43 @@ public final class Configuration {
 		}
 
 		StringBuilder result = new StringBuilder();
-		result.append(
-						"Instance ID               		 : " + ((instanceId != null && !instanceId.equals("")) ? instanceId : "not provisioned") + "\\n" +
-						"IP Address                		 : " + ipAddress + "\\n" +
-						"Network Interface         		 : " + networkInterface + "\\n" +
-						"ioFog Controller          		 : " + controllerUrl + "\\n" +
-						"ioFog Certificate         		 : " + controllerCert + "\\n" +
-						"Docker URL                		 : " + dockerUrl + "\\n" +
-						String.format("Disk Usage Limit           	 : %.2f GiB\\n", diskLimit) +
-						"Message Storage Directory 		 : " + diskDirectory + "\\n" +
-						String.format("Memory RAM Limit           	 : %.2f MiB\\n", memoryLimit) +
-						String.format("CPU Usage Limit           	 : %.2f%%\\n", cpuLimit) +
-						String.format("Log Disk Limit            	 : %.2f GiB\\n", logDiskLimit) +
-						"Status Update Frequency    	 : " + statusUpdateFreq + "\\n" +
-						"Get Changes Frequency     		 : " + getChangesFreq + "\\n" +
-						"Log File Directory              : " + logDiskDirectory + "\\n" +
-						String.format("Log Rolling File Count    	 : %d", logFileCount) + "\\n" +
-						"Isolated Docker Containers Mode : " + (isolatedDockerContainers ? "on" : "off"));
+		// instance id
+		result.append(buildReportLine(getInstanceIdMessage(), isNotBlank(instanceId) ? instanceId : "not provisioned"));
+		//ip address
+		result.append(buildReportLine(getIpAddressMessage(), ipAddress));
+		// network interface
+		result.append(buildReportLine(getConfigParamMessage(NETWORK_INTERFACE), networkInterface));
+		// controller url
+		result.append(buildReportLine(getConfigParamMessage(CONTROLLER_URL), controllerUrl));
+		// controller cert dir
+		result.append(buildReportLine(getConfigParamMessage(CONTROLLER_CERT), controllerCert));
+		// docker url
+		result.append(buildReportLine(getConfigParamMessage(DOCKER_URL), dockerUrl));
+		// disk usage limit
+		result.append(buildReportLine(getConfigParamMessage(DISK_CONSUMPTION_LIMIT), format("%.2f GiB", diskLimit)));
+		// disk directory
+		result.append(buildReportLine(getConfigParamMessage(DISK_DIRECTORY), diskDirectory));
+		// memory ram limit
+		result.append(buildReportLine(getConfigParamMessage(MEMORY_CONSUMPTION_LIMIT), format("%.2f MiB", memoryLimit)));
+		// cpu usage limit
+		result.append(buildReportLine(getConfigParamMessage(PROCESSOR_CONSUMPTION_LIMIT), format("%.2f%%", cpuLimit)));
+		// log disk limit
+		result.append(buildReportLine(getConfigParamMessage(LOG_DISK_CONSUMPTION_LIMIT), format("%.2f GiB", logDiskLimit)));
+		// log file directory
+		result.append(buildReportLine(getConfigParamMessage(LOG_DISK_DIRECTORY), logDiskDirectory));
+		// log files count
+		result.append(buildReportLine(getConfigParamMessage(LOG_FILE_COUNT), format("%d", logFileCount)));
+		// status update frequency
+		result.append(buildReportLine(getConfigParamMessage(STATUS_UPDATE_FREQ), format("%d", statusUpdateFreq)));
+		// status update frequency
+		result.append(buildReportLine(getConfigParamMessage(GET_CHANGES_FREQ), format("%d", getChangesFreq)));
+		// log file directory
+		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
 		return result.toString();
+	}
+
+	private static String buildReportLine(String messageDescription, String value) {
+		return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
 	}
 
 }
