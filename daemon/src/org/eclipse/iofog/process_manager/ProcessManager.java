@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Queue;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 import static org.eclipse.iofog.utils.Constants.ElementState.RUNNING;
@@ -222,12 +223,14 @@ public class ProcessManager implements IOFogModule {
                     }
 				}
                 boolean taskResult = containerManager.execute(newTask);
-                if (!taskResult && (StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) || newTask.action.equals(REMOVE))) {
+                if (!taskResult &&
+						(StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK)
+								|| newTask.action.equals(REMOVE))) {
                     if (newTask.retries < 5) {
                         newTask.retries++;
                         addTask(newTask);
                     } else {
-                        String msg = "";
+                        String msg = EMPTY;
                         switch (newTask.action) {
                             case REMOVE:
                                 msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
