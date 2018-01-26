@@ -52,12 +52,7 @@ public class ProcessManager implements IOFogModule {
 	private ContainerManager containerManager;
 	private static ProcessManager instance;
 
-	/**
-	 * Private constructor - to prevent creation of class instance
-	 */
-	private ProcessManager() {
-		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
-	}
+	private ProcessManager() {}
 
 	@Override
 	public int getModuleIndex() {

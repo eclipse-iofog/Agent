@@ -61,12 +61,7 @@ public class Supervisor implements IOFogModule {
 		} catch (Exception e) {}
 	};
 
-	/**
-	 * Private constructor - to prevent creation of class instance
-	 */
-	public Supervisor() {
-		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
-	}
+	public Supervisor() {}
 	
 	/**
 	 * starts Supervisor module

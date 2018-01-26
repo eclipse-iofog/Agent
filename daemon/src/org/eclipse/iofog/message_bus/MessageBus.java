@@ -51,12 +51,7 @@ public class MessageBus implements IOFogModule {
 	
 	private long lastSpeedTime, lastSpeedMessageCount;
 
-	/**
-	 * Private constructor - to prevent creation of class instance
-	 */
-	private MessageBus() {
-		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
-	}
+	private MessageBus() {}
 
 	@Override
 	public int getModuleIndex() {
@@ -73,7 +68,7 @@ public class MessageBus implements IOFogModule {
 			synchronized (MessageBus.class) {
 				if (instance == null) { 
 					instance = new MessageBus();
-					instance.start();
+					//instance.start();
 				}
 			}
 		}

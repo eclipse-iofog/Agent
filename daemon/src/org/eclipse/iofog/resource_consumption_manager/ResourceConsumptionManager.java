@@ -39,12 +39,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
 
-	/**
-	 * Private constructor - to prevent creation of class instance
-	 */
-	private ResourceConsumptionManager() {
-		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
-	}
+	private ResourceConsumptionManager() {}
 
 	@Override
 	public int getModuleIndex() {
