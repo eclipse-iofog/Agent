@@ -12,35 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.ConnectException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.UnknownHostException;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.core.NoContentException;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -51,6 +22,25 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.iofog.utils.configuration.Configuration;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.core.NoContentException;
+import java.io.*;
+import java.net.*;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
 
 /**
  * provides methods for IOFog controller
@@ -248,18 +238,16 @@ public class Orchestrator {
 			.append("/token/").append(accessToken);
 		
 		if (queryParams != null)
-			queryParams.entrySet().forEach(entry -> {
-				uri.append("/").append(entry.getKey())
-					.append("/").append(entry.getValue());
-			});
+			queryParams.forEach((key, value) -> uri.append("/").append(key)
+					.append("/").append(value));
 
 		List<NameValuePair> postData = new ArrayList<NameValuePair>();		
 		if (postParams != null)
-			postParams.entrySet().forEach(entry -> {
-				String value = entry.getValue().toString();
+			postParams.forEach((key, value1) -> {
+				String value = value1.toString();
 				if (value == null)
 					value = "";
-				postData.add(new BasicNameValuePair(entry.getKey(), value));
+				postData.add(new BasicNameValuePair(key, value));
 			});
 		
 	
