@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
@@ -28,12 +30,12 @@ public class BytesUtil {
 			return new byte[] {};
 		byte[] tmp = new byte[from];
 		byte[] result = new byte[to - from];
-		ByteArrayInputStream input = new ByteArrayInputStream(src);
-		input.read(tmp, 0, tmp.length);
-		input.read(result, 0, result.length);
-		try {
-			input.close();
-		} catch (IOException e) {}
+		try (ByteArrayInputStream input = new ByteArrayInputStream(src)){
+			input.read(tmp, 0, tmp.length);
+			input.read(result, 0, result.length);
+		} catch (IOException e) {
+			LoggingService.logWarning("BytesUtil: ", e.getMessage());
+		}
 		return result;
 	}
 	

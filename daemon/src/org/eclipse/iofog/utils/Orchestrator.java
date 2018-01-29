@@ -208,21 +208,23 @@ public class Orchestrator {
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(surl);
 		post.setConfig(config);
-		
-		CloseableHttpResponse response = client.execute(post);
-		
-		if (response.getStatusLine().getStatusCode() != 200) {
-			if (response.getStatusLine().getStatusCode() == 404)
-				throw new UnknownHostException();
-			else
-				throw new Exception();
-		}
-		
-        Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
 
-        JsonObject result = Json.createReader(in).readObject();
-        
-        response.close();
+		JsonObject result;
+		
+		try (CloseableHttpResponse response = client.execute(post)) {
+
+			if (response.getStatusLine().getStatusCode() != 200) {
+				if (response.getStatusLine().getStatusCode() == 404)
+					throw new UnknownHostException();
+				else
+					throw new Exception();
+			}
+
+			try(Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"))){
+				result = Json.createReader(in).readObject();
+			}
+
+		}
 		return result;
 	}
 
@@ -238,7 +240,7 @@ public class Orchestrator {
 	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
 		if (!controllerUrl.toLowerCase().startsWith("https"))
 			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result = null;
+		JsonObject result;
 		
 		StringBuilder uri = new StringBuilder(controllerUrl);
 		
@@ -253,7 +255,7 @@ public class Orchestrator {
 					.append("/").append(entry.getValue());
 			});
 
-		List<NameValuePair> postData = new ArrayList<NameValuePair>();		
+		List<NameValuePair> postData = new ArrayList<NameValuePair>();
 		if (postParams != null)
 			postParams.entrySet().forEach(entry -> {
 				String value = entry.getValue().toString();
@@ -261,24 +263,24 @@ public class Orchestrator {
 					value = "";
 				postData.add(new BasicNameValuePair(entry.getKey(), value));
 			});
-		
-	
-		try {
-			initialize();
-			RequestConfig config = getRequestConfig();
-			HttpPost post = new HttpPost(uri.toString());
-			post.setConfig(config);
-			post.setEntity(new UrlEncodedFormEntity(postData));
 
-			CloseableHttpResponse response = client.execute(post);
-			
-			if (response.getStatusLine().getStatusCode() == 403){
+
+		initialize();
+		RequestConfig config = getRequestConfig();
+		HttpPost post = new HttpPost(uri.toString());
+		post.setConfig(config);
+		post.setEntity(new UrlEncodedFormEntity(postData));
+
+		try (CloseableHttpResponse response = client.execute(post);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"))) {
+
+			if (response.getStatusLine().getStatusCode() == 403) {
 				throw new ForbiddenException();
-			} else if (response.getStatusLine().getStatusCode() == 204){
+			} else if (response.getStatusLine().getStatusCode() == 204) {
 				throw new NoContentException("");
 			}
-			
-			BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+
+
 			result = Json.createReader(in).readObject();
 		} catch (Exception e) {
 			throw e;

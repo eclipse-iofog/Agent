@@ -26,7 +26,7 @@ import org.hornetq.api.core.client.ClientMessage;
  * @author saeid
  *
  */
-public class MessageReceiver {
+public class MessageReceiver implements AutoCloseable{
 	private final String name;
 
 	private MessageListener listener;
@@ -108,7 +108,7 @@ public class MessageReceiver {
 		} catch (Exception e) {}
 	}
 	
-	protected void close() {
+	public void close() {
 		if (consumer == null)
 			return;
 		disableRealTimeReceiving();
