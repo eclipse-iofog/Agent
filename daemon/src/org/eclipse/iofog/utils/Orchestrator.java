@@ -274,7 +274,8 @@ public class Orchestrator {
 		post.setEntity(new UrlEncodedFormEntity(postData));
 
 		try (CloseableHttpResponse response = client.execute(post);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"))) {
+			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+			 JsonReader jsonReader = Json.createReader(in)) {
 
 			if (response.getStatusLine().getStatusCode() == 403) {
 				throw new ForbiddenException();
@@ -283,7 +284,7 @@ public class Orchestrator {
 			}
 
 
-			result = Json.createReader(in).readObject();
+			result = jsonReader.readObject();
 		} catch (Exception e) {
 			throw e;
 		}
