@@ -35,6 +35,7 @@ import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -220,8 +221,9 @@ public class Orchestrator {
 					throw new Exception();
 			}
 
-			try(Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"))){
-				result = Json.createReader(in).readObject();
+			try(Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+				JsonReader jsonReader = Json.createReader(in)){
+				result = jsonReader.readObject();
 			}
 
 		}

@@ -147,10 +147,6 @@ public class FieldAgent {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
 				LoggingService.logInfo(MODULE_NAME, "post status");
-				//				if (notProvisioned()) {
-				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-				//					continue;
-				//				}
 				if (controllerNotConnected()) {
 					connected = false;
 					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
