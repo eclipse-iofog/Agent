@@ -17,7 +17,6 @@ import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
-import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
@@ -101,7 +100,6 @@ public class FieldAgent {
 		result.put("elementmessagecounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerElement());
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
 		result.put("lastcommandtime", StatusReporter.getFieldAgentStatus().getLastCommandTime());
-		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
 		result.put("version", Constants.VERSION);
 
 		return result;
@@ -256,8 +254,6 @@ public class FieldAgent {
 					loadRoutes(false);
 					MessageBus.getInstance().update();
 				}
-				if (changes.getBoolean("proxy") && !initialization)
-					getProxyConfig();
 
 				initialization = false;
 			} catch (Exception e) {}
@@ -769,75 +765,6 @@ public class FieldAgent {
 			verficationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to post fog config : " + e.getMessage());
-		}
-	}
-
-	public void getProxyConfig() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "get proxy config");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
-			return;
-		}
-
-		if (controllerNotConnected()) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
-
-		try {
-			JsonObject result = orchestrator.doCommand("proxyconfig", null, null);
-			if (!result.getString("status").equals("ok"))
-				throw new Exception("error from fog controller");
-
-			JsonObject configs = result.getJsonObject("config");
-			String user = configs.getString("user");
-			String password = configs.getString("password");
-			String host = configs.getString("host");
-			String rsaKey = configs.getString("rsaKey");
-			int rport = Integer.parseInt(configs.getString("rport"));
-			int lport = Integer.parseInt(configs.getString("lport"));
-			boolean force = Boolean.parseBoolean(configs.getString("force"));
-
-			boolean isUpdated = false;
-
-			SshProxyManager sshProxyManager = SshProxyManager.getInstance();
-
-			if (!sshProxyManager.getUser().equals(user)) {
-				sshProxyManager.setUser(user);
-				isUpdated = true;
-			}
-			if (!sshProxyManager.getPassword().equals(password)) {
-				sshProxyManager.setPassword(password);
-				isUpdated = true;
-			}
-			if (!sshProxyManager.getHost().equals(host)) {
-				sshProxyManager.setHost(host);
-				isUpdated = true;
-			}
-			if (!sshProxyManager.getRsaKey().equals(rsaKey)) {
-				sshProxyManager.setRsaKey(rsaKey);
-				isUpdated = true;
-			}
-			if (sshProxyManager.getRport() != rport) {
-				sshProxyManager.setRport(rport);
-				isUpdated = true;
-			}
-			if (sshProxyManager.getLport() != rport) {
-				sshProxyManager.setLport(lport);
-				isUpdated = true;
-			}
-
-			if (isUpdated || force) {
-				sshProxyManager.open();
-			}
-
-		} catch (CertificateException|SSLHandshakeException e) {
-			verficationFailed();
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
 		}
 	}
 
