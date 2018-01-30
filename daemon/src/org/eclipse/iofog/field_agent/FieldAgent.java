@@ -800,37 +800,34 @@ public class FieldAgent {
 			int rport = Integer.parseInt(configs.getString("rport"));
 			int lport = Integer.parseInt(configs.getString("lport"));
 			boolean force = Boolean.parseBoolean(configs.getString("force"));
-
-			boolean isUpdated = false;
+			boolean close = Boolean.parseBoolean((configs.getString("close")));
 
 			SshProxyManager sshProxyManager = SshProxyManager.getInstance();
 
+			if (close) {
+				sshProxyManager.close();
+				return;
+			}
+
 			if (!sshProxyManager.getUser().equals(user)) {
 				sshProxyManager.setUser(user);
-				isUpdated = true;
 			}
 			if (!sshProxyManager.getPassword().equals(password)) {
 				sshProxyManager.setPassword(password);
-				isUpdated = true;
 			}
 			if (!sshProxyManager.getHost().equals(host)) {
 				sshProxyManager.setHost(host);
-				isUpdated = true;
-			}
-			if (!sshProxyManager.getRsaKey().equals(rsaKey)) {
-				sshProxyManager.setRsaKey(rsaKey);
-				isUpdated = true;
 			}
 			if (sshProxyManager.getRport() != rport) {
 				sshProxyManager.setRport(rport);
-				isUpdated = true;
 			}
 			if (sshProxyManager.getLport() != rport) {
 				sshProxyManager.setLport(lport);
-				isUpdated = true;
 			}
-
-			if (isUpdated || force) {
+			if (!sshProxyManager.getRsaKey().equals(rsaKey)) {
+				sshProxyManager.setRsaKey(rsaKey);
+			}
+			if (sshProxyManager.isConfigUpdated() || force) {
 				sshProxyManager.open();
 			}
 

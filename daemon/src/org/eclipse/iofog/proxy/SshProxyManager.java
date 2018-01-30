@@ -24,6 +24,7 @@ public class SshProxyManager {
     private int lport = 22;
     private Session session;
     private StringBuilder errorMessage = new StringBuilder();
+    private boolean isConfigUpdated = false;
 
     private SshProxyManager() {
         jschSSHChannel = new JSch();
@@ -37,17 +38,6 @@ public class SshProxyManager {
             }
         }
         return instance;
-    }
-
-    private void setKnownHost(String rsaKey) {
-        try {
-            jschSSHChannel.setKnownHosts(new ByteArrayInputStream(rsaKey.getBytes()));
-        } catch (JSchException jschX) {
-            String errMsg = String.format("There was an issue with server RSA key setup:%n %s", jschX.getMessage());
-            errorMessage.append(errMsg);
-            errorMessage.append(System.getProperty("line.separator"));
-            LoggingService.logWarning(MODULE_NAME, errMsg);
-        }
     }
 
     public String getUser() {
@@ -74,29 +64,48 @@ public class SshProxyManager {
         return rsaKey;
     }
 
+    public boolean isConfigUpdated() {
+        return isConfigUpdated;
+    }
+
     public void setUser(String user) {
         this.user = user;
+        this.isConfigUpdated = true;
     }
 
     public void setPassword(String password) {
         this.password = password;
+        this.isConfigUpdated = true;
     }
 
     public void setHost(String host) {
         this.host = host;
+        this.isConfigUpdated = true;
     }
 
     public void setRport(int rport) {
         this.rport = rport;
+        this.isConfigUpdated = true;
     }
 
     public void setLport(int lport) {
         this.lport = lport;
+        this.isConfigUpdated = true;
     }
 
     public void setRsaKey(String rsaKey) {
         this.rsaKey = rsaKey;
-        setKnownHost(rsaKey);
+        this.isConfigUpdated = true;
+    }
+
+    private void setKnownHost() {
+        try {
+            jschSSHChannel.setKnownHosts(new ByteArrayInputStream(this.rsaKey.getBytes()));
+        } catch (JSchException jschX) {
+            String errMsg = String.format("There was an issue with server RSA key setup:%n %s", jschX.getMessage());
+            errorMessage.append(errMsg).append(System.getProperty("line.separator"));
+            LoggingService.logWarning(MODULE_NAME, errMsg);
+        }
     }
 
     public Runnable connect() {
@@ -108,11 +117,10 @@ public class SshProxyManager {
                 session.connect(TIMEOUT);
                 session.setPortForwardingR(host, rport, LOCAL_HOST, lport);
 
-                setSshProxyManagerStatus(CONNECTED);
+                setSshProxyManagerStatus(OPEN);
             } catch (JSchException jschX) {
                 String errMsg = String.format("Unable to connect to the server:%n %s", jschX.getMessage());
-                errorMessage.append(errMsg);
-                errorMessage.append(System.getProperty("line.separator"));
+                errorMessage.append(errMsg).append(System.getProperty("line.separator"));
                 LoggingService.logWarning(MODULE_NAME, errMsg);
                 setSshProxyManagerStatus(FAILED);
             }
@@ -129,14 +137,23 @@ public class SshProxyManager {
                 .setErrorMessage(errorMessage.toString());
     }
 
+    private void resetErrorMessages() {
+        this.errorMessage.setLength(0);
+    }
+
     public void close() {
-        session.disconnect();
-        setSshProxyManagerStatus(NOT_CONNECTED);
+        if (session != null) {
+            session.disconnect();
+        }
+        setSshProxyManagerStatus(CLOSED);
+        resetErrorMessages();
     }
 
     public void open() {
-        this.errorMessage.setLength(0);
+        resetErrorMessages();
+        setKnownHost();
         new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
         LoggingService.logInfo(MODULE_NAME, "opened ssh channel");
+        this.isConfigUpdated = false;
     }
 }

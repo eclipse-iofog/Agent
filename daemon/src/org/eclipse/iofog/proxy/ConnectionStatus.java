@@ -1,7 +1,7 @@
 package org.eclipse.iofog.proxy;
 
 public enum ConnectionStatus {
-    CONNECTED,
+    OPEN,
     FAILED,
-    NOT_CONNECTED
+    CLOSED
 }
