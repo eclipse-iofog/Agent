@@ -1,7 +1,7 @@
 package org.eclipse.iofog.proxy;
 
 /**
- * Enum that's indicates if ssh tunnel is open, closed or failed to start.
+ * Enum that indicates if ssh tunnel is open, closed or failed to start.
  *
  * @author epankov
  *

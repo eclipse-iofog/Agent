@@ -50,34 +50,10 @@ public class SshProxyManagerStatus {
         return this;
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getRport() {
-        return rport;
-    }
-
-    public int getLport() {
-        return lport;
-    }
-
-    public ConnectionStatus getStatus() {
-        return status;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
     public String getJsonProxyStatus() {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
                     .add("user", this.user)
-                    .add("host", this.getHost())
+                    .add("host", this.host)
                     .add("rport", this.rport)
                     .add("lport", this.lport)
                     .add("status", this.status.toString())

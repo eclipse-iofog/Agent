@@ -825,7 +825,7 @@ public class FieldAgent {
 			if (sshProxyManager.getRport() != rport) {
 				sshProxyManager.setRport(rport);
 			}
-			if (sshProxyManager.getLport() != rport) {
+			if (sshProxyManager.getLport() != lport) {
 				sshProxyManager.setLport(lport);
 			}
 			if (!sshProxyManager.getRsaKey().equals(rsaKey)) {
