@@ -774,7 +774,7 @@ public class FieldAgent {
 
 	/**
 	 * gets IOFog proxy configuration from IOFog controller
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public void getProxyConfig() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get proxy config");
@@ -812,7 +812,9 @@ public class FieldAgent {
 				sshProxyManager.close();
 				return;
 			}
-
+			if (sshProxyManager.isTunnelIsAlreadyOpen()) {
+				return;
+			}
 			if (!sshProxyManager.getUser().equals(user)) {
 				sshProxyManager.setUser(user);
 			}

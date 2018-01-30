@@ -12,17 +12,16 @@
  *******************************************************************************/
 package org.eclipse.iofog.command_line;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.json.JsonObject;
-
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import javax.json.JsonObject;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * to parse command-line parameters 
@@ -90,7 +89,7 @@ public class CommandLineParser {
 				return showHelp();
 			}
 			String provisionKey = args[1];
-			result.append("Provisioning with key \"" + provisionKey + "\"...");
+			result.append("Provisioning with key \"").append(provisionKey).append("\"...");
 			JsonObject provisioningResult = FieldAgent.getInstance().provision(provisionKey);
 			if (provisioningResult == null) {
 				result.append("\\nProvisioning failed");
@@ -155,7 +154,7 @@ public class CommandLineParser {
 				HashMap<String, String> errorMap = Configuration.setConfig(config, false);
 
 				for (Entry<String, String> e : errorMap.entrySet())
-					result.append("\\n\tError : " + e.getValue());
+					result.append("\\n\tError : ").append(e.getValue());
 
 				for (Entry<String, Object> e : config.entrySet()){
 					if(!errorMap.containsKey(e.getKey())){

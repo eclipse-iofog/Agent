@@ -105,19 +105,6 @@ public class SshProxyManager {
     }
 
     /**
-     * adds server rsa key to known hosts
-     */
-    private void setKnownHost() {
-        try {
-            jschSSHChannel.setKnownHosts(new ByteArrayInputStream(this.rsaKey.getBytes()));
-        } catch (JSchException jschX) {
-            String errMsg = String.format("There was an issue with server RSA key setup:%n %s", jschX.getMessage());
-            errorMessage.append(errMsg).append(System.getProperty("line.separator"));
-            LoggingService.logWarning(MODULE_NAME, errMsg);
-        }
-    }
-
-    /**
      * opens reverse proxy on specified host
      * @return Runnable to be executed on separate thread
      */
@@ -133,11 +120,61 @@ public class SshProxyManager {
                 setSshProxyManagerStatus(OPEN);
             } catch (JSchException jschX) {
                 String errMsg = String.format("Unable to connect to the server:%n %s", jschX.getMessage());
-                errorMessage.append(errMsg).append(System.getProperty("line.separator"));
-                LoggingService.logWarning(MODULE_NAME, errMsg);
-                setSshProxyManagerStatus(FAILED);
+                updateProxyManagerStatus(errMsg, FAILED);
             }
         };
+    }
+
+    /**
+     * opens ssh tunnel
+     */
+    public void open() {
+        resetErrorMessages();
+        setKnownHost();
+        new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
+        LoggingService.logInfo(MODULE_NAME, "opened ssh channel");
+        this.isConfigUpdated = false;
+    }
+
+    /**
+     * closes ssh tunnel
+     */
+    public void close() {
+        resetErrorMessages();
+        if (isConnected()) {
+            session.disconnect();
+            setSshProxyManagerStatus(CLOSED);
+        } else {
+            String errMsg = "There is no open ssh tunnel";
+            updateProxyManagerStatus(errMsg, FAILED);
+        }
+    }
+
+    /**
+     * checks whether the tunnel is already opened
+     * @return boolean if tunnel is open
+     */
+    public boolean isTunnelIsAlreadyOpen() {
+        boolean isConnected = isConnected();
+        if (isConnected) {
+            resetErrorMessages();
+            String errMsg = "The tunnel is already opened. Please close it first.";
+            updateProxyManagerStatus(errMsg, OPEN);
+        }
+        return isConnected;
+    }
+
+    /**
+     * adds server rsa key to known hosts
+     */
+    private void setKnownHost() {
+        try {
+            jschSSHChannel.setKnownHosts(new ByteArrayInputStream(this.rsaKey.getBytes()));
+        } catch (JSchException jschX) {
+            String errMsg = String.format("There was an issue with server RSA key setup:%n %s", jschX.getMessage());
+            errorMessage.append(errMsg).append(System.getProperty("line.separator"));
+            LoggingService.logWarning(MODULE_NAME, errMsg);
+        }
     }
 
     /**
@@ -162,24 +199,21 @@ public class SshProxyManager {
     }
 
     /**
-     * closes ssh tunnel
+     * checks if tunnel is open
+     * @return boolean
      */
-    public void close() {
-        if (session != null) {
-            session.disconnect();
-        }
-        setSshProxyManagerStatus(CLOSED);
-        resetErrorMessages();
+    private boolean isConnected() {
+        return this.session != null && session.isConnected();
     }
 
     /**
-     * opens ssh tunnel
+     * updates ssh proxy manager status
+     * @param errMsg error message
+     * @param status connection status
      */
-    public void open() {
-        resetErrorMessages();
-        setKnownHost();
-        new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
-        LoggingService.logInfo(MODULE_NAME, "opened ssh channel");
-        this.isConfigUpdated = false;
+    private void updateProxyManagerStatus(String errMsg, ConnectionStatus status) {
+        errorMessage.append(errorMessage).append(System.getProperty("line.separator"));;
+        LoggingService.logWarning(MODULE_NAME, errMsg);
+        setSshProxyManagerStatus(status);
     }
 }
