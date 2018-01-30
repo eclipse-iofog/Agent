@@ -772,6 +772,10 @@ public class FieldAgent {
 		}
 	}
 
+	/**
+	 * gets IOFog proxy configuration from IOFog controller
+	 * @throws Exception
+	 */
 	public void getProxyConfig() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get proxy config");
 		if (notProvisioned()) {

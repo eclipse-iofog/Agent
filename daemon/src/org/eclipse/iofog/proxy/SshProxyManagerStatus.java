@@ -3,6 +3,12 @@ package org.eclipse.iofog.proxy;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
+/**
+ * SSH Proxy Manager Status
+ *
+ * @author epankov
+ *
+ */
 public class SshProxyManagerStatus {
 
     private String user;

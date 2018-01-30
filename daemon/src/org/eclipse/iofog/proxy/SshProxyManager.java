@@ -10,6 +10,12 @@ import java.io.ByteArrayInputStream;
 
 import static org.eclipse.iofog.proxy.ConnectionStatus.*;
 
+/**
+ * SSH Proxy Manager Module
+ *
+ * @author epankov
+ *
+ */
 public class SshProxyManager {
     private String MODULE_NAME = "SSH Proxy Manager";
     private static final String LOCAL_HOST = "localhost";
@@ -98,6 +104,9 @@ public class SshProxyManager {
         this.isConfigUpdated = true;
     }
 
+    /**
+     * adds server rsa key to known hosts
+     */
     private void setKnownHost() {
         try {
             jschSSHChannel.setKnownHosts(new ByteArrayInputStream(this.rsaKey.getBytes()));
@@ -108,6 +117,10 @@ public class SshProxyManager {
         }
     }
 
+    /**
+     * opens reverse proxy on specified host
+     * @return Runnable to be executed on separate thread
+     */
     public Runnable connect() {
         return () -> {
             try {
@@ -127,6 +140,10 @@ public class SshProxyManager {
         };
     }
 
+    /**
+     * sets current ssh proxy manager status
+     * @param status Connection status of the tunnel
+     */
     private void setSshProxyManagerStatus(ConnectionStatus status) {
         StatusReporter.setSshProxyManagerStatus()
                 .setUser(user)
@@ -137,10 +154,16 @@ public class SshProxyManager {
                 .setErrorMessage(errorMessage.toString());
     }
 
+    /**
+     * resets all the errors
+     */
     private void resetErrorMessages() {
         this.errorMessage.setLength(0);
     }
 
+    /**
+     * closes ssh tunnel
+     */
     public void close() {
         if (session != null) {
             session.disconnect();
@@ -149,6 +172,9 @@ public class SshProxyManager {
         resetErrorMessages();
     }
 
+    /**
+     * opens ssh tunnel
+     */
     public void open() {
         resetErrorMessages();
         setKnownHost();
