@@ -30,20 +30,9 @@ public class SshProxyManager {
     private int lport = 22;
     private Session session;
     private StringBuilder errorMessage = new StringBuilder();
-    private boolean isConfigUpdated = false;
 
-    private SshProxyManager() {
+    public SshProxyManager() {
         jschSSHChannel = new JSch();
-    }
-
-    public static SshProxyManager getInstance() {
-        if (instance == null) {
-            synchronized (SshProxyManager.class) {
-                if (instance == null)
-                    instance = new SshProxyManager();
-            }
-        }
-        return instance;
     }
 
     public String getUser() {
@@ -70,38 +59,28 @@ public class SshProxyManager {
         return rsaKey;
     }
 
-    public boolean isConfigUpdated() {
-        return isConfigUpdated;
-    }
-
     public void setUser(String user) {
         this.user = user;
-        this.isConfigUpdated = true;
     }
 
     public void setPassword(String password) {
         this.password = password;
-        this.isConfigUpdated = true;
     }
 
     public void setHost(String host) {
         this.host = host;
-        this.isConfigUpdated = true;
-    }
-
-    public void setRport(int rport) {
-        this.rport = rport;
-        this.isConfigUpdated = true;
-    }
-
-    public void setLport(int lport) {
-        this.lport = lport;
-        this.isConfigUpdated = true;
     }
 
     public void setRsaKey(String rsaKey) {
         this.rsaKey = rsaKey;
-        this.isConfigUpdated = true;
+    }
+
+    public void setRport(int rport) {
+        this.rport = rport;
+    }
+
+    public void setLport(int lport) {
+        this.lport = lport;
     }
 
     /**
@@ -121,6 +100,7 @@ public class SshProxyManager {
             } catch (JSchException jschX) {
                 String errMsg = String.format("Unable to connect to the server:%n %s", jschX.getMessage());
                 updateProxyManagerStatus(errMsg, FAILED);
+                session.disconnect();
             }
         };
     }
@@ -129,11 +109,12 @@ public class SshProxyManager {
      * opens ssh tunnel
      */
     public void open() {
-        resetErrorMessages();
-        setKnownHost();
-        new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
-        LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
-        this.isConfigUpdated = false;
+        if (!isConnected()) {
+            resetErrorMessages();
+            setKnownHost();
+            new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
+            LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
+        };
     }
 
     /**
@@ -154,7 +135,7 @@ public class SshProxyManager {
      * checks whether the tunnel is already opened
      * @return boolean if tunnel is open
      */
-    public boolean isTunnelAlreadyOpen() {
+    public boolean isTunnelAlreadyOpened() {
         boolean isConnected = isConnected();
         if (isConnected) {
             resetErrorMessages();
