@@ -264,7 +264,7 @@ public class FieldAgent {
 	/**
 	 * gets list of registries from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	public void loadRegistries(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get registries");
@@ -323,7 +323,7 @@ public class FieldAgent {
 	/**
 	 * gets list of IOElement configurations from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	private void loadElementsConfig(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get elemets config");
@@ -376,7 +376,7 @@ public class FieldAgent {
 	/**
 	 * gets list of IOElement routings from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	private void loadRoutes(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get routes");
@@ -436,7 +436,7 @@ public class FieldAgent {
 	/**
 	 * gets list of IOElements from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	private void loadElementsList(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get elements");
