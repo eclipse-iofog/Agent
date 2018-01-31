@@ -120,9 +120,8 @@ public class FieldAgent {
 	 * checks if IOFog controller connection is broken
 	 * 
 	 * @return	boolean
-	 * @throws	Exception
 	 */
-	private boolean controllerNotConnected() throws Exception {
+	private boolean controllerNotConnected() {
 		return !StatusReporter.getFieldAgentStatus().getContollerStatus().equals(ControllerStatus.OK) && !ping(); 
 	}
 
@@ -172,9 +171,7 @@ public class FieldAgent {
 					LoggingService.logWarning(MODULE_NAME, "unable to send status : " + e.getMessage());
 					connected = false;
 				}
-			} catch (CertificateException | SSLHandshakeException e) {
-				verficationFailed();
-			} catch (Exception e) {
+			} catch (InterruptedException ex) {
 				connected = false;
 			}
 		}
@@ -268,9 +265,8 @@ public class FieldAgent {
 	 * gets list of registries from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	public void loadRegistries(boolean fromFile) throws Exception {
+	public void loadRegistries(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get registries");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -328,9 +324,8 @@ public class FieldAgent {
 	 * gets list of IOElement configurations from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	private void loadElementsConfig(boolean fromFile) throws Exception {
+	private void loadElementsConfig(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get elemets config");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -382,9 +377,8 @@ public class FieldAgent {
 	 * gets list of IOElement routings from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	private void loadRoutes(boolean fromFile) throws Exception {
+	private void loadRoutes(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get routes");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -443,9 +437,8 @@ public class FieldAgent {
 	 * gets list of IOElements from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	private void loadElementsList(boolean fromFile) throws Exception {
+	private void loadElementsList(boolean fromFile) {
 		LoggingService.logInfo(MODULE_NAME, "get elements");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -530,10 +523,8 @@ public class FieldAgent {
 
 	/**
 	 * pings IOFog controller
-	 * 
-	 * @throws Exception
 	 */
-	private boolean ping() throws Exception {
+	private boolean ping() {
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
 			return false;
@@ -643,10 +634,8 @@ public class FieldAgent {
 
 	/**
 	 * gets IOFog instance configuration from IOFog controller
-	 * 
-	 * @throws Exception
 	 */
-	private void getFogConfig() throws Exception {
+	private void getFogConfig() {
 		LoggingService.logInfo(MODULE_NAME, "get fog config");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -730,10 +719,8 @@ public class FieldAgent {
 
 	/**
 	 * sends IOFog instance configuration to IOFog controller
-	 * 
-	 * @throws Exception
 	 */
-	public void postFogConfig() throws Exception {
+	public void postFogConfig() {
 		LoggingService.logInfo(MODULE_NAME, "post fog config");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -774,9 +761,8 @@ public class FieldAgent {
 
 	/**
 	 * gets IOFog proxy configuration from IOFog controller
-	 * @throws Exception exception
 	 */
-	public void getProxyConfig() throws Exception {
+	public void getProxyConfig() {
 		LoggingService.logInfo(MODULE_NAME, "get proxy config");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -812,7 +798,7 @@ public class FieldAgent {
 				sshProxyManager.close();
 				return;
 			}
-			if (sshProxyManager.isTunnelIsAlreadyOpen()) {
+			if (sshProxyManager.isTunnelAlreadyOpen()) {
 				return;
 			}
 			if (!sshProxyManager.getUser().equals(user)) {
@@ -928,9 +914,8 @@ public class FieldAgent {
 	 * does de-provisioning  
 	 * 
 	 * @return String
-	 * @throws Exception
 	 */
-	public String deProvision() throws Exception {
+	public String deProvision() {
 		LoggingService.logInfo(MODULE_NAME, "deprovisioning");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");

@@ -132,7 +132,7 @@ public class SshProxyManager {
         resetErrorMessages();
         setKnownHost();
         new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
-        LoggingService.logInfo(MODULE_NAME, "opened ssh channel");
+        LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
         this.isConfigUpdated = false;
     }
 
@@ -154,7 +154,7 @@ public class SshProxyManager {
      * checks whether the tunnel is already opened
      * @return boolean if tunnel is open
      */
-    public boolean isTunnelIsAlreadyOpen() {
+    public boolean isTunnelAlreadyOpen() {
         boolean isConnected = isConnected();
         if (isConnected) {
             resetErrorMessages();
