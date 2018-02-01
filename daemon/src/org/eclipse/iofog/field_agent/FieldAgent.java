@@ -729,15 +729,8 @@ public class FieldAgent {
 
                 if (close) {
                     sshProxyManager.close();
-                    return;
-                }
-                if (!sshProxyManager.isTunnelAlreadyOpened()) {
-                    sshProxyManager.setUser(user);
-                    sshProxyManager.setPassword(password);
-                    sshProxyManager.setHost(host);
-                    sshProxyManager.setRport(rport);
-                    sshProxyManager.setLport(lport);
-                    sshProxyManager.setRsaKey(rsaKey);
+                } else if (!sshProxyManager.isTunnelAlreadyOpened()) {
+                    sshProxyManager.setProxyInfo(user, password, host, rport, lport, rsaKey);
                 }
 
             } catch (Exception e) {

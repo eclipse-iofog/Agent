@@ -83,6 +83,15 @@ public class SshProxyManager {
         this.lport = lport;
     }
 
+    public void setProxyInfo(String user, String password, String host, int rport, int lport, String rsaKey) {
+        this.user = user;
+        this.password = password;
+        this.host = host;
+        this.rport = rport;
+        this.lport = lport;
+        this.rsaKey = rsaKey;
+    }
+
     /**
      * opens reverse proxy on specified host
      * @return Runnable to be executed on separate thread
