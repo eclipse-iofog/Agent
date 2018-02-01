@@ -28,7 +28,8 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  *
  */
 public class Message {
-	private final short VERSION = 4; 
+	private final short VERSION = 4;
+	private static final String MODULE_NAME = "Message";
 
 	private String id;
 	private String tag;
@@ -642,7 +643,7 @@ public class Message {
 			dataBaos.writeTo(result);
 			return result.toByteArray();
 		} catch (IOException exc) {
-			LoggingService.logWarning("Message: ", exc.getMessage());
+			LoggingService.logWarning(MODULE_NAME, exc.getMessage());
 		}
 
 		return new byte[] {};
