@@ -24,7 +24,9 @@ import java.io.IOException;
  *
  */
 public class BytesUtil {
-	
+
+	private static final String MODULE_NAME = "BytesUtil";
+
 	public static byte[] copyOfRange(byte[] src, int from, int to) {
 		if (from < 0 || from >= src.length || to < from || to > src.length)
 			return new byte[] {};
@@ -34,7 +36,7 @@ public class BytesUtil {
 			input.read(tmp, 0, tmp.length);
 			input.read(result, 0, result.length);
 		} catch (IOException e) {
-			LoggingService.logWarning("BytesUtil: ", e.getMessage());
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		}
 		return result;
 	}
