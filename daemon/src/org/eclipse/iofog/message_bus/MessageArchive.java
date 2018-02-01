@@ -32,7 +32,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class MessageArchive {
+public class MessageArchive implements AutoCloseable{
 	private final byte HEADER_SIZE = 33;
 	private final short MAXIMUM_MESSAGE_PER_FILE = 1000;
 	private final int MAXIMUM_ARCHIVE_SIZE_MB = 1;
@@ -220,9 +220,9 @@ public class MessageArchive {
 		while (!resultSet.isEmpty() && !outOfMemory) {
 			File file = resultSet.pop();
 			String fileName = file.getName();
-			try {
-				RandomAccessFile indexFile = new RandomAccessFile(new File(diskDirectory + fileName), "r");
-				RandomAccessFile dataFile = new RandomAccessFile(new File(diskDirectory + fileName.substring(0, fileName.indexOf(".")) + ".iomsg"), "r");
+			String dataFileName = diskDirectory + fileName.substring(0, fileName.indexOf(".")) + ".iomsg";
+			try (RandomAccessFile indexFile = new RandomAccessFile(new File(diskDirectory + fileName), "r");
+				RandomAccessFile dataFile = new RandomAccessFile(new File(dataFileName), "r")){
 				long dataFileLength = dataFile.length();
 				while (indexFile.getFilePointer() < indexFile.length()) {
 					if (freeMemory() < 32 * Constants.MiB) {
@@ -244,8 +244,6 @@ public class MessageArchive {
 						continue;
 					result.add(message);
 				}
-				indexFile.close();
-				dataFile.close();
 			} catch (Exception e) {
 				LoggingService.logWarning("Message Archive", e.getMessage());
 			}

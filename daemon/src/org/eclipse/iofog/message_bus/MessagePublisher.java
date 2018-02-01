@@ -27,7 +27,7 @@ import org.hornetq.api.core.client.ClientSession;
  * @author saeid
  *
  */
-public class MessagePublisher {
+public class MessagePublisher implements AutoCloseable{
 	private final MessageArchive archive;
 	private final String name;
 	private ClientProducer producer;
