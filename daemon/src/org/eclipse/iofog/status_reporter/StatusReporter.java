@@ -16,7 +16,6 @@ import org.eclipse.iofog.field_agent.FieldAgentStatus;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBusStatus;
 import org.eclipse.iofog.process_manager.ProcessManagerStatus;
-import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
@@ -44,8 +43,7 @@ public final class StatusReporter {
 	private static ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
 	private static LocalApiStatus localApiStatus = new LocalApiStatus();
 	private static MessageBusStatus messageBusStatus = new MessageBusStatus();
-	private static SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
-	
+
 	private static String MODULE_NAME = "Status Reporter";
 	
 	/**
@@ -121,11 +119,6 @@ public final class StatusReporter {
 		return processManagerStatus;
 	}
 
-	public static SshProxyManagerStatus setSshProxyManagerStatus() {
-		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
-		return sshManagerStatus;
-	}
-	
 	public static ProcessManagerStatus getProcessManagerStatus() {
 		return processManagerStatus;
 	}
@@ -157,10 +150,6 @@ public final class StatusReporter {
 
 	public static LocalApiStatus getLocalApiStatus() {
 		return localApiStatus;
-	}
-
-	public static SshProxyManagerStatus getSshManagerStatus() {
-		return sshManagerStatus;
 	}
 
 	/**
