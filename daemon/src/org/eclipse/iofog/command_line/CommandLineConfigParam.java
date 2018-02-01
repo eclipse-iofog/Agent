@@ -67,9 +67,13 @@ public enum CommandLineConfigParam {
                 .findFirst();
     }
 
-    public static List<String> getAllNames(){
+    public static List<String> getAllCmdTextNames(){
         return stream(CommandLineConfigParam.values())
                 .map(CommandLineConfigParam::getCmdText)
                 .collect(toList());
+    }
+
+    public static boolean existParam(String paramOption) {
+        return getAllCmdTextNames().contains(paramOption);
     }
 }

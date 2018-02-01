@@ -1,6 +1,7 @@
 package org.eclipse.iofog.utils;
 
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,16 +15,17 @@ import java.util.Properties;
  */
 public class CmdProperties {
 
+    private static final String MODULE_NAME = "CmdProperties";
+    private static final String FILE_PATH = "cmd_messages.properties";
+
     private static Properties cmdProperties;
 
     static {
         cmdProperties = new Properties();
-        InputStream in = CmdProperties.class.getResourceAsStream("cmd_messages.properties");
-        try {
+        try (InputStream in = CmdProperties.class.getResourceAsStream(FILE_PATH)) {
             cmdProperties.load(in);
-            in.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggingService.logInfo(MODULE_NAME, e.getMessage());
         }
     }
 

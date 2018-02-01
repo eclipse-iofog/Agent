@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.*;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.CONTROLLER_CERT;
-import static org.eclipse.iofog.command_line.CommandLineConfigParam.getAllNames;
+import static org.eclipse.iofog.command_line.CommandLineConfigParam.existParam;
 import static org.eclipse.iofog.status_reporter.StatusReporter.getStatusReport;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.VERSION;
@@ -98,7 +98,7 @@ public enum CommandLineAction {
                 status = FieldAgent.getInstance().deProvision();
             } catch (Exception e) {
                 status = "Error";
-                e.printStackTrace();
+                LoggingService.logInfo(MODULE_NAME, "error de-provisioning");
             }
             return format(getDeprovisionMessage(), status);
         }
@@ -159,30 +159,30 @@ public enum CommandLineAction {
                         return "Error resetting configuration.";
                     }
                     return "Configuration has been reset to its defaults.";
-                } else if (!CONTROLLER_CERT.getCmdText().equals(args[1]))
+                } else if (!CONTROLLER_CERT.getCmdText().equals(args[1])) {
                     return showHelp();
+                }
             }
 
             Map<String, Object> config = new HashMap<>();
             int i = 1;
             while (i < args.length) {
-                if (args.length - i < 2 && !args[i].equals(CONTROLLER_CERT.getCmdText()))
-                    return showHelp();
-                if (!asList(getAllNames()).contains(args[i]))
-                    return showHelp();
-
+                String configParamOption = args[i];
                 String value;
-                if(CONTROLLER_CERT.getCmdText().equals(args[i]) && args.length == 2){
-                    value = ""; i += 1;
+                boolean isCertificateOption = configParamOption.equals(CONTROLLER_CERT.getCmdText());
+
+                if ((args.length - i < 2 && !isCertificateOption) || !existParam(configParamOption)) {
+                    return showHelp();
                 }
-                else if(CONTROLLER_CERT.getCmdText().equals(args[i]) && asList(getAllNames()).contains(args[i+1])){
-                    value = ""; i += 1;
+
+                if (isCertificateOption && (args.length == 2 || existParam(args[i + 1]))) {
+                    value = "";
+                    i += 1;
+                } else {
+                    value = args[i + 1];
+                    i += 2;
                 }
-                else{
-                    value = args[i + 1]; i += 2;
-                }
-                System.out.println("CMD " + args[i].substring(1) + " = " + value);
-                config.put(args[i].substring(1), value);
+                config.put(configParamOption.substring(1), value);
             }
 
             try {
@@ -197,12 +197,15 @@ public enum CommandLineAction {
                     if(!errorMap.containsKey(e.getKey())){
                         String newValue = e.getValue().toString();
                         if(e.getValue().toString().startsWith("+")) newValue = e.getValue().toString().substring(1);
-                        result.append("\\n\tChange accepted for Parameter : -").append(e.getKey()).append(", Old value was :").append(oldValuesMap.get(e.getKey()))
+                        result.append("\\n\tChange accepted for Parameter : - ")
+                                .append(e.getKey())
+                                .append(", Old value was :")
+                                .append(oldValuesMap.get(e.getKey()))
                                 .append(", New Value is : ").append(newValue);
                     }
                 }
             } catch (Exception e) {
-                LoggingService.logWarning("Command-line Parser", "error updating new config.");
+                LoggingService.logWarning(MODULE_NAME, "error updating new config.");
                 result.append("error updating new config : " + e.getMessage());
             }
 
@@ -225,6 +228,7 @@ public enum CommandLineAction {
     }
 
     private static final String CMD_CONFIG_DEFAULTS = "defaults";
+    public static final String MODULE_NAME = "Command Line Parser";
 
     private static String showHelp() {
         StringBuilder help = new StringBuilder();
@@ -284,6 +288,9 @@ public enum CommandLineAction {
                 "                                         split the log storage limit\\n" +
                 "                 -sf <#seconds>          Set the status update frequency\\n" +
                 "                 -cf <#seconds>          Set the get changes frequency\\n" +
+                "                 -idc <on/off>           Set the mode on which any not\\n" +
+                "										  registered docker container will be\\n" +
+                "										  shut down\\n" +
                 "\\n" +
                 "\\n" +
                 "Report bugs to: bugs@iotracks.com\\n" +

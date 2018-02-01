@@ -26,6 +26,7 @@ import java.util.Map;
 public class ElementManager {
 
 	private List<Element> elements;
+	private List<Element> currentElements;
 	private Map<String, Route> routes;
 	private Map<String, String> configs;
 	private List<Registry> registries;
@@ -51,6 +52,12 @@ public class ElementManager {
 	public List<Element> getElements() {
 		synchronized (ElementManager.class) {
 			return elements;
+		}
+	}
+
+	public List<Element> getCurrentElements() {
+		synchronized (ElementManager.class) {
+			return currentElements;
 		}
 	}
 
@@ -98,23 +105,26 @@ public class ElementManager {
 		}
 	}
 
+	public void setCurrentElements(List<Element> currentElements) {
+		synchronized (ElementManager.class) {
+			this.currentElements = currentElements;
+		}
+	}
+
 	public void setRoutes(Map<String, Route> routes) {
 		synchronized (ElementManager.class) {
 			this.routes = routes;
 		}
 	}
 
-	public boolean elementExists(String elementId) {
-		for (Element element : elements)
-			if (element.getElementId().equals(elementId))
-				return true;
-				
-		return false;
+	public boolean elementExists(List<Element> elements, String elementId) {
+		return getElementById(elements, elementId) != null;
 	}
 
 	public void clear() {
 		synchronized (ElementManager.class) {
 			elements.clear();
+			currentElements.clear();
 			routes.clear();
 			configs.clear();
 			registries.clear();
@@ -122,10 +132,13 @@ public class ElementManager {
 	}
 
 	public Element getElementById(String elementId) {
+		return getElementById(elements, elementId);
+	}
+
+	public Element getElementById(List<Element> elements, String elementId) {
 		for (Element element : elements)
 			if (element.getElementId().equals(elementId))
 				return element;
-				
 		return null;
 	}
 

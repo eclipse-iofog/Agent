@@ -284,11 +284,11 @@ public class MessageBus implements IOFogModule {
 
 			routes = newRoutes;
 
+			List<Element> elements = elementManager.getElements();
 			StatusReporter.getMessageBusStatus()
-				.getPublishedMessagesPerElement().entrySet().removeIf(entry -> {
-					return !elementManager.elementExists(entry.getKey());
-				});
-			elementManager.getElements().forEach(e -> {
+				.getPublishedMessagesPerElement().entrySet().removeIf(entry ->
+					!elementManager.elementExists(elements, entry.getKey()));
+			elements.forEach(e -> {
 				if (!StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().entrySet().contains(e.getElementId()))
 						StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().put(e.getElementId(), 0l);
 			});

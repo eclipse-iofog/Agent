@@ -14,6 +14,7 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.command_line.CommandLineAction;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
@@ -21,6 +22,7 @@ import org.eclipse.iofog.element.Registry;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -91,8 +93,9 @@ public class ProcessManager implements IOFogModule {
 				return;
 			}
 		}
-		
+
 		List<Element> elements = elementManager.getElements();
+		logInfo("ilary : loaded elements size = " + elements.size());
 		for (Element element : elements) {
 			Container container =  docker.getContainer(element.getElementId());
 			if (container != null && !element.isRebuild()) {
@@ -104,9 +107,12 @@ public class ProcessManager implements IOFogModule {
 				}
 				long elementLastModified = element.getLastModified();
 				long containerCreated = container.getCreated();
-				if (elementLastModified > containerCreated || !docker.comprarePorts(element))
+				if (elementLastModified > containerCreated || !docker.comprarePorts(element)) {
+					logInfo("ilary : adding task to UPDATE container");
 					addTask(new ContainerTask(UPDATE, element));
+				}
 			} else {
+				logInfo("ilary : adding task to ADD container");
 				addTask(new ContainerTask(ADD, element));
 			}
 		}
@@ -136,27 +142,32 @@ public class ProcessManager implements IOFogModule {
 				}
 
 				synchronized (containersMonitorLock) {
-					for (Element element : elementManager.getElements())
-						if (!docker.hasContainer(element.getElementId()) || element.isRebuild())
+					List<Element> elements = elementManager.getElements();
+					List<Element> currentElements = elementManager.getCurrentElements();
+					logInfo("ilary elements size = " + elements.size());
+					logInfo("ilary current element size = " + currentElements.size());
+					for (Element element : elements)
+						if (!docker.hasContainer(element.getElementId()) || element.isRebuild()) {
+							logInfo("ilary ADDing task to add container");
 							addTask(new ContainerTask(ADD, element));
-					StatusReporter.setProcessManagerStatus().setRunningElementsCount(elementManager.getElements().size());
+						}
+					StatusReporter.setProcessManagerStatus().setRunningElementsCount(elements.size());
 
 					List<Container> containers = docker.getContainers();
 					for (Container container : containers) {
 						String containerId = container.getNames()[0].substring(1);
-						Element element = elementManager.getElementById(containerId);
+						Element element = elementManager.getElementById(elements, containerId);
 
-						// remove container if needed
 						boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
-						System.out.println("Process Manager: isIsolatedDockerContainers = " + isIsolatedDockerContainers);
-						// TODO: ilaryionava needs additional check if element is still registered
-						// smth like whiteList = elementManager.getWhiteList() - that will return all ids for registered images (aka whitelisted)
+						logInfo("ilary isIsolatedDockerContainers = " + isIsolatedDockerContainers);
+						logInfo("ilary exist element in current = " + elementManager.elementExists(currentElements, containerId));
+						// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
 						if (element == null) {
-							if (isIsolatedDockerContainers /*|| whiteList.contains(containerId)*/) {
+							if (isIsolatedDockerContainers || elementManager.elementExists(currentElements, containerId)) {
+								LoggingService.logInfo(CommandLineAction.MODULE_NAME, "ilary ADDing task to remove container");
 								addTask(new ContainerTask(REMOVE, container.getId()));
 								continue;
 							}
-
 						}
 
 						element.setContainerId(container.getId());
@@ -177,12 +188,14 @@ public class ProcessManager implements IOFogModule {
 									logInfo(format("\"%s\": started", containerName));
 								} catch (Exception startException) {
 									// unable to start the container, update it!
+									logInfo("ilary ADDing task to UPDATE container");
 									addTask(new ContainerTask(UPDATE, container.getId()));
 								}
 							}
 						} catch (Exception e) {
 						}
 					}
+					elementManager.setCurrentElements(elements);
 				}
 			} catch (Exception e) {
 			}
