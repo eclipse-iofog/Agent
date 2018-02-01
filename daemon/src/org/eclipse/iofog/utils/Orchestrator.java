@@ -12,6 +12,36 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.ConnectException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.core.NoContentException;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -22,25 +52,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.iofog.utils.configuration.Configuration;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.core.NoContentException;
-import java.io.*;
-import java.net.*;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
 
 /**
  * provides methods for IOFog controller
@@ -198,21 +209,24 @@ public class Orchestrator {
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(surl);
 		post.setConfig(config);
-		
-		CloseableHttpResponse response = client.execute(post);
-		
-		if (response.getStatusLine().getStatusCode() != 200) {
-			if (response.getStatusLine().getStatusCode() == 404)
-				throw new UnknownHostException();
-			else
-				throw new Exception();
-		}
-		
-        Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
 
-        JsonObject result = Json.createReader(in).readObject();
-        
-        response.close();
+		JsonObject result;
+		
+		try (CloseableHttpResponse response = client.execute(post)) {
+
+			if (response.getStatusLine().getStatusCode() != 200) {
+				if (response.getStatusLine().getStatusCode() == 404)
+					throw new UnknownHostException();
+				else
+					throw new Exception();
+			}
+
+			try(Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+				JsonReader jsonReader = Json.createReader(in)){
+				result = jsonReader.readObject();
+			}
+
+		}
 		return result;
 	}
 
@@ -228,7 +242,7 @@ public class Orchestrator {
 	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
 		if (!controllerUrl.toLowerCase().startsWith("https"))
 			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result = null;
+		JsonObject result;
 		
 		StringBuilder uri = new StringBuilder(controllerUrl);
 		
@@ -249,25 +263,26 @@ public class Orchestrator {
 					value = "";
 				postData.add(new BasicNameValuePair(key, value));
 			});
-		
-	
-		try {
-			initialize();
-			RequestConfig config = getRequestConfig();
-			HttpPost post = new HttpPost(uri.toString());
-			post.setConfig(config);
-			post.setEntity(new UrlEncodedFormEntity(postData));
 
-			CloseableHttpResponse response = client.execute(post);
-			
-			if (response.getStatusLine().getStatusCode() == 403){
+
+		initialize();
+		RequestConfig config = getRequestConfig();
+		HttpPost post = new HttpPost(uri.toString());
+		post.setConfig(config);
+		post.setEntity(new UrlEncodedFormEntity(postData));
+
+		try (CloseableHttpResponse response = client.execute(post);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+			 JsonReader jsonReader = Json.createReader(in)) {
+
+			if (response.getStatusLine().getStatusCode() == 403) {
 				throw new ForbiddenException();
-			} else if (response.getStatusLine().getStatusCode() == 204){
+			} else if (response.getStatusLine().getStatusCode() == 204) {
 				throw new NoContentException("");
 			}
-			
-			BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-			result = Json.createReader(in).readObject();
+
+
+			result = jsonReader.readObject();
 		} catch (Exception e) {
 			throw e;
 		}

@@ -54,8 +54,9 @@ public class ControlWebsocketHandler {
 	/**
 	 * Handler to open the websocket for the real-time control signals
 	 * 
-	 * @param ChannelHandlerContext,
-	 *            FullHttpRequest
+	 * @param ctx,
+	 * @param req,
+	 *
 	 * @return void
 	 */
 	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
@@ -92,8 +93,8 @@ public class ControlWebsocketHandler {
 	 * Handler for the real-time control signals Receive ping and send pong Send
 	 * control signals to container on configuration change
 	 * 
-	 * @param ChannelHandlerContext,
-	 *            WebSocketFrame
+	 * @param ctx,
+	 * @param frame,
 	 * @return void
 	 */
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
@@ -131,15 +132,14 @@ public class ControlWebsocketHandler {
 			ctx.channel().close();
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.controlWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
-			return;
 		}
 	}
 
 	/**
 	 * Helper method to compare the configuration map to start control signals
 	 * 
-	 * @param Map<String,
-	 *            String>, Map<String, String>
+	 * @param oldConfigMap
+	 * @param newConfigMap
 	 * @return void
 	 */
 	public void initiateControlSignal(Map<String, String> oldConfigMap, Map<String, String> newConfigMap)
@@ -180,7 +180,7 @@ public class ControlWebsocketHandler {
 	/**
 	 * Websocket path
 	 * 
-	 * @param FullHttpRequest
+	 * @param req
 	 * @return void
 	 */
 	private static String getWebSocketLocation(HttpRequest req) throws Exception {

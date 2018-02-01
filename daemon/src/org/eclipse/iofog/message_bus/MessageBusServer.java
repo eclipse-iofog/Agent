@@ -21,6 +21,7 @@ import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.core.client.ClientConsumer;
@@ -140,19 +141,6 @@ public class MessageBusServer {
 		commandlineConsumer = messageBusSession.createConsumer(Constants.commandlineAddress, String.format("receiver = '%s'", "iofog.commandline.command"));
 		commandlineConsumer.setMessageHandler(new CommandLineHandler());
 		messageBusSession.start();
-
-//		Runnable countMessages = new Runnable() {
-//			@Override
-//			public void run() {
-//				try {
-//					QueueQuery queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.address));
-//					LoggingService.logInfo(MODULE_NAME, String.valueOf(queueQuery.getMessageCount()));
-//				} catch (HornetQException e) {
-//				}
-//			}
-//		};
-//		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
-//		scheduler.scheduleAtFixedRate(countMessages, 10, 10, TimeUnit.SECONDS);
 	}
 	
 	/**
@@ -252,18 +240,22 @@ public class MessageBusServer {
 	protected void stopServer() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "stopping...");
 		if (consumers != null)
-			consumers.entrySet().forEach(entry -> {
+			consumers.forEach((key, value) -> {
 				try {
-					entry.getValue().close();
-				} catch (Exception e) {	}
+					value.close();
+				} catch (HornetQException e) {
+					LoggingService.logInfo(MODULE_NAME, e.getMessage());
+				}
 			});
 		if (commandlineConsumer != null)
 			commandlineConsumer.close();
 		if (producers != null)
-			producers.entrySet().forEach(entry -> {
+			producers.forEach((key, value) -> {
 				try {
-					entry.getValue().close();
-				} catch (Exception e) {	}
+					value.close();
+				} catch (HornetQException e) {
+					LoggingService.logInfo(MODULE_NAME, e.getMessage());
+				}
 			});
 		if (serverLocator != null)
 			serverLocator.close();

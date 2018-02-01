@@ -12,25 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
-import io.netty.util.internal.StringUtil;
-import org.eclipse.iofog.element.*;
-import org.eclipse.iofog.local_api.LocalApi;
-import org.eclipse.iofog.message_bus.MessageBus;
-import org.eclipse.iofog.process_manager.ProcessManager;
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ControllerStatus;
-import org.eclipse.iofog.utils.Orchestrator;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
-
-import javax.json.*;
-import javax.net.ssl.SSLHandshakeException;
-import javax.ws.rs.ForbiddenException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.StringReader;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +21,33 @@ import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonWriter;
+import javax.net.ssl.SSLHandshakeException;
+
+import javax.ws.rs.ForbiddenException;
+
+import org.eclipse.iofog.element.*;
+import org.eclipse.iofog.local_api.LocalApi;
+import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
+import io.netty.util.internal.StringUtil;
 
 /**
  * Field Agent module
@@ -139,10 +147,6 @@ public class FieldAgent {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
 				LoggingService.logInfo(MODULE_NAME, "post status");
-				//				if (notProvisioned()) {
-				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-				//					continue;
-				//				}
 				if (controllerNotConnected()) {
 					connected = false;
 					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
@@ -595,26 +599,30 @@ public class FieldAgent {
 	 * @return JsonArray
 	 */
 	private JsonArray readFile(String filename) {
-		try {
-			if (!Files.exists(Paths.get(filename), LinkOption.NOFOLLOW_LINKS))
-				return null;
-
-			JsonReader reader = Json.createReader(new FileReader(new File(filename)));
-			JsonObject object = reader.readObject();
-			reader.close();
-			String checksum = object.getString("checksum");
-			JsonArray data = object.getJsonArray("data");
-			if (!checksum(data.toString()).equals(checksum))
-				return null;
-			long timestamp = object.getJsonNumber("timestamp").longValue();
-			if (lastGetChangesList == 0)
-				lastGetChangesList = timestamp;
-			else
-				lastGetChangesList = Long.min(timestamp, lastGetChangesList);
-			return data;
-		} catch (Exception e) {
+		if (!Files.exists(Paths.get(filename), LinkOption.NOFOLLOW_LINKS))
 			return null;
+
+		JsonObject object = readObject(filename);
+		String checksum = object.getString("checksum");
+		JsonArray data = object.getJsonArray("data");
+		if (!checksum(data.toString()).equals(checksum))
+			return null;
+		long timestamp = object.getJsonNumber("timestamp").longValue();
+		if (lastGetChangesList == 0)
+			lastGetChangesList = timestamp;
+		else
+			lastGetChangesList = Long.min(timestamp, lastGetChangesList);
+		return data;
+	}
+
+	private JsonObject readObject(String filename){
+		JsonObject object = null;
+		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))){
+			object = reader.readObject();
+		} catch (FileNotFoundException ex){
+			LoggingService.logWarning(MODULE_NAME, "Invalid file: " + filename);
 		}
+		return object;
 	}
 
 	/**
@@ -624,17 +632,17 @@ public class FieldAgent {
 	 * @param filename - file name 
 	 */
 	private void saveFile(JsonArray data, String filename) {
-		try {
-			String checksum = checksum(data.toString());
-			JsonObject object = Json.createObjectBuilder()
-					.add("checksum", checksum)
-					.add("timestamp", lastGetChangesList)
-					.add("data", data)
-					.build();
-			JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)));
+		String checksum = checksum(data.toString());
+		JsonObject object = Json.createObjectBuilder()
+				.add("checksum", checksum)
+				.add("timestamp", lastGetChangesList)
+				.add("data", data)
+				.build();
+		try (JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)))) {
 			writer.writeObject(object);
-			writer.close();
-		} catch (Exception e) {}
+		} catch (IOException ex) {
+			LoggingService.logWarning(MODULE_NAME, ex.getMessage());
+		}
 	}
 
 	/**
@@ -783,14 +791,6 @@ public class FieldAgent {
 		
 		try {
 			provisioningResult = orchestrator.provision(key);
-			
-//			try{
-//			if(provisioningResult.getString("id").equals("")) return "";
-//			}catch(Exception e){
-//				return "";
-//			}
-//			if (!notProvisioned())
-//				deProvision();
 
 			if (provisioningResult.getString("status").equals("ok")) { 
 				StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.OK);
