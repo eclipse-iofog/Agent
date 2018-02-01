@@ -252,18 +252,16 @@ public class Orchestrator {
 			.append("/token/").append(accessToken);
 		
 		if (queryParams != null)
-			queryParams.entrySet().forEach(entry -> {
-				uri.append("/").append(entry.getKey())
-					.append("/").append(entry.getValue());
-			});
+			queryParams.forEach((key, value) -> uri.append("/").append(key)
+					.append("/").append(value));
 
-		List<NameValuePair> postData = new ArrayList<NameValuePair>();
+		List<NameValuePair> postData = new ArrayList<NameValuePair>();		
 		if (postParams != null)
-			postParams.entrySet().forEach(entry -> {
-				String value = entry.getValue().toString();
+			postParams.forEach((key, value1) -> {
+				String value = value1.toString();
 				if (value == null)
 					value = "";
-				postData.add(new BasicNameValuePair(entry.getKey(), value));
+				postData.add(new BasicNameValuePair(key, value));
 			});
 
 
