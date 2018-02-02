@@ -20,10 +20,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.concurrent.Callable;
 
 public class BluetoothApiHandler implements Callable<Object> {
+
+	private final String MODULE_NAME = "Bluetooth API";
 
 	private final FullHttpRequest req;
 	private ByteBuf outputBuffer;
@@ -52,7 +55,6 @@ public class BluetoothApiHandler implements Callable<Object> {
             b.group(group)
                     .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
-                    	
                         @Override
 						protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new HttpClientCodec());
@@ -82,7 +84,7 @@ public class BluetoothApiHandler implements Callable<Object> {
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
         } catch (Exception e) {
-        	System.out.println("Error");
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
         } finally {
             group.shutdownGracefully();
         }

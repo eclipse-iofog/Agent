@@ -256,11 +256,11 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 */
 	private void runTask(Callable<?> callable, ChannelHandlerContext ctx, HttpRequest req) {
 		final Future<?> future = executor.submit(callable);
-		future.addListener((GenericFutureListener<Future<Object>>) future1 -> {
-			if (future1.isSuccess()) {
-				sendHttpResponse(ctx, req, (FullHttpResponse) future1.get());
+		future.addListener((GenericFutureListener<Future<Object>>) f -> {
+			if (f.isSuccess()) {
+				sendHttpResponse(ctx, req, (FullHttpResponse) f.get());
 			} else {
-				ctx.fireExceptionCaught(future1.cause());
+				ctx.fireExceptionCaught(f.cause());
 				ctx.close();
 			}
 		});

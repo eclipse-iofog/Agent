@@ -114,15 +114,12 @@ public class Element {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Element element = (Element) o;
-        return Objects.equals(elementId, element.elementId) &&
-                Objects.equals(imageName, element.imageName) &&
-                Objects.equals(containerId, element.containerId);
+        return Objects.equals(elementId, element.elementId);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(elementId, imageName, containerId);
+        return Objects.hash(elementId);
     }
 
     public boolean isRootHostAccess() {

@@ -8,6 +8,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.concurrent.Callable;
 
@@ -15,6 +16,8 @@ import java.util.concurrent.Callable;
  * @author Kate Lukashick
  */
 public class HalApiHandler implements Callable<Object> {
+
+    private final String MODULE_NAME = "HAL API";
 
     private final FullHttpRequest req;
     private ByteBuf outputBuffer;
@@ -32,7 +35,7 @@ public class HalApiHandler implements Callable<Object> {
     @Override
     public Object call() {
         response = null;
-        String host = "1ocalhost";
+        String host = "localhost";
         int port = 54331;
 
         EventLoopGroup group = new NioEventLoopGroup(1);
@@ -43,7 +46,6 @@ public class HalApiHandler implements Callable<Object> {
             b.group(group)
                     .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
-
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new HttpClientCodec());
@@ -73,7 +75,7 @@ public class HalApiHandler implements Callable<Object> {
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
         } catch (Exception e) {
-            System.out.println("Error");
+            LoggingService.logWarning(MODULE_NAME, e.getMessage());
         } finally {
             group.shutdownGracefully();
         }
