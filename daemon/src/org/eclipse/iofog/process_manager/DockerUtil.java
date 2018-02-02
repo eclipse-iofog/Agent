@@ -51,6 +51,8 @@ import com.github.dockerjava.api.model.Ports.Binding;
 
 import io.netty.util.internal.StringUtil;
 
+import static org.apache.commons.lang.StringUtils.*;
+
 /**
  * provides methods for Docker commands
  * 
@@ -190,7 +192,7 @@ public class DockerUtil {
 				.add("username", registry.getUserName())
 				.add("password", registry.getPassword())
 				.add("email", registry.getUserEmail())
-				.add("auth", "")
+				.add("auth", EMPTY)
 				.build();
 		return Base64.getEncoder().encodeToString(auth.toString().getBytes(StandardCharsets.US_ASCII));
 	}
@@ -509,7 +511,7 @@ public class DockerUtil {
 	 * @param element - {@link Element}
 	 * @return boolean
 	 */
-	public boolean comprarePorts(Element element) {
+	public boolean comparePorts(Element element) {
 		List<PortMapping> elementPorts = element.getPortMappings();
 		Container container = getContainer(element.getElementId());
 		if (container == null)

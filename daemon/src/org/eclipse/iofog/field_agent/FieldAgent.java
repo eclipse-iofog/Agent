@@ -12,15 +12,13 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
-import io.netty.util.internal.StringUtil;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -34,20 +32,19 @@ import java.io.FileWriter;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
 
+import static io.netty.util.internal.StringUtil.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
-import static org.eclipse.iofog.utils.Constants.FIELD_AGENT;
-import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
-import static org.eclipse.iofog.utils.Constants.VERSION;
+import static org.eclipse.iofog.utils.Constants.*;
 
 /**
  * Field Agent module
@@ -137,16 +134,6 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	/**
-	 * checks if IOFog controller connection is broken
-	 * 
-	 * @return	boolean
-	 * @throws	Exception
-	 */
-	private boolean controllerNotConnected() throws Exception {
-		return !StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping();
-	}
-
-	/**
 	 * sends IOFog instance status to IOFog controller
 	 * 
 	 */
@@ -165,13 +152,12 @@ public class FieldAgent implements IOFogModule {
 				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
 				//					continue;
 				//				}
-				connected = checkConnectionToController(false);
+				connected = isControllerConnected(false);
 				if(!connected)
 					continue;
 				logInfo("verified");
 
-				try {
-					logInfo("sending...");
+				logInfo("sending...");
 					JsonObject result = orchestrator.doCommand("status", null, status);
 					if (!result.getString("status").equals("ok")){
 						throw new Exception("error from fog controller");
@@ -181,15 +167,12 @@ public class FieldAgent implements IOFogModule {
 						connected = true;
 						postFogConfig();
 					}
-				} catch(ForbiddenException je){
-						deProvision();
-				} catch (Exception e) {
-					logWarning("unable to send status : " + e.getMessage());
-					connected = false;
-				}
 			} catch (CertificateException | SSLHandshakeException e) {
 				verificationFailed();
+			} catch(ForbiddenException e){
+				deProvision();
 			} catch (Exception e) {
+				logWarning("unable to send status : " + e.getMessage());
 				connected = false;
 			}
 		}
@@ -219,7 +202,7 @@ public class FieldAgent implements IOFogModule {
 				Thread.sleep(Configuration.getGetChangesFreq() * 1000);
 
 				logInfo("get changes list");
-				if (notProvisioned() || checkConnectionToController(false)) {
+				if (notProvisioned() || !isControllerConnected(false)) {
 					continue;
 				}
 
@@ -272,11 +255,10 @@ public class FieldAgent implements IOFogModule {
 	 * gets list of registries from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	public void loadRegistries(boolean fromFile) throws Exception {
+	public void loadRegistries(boolean fromFile) {
 		logInfo("get registries");
-		if (notProvisioned() || checkConnectionToController(fromFile)) {
+		if (notProvisioned() || !isControllerConnected(fromFile)) {
 			return;
 		}
 
@@ -323,15 +305,14 @@ public class FieldAgent implements IOFogModule {
 	 * gets list of IOElement configurations from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	private void loadElementsConfig(boolean fromFile) throws Exception {
-		logInfo("get elemets config");
+	private void loadElementsConfig(boolean fromFile) {
+		logInfo("get elements config");
 		if (notProvisioned() ) {
 			return;
 		}
 
-		if(checkConnectionToController(fromFile))
+		if(!isControllerConnected(fromFile))
 			return;
 
 		String filename = "configs.json";
@@ -371,11 +352,10 @@ public class FieldAgent implements IOFogModule {
 	 * gets list of IOElement routings from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	private void loadRoutes(boolean fromFile) throws Exception {
+	private void loadRoutes(boolean fromFile) {
 		logInfo("get routes");
-		if (notProvisioned() || checkConnectionToController(fromFile)) {
+		if (notProvisioned() || !isControllerConnected(fromFile)) {
 			return;
 		}
 
@@ -423,11 +403,10 @@ public class FieldAgent implements IOFogModule {
 	 * gets list of IOElements from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
-	 * @throws Exception
 	 */
-	private void loadElementsList(boolean fromFile) throws Exception {
+	private void loadElementsList(boolean fromFile) {
 		logInfo("get elements");
-		if (notProvisioned() || checkConnectionToController(fromFile)) {
+		if (notProvisioned() || !isControllerConnected(fromFile)) {
 			return;
 		}
 
@@ -501,10 +480,9 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * pings IOFog controller
-	 * 
-	 * @throws Exception
+	 *
 	 */
-	private boolean ping() throws Exception {
+	private boolean ping() {
 		if (notProvisioned()) {
 			return false;
 		}
@@ -519,7 +497,7 @@ public class FieldAgent implements IOFogModule {
 			verificationFailed();
 		} catch (Exception e) {
 			StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.BROKEN);
-			logWarning(e.getMessage());
+			logWarning("Error pinging for controller: " + e.getMessage());
 		}
 		return false;
 	}
@@ -527,15 +505,16 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * pings IOFog controller
 	 * 
-	 * @throws Exception
 	 */
 	private final Runnable pingController = () -> {
 		while (true) {
 			try {
-				Thread.sleep(Constants.PING_CONTROLLER_FREQ_SECONDS * 1000);
+				Thread.sleep(PING_CONTROLLER_FREQ_SECONDS * 1000);
 				logInfo("ping controller");
 				ping();
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				logInfo("exception pinging controller : " + e.getMessage());
+			}
 		}
 	};
 
@@ -547,7 +526,7 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private String checksum(String data) {
 		try {
-			byte[] base64 = Base64.getEncoder().encode(data.getBytes(StandardCharsets.UTF_8));
+			byte[] base64 = Base64.getEncoder().encode(data.getBytes(UTF_8));
 			MessageDigest md = MessageDigest.getInstance("SHA1");
 			md.update(base64);
 			byte[] mdbytes = md.digest();
@@ -557,6 +536,7 @@ public class FieldAgent implements IOFogModule {
 			}
 			return sb.toString();
 		} catch (Exception e) {
+			logInfo("Error computing checksum : " + e.getMessage());
 			return "";
 		}
 	}
@@ -570,7 +550,7 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private JsonArray readFile(String filename) {
 		try {
-			if (!Files.exists(Paths.get(filename), LinkOption.NOFOLLOW_LINKS))
+			if (!Files.exists(Paths.get(filename), NOFOLLOW_LINKS))
 				return null;
 
 			JsonReader reader = Json.createReader(new FileReader(new File(filename)));
@@ -587,6 +567,7 @@ public class FieldAgent implements IOFogModule {
 				lastGetChangesList = Long.min(timestamp, lastGetChangesList);
 			return data;
 		} catch (Exception e) {
+			logInfo("Error reading file '" + filename + "' : " + e.getMessage());
 			return null;
 		}
 	}
@@ -598,27 +579,26 @@ public class FieldAgent implements IOFogModule {
 	 * @param filename - file name 
 	 */
 	private void saveFile(JsonArray data, String filename) {
-		try {
-			String checksum = checksum(data.toString());
-			JsonObject object = Json.createObjectBuilder()
-					.add("checksum", checksum)
-					.add("timestamp", lastGetChangesList)
-					.add("data", data)
-					.build();
-			JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)));
+		String checksum = checksum(data.toString());
+		JsonObject object = Json.createObjectBuilder()
+				.add("checksum", checksum)
+				.add("timestamp", lastGetChangesList)
+				.add("data", data)
+				.build();
+		try (JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)))) {
 			writer.writeObject(object);
-			writer.close();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			logInfo("Error saving data to file '" + filename + "': " + e.getMessage());
+		}
 	}
 
 	/**
 	 * gets IOFog instance configuration from IOFog controller
 	 * 
-	 * @throws Exception
 	 */
-	private void getFogConfig() throws Exception {
+	private void getFogConfig() {
 		logInfo("get fog config");
-		if (notProvisioned() || checkConnectionToController(false)) {
+		if (notProvisioned() || !isControllerConnected(false)) {
 			return;
 		}
 
@@ -682,9 +662,6 @@ public class FieldAgent implements IOFogModule {
 			if (Configuration.getGetChangesFreq() != getChangesFreq)
 				instanceConfig.put(GET_CHANGES_FREQ.getCommandName(), getChangesFreq);
 
-			System.out.println("FieldAgent : isIsolatedDockerContainer = " + isIsolatedDockerContainer);
-			System.out.println("FieldAgent : isolatedDockerContainerValue = " + isolatedDockerContainerValue);
-			System.out.println("FieldAgent : Configuration.isIsolatedDockerContainers = " + Configuration.isIsolatedDockerContainers());
 			if (Configuration.isIsolatedDockerContainers() != isIsolatedDockerContainer)
 				instanceConfig.put(ISOLATED_DOCKER_CONTAINER.getCommandName(), isolatedDockerContainerValue);
 
@@ -701,29 +678,29 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * sends IOFog instance configuration to IOFog controller
 	 * 
-	 * @throws Exception
 	 */
-	public void postFogConfig() throws Exception {
+	public void postFogConfig() {
 		logInfo("post fog config");
-		if (notProvisioned() || checkConnectionToController(false)) {
+		if (notProvisioned() || !isControllerConnected(false)) {
 			return;
 		}
 
-		try {
-			Map<String, Object> postParams = new HashMap<>();
-			postParams.put(NETWORK_INTERFACE.getJsonProperty(), Configuration.getNetworkInterface());
-			postParams.put(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl());
-			postParams.put(DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getDiskLimit());
-			postParams.put(DISK_DIRECTORY.getJsonProperty(), Configuration.getDiskDirectory());
-			postParams.put(MEMORY_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getMemoryLimit());
-			postParams.put(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getCpuLimit());
-			postParams.put(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getLogDiskLimit());
-			postParams.put(LOG_DISK_DIRECTORY.getJsonProperty(), Configuration.getLogDiskDirectory());
-			postParams.put(LOG_FILE_COUNT.getJsonProperty(), Configuration.getLogFileCount());
-			postParams.put(STATUS_UPDATE_FREQ.getJsonProperty(), Configuration.getStatusUpdateFreq());
-			postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
-			postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
+		logInfo(" ilary posting fog config");
+		Map<String, Object> postParams = new HashMap<>();
+		postParams.put(NETWORK_INTERFACE.getJsonProperty(), Configuration.getNetworkInterface());
+		postParams.put(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl());
+		postParams.put(DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getDiskLimit());
+		postParams.put(DISK_DIRECTORY.getJsonProperty(), Configuration.getDiskDirectory());
+		postParams.put(MEMORY_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getMemoryLimit());
+		postParams.put(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getCpuLimit());
+		postParams.put(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getLogDiskLimit());
+		postParams.put(LOG_DISK_DIRECTORY.getJsonProperty(), Configuration.getLogDiskDirectory());
+		postParams.put(LOG_FILE_COUNT.getJsonProperty(), Configuration.getLogFileCount());
+		postParams.put(STATUS_UPDATE_FREQ.getJsonProperty(), Configuration.getStatusUpdateFreq());
+		postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
+		postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
 
+		try {
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
 			if (!result.getString("status").equals("ok"))
 				throw new Exception("error from fog controller");
@@ -745,26 +722,17 @@ public class FieldAgent implements IOFogModule {
 	 */
 	public JsonObject provision(String key) {
 		logInfo("provisioning");
-		JsonObject provisioningResult = null;
-		
+		JsonObject provisioningResult;
+
 		try {
 			provisioningResult = orchestrator.provision(key);
-			
-//			try{
-//			if(provisioningResult.getString("id").equals("")) return "";
-//			}catch(Exception e){
-//				return "";
-//			}
-//			if (!notProvisioned())
-//				deProvision();
 
-			if (provisioningResult.getString("status").equals("ok")) { 
+			if (provisioningResult.getString("status").equals("ok")) {
 				StatusReporter.setFieldAgentStatus().setContollerStatus(OK);
 				Configuration.setInstanceId(provisioningResult.getString("id"));
 				Configuration.setAccessToken(provisioningResult.getString("token"));
-				try {
-					Configuration.saveConfigUpdates();
-				} catch (Exception e) {}
+
+				Configuration.saveConfigUpdates();
 
 				postFogConfig();
 				loadRegistries(false);
@@ -774,34 +742,27 @@ public class FieldAgent implements IOFogModule {
 				notifyModules();
 
 			}
+		} catch (CertificateException | SSLHandshakeException e ) {
+			verificationFailed();
+			provisioningResult = buildProvisionFailResponse("Certificate error", e);
+		} catch (ConnectException e) {
+			StatusReporter.setFieldAgentStatus().setControllerVerified(true);
+			provisioningResult = buildProvisionFailResponse("Connection error: invalid network interface.", e);
+		} catch (UnknownHostException e) {
+			StatusReporter.setFieldAgentStatus().setControllerVerified(false);
+			provisioningResult = buildProvisionFailResponse("Connection error: unable to connect to fog controller.", e);
 		} catch (Exception e) {
-			
-			if (e instanceof CertificateException || e instanceof SSLHandshakeException) {
-				verificationFailed();
-				provisioningResult = Json.createObjectBuilder()
-						.add("status", "failed")
-						.add("errormessage", "Certificate error")
-						.build();
-			} else {
-//				StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.NOT_PROVISIONED);
-				logWarning("provisioning failed - " + e.getMessage());
-				
-				if (e instanceof ConnectException) {
-					StatusReporter.setFieldAgentStatus().setControllerVerified(true);
-					provisioningResult = Json.createObjectBuilder()
-							.add("status", "failed")
-							.add("errormessage", "Connection error: invalid network interface.")
-							.build();
-				} else if (e instanceof UnknownHostException) {
-					StatusReporter.setFieldAgentStatus().setControllerVerified(false);
-					provisioningResult = Json.createObjectBuilder()
-							.add("status", "failed")
-							.add("errormessage", "Connection error: unable to connect to fog controller.")
-							.build();
-				}
-			}
+			provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
 		}
 		return provisioningResult;
+	}
+
+	private JsonObject buildProvisionFailResponse(String message, Exception e) {
+		logWarning("provisioning failed - " + e.getMessage());
+		return Json.createObjectBuilder()
+				.add("status", "failed")
+				.add("errormessage", message)
+				.build();
 	}
 
 	/**
@@ -818,27 +779,29 @@ public class FieldAgent implements IOFogModule {
 	 * does de-provisioning  
 	 * 
 	 * @return String
-	 * @throws Exception
 	 */
-	public String deProvision() throws Exception {
+	public String deProvision() {
 		logInfo("deprovisioning");
+
 		if (notProvisioned()) {
 			return "\nFailure - not provisioned";
 		}
 
-		if (checkConnectionToController(false)) {
+		if (!isControllerConnected(false)) {
 			return "\nFailure - not connected to controller";
 		}
 
 		StatusReporter.setFieldAgentStatus().setContollerStatus(NOT_PROVISIONED);
-		Configuration.setInstanceId("");
-		Configuration.setAccessToken("");
 		try {
+			Configuration.setInstanceId("");
+			Configuration.setAccessToken("");
 			Configuration.saveConfigUpdates();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			logInfo("error saving config updates : " + e.getMessage());
+		}
 		elementManager.clear();
 		notifyModules();
-		return "\nSuccess - tokens and identifiers and keys removed";
+		return "\nSuccess - tokens, identifiers and keys removed";
 	}
 
 	/**
@@ -848,18 +811,18 @@ public class FieldAgent implements IOFogModule {
 	public void instanceConfigUpdated() {
 		try {
 			postFogConfig();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			logInfo("error posting updated for config : " + e.getMessage());
+		}
 		orchestrator.update();
 	}
 
 	/**
 	 * starts Field Agent module
 	 * 
-	 * @throws Exception
 	 */
-	public void start() throws Exception {
-
-		if (StringUtil.isNullOrEmpty(Configuration.getInstanceId())	|| StringUtil.isNullOrEmpty(Configuration.getAccessToken()))
+	public void start() {
+		if (isNullOrEmpty(Configuration.getInstanceId()) || isNullOrEmpty(Configuration.getAccessToken()))
 			StatusReporter.setFieldAgentStatus().setContollerStatus(NOT_PROVISIONED);
 
 		elementManager = ElementManager.getInstance();
@@ -879,8 +842,14 @@ public class FieldAgent implements IOFogModule {
 		new Thread(postStatus, "FieldAgent : PostStatus").start();
 	}
 
-	private boolean checkConnectionToController(boolean fromFile) throws Exception {
-		if (controllerNotConnected() && !fromFile) {
+    /**
+     * checks if IOFog controller connection is broken
+     *
+     * @param fromFile
+     * @return	boolean
+     */
+    private boolean isControllerConnected(boolean fromFile) {
+		if ((!StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping()) && !fromFile) {
 			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
 				logWarning("connection to controller has broken");
 			else

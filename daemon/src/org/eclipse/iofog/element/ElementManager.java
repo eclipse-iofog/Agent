@@ -34,6 +34,7 @@ public class ElementManager {
 	
 	private ElementManager() {
 		elements = new ArrayList<>();
+		currentElements = new ArrayList<>();
 		routes = new HashMap<>();
 		configs = new HashMap<>();
 		registries = new ArrayList<>();

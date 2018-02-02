@@ -38,8 +38,8 @@ import java.util.*;
 import static java.io.File.separatorChar;
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
-import static org.apache.commons.lang.StringUtils.rightPad;
+import static java.util.Collections.list;
+import static org.apache.commons.lang.StringUtils.*;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.CONFIG_DIR;
@@ -156,15 +156,12 @@ public final class Configuration {
 
 	public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters) throws ConfigurationItemException{
 
-		HashMap<String, String> result = new HashMap<String, String>();
+		HashMap<String, String> result = new HashMap<>();
 
 		for(String option : parameters){
 			CommandLineConfigParam cmdOption = getCommandByName(option)
 					.orElseThrow(() -> new ConfigurationItemException("Invalid parameter -" + option));
-			String value = getNode(cmdOption.getXmlTag());
-			LoggingService.logInfo(MODULE_NAME, "method : getOldNodeValuesForParameters, " +
-					cmdOption.getXmlTag() + " = " + value);
-			result.put(cmdOption.getCommandName(), value/*getNode(cmdOption.getXmlTag())*/);
+			result.put(cmdOption.getCommandName(), getNode(cmdOption.getXmlTag()));
 		}
 
 		return result;
@@ -207,7 +204,7 @@ public final class Configuration {
 			
 			if(value.startsWith("+")) value = value.substring(1);
 			
-			if(cmdOption == null || option == null || value == null || value.trim() == "" || option.trim() == ""){
+			if(isBlank(option) || isBlank(value)){
 				if(!option.equals(CONTROLLER_CERT.getCommandName())){
 					messageMap.put("Parameter error", "Command or value is invalid"); break;
 				}
@@ -331,7 +328,6 @@ public final class Configuration {
 					setGetChangesFreq(Integer.parseInt(value));
 					break;
 				case ISOLATED_DOCKER_CONTAINER:
-					LoggingService.logInfo(MODULE_NAME, "method : setConfig, isolated_docker_container = " + value);
 					setNode(ISOLATED_DOCKER_CONTAINER.getXmlTag(), value);
 					setIsolatedDockerContainers(!value.equals("off"));
 					break;
@@ -353,13 +349,13 @@ public final class Configuration {
 	private static boolean isValidNetworkInterface(String eth) {
 		try {
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-	        for (NetworkInterface networkInterface : Collections.list(networkInterfaces)) {
+	        for (NetworkInterface networkInterface : list(networkInterfaces)) {
 	        	if (networkInterface.getName().equalsIgnoreCase(eth))
 	        		return true;
 	        }
 		} catch (Exception e) {
+			LoggingService.logInfo(MODULE_NAME, "Error validating network interface : " + e.getMessage());
 		}
-        	
 		return false;
 	}
 	
@@ -390,11 +386,7 @@ public final class Configuration {
 		configFile = builder.parse(CONFIG_DIR);
 		configFile.getDocumentElement().normalize();
 
-		NodeList nodes = configFile.getElementsByTagName("config");
-		if (nodes.getLength() != 1) {
-			throw new ConfigurationItemException("<config> element not found or defined more than once");
-		}
-		configElement = (Element) nodes.item(0);
+		configElement = (Element) getFirstNodeByTagName("config");
 
 		setInstanceId(getNode(CONFIG_INSTANCE_ID));
 		setAccessToken(getNode(CONFIG_ACCESS_TOKEN));
@@ -408,23 +400,22 @@ public final class Configuration {
 		setCpuLimit(Float.parseFloat(getNode(PROCESSOR_CONSUMPTION_LIMIT.getXmlTag())));
 		setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY.getXmlTag()));
 		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag())));
-		//setLogFileCount(Integer.parseInt(configElement.getElementsByTagName(CONFIG_LOG_FILE_COUNT).item(0).getTextContent()));
 		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT.getXmlTag())));
 		try {
 			setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ.getXmlTag())));
-		} catch (Exception e) {
+		} catch (ConfigurationItemException e) {
 			setGetChangesFreq(20);
 			createConfigProperty(GET_CHANGES_FREQ);
 		}
 		try {
 			setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ.getXmlTag())));
-		} catch (Exception e) {
+		} catch (ConfigurationItemException e) {
 			setStatusUpdateFreq(10);
 			createConfigProperty(STATUS_UPDATE_FREQ);
 		}
 		try {
 			setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER.getXmlTag()).equals("off"));
-		} catch (Exception e) {
+		} catch (ConfigurationItemException e) {
 			setIsolatedDockerContainers(true);
 			createConfigProperty(ISOLATED_DOCKER_CONTAINER);
 		}
@@ -432,6 +423,7 @@ public final class Configuration {
 
 	// this code will be triggered in case of iofog updated (not newly installed) and add new option for config
 	private static void createConfigProperty(CommandLineConfigParam cmdParam) throws Exception {
+		// TODO: add appropriate handling of case when 0 nodes found or multiple before adding new property to file
 		Element el = configFile.createElement(cmdParam.getXmlTag());
 		el.appendChild(configFile.createTextNode(cmdParam.getDefaultValue()));
 		configElement.appendChild(el);
@@ -503,17 +495,13 @@ public final class Configuration {
 		Configuration.logDiskDirectory = SNAP_COMMON + logDiskDirectory;
 	}
 
-	public static void setAccessToken(String accessToken) {
-		try {
-			setNode(CONFIG_ACCESS_TOKEN, accessToken);
-		} catch (Exception e){}
+	public static void setAccessToken(String accessToken) throws ConfigurationItemException {
+		setNode(CONFIG_ACCESS_TOKEN, accessToken);
 		Configuration.accessToken = accessToken;
 	}
 
-	public static void setInstanceId(String instanceId) {
-		try {
-			setNode(CONFIG_INSTANCE_ID, instanceId);
-		} catch (Exception e){}
+	public static void setInstanceId(String instanceId) throws ConfigurationItemException {
+		setNode(CONFIG_INSTANCE_ID, instanceId);
 		Configuration.instanceId = instanceId;
 	}
 

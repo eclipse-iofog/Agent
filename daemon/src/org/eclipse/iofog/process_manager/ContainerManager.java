@@ -12,16 +12,18 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.Registry;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.Constants.ElementState;
+import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Image;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.eclipse.iofog.utils.Constants.ElementState.*;
 
 /**
  * provides methods to manage Docker containers
@@ -88,7 +90,7 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
 
 			LoggingService.logInfo(MODULE_NAME, "creating container");
-			String hostName = "";
+			String hostName = EMPTY;
 			if (!element.isRootHostAccess())
 				hostName = Orchestrator.getInetAddress().getHostAddress();
 			String id = docker.createContainer(element, hostName);
@@ -98,7 +100,7 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, "created");
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME, ex.getMessage());
-			StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(ElementState.FAILED_VERIFICATION);
+			StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(FAILED_VERIFICATION);
 			throw ex;
 		}
 	}
@@ -109,17 +111,17 @@ public class ContainerManager {
 	 */
 	private void startElement() {
 		Element element = (Element) task.data;
-		StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(ElementState.STARTING);
+		StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(STARTING);
 		LoggingService.logInfo(MODULE_NAME, String.format("starting container \"%s\"", element.getImageName()));
 		try {
 			docker.startContainer(element.getContainerId());
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" started", element.getImageName()));
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
-			StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(ElementState.RUNNING);
+			StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(RUNNING);
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
 					String.format("container \"%s\" not found - %s", element.getImageName(), ex.getMessage()));
-			StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(ElementState.STOPPED);
+			StatusReporter.setProcessManagerStatus().getElementStatus(element.getElementId()).setStatus(STOPPED);
 		}
 	}
 	
