@@ -12,14 +12,26 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.TransportConfiguration;
-import org.hornetq.api.core.client.*;
+import org.hornetq.api.core.client.ClientConsumer;
+import org.hornetq.api.core.client.ClientMessage;
+import org.hornetq.api.core.client.ClientProducer;
+import org.hornetq.api.core.client.ClientSession;
 import org.hornetq.api.core.client.ClientSession.QueueQuery;
+import org.hornetq.api.core.client.ClientSessionFactory;
+import org.hornetq.api.core.client.HornetQClient;
+import org.hornetq.api.core.client.ServerLocator;
 import org.hornetq.core.config.impl.ConfigurationImpl;
 import org.hornetq.core.remoting.impl.invm.InVMAcceptorFactory;
 import org.hornetq.core.remoting.impl.invm.InVMConnectorFactory;
@@ -29,11 +41,6 @@ import org.hornetq.core.server.HornetQServers;
 import org.hornetq.core.server.JournalType;
 import org.hornetq.core.settings.impl.AddressFullMessagePolicy;
 import org.hornetq.core.settings.impl.AddressSettings;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * HornetQ server
@@ -134,19 +141,6 @@ public class MessageBusServer {
 		commandlineConsumer = messageBusSession.createConsumer(Constants.commandlineAddress, String.format("receiver = '%s'", "iofog.commandline.command"));
 		commandlineConsumer.setMessageHandler(new CommandLineHandler());
 		messageBusSession.start();
-
-//		Runnable countMessages = new Runnable() {
-//			@Override
-//			public void run() {
-//				try {
-//					QueueQuery queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.address));
-//					LoggingService.logInfo(MODULE_NAME, String.valueOf(queueQuery.getMessageCount()));
-//				} catch (HornetQException e) {
-//				}
-//			}
-//		};
-//		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
-//		scheduler.scheduleAtFixedRate(countMessages, 10, 10, TimeUnit.SECONDS);
 	}
 	
 	/**
@@ -246,25 +240,23 @@ public class MessageBusServer {
 	protected void stopServer() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "stopping...");
 		if (consumers != null)
-			consumers.entrySet().forEach(entry -> {
+			consumers.forEach((key, value) -> {
 				try {
-					entry.getValue().close();
-				} catch (Exception e) {
-					LoggingService.logWarning(MODULE_NAME, e.getMessage());
+					value.close();
+				} catch (HornetQException e) {
+					LoggingService.logInfo(MODULE_NAME, e.getMessage());
 				}
 			});
-		if (commandlineConsumer != null) {
+		if (commandlineConsumer != null)
 			commandlineConsumer.close();
-		}
-		if (producers != null) {
-			producers.entrySet().forEach(entry -> {
+		if (producers != null)
+			producers.forEach((key, value) -> {
 				try {
-					entry.getValue().close();
-				} catch (Exception e) {
-					LoggingService.logWarning(MODULE_NAME, e.getMessage());
+					value.close();
+				} catch (HornetQException e) {
+					LoggingService.logInfo(MODULE_NAME, e.getMessage());
 				}
 			});
-		}
 		if (serverLocator != null)
 			serverLocator.close();
 		if (sf != null)
