@@ -239,7 +239,11 @@ public class FieldAgent {
 				StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
 				JsonObject changes = result.getJsonObject("changes");
-				if (changes.getBoolean("config") && !initialization)
+                if (changes.getBoolean("reboot") && !initialization) {
+                    reboot();
+                }
+
+                if (changes.getBoolean("config") && !initialization)
 					getFogConfig();
 
 				if (changes.getBoolean("registries") || initialization) {
@@ -263,6 +267,22 @@ public class FieldAgent {
 			} catch (Exception e) {}
 		}
 	};
+
+    /**
+     * Remote reboot of Linux machine from IOFog controller
+     *
+     */
+    private void reboot() {
+        try {
+            LoggingService.logInfo(MODULE_NAME, "start rebooting");
+            Runtime.getRuntime().exec("shutdown -r now");
+            System.exit(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+            LoggingService.logWarning(MODULE_NAME, "can't start rebooting");
+        }
+        System.exit(0);
+    }
 
 	/**
 	 * gets list of registries from file or IOFog controller
