@@ -276,12 +276,9 @@ public class FieldAgent {
         try {
             LoggingService.logInfo(MODULE_NAME, "start rebooting");
             Runtime.getRuntime().exec("shutdown -r now");
-            System.exit(0);
         } catch (IOException e) {
-            e.printStackTrace();
-            LoggingService.logWarning(MODULE_NAME, "can't start rebooting");
+            LoggingService.logWarning(MODULE_NAME, "can't start rebooting: \n" + e.getMessage());
         }
-        System.exit(0);
     }
 
 	/**
