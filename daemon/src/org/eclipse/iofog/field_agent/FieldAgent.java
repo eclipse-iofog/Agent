@@ -103,7 +103,7 @@ public class FieldAgent {
 		result.put("repositorystatus", StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus());
 		result.put("systemtime", StatusReporter.getStatusReporterStatus().getSystemTime());
 		result.put("laststatustime", StatusReporter.getStatusReporterStatus().getLastUpdate());
-		result.put("ipaddress", StatusReporter.getLocalApiStatus().getCurrentIpAddress());
+		result.put("ipaddress", Orchestrator.getCurrentIpAddress());
 		result.put("processedmessages", StatusReporter.getMessageBusStatus().getProcessedMessages());
 		result.put("elementmessagecounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerElement());
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());

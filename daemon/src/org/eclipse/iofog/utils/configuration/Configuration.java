@@ -587,11 +587,7 @@ public final class Configuration {
 	 */
 	public static String getConfigReport() {
 		String ipAddress;
-		try {
-			ipAddress = Orchestrator.getInetAddress().getHostAddress();
-		} catch (Exception e) {
-			ipAddress = "unable to retrieve ip address";
-		}
+		ipAddress = Orchestrator.getCurrentIpAddress();
 
 		StringBuilder result = new StringBuilder();
 		result.append(

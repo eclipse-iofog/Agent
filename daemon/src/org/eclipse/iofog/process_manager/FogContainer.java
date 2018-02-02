@@ -138,7 +138,7 @@ public class FogContainer {
 			docker.pullImage(element.getImageName());
 			LoggingService.logInfo(MODULE_NAME, String.format("pulled \"%s\"", element.getImageName()));
 
-			String hostName = Orchestrator.getInetAddress().getHostAddress();
+			String hostName = Orchestrator.getCurrentIpAddress();
 			containerId = docker.createContainer(element, hostName);
 			element.setContainerId(containerId);
 			element.setContainerIpAddress(docker.getContainerIpAddress(containerId));
