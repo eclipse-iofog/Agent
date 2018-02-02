@@ -56,7 +56,6 @@ public class HalApiHandler implements Callable<Object> {
                                         FullHttpResponse res = (FullHttpResponse) msg;
                                         outputBuffer.writeBytes(res.content());
                                         response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, res.status(), outputBuffer);
-                                        System.out.println("set http response #1 at: " + System.currentTimeMillis());
                                         HttpUtil.setContentLength(response, outputBuffer.readableBytes());
                                         response.headers().set(res.headers());
                                         ctx.channel().close().sync();
@@ -81,7 +80,6 @@ public class HalApiHandler implements Callable<Object> {
         }
 
         if (response == null) {
-            System.out.println("response == null at: " + System.currentTimeMillis());
             String responseString = "{\"error\":\"unable to reach hal container!\"}";
             outputBuffer.writeBytes(responseString.getBytes());
             response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, outputBuffer);
