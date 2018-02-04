@@ -213,18 +213,7 @@ public class FieldAgent {
 				Thread.sleep(Configuration.getGetChangesFreq() * 1000);
 
 				LoggingService.logInfo(MODULE_NAME, "get changes list");
-				if (notProvisioned()) {
-					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-					continue;
-				}
-
-				if (controllerNotConnected()) {
-					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-						LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-					else
-						verficationFailed();
-					continue;
-				}
+				if (notWorking()) continue;
 
 				Map<String, Object> queryParams = new HashMap<>();
 				queryParams.put("timestamp", lastGetChangesList);
@@ -279,20 +268,9 @@ public class FieldAgent {
 	 */
 	public void loadRegistries(boolean fromFile) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get registries");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
-			return;
-		}
+        if (notWorking(fromFile)) return;
 
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
-
-		String filename = "registries.json";
+        String filename = "registries.json";
 		try {
 			JsonArray registriesList = null;
 			if (fromFile) {
@@ -331,7 +309,23 @@ public class FieldAgent {
 		}
 	}
 
-	/**
+    private boolean notWorking(boolean fromFile) throws Exception {
+        if (notProvisioned()) {
+            LoggingService.logWarning(MODULE_NAME, "not provisioned");
+            return true;
+        }
+
+        if (controllerNotConnected() && !fromFile) {
+            if (StatusReporter.getFieldAgentStatus().isControllerVerified())
+                LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
+            else
+                verficationFailed();
+            return true;
+        }
+        return false;
+    }
+
+    /**
 	 * gets list of IOElement configurations from file or IOFog controller
 	 * 
 	 * @param fromFile - load from file 	
@@ -339,18 +333,7 @@ public class FieldAgent {
 	 */
 	private void loadElementsConfig(boolean fromFile) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get elemets config");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
-			return;
-		}
-
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+        if (notWorking(fromFile)) return;
 
 		String filename = "configs.json";
 		try {
@@ -393,18 +376,7 @@ public class FieldAgent {
 	 */
 	private void loadRoutes(boolean fromFile) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get routes");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
-			return;
-		}
-
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+        if (notWorking(fromFile)) return;
 
 		String filename = "routes.json";
 		try {
@@ -454,18 +426,7 @@ public class FieldAgent {
 	 */
 	private void loadElementsList(boolean fromFile) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get elements");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
-			return;
-		}
-
-		if (controllerNotConnected() && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+        if (notWorking(fromFile)) return;
 
 		String filename = "elements.json";
 		try {
@@ -655,18 +616,7 @@ public class FieldAgent {
 	 */
 	private void getFogConfig() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get fog config");
-		if (notProvisioned()) {
-			LoggingService.logWarning(MODULE_NAME, "not provisioned");
-			return;
-		}
-
-		if (controllerNotConnected()) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				LoggingService.logWarning(MODULE_NAME, "connection to controller has broken");
-			else
-				verficationFailed();
-			return;
-		}
+		if (notWorking()) return;
 
 		if (initialization) {
 			postFogConfig();
@@ -733,6 +683,10 @@ public class FieldAgent {
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
 		}
+	}
+
+	private boolean notWorking() throws Exception {
+		return notWorking(false);
 	}
 
 	/**
