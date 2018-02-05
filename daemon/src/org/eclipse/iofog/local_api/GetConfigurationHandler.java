@@ -37,7 +37,7 @@ import io.netty.buffer.ByteBuf;
  * @author ashita
  * @since 2016
  */
-public class GetConfigurationHandler implements Callable<Object> {
+public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 
 	private final String MODULE_NAME = "Local API";
 
@@ -56,7 +56,7 @@ public class GetConfigurationHandler implements Callable<Object> {
 	 *
 	 * @return Object
 	 */
-	public Object handleGetConfigurationRequest() {
+	public FullHttpResponse handleGetConfigurationRequest() {
 		if (req.method() != POST) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
@@ -124,7 +124,7 @@ public class GetConfigurationHandler implements Callable<Object> {
 	 * @return Object
 	 */
 	@Override
-	public Object call() throws Exception {
+	public FullHttpResponse call() throws Exception {
 		return handleGetConfigurationRequest();
 	}
 }

@@ -29,13 +29,13 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 
-public class BluetoothApiHandler implements Callable<Object> {
+public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
 	private final FullHttpRequest req;
 	private ByteBuf outputBuffer;
 	private final byte[] content;
 	public static Channel channel;
-	private HttpResponse response;
+	private FullHttpResponse response;
 
 	
 	public BluetoothApiHandler(FullHttpRequest req, ByteBuf outputBuffer, byte[] content) {
@@ -45,8 +45,7 @@ public class BluetoothApiHandler implements Callable<Object> {
 	}
 
 	@Override
-	public Object call() throws Exception {
-		response = null;
+	public FullHttpResponse call() throws Exception {
 		String host = "localhost";
 		int port = 10500;
 		

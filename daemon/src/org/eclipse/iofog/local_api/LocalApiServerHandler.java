@@ -159,43 +159,43 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		}
 
 		if (request.uri().equals("/v2/config/get")) {
-			Callable<? extends Object> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().equals("/v2/messages/next")) {
-			Callable<? extends Object> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().equals("/v2/messages/new")) {
-			Callable<? extends Object> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().equals("/v2/messages/query")) {
-			Callable<? extends Object> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().startsWith("/v2/restblue")) {
-			Callable<? extends Object> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content); 
+			Callable<FullHttpResponse> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().startsWith("/v2/log")) {
-			Callable<? extends Object> callable = new LogApiHandler(request, ctx.alloc().buffer(), content); 
+			Callable<FullHttpResponse> callable = new LogApiHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().startsWith("/v2/commandline")) {
-			Callable<? extends Object> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content); 
+			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
@@ -252,8 +252,8 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * @param callable, ctx, req
 	 * @return void
 	 */
-	private void runTask(Callable<? extends Object> callable, ChannelHandlerContext ctx, HttpRequest req) {
-		final Future<? extends Object> future = executor.submit(callable);
+	private void runTask(Callable<FullHttpResponse> callable, ChannelHandlerContext ctx, HttpRequest req) {
+		final Future<FullHttpResponse> future = executor.submit(callable);
 		future.addListener(new GenericFutureListener<Future<Object>>() {
 			public void operationComplete(Future<Object> future)
 					throws Exception {

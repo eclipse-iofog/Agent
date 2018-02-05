@@ -43,7 +43,7 @@ import io.netty.buffer.ByteBuf;
  * @author ashita
  * @since 2016
  */
-public class QueryMessageReceiverHandler implements Callable<Object> {
+public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
@@ -62,7 +62,7 @@ public class QueryMessageReceiverHandler implements Callable<Object> {
 	 *
 	 * @return Object
 	 */
-	public Object handleQueryMessageRequest() throws Exception {
+	public FullHttpResponse handleQueryMessageRequest() throws Exception {
 		HttpHeaders headers = req.headers();
 
 		if (req.method() != POST) {
@@ -177,7 +177,7 @@ public class QueryMessageReceiverHandler implements Callable<Object> {
 	 * @return Object
 	 */
 	@Override
-	public Object call() throws Exception {
+	public FullHttpResponse call() throws Exception {
 		return handleQueryMessageRequest();
 	}
 }

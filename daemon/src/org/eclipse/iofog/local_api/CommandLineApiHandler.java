@@ -32,7 +32,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
 
-public class CommandLineApiHandler implements Callable<Object> {
+public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
@@ -46,7 +46,7 @@ public class CommandLineApiHandler implements Callable<Object> {
 	}
 
 	@Override
-	public Object call() throws Exception {
+	public FullHttpResponse call() throws Exception {
 		HttpHeaders headers = req.headers();
 
 		if (req.method() != POST) {
