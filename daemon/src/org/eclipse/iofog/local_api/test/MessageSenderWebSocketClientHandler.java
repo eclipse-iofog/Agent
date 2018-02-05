@@ -83,7 +83,7 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		sendRealTimeMessageTest(ctx);
 	}
 
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
 		System.out.println("In client handleWebSocketFrame.....");
 
 		if (frame instanceof BinaryWebSocketFrame) {
@@ -121,7 +121,7 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 
 	}
 
-	public void sendRealTimeMessageTest(ChannelHandlerContext ctx){
+	private void sendRealTimeMessageTest(ChannelHandlerContext ctx){
 		System.out.println("In clienttest : sendRealTimeMessageTest");
 		System.out.println("Test Counter: " + testCounter);
 

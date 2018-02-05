@@ -34,7 +34,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 	private final FullHttpRequest req;
 	private ByteBuf outputBuffer;
 	private final byte[] content;
-	public static Channel channel;
+	private static Channel channel;
 	private FullHttpResponse response;
 
 	

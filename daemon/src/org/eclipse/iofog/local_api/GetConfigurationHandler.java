@@ -56,7 +56,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 *
 	 * @return Object
 	 */
-	public FullHttpResponse handleGetConfigurationRequest() {
+	private FullHttpResponse handleGetConfigurationRequest() {
 		if (req.method() != POST) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);

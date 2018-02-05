@@ -35,15 +35,14 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
 public final class LocalApiServer {
 	private final String MODULE_NAME = "Local API";
 
-	EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-	EventLoopGroup workerGroup = new NioEventLoopGroup(10);
+	private final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+	private final EventLoopGroup workerGroup = new NioEventLoopGroup(10);
 
 	static final boolean SSL = System.getProperty("ssl") != null;
-	static final int PORT = 54321;
+	private static final int PORT = 54321;
 
 	/**
 	 * Create and start local api server
-	 * @param None
 	 * @return void
 	 */
 	
@@ -78,10 +77,9 @@ public final class LocalApiServer {
 
 	/**
 	 * Stop local api server
-	 * @param None
 	 * @return void
 	 */
-	protected void stop() throws Exception {
+	void stop() throws Exception {
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 		LoggingService.logInfo(MODULE_NAME, "Local api server stopped\n");

@@ -299,7 +299,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * Return the local host IP address
 	 * @return String
 	 */
-	public String getLocalIp() throws Exception {
+	private String getLocalIp() throws Exception {
 		InetAddress address = null;
 		try {
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();

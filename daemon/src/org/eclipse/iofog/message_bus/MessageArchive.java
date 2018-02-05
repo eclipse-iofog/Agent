@@ -52,7 +52,7 @@ public class MessageArchive implements AutoCloseable{
 	 * sets the file name for {@link Message} to be archived
 	 * 
 	 */
-	protected void init() {
+	private void init() {
 		currentFileName = "";
 		diskDirectory = Configuration.getDiskDirectory() + "messages/archive/";
 		
@@ -108,7 +108,7 @@ public class MessageArchive implements AutoCloseable{
 	 * @param timestamp - timestamp of the {@link Message}
 	 * @throws Exception
 	 */
-	protected void save(byte[] message, long timestamp) throws Exception {
+	void save(byte[] message, long timestamp) throws Exception {
 		if (indexFile == null)
 			openFiles(timestamp);
 		

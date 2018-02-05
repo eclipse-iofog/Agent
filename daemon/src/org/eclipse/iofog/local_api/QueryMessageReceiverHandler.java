@@ -62,7 +62,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	 *
 	 * @return Object
 	 */
-	public FullHttpResponse handleQueryMessageRequest() throws Exception {
+	private FullHttpResponse handleQueryMessageRequest() throws Exception {
 		HttpHeaders headers = req.headers();
 
 		if (req.method() != POST) {

@@ -73,11 +73,10 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 			if(frame instanceof BinaryWebSocketFrame){
 				handleWebSocketFrame(ctx,  frame);
 			}
-			return;
 		}
 	}
 
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
 		System.out.println("In client handleWebSocketFrame.....");
 		if (frame instanceof BinaryWebSocketFrame) {
 			System.out.println("In websocket client.....  Text WebSocket Frame...Receiving message" );
@@ -108,7 +107,6 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 				buffer1.writeByte(OPCODE_ACK);
 				System.out.println("Message received.. Send acknoledgmwnt");
 				ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-				return;
 			}
 		}
 

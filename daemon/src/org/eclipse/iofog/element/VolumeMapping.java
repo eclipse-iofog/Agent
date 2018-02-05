@@ -19,9 +19,9 @@ package org.eclipse.iofog.element;
  */
 public class VolumeMapping {
 
-    final String hostDestination;
-    final String containerDestination;
-    final String accessMode;
+    private final String hostDestination;
+    private final String containerDestination;
+    private final String accessMode;
 
     public VolumeMapping(String hostDestination, String containerDestination, String accessMode) {
         this.hostDestination = hostDestination;
