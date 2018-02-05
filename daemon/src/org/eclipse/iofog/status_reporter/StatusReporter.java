@@ -44,7 +44,7 @@ public final class StatusReporter {
 	private static LocalApiStatus localApiStatus = new LocalApiStatus();
 	private static MessageBusStatus messageBusStatus = new MessageBusStatus();
 
-	private static String MODULE_NAME = "Status Reporter";
+	private final static String MODULE_NAME = "Status Reporter";
 	
 	/**
 	 * sets system time property
