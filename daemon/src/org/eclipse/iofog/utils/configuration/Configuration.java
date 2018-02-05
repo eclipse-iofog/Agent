@@ -586,8 +586,8 @@ public final class Configuration {
 	 * @return info report
 	 */
 	public static String getConfigReport() {
-		String ipAddress;
-		ipAddress = Orchestrator.getCurrentIpAddress();
+		String ipAddress = Orchestrator.getCurrentIpAddress();
+		ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
 		StringBuilder result = new StringBuilder();
 		result.append(
