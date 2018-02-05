@@ -59,7 +59,7 @@ import static org.apache.commons.lang.StringUtils.*;
  * @author saeid
  *
  */
-public class DockerUtil {
+public class DockerUtil implements AutoCloseable{
 	private final String MODULE_NAME = "Docker Util";
 	
 	private static DockerUtil instance;
@@ -151,10 +151,7 @@ public class DockerUtil {
 		Optional<Image> result = images.stream()
 				.filter(image -> image.getRepoTags()[0].equals(imageName)).findFirst();
 
-		if (result.isPresent())
-			return result.get();
-		else
-			return null;
+		return result.orElse(null);
 	}
 	
 	/**

@@ -23,6 +23,7 @@ import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import java.io.*;
 import javax.json.*;
 import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
@@ -111,7 +112,7 @@ public class FieldAgent implements IOFogModule {
 		result.put("repositorystatus", StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus());
 		result.put("systemtime", StatusReporter.getStatusReporterStatus().getSystemTime());
 		result.put("laststatustime", StatusReporter.getStatusReporterStatus().getLastUpdate());
-		result.put("ipaddress", StatusReporter.getLocalApiStatus().getCurrentIpAddress());
+		result.put("ipaddress", Orchestrator.getCurrentIpAddress());
 		result.put("processedmessages", StatusReporter.getMessageBusStatus().getProcessedMessages());
 		result.put("elementmessagecounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerElement());
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
@@ -254,7 +255,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * gets list of registries from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	public void loadRegistries(boolean fromFile) {
 		logInfo("get registries");
@@ -304,7 +305,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * gets list of IOElement configurations from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	private void loadElementsConfig(boolean fromFile) {
 		logInfo("get elements config");
@@ -351,7 +352,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * gets list of IOElement routings from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	private void loadRoutes(boolean fromFile) {
 		logInfo("get routes");
@@ -402,7 +403,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * gets list of IOElements from file or IOFog controller
 	 * 
-	 * @param fromFile - load from file 	
+	 * @param fromFile - load from file
 	 */
 	private void loadElementsList(boolean fromFile) {
 		logInfo("get elements");
@@ -504,7 +505,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * pings IOFog controller
-	 * 
+	 *
 	 */
 	private final Runnable pingController = () -> {
 		while (true) {
@@ -549,27 +550,30 @@ public class FieldAgent implements IOFogModule {
 	 * @return JsonArray
 	 */
 	private JsonArray readFile(String filename) {
-		try {
-			if (!Files.exists(Paths.get(filename), NOFOLLOW_LINKS))
-				return null;
-
-			JsonReader reader = Json.createReader(new FileReader(new File(filename)));
-			JsonObject object = reader.readObject();
-			reader.close();
-			String checksum = object.getString("checksum");
-			JsonArray data = object.getJsonArray("data");
-			if (!checksum(data.toString()).equals(checksum))
-				return null;
-			long timestamp = object.getJsonNumber("timestamp").longValue();
-			if (lastGetChangesList == 0)
-				lastGetChangesList = timestamp;
-			else
-				lastGetChangesList = Long.min(timestamp, lastGetChangesList);
-			return data;
-		} catch (Exception e) {
-			logInfo("Error reading file '" + filename + "' : " + e.getMessage());
+		if (!Files.exists(Paths.get(filename), NOFOLLOW_LINKS))
 			return null;
+
+		JsonObject object = readObject(filename);
+		String checksum = object.getString("checksum");
+		JsonArray data = object.getJsonArray("data");
+		if (!checksum(data.toString()).equals(checksum))
+			return null;
+		long timestamp = object.getJsonNumber("timestamp").longValue();
+		if (lastGetChangesList == 0)
+			lastGetChangesList = timestamp;
+		else
+			lastGetChangesList = Long.min(timestamp, lastGetChangesList);
+		return data;
+	}
+
+	private JsonObject readObject(String filename){
+		JsonObject object = null;
+		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))){
+			object = reader.readObject();
+		} catch (FileNotFoundException ex){
+			LoggingService.logWarning(MODULE_NAME, "Invalid file: " + filename);
 		}
+		return object;
 	}
 
 	/**
@@ -594,7 +598,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * gets IOFog instance configuration from IOFog controller
-	 * 
+	 *
 	 */
 	private void getFogConfig() {
 		logInfo("get fog config");
@@ -677,7 +681,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * sends IOFog instance configuration to IOFog controller
-	 * 
+	 *
 	 */
 	public void postFogConfig() {
 		logInfo("post fog config");
@@ -819,7 +823,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * starts Field Agent module
-	 * 
+	 *
 	 */
 	public void start() {
 		if (isNullOrEmpty(Configuration.getInstanceId()) || isNullOrEmpty(Configuration.getAccessToken()))

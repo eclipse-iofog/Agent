@@ -92,7 +92,7 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, "creating container");
 			String hostName = EMPTY;
 			if (!element.isRootHostAccess())
-				hostName = Orchestrator.getInetAddress().getHostAddress();
+				hostName = Orchestrator.getCurrentIpAddress();
 			String id = docker.createContainer(element, hostName);
 			element.setContainerId(id);
 			element.setContainerIpAddress(docker.getContainerIpAddress(id));

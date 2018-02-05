@@ -557,12 +557,8 @@ public final class Configuration {
 	 * @return info report
 	 */
 	public static String getConfigReport() {
-		String ipAddress;
-		try {
-			ipAddress = Orchestrator.getInetAddress().getHostAddress();
-		} catch (Exception e) {
-			ipAddress = "unable to retrieve ip address";
-		}
+		String ipAddress = Orchestrator.getCurrentIpAddress();
+		ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
 		StringBuilder result = new StringBuilder();
 		// instance id
