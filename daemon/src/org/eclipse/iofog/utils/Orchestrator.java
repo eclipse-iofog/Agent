@@ -12,24 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
-import java.io.*;
-import java.net.*;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.*;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.core.NoContentException;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -42,6 +24,21 @@ import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.core.NoContentException;
+import java.io.*;
+import java.net.*;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.util.*;
 
 /**
  * provides methods for IOFog controller

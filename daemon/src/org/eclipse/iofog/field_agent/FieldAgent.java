@@ -23,14 +23,10 @@ import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import java.io.*;
 import javax.json.*;
 import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.StringReader;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
