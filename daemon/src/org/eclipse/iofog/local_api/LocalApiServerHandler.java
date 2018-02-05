@@ -81,7 +81,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 				this.content = new byte[content.readableBytes()];
 				content.readBytes(this.content);
 				handleHttpRequest(ctx);
-				return;
 			} else if (msg instanceof HttpRequest) {
 				// chunked request
 				if (this.baos == null)
@@ -224,7 +223,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		String errorMsg = " Request not found ";
 		errorMsgBytes.writeBytes(errorMsg.getBytes());
 		sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
-		return;
 
 	}
 

@@ -75,7 +75,6 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 			}
 			return;
 		}
-		return;
 	}
 
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
@@ -112,8 +111,6 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 				return;
 			}
 		}
-		
-		return;
 
 	}
 

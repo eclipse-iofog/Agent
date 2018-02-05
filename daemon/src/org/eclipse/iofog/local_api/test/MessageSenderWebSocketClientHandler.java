@@ -81,7 +81,6 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 			return;
 		}
 		sendRealTimeMessageTest(ctx);
-		return;
 	}
 
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
@@ -119,7 +118,6 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 
 			}
 		}
-		return;
 
 	}
 
@@ -193,7 +191,6 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 
 		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 		System.out.println("Send RealTime Message : done");
-		return;
 	}
 
 

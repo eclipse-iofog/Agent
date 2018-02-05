@@ -87,7 +87,6 @@ public class MessageWebsocketHandler {
 		MessageBus.getInstance().enableRealTimeReceiving(publisherId);
 
 		LoggingService.logInfo(MODULE_NAME, "Handshake end....");
-		return;
 	}
 
 	/**
@@ -186,7 +185,6 @@ public class MessageWebsocketHandler {
 			.disableRealTimeReceiving(WebsocketUtil.getIdForWebsocket(ctx, WebSocketMap.messageWebsocketMap));
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.messageWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
-			return;
 		}
 	}
 
