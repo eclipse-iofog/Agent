@@ -29,7 +29,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * Supervisor module
- * 
+ *
  * @author saeid
  *
  */
@@ -37,17 +37,17 @@ public class Supervisor {
 
 	private final String MODULE_NAME = "Supervisor";
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	
+
 	private ProcessManager processManager;
 	private ResourceConsumptionManager resourceConsumptionManager;
 	private FieldAgent fieldAgent;
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
-	
+
 	/**
 	 * monitors {@link LocalApi} module status
-	 * 
+	 *
 	 */
 	private Runnable checkLocalApiStatus = () -> {
 		try {
@@ -60,19 +60,19 @@ public class Supervisor {
 
 	public Supervisor() {
 	}
-	
+
 	/**
 	 * starts Supervisor module
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
 		Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, "shutdown hook"));
-		
+
 		LoggingService.logInfo(MODULE_NAME, "starting status reporter");
 		StatusReporter.start();
 		StatusReporter.setSupervisorStatus().setModuleStatus(Constants.STATUS_REPORTER, ModulesStatus.RUNNING);
-		
+
 		StatusReporter.setSupervisorStatus()
 				.setDaemonStatus(ModulesStatus.STARTING)
 				.setDaemonLastStart(System.currentTimeMillis())
@@ -80,7 +80,7 @@ public class Supervisor {
 
 		// TODO: start other modules
 		// TODO: after starting each module, set SupervisorStatus.modulesStatus
-		
+
 		// starting Resource Consumption Manager
 		LoggingService.logInfo(MODULE_NAME, "starting resource consumption manager");
 		StatusReporter.setSupervisorStatus()
@@ -107,7 +107,7 @@ public class Supervisor {
 		processManager.start();
 		StatusReporter.setSupervisorStatus()
 				.setModuleStatus(Constants.PROCESS_MANAGER,	ModulesStatus.RUNNING);
-		
+
 		// starting Message Bus
 		LoggingService.logInfo(MODULE_NAME, "starting message bus");
 		StatusReporter.setSupervisorStatus()
@@ -115,7 +115,7 @@ public class Supervisor {
 		messageBus = MessageBus.getInstance();
 		StatusReporter.setSupervisorStatus()
 				.setModuleStatus(Constants.MESSAGE_BUS,	ModulesStatus.RUNNING);
-		
+
 		LocalApi localApi = LocalApi.getInstance();
 		localApiThread = new Thread(localApi, "Local Api");
 		localApiThread.start();
@@ -124,7 +124,7 @@ public class Supervisor {
 		StatusReporter.setSupervisorStatus()
 				.setDaemonStatus(ModulesStatus.RUNNING);
 		LoggingService.logInfo(MODULE_NAME, "started");
-		
+
 		while (true) {
 			try {
 				Thread.sleep(Constants.STATUS_REPORT_FREQ_SECONDS * 1000);
@@ -139,7 +139,7 @@ public class Supervisor {
 
 	/**
 	 * shutdown hook to stop {@link MessageBus} and {@link LocalApi}
-	 * 
+	 *
 	 */
 	private final Runnable shutdownHook = () -> {
 		try {

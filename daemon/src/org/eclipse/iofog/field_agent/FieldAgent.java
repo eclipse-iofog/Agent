@@ -12,10 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.StringReader;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +37,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 
 import org.eclipse.iofog.element.*;
+import org.eclipse.iofog.utils.exceptions.UnknownVersionCommandException;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -48,9 +46,12 @@ import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.enums.VersionCommand;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.util.internal.StringUtil;
+
+import static org.eclipse.iofog.utils.enums.VersionCommand.*;
 
 /**
  * Field Agent module
@@ -235,9 +236,12 @@ public class FieldAgent {
 				StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
 				JsonObject changes = result.getJsonObject("changes");
-				if (changes.getBoolean("config") && !initialization)
-					getFogConfig();
-
+				if (changes.getBoolean("config") && !initialization) {
+                    getFogConfig();
+                }
+                if (changes.getBoolean("version") && !initialization) {
+				    changeVersion();
+                }
 				if (changes.getBoolean("registries") || initialization) {
 					loadRegistries(false);
 					ProcessManager.getInstance().update();
@@ -259,6 +263,68 @@ public class FieldAgent {
 			} catch (Exception e) {}
 		}
 	};
+
+    /**
+     * performs change version operation, received from ioFog controller
+     *
+     * @throws Exception if there is a connection or provision problem
+     */
+	private void changeVersion() throws Exception {
+        LoggingService.logInfo(MODULE_NAME, "get change version action");
+        if (notWorking()) return;
+
+        try {
+            JsonObject result = orchestrator.doCommand("version", null, null);
+
+            if (!result.getString("status").equals("ok"))
+                throw new Exception("error from fog controller");
+
+            JsonObject versionData = result.getJsonObject("version");
+            VersionCommand versionCommand = parseJson(versionData);
+
+            executeChangeVersionScript(versionCommand);
+
+
+        } catch (UnknownVersionCommandException e) {
+            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+        } catch (CertificateException|SSLHandshakeException e) {
+            verficationFailed();
+        } catch (Exception e) {
+            LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
+        }
+    }
+
+    /**
+     * executes sh script to change iofog version
+     *
+     * @param command {@link VersionCommand}
+     */
+    public void executeChangeVersionScript(VersionCommand command) {
+        final String SCRIPTS_ROOT_DIR_PATH = "/usr/share/iofog/";
+        final String UPGRADE_FILE_NAME = "upgrade.sh";
+        final String ROLLBACK_FILE_NAME = "rollback.sh";
+
+        String shToExecute = null;
+
+        switch (command) {
+            case UPGRADE:
+                shToExecute = SCRIPTS_ROOT_DIR_PATH + UPGRADE_FILE_NAME;
+                break;
+            case ROLLBACK:
+                shToExecute = SCRIPTS_ROOT_DIR_PATH + ROLLBACK_FILE_NAME;
+                break;
+            default:
+                break;
+        }
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder("/bin/sh", shToExecute);
+            Process p = pb.start();
+        } catch (IOException e) {
+            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+        }
+
+    }
 
 	/**
 	 * gets list of registries from file or IOFog controller
