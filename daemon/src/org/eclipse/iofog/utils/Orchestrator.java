@@ -12,26 +12,14 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.ConnectException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.UnknownHostException;
+import java.io.*;
+import java.net.*;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -52,6 +40,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
 /**
  * provides methods for IOFog controller
@@ -67,6 +57,8 @@ public class Orchestrator {
 	private Certificate controllerCert;
 	private static String eth;
 	private CloseableHttpClient client;
+
+	private static final String MODULE_NAME = "Orchestrator";
 	
 	public Orchestrator() {
 		this.update();
@@ -95,7 +87,7 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	public JsonObject provision(String key) throws Exception {
-		JsonObject result = null;
+		JsonObject result;
 		try {
 			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Constants.FOG_TYPE);
 		} catch (Exception e) {
@@ -103,30 +95,42 @@ public class Orchestrator {
 		} 
 		return result;
 	}
-	
+
+	/**
+	 * returns IPv4 host address of IOFog network interface
+	 *
+	 * @return {@link Inet4Address}
+	 * @throws Exception
+	 */
+	public static String getCurrentIpAddress() {
+		Optional<InetAddress> inetAddress = getLocalIp();
+		return inetAddress.map(InetAddress::getHostAddress).orElse("");
+	}
+
+	private static Optional<InetAddress> getLocalIp(){
+		Optional<InetAddress> inetAddress = Optional.empty();
+		try {
+			inetAddress = Optional.of(Orchestrator.getInetAddress());
+		} catch (SocketException exp) {
+			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + exp.getMessage());
+		}
+		return inetAddress;
+	}
+
 	/**
 	 * returns IPv4 address of IOFog network interface
 	 * 
 	 * @return {@link Inet4Address}
 	 * @throws Exception
 	 */
-	public static InetAddress getInetAddress() throws Exception {
-		InetAddress address = null;
-		try {
-			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-		    while (networkInterfaces.hasMoreElements()) {
-		        NetworkInterface networkInterface = networkInterfaces.nextElement();
-		        if (networkInterface.getName().equals(eth)) {
-		        	Enumeration<InetAddress> ipAddresses = networkInterface.getInetAddresses();
-		        	while (ipAddresses.hasMoreElements()) {
-		        		address = ipAddresses.nextElement();
-		        		if (address instanceof Inet4Address) {
-		        			return address;
-		        		}
-		        	}
-		        }
-		    }
-		} catch (Exception e) {
+	public static InetAddress getInetAddress() throws SocketException {
+		Enumeration<InetAddress> ipAddresses = NetworkInterface.getByName(eth)
+				.getInetAddresses();
+		while (ipAddresses.hasMoreElements()) {
+			InetAddress address = ipAddresses.nextElement();
+			if (address instanceof Inet4Address) {
+				return address;
+			}
 		}
 		throw new ConnectException(String.format("unable to get ip address \"%s\"", eth));
 	}
@@ -134,8 +138,6 @@ public class Orchestrator {
 	private RequestConfig getRequestConfig() throws Exception {
 		return RequestConfig.copy(RequestConfig.DEFAULT)
 				.setLocalAddress(getInetAddress())
-//				.setConnectionRequestTimeout(CONNECTION_TIMEOUT)
-//				.setSocketTimeout(CONNECTION_TIMEOUT)
 				.setConnectTimeout(CONNECTION_TIMEOUT)
 				.build();
 	}
@@ -146,33 +148,7 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	private void initialize() throws Exception {
-		TrustManager[] trustManager = new TrustManager[] {
-				new X509TrustManager() {
-					private X509Certificate[] certs;
-					
-					@Override
-					public X509Certificate[] getAcceptedIssuers() {
-						return certs;
-					}
-					
-					@Override
-					public void checkServerTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
-						boolean verified = false;
-						for (X509Certificate cert : certs) {
-							if (cert.equals(controllerCert)) {
-								verified = true;
-								break;
-							}
-						}
-						if (!verified)
-							throw new CertificateException();
-					}
-					
-					@Override
-					public void checkClientTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
-					}
-				}
-		}; 
+		TrustManager[] trustManager = new TrustManager[] {new X509TrustManagerImpl(controllerCert)};
         SSLContext sslContext = SSLContext.getInstance("TLS");
 		sslContext.init(null, trustManager, new SecureRandom());
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
@@ -186,13 +162,14 @@ public class Orchestrator {
 	 * @return {@link Certificate}
 	 */
 	private Certificate getCert(InputStream is) {
+		Certificate result = null;
 		try {
 			CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-			Certificate result = certificateFactory.generateCertificate(is);
-			return result;
-		} catch (Exception e) {
-			return null;
+			result = certificateFactory.generateCertificate(is);
+		} catch (CertificateException exp) {
+			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
 		}
+		return result;
 	}
 	
 	/**
@@ -298,9 +275,9 @@ public class Orchestrator {
 		instanceId = Configuration.getInstanceId();
 		accessToken = Configuration.getAccessToken();
 		controllerUrl = Configuration.getControllerUrl();
-		try {
-			controllerCert = getCert(new FileInputStream(Configuration.getControllerCert()));
-		} catch (FileNotFoundException e) {
+		try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
+			controllerCert = getCert(fileInputStream);
+		} catch (IOException e) {
 			controllerCert = null;
 		} 
 		eth = Configuration.getNetworkInterface();

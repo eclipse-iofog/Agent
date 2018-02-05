@@ -41,7 +41,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Instantiate local api - singleton
-	 * @param None
 	 * @return LocalApi
 	 */
 	public static LocalApi getInstance(){
@@ -58,7 +57,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Stop local api server
-	 * @param None
 	 * @return void
 	 */
 	public void stopServer() throws Exception {
@@ -69,7 +67,6 @@ public class LocalApi implements Runnable {
 	/**
 	 * Start local api server
 	 * Instantiate websocket map and configuration map
-	 * @param None
 	 * @return void
 	 */
 	@Override
@@ -78,12 +75,6 @@ public class LocalApi implements Runnable {
 
 		WebSocketMap.getInstance();
 		ConfigurationMap.getInstance();
-
-		try {
-			StatusReporter.setLocalApiStatus().setCurrentIpAddress(Orchestrator.getInetAddress());
-		} catch (Exception e2) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + e2.getMessage());
-		}
 
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(WebSocketMap.messageWebsocketMap.size());
@@ -114,7 +105,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Get the containers configuration and store it.
-	 * @param None
 	 * @return void
 	 */
 	public void retrieveContainerConfig() {
@@ -128,7 +118,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Update the containers configuration and store it.
-	 * @param None
 	 * @return void
 	 */
 	public void updateContainerConfig(){
@@ -143,16 +132,9 @@ public class LocalApi implements Runnable {
 	/**
 	 * Initiate the real-time control signal when the cofiguration changes.
 	 * Called by field-agtent.
-	 * @param None
 	 * @return void
 	 */
 	public void update(){
-		try {
-			StatusReporter.setLocalApiStatus().setCurrentIpAddress(Orchestrator.getInetAddress());
-		} catch (Exception e2) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + e2.getMessage());
-		}
-
 		Map<String, String> oldConfigMap = new HashMap<String, String>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
