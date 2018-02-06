@@ -199,7 +199,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		}
 
 		if (request.uri().startsWith("/v2/commandline")) {
-			Callable<?> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
