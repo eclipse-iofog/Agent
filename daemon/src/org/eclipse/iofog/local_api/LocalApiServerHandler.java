@@ -12,22 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.util.CharsetUtil;
-import io.netty.util.concurrent.EventExecutorGroup;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,7 +24,23 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import io.netty.handler.codec.http.*;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * Provide handler for the rest api and real-time websocket depending on the request.
@@ -156,43 +157,43 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		}
 
 		if (request.uri().equals("/v2/config/get")) {
-			Callable<?> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().equals("/v2/messages/next")) {
-			Callable<?> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().equals("/v2/messages/new")) {
-			Callable<?> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().equals("/v2/messages/query")) {
-			Callable<?> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().startsWith("/v2/restblue")) {
-			Callable<?> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
-
-		if (request.uri().startsWith("/v2/hal")) {
-			Callable<?> callable = new HalApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
 		if (request.uri().startsWith("/v2/log")) {
-			Callable<?> callable = new LogApiHandler(request, ctx.alloc().buffer(), content);
+			Callable<FullHttpResponse> callable = new LogApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		if (request.uri().startsWith("/v2/commandline")) {
+			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
@@ -254,14 +255,17 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * @param ctx
 	 * @param req
 	 */
-	private void runTask(Callable<?> callable, ChannelHandlerContext ctx, HttpRequest req) {
-		final Future<?> future = executor.submit(callable);
-		future.addListener((GenericFutureListener<Future<Object>>) f -> {
-			if (f.isSuccess()) {
-				sendHttpResponse(ctx, req, (FullHttpResponse) f.get());
-			} else {
-				ctx.fireExceptionCaught(f.cause());
-				ctx.close();
+	private void runTask(Callable<FullHttpResponse> callable, ChannelHandlerContext ctx, HttpRequest req) {
+		final Future<FullHttpResponse> future = executor.submit(callable);
+		future.addListener(new GenericFutureListener<Future<Object>>() {
+			public void operationComplete(Future<Object> future)
+					throws Exception {
+				if (future.isSuccess()) {
+					sendHttpResponse(ctx, req, (FullHttpResponse)future.get());
+				} else {
+					ctx.fireExceptionCaught(future.cause());
+					ctx.close();
+				}
 			}
 		});
 	}
@@ -301,7 +305,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * Return the local host IP address
 	 * @return String
 	 */
-	public String getLocalIp() {
+	private String getLocalIp() throws Exception {
 		InetAddress address;
 		try {
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();

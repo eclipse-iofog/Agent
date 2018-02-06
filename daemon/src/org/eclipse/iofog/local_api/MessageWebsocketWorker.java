@@ -38,7 +38,6 @@ public class MessageWebsocketWorker implements Runnable{
 	/**
 	 * Initiating message sending for the unacknowledged messages
 	 * If tried for 10 times, then disable real-time service for the channel
-	 * @param none
 	 * @return void
 	 */
 	@Override
@@ -65,12 +64,10 @@ public class MessageWebsocketWorker implements Runnable{
 				}
 			}
 		}
-		return;
 	}
 	
 	/**
 	 * Helper method to send real-time messages
-	 * @param ChannelHandlerContext
 	 * @return void
 	 */
 	private void sendRealTimeMessage(ChannelHandlerContext ctx){
@@ -98,6 +95,5 @@ public class MessageWebsocketWorker implements Runnable{
 		//Message
 		buffer1.writeBytes(bytesMsg);
 		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		return;
 	}
 }

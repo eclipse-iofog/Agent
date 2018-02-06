@@ -12,15 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.logging.LoggingService;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Local api point of start using iofog. 
@@ -86,12 +86,10 @@ public class LocalApi implements Runnable {
 		server = new LocalApiServer();
 		try {
 			server.start();
-			isSeverStarted = true;
 			
 		} catch (Exception e) {
 			try {
 				stopServer();
-				isSeverStarted = false;
 			} catch (Exception e1) {
 				LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e1.getMessage());
 				StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
@@ -106,8 +104,9 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Get the containers configuration and store it.
+	 * @return void
 	 */
-	public void retrieveContainerConfig() {
+	private void retrieveContainerConfig() {
 		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration retrieved");
@@ -118,8 +117,9 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Update the containers configuration and store it.
+	 * @return void
 	 */
-	public void updateContainerConfig(){
+	private void updateContainerConfig(){
 		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration updated");

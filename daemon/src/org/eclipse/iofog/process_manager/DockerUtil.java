@@ -116,7 +116,7 @@ public class DockerUtil implements AutoCloseable{
 			} catch (InterruptedException e) {}
 		}
 		Map<String, Object> usageBefore = statsCallback.getStats().getCpuStats();
-		float totalBefore = Long.parseLong(((Map<String, Object>) usageBefore.get("cpu_usage")).get("total_usage").toString());;
+		float totalBefore = Long.parseLong(((Map<String, Object>) usageBefore.get("cpu_usage")).get("total_usage").toString());
 		float systemBefore = Long.parseLong((usageBefore.get("system_cpu_usage")).toString());
 		
 		try {
@@ -316,10 +316,7 @@ public class DockerUtil implements AutoCloseable{
 		List<Container> containers = getContainers();
 		Optional<Container> result = containers.stream()
 				.filter(c -> c.getNames()[0].trim().substring(1).equals(elementId)).findFirst();
-		if (result.isPresent())
-			return result.get();
-		else 
-			return null;
+		return result.orElse(null);
 	}
 	
 	/**

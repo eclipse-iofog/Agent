@@ -18,8 +18,8 @@ package org.eclipse.iofog.local_api;
  * @since 2016
  */
 public class ControlSignalSentInfo {
-	int sendTryCount = 0;
-	long timeMillis;
+	private int sendTryCount = 0;
+	private long timeMillis;
 	
 	ControlSignalSentInfo(int count, long timeMillis){
 		this.sendTryCount = count;
@@ -36,7 +36,6 @@ public class ControlSignalSentInfo {
 	
 	/**
 	 * Get message sending trial count
-	 * @param none
 	 * @return int
 	 */
 	public int getSendTryCount() {
@@ -45,7 +44,6 @@ public class ControlSignalSentInfo {
 	
 	/**
 	 * Save message sending trial count
-	 * @param int
 	 * @return void
 	 */
 	public void setSendTryCount(int sendTryCount) {
