@@ -24,7 +24,7 @@ public class ContainerTask {
 	public enum Tasks {
 		ADD,
 		UPDATE,
-		REMOVE;
+		REMOVE
 	}
 	
 	public Tasks action;

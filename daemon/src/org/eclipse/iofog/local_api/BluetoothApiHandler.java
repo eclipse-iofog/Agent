@@ -27,25 +27,15 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.*;
 
-public class BluetoothApiHandler implements Callable<Object> {
+public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
 	private final FullHttpRequest req;
 	private ByteBuf outputBuffer;
 	private final byte[] content;
-	public static Channel channel;
-	private HttpResponse response;
+	private static Channel channel;
+	private FullHttpResponse response;
 
 	
 	public BluetoothApiHandler(FullHttpRequest req, ByteBuf outputBuffer, byte[] content) {
@@ -55,8 +45,7 @@ public class BluetoothApiHandler implements Callable<Object> {
 	}
 
 	@Override
-	public Object call() throws Exception {
-		response = null;
+	public FullHttpResponse call() throws Exception {
 		String host = "localhost";
 		int port = 10500;
 		
@@ -79,8 +68,8 @@ public class BluetoothApiHandler implements Callable<Object> {
 										FullHttpResponse res = (FullHttpResponse) msg;
 
 										outputBuffer.writeBytes(res.content());
-										response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, res.getStatus(), outputBuffer);
-										HttpHeaders.setContentLength(response, outputBuffer.readableBytes());
+										response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, res.status(), outputBuffer);
+										HttpUtil.setContentLength(response, outputBuffer.readableBytes());
 										response.headers().set(res.headers());
 										ctx.channel().close().sync();
 									}
@@ -92,8 +81,8 @@ public class BluetoothApiHandler implements Callable<Object> {
 
             ByteBuf requestContent = Unpooled.copiedBuffer(content);
             channel = b.connect(host, port).sync().channel();
-            String endpoint = req.getUri().substring(12);
-            FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.getMethod(), endpoint, requestContent);
+            String endpoint = req.uri().substring(12);
+            FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.method(), endpoint, requestContent);
             request.headers().set(req.headers());
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
@@ -107,8 +96,8 @@ public class BluetoothApiHandler implements Callable<Object> {
     		String responseString = "{\"error\":\"unable to reach RESTblue container!\"}";
     		outputBuffer.writeBytes(responseString.getBytes());
     		response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, outputBuffer);
-    		HttpHeaders.setContentLength(response, outputBuffer.readableBytes());
-    	    response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+			HttpUtil.setContentLength(response, outputBuffer.readableBytes());
+    	    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         }
 
         return response;

@@ -270,7 +270,7 @@ public class FieldAgent {
 	 * @param fromFile - load from file 	
 	 * @throws Exception
 	 */
-	public void loadRegistries(boolean fromFile) throws Exception {
+	private void loadRegistries(boolean fromFile) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get registries");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -737,7 +737,7 @@ public class FieldAgent {
 	 * 
 	 * @throws Exception
 	 */
-	public void postFogConfig() throws Exception {
+	private void postFogConfig() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "post fog config");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");

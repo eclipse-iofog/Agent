@@ -49,8 +49,6 @@ public class ControlWebsocketHandler {
 
 	private static final String WEBSOCKET_PATH = "/v2/control/socket";
 
-	private WebSocketServerHandshaker handshaker;
-
 	/**
 	 * Handler to open the websocket for the real-time control signals
 	 * 
@@ -60,7 +58,7 @@ public class ControlWebsocketHandler {
 	 * @return void
 	 */
 	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
-		String uri = req.getUri();
+		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
 
@@ -76,7 +74,7 @@ public class ControlWebsocketHandler {
 		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(req),
 				null, true, Integer.MAX_VALUE);
-		handshaker = wsFactory.newHandshaker(req);
+		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
 		} else {
@@ -86,7 +84,6 @@ public class ControlWebsocketHandler {
 		WebSocketMap.addWebsocket('C', id, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 
-		return;
 	}
 
 	/**
