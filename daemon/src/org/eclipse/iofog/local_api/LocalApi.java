@@ -31,7 +31,8 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 public class LocalApi implements Runnable {
 
 	private final String MODULE_NAME = "Local API";
-	private static LocalApi instance = null;
+	private static volatile LocalApi instance;
+	public boolean isSeverStarted = false; 
 	private LocalApiServer server;
 
 	private LocalApi() {
@@ -43,15 +44,17 @@ public class LocalApi implements Runnable {
 	 * @return LocalApi
 	 */
 	public static LocalApi getInstance(){
-		if (instance == null) {
+		LocalApi localInstance = instance;
+		if (localInstance == null) {
 			synchronized (LocalApi.class) {
-				if(instance == null){
-					instance = new LocalApi();
+				localInstance = instance;
+				if (localInstance == null) {
+					instance = localInstance = new LocalApi();
 					LoggingService.logInfo("LOCAL API ","Local Api Instantiated");
 				}
 			}
 		}
-		return instance;
+		return localInstance;
 	}
 
 	/**
@@ -134,8 +137,8 @@ public class LocalApi implements Runnable {
 		Map<String, String> oldConfigMap = new HashMap<String, String>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
-		Map<String, String> newConfigMap = new HashMap<String, String>();
-		newConfigMap.putAll(ConfigurationMap.containerConfigMap);
+		Map<String, String> newConfigMap = new HashMap<>();
+		ConfigurationMap.containerConfigMap.putAll(newConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		try {
 			handler.initiateControlSignal(oldConfigMap, newConfigMap);

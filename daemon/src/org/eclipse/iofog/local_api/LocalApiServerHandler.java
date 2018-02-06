@@ -67,8 +67,8 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	/**
 	 * Method to be called on channel initializing
 	 * Can take requests as HttpRequest or Websocket frame
-	 * @param ctx, msg
-	 * @return void
+	 * @param ctx ChannelHandlerContext
+	 * @param msg Object
 	 */
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, Object msg){
@@ -126,13 +126,12 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	/**
 	 * Method to be called if the request is HttpRequest 
 	 * Pass the request to the handler call as per the request URI
-	 * @param ctx
-	 * @return void
+	 * @param ctx ChannelHandlerContext
 	 */
 	private void handleHttpRequest(ChannelHandlerContext ctx) throws Exception {
 		String remoteIpAddress = getRemoteIP(ctx);
 		List<Element> elements = ElementManager.getInstance().getElements();
-		boolean found = false;
+		boolean found;
 		for(Element e: elements){
 			if(e.getContainerIpAddress() != null && e.getContainerIpAddress().equals(remoteIpAddress)) {
 				found = true; 
@@ -199,6 +198,12 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 			return;
 		}
 
+		if (request.uri().startsWith("/v2/commandline")) {
+			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
 		String uri = request.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
@@ -237,18 +242,18 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 
 	/**
 	 * Method to be called on channel complete 
-	 * @param ctx
-	 * @return void
+	 * @param ctx ChannelHandlerContext
 	 */
 	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception{
+	public void channelReadComplete(ChannelHandlerContext ctx) {
 		ctx.flush();
 	}
 
 	/**
 	 * Helper for request thread
-	 * @param callable, ctx, req
-	 * @return void
+	 * @param callable
+	 * @param ctx
+	 * @param req
 	 */
 	private void runTask(Callable<FullHttpResponse> callable, ChannelHandlerContext ctx, HttpRequest req) {
 		final Future<FullHttpResponse> future = executor.submit(callable);
@@ -267,10 +272,11 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 
 	/**
 	 * Provide the response as per the requests
-	 * @param ctx, req, res
-	 * @return void
+	 * @param ctx
+	 * @param req
+	 * @param res
 	 */
-	private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) throws Exception {
+	private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) {
 		if (res.status().code() != 200) {
 			ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
 			res.content().writeBytes(buf);
@@ -300,7 +306,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * @return String
 	 */
 	private String getLocalIp() throws Exception {
-		InetAddress address = null;
+		InetAddress address;
 		try {
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 			while (networkInterfaces.hasMoreElements()) {

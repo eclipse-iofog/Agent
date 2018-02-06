@@ -12,24 +12,22 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import java.util.concurrent.Callable;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.*;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.util.concurrent.Callable;
 
 public class BluetoothApiHandler implements Callable<FullHttpResponse> {
+
+	private final String MODULE_NAME = "Bluetooth API";
 
 	private final FullHttpRequest req;
 	private ByteBuf outputBuffer;
@@ -57,9 +55,8 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
             b.group(group)
                     .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
-                    	
                         @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
+						protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new HttpClientCodec());
                             ch.pipeline().addLast(new HttpObjectAggregator(1048576));
                             ChannelInboundHandler handler = new SimpleChannelInboundHandler<HttpObject>() {
@@ -87,7 +84,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
         } catch (Exception e) {
-        	System.out.println("Error");
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
         } finally {
             group.shutdownGracefully();
         }
@@ -97,7 +94,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
     		outputBuffer.writeBytes(responseString.getBytes());
     		response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, outputBuffer);
 			HttpUtil.setContentLength(response, outputBuffer.readableBytes());
-    	    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         }
 
         return response;
