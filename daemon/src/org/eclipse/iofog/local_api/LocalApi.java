@@ -12,15 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
+import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Local api point of start using iofog. 
