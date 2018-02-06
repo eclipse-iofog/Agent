@@ -12,15 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.Orchestrator;
+import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.logging.LoggingService;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Local api point of start using iofog. 
@@ -59,6 +59,7 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Stop local api server
+	 * @return void
 	 */
 	public void stopServer() throws Exception {
 		server.stop();
@@ -68,6 +69,7 @@ public class LocalApi implements Runnable {
 	/**
 	 * Start local api server
 	 * Instantiate websocket map and configuration map
+	 * @return void
 	 */
 	@Override
 	public void run() {
@@ -75,12 +77,6 @@ public class LocalApi implements Runnable {
 
 		WebSocketMap.getInstance();
 		ConfigurationMap.getInstance();
-
-		try {
-			StatusReporter.setLocalApiStatus().setCurrentIpAddress(Orchestrator.getInetAddress());
-		} catch (Exception e2) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + e2.getMessage());
-		}
 
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(WebSocketMap.messageWebsocketMap.size());
@@ -135,16 +131,11 @@ public class LocalApi implements Runnable {
 	/**
 	 * Initiate the real-time control signal when the cofiguration changes.
 	 * Called by field-agtent.
+	 * @return void
 	 */
 	public void update(){
-		try {
-			StatusReporter.setLocalApiStatus().setCurrentIpAddress(Orchestrator.getInetAddress());
-		} catch (Exception e2) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + e2.getMessage());
-		}
-
-		Map<String, String> oldConfigMap = new HashMap<>();
-		ConfigurationMap.containerConfigMap.putAll(oldConfigMap);
+		Map<String, String> oldConfigMap = new HashMap<String, String>();
+		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
 		Map<String, String> newConfigMap = new HashMap<>();
 		ConfigurationMap.containerConfigMap.putAll(newConfigMap);
