@@ -52,7 +52,7 @@ public class FogContainer {
 	}
 	
 	private final Runnable checkStatus = () -> {
-		if (ElementManager.getInstance().getElementById(elementId) == null)
+		if (ElementManager.getInstance().getLatestElementById(elementId) == null)
 			remove();
 
 		if (isBlank(containerId)) {
@@ -123,7 +123,7 @@ public class FogContainer {
 	}
 	
 	public void create() throws Exception {
-		Element element = ElementManager.getInstance().getElementById(elementId);
+		Element element = ElementManager.getInstance().getLatestElementById(elementId);
 		LoggingService.logWarning(MODULE_NAME, "creating container...");
 
 		try {

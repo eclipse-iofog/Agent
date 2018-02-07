@@ -92,9 +92,9 @@ public class ProcessManager implements IOFogModule {
 			}
 		}
 
-		List<Element> elements = elementManager.getElements();
+		List<Element> latestElements = elementManager.getLatestElements();
 
-		for (Element element : elements) {
+		for (Element element : latestElements) {
 			Container container =  docker.getContainer(element.getElementId());
 			if (container != null && !element.isRebuild()) {
 				element.setContainerId(container.getId());
@@ -142,20 +142,20 @@ public class ProcessManager implements IOFogModule {
 
 			synchronized (containersMonitorLock) {
 
-				List<Element> elements = elementManager.getElements();
+				List<Element> latestElements = elementManager.getLatestElements();
 				List<Element> currentElements = elementManager.getCurrentElements();
 
-				for (Element element : elements) {
+				for (Element element : latestElements) {
 					if (!docker.hasContainer(element.getElementId()) || element.isRebuild()) {
 						addTask(new ContainerTask(ADD, element));
 					}
 				}
-				StatusReporter.setProcessManagerStatus().setRunningElementsCount(elements.size());
+				StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
 
 				List<Container> containers = docker.getContainers();
 				for (Container container : containers) {
 					String containerId = container.getNames()[0].substring(1);
-					Element element = elementManager.getElementById(elements, containerId);
+					Element element = elementManager.getLatestElementById(latestElements, containerId);
 
 					boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
 					// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
@@ -190,7 +190,7 @@ public class ProcessManager implements IOFogModule {
 						}
 					}
 				}
-				elementManager.setCurrentElements(elements);
+				elementManager.setCurrentElements(latestElements);
 			}
 		}
 	};

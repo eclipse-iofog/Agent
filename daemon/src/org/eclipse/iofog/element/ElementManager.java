@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class ElementManager {
 
-	private List<Element> elements;
+	private List<Element> latestElements;
 	private List<Element> currentElements;
 	private Map<String, Route> routes;
 	private Map<String, String> configs;
@@ -33,7 +33,7 @@ public class ElementManager {
 	private static ElementManager instance = null;
 	
 	private ElementManager() {
-		elements = new ArrayList<>();
+		latestElements = new ArrayList<>();
 		currentElements = new ArrayList<>();
 		routes = new HashMap<>();
 		configs = new HashMap<>();
@@ -50,9 +50,9 @@ public class ElementManager {
 		return instance;
 	}
 	
-	public List<Element> getElements() {
+	public List<Element> getLatestElements() {
 		synchronized (ElementManager.class) {
-			return elements;
+			return latestElements;
 		}
 	}
 
@@ -100,9 +100,9 @@ public class ElementManager {
 		}
 	}
 
-	public void setElements(List<Element> elements) {
+	public void setLatestElements(List<Element> latestElements) {
 		synchronized (ElementManager.class) {
-			this.elements = elements;
+			this.latestElements = latestElements;
 		}
 	}
 
@@ -119,12 +119,12 @@ public class ElementManager {
 	}
 
 	public boolean elementExists(List<Element> elements, String elementId) {
-		return getElementById(elements, elementId) != null;
+		return getLatestElementById(elements, elementId) != null;
 	}
 
 	public void clear() {
 		synchronized (ElementManager.class) {
-			elements.clear();
+			latestElements.clear();
 			currentElements.clear();
 			routes.clear();
 			configs.clear();
@@ -132,14 +132,15 @@ public class ElementManager {
 		}
 	}
 
-	public Element getElementById(String elementId) {
-		return getElementById(elements, elementId);
+	public Element getLatestElementById(String elementId) {
+		return getLatestElementById(latestElements, elementId);
 	}
 
-	public Element getElementById(List<Element> elements, String elementId) {
+	public Element getLatestElementById(List<Element> elements, String elementId) {
 		for (Element element : elements)
-			if (element.getElementId().equals(elementId))
+			if (element.getElementId().equals(elementId)) {
 				return element;
+			}
 		return null;
 	}
 

@@ -86,10 +86,10 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/../target</outputDirectory>
+							<outputDirectory>${project.build.directory}</outputDirectory>
 							<resources>
 								<resource>
-									<directory>${project.basedir}/target</directory>
+									<directory>${project.build.directory}</directory>
 									<filtering>false</filtering>
 								</resource>
 							</resources>

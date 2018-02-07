@@ -244,7 +244,9 @@ public class FieldAgent implements IOFogModule {
 				}
 
 				initialization = false;
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				logInfo("Error getting changes list : " + e.getMessage());
+			}
 		}
 	};
 
@@ -424,7 +426,7 @@ public class FieldAgent implements IOFogModule {
 				saveFile(containers, filesPath + filename);
 			}
 
-			List<Element> elements = new ArrayList<>();
+			List<Element> latestElements = new ArrayList<>();
 			for (int i = 0; i < containers.size(); i++) {
 				JsonObject container = containers.getJsonObject(i);
 
@@ -464,10 +466,10 @@ public class FieldAgent implements IOFogModule {
 					}
 					element.setVolumeMappings(vms);
 				}
-				elements.add(element);
+				latestElements.add(element);
 				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
 			}
-			elementManager.setElements(elements);
+			elementManager.setLatestElements(latestElements);
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
