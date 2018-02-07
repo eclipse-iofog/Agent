@@ -35,12 +35,10 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 public class MessageWebsocketReceiverClient implements Runnable{
-	
-	private String id = "";
-	final String URL;
+
+	private final String URL;
 	
 	public MessageWebsocketReceiverClient(String id) {
-		this.id = id;
 		 URL = System.getProperty("url", "ws://127.0.0.1:54321/v2/message/socket/id/" + id);
 	}
 	

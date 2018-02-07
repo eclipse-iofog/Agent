@@ -20,9 +20,9 @@ import org.eclipse.iofog.message_bus.Message;
  * @since 2016
  */
 public class MessageSentInfo {
-	Message message;
-	int sendTryCount = 0;
-	long timeMillis;
+	private Message message;
+	private int sendTryCount = 0;
+	private long timeMillis;
 	
 	
 
@@ -42,7 +42,6 @@ public class MessageSentInfo {
 	
 	/**
 	 * Get message
-	 * @param none
 	 * @return Message
 	 */
 	public Message getMessage() {
@@ -51,7 +50,7 @@ public class MessageSentInfo {
 	
 	/**
 	 * Save message
-	 * @param Message
+	 * @param message
 	 * @return void
 	 */
 	public void setMessage(Message message) {
@@ -60,7 +59,6 @@ public class MessageSentInfo {
 	
 	/**
 	 * Get message sending trial count
-	 * @param none
 	 * @return int
 	 */
 	public int getSendTryCount() {
@@ -69,7 +67,7 @@ public class MessageSentInfo {
 	
 	/**
 	 * Save message sending trial count
-	 * @param int
+	 * @param sendTryCount
 	 * @return void
 	 */
 	public void setSendTryCount(int sendTryCount) {

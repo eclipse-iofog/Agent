@@ -34,7 +34,6 @@ public class ControlWebsocketWorker  implements Runnable{
 	/**
 	 * Initiating control signals for unacknowledged signals
 	 * If tried for 10 times, then disable real-time service for the channel
-	 * @param none
 	 * @return void
 	 */
 	@Override
@@ -70,12 +69,11 @@ public class ControlWebsocketWorker  implements Runnable{
 				}
 			}
 		}
-		return;
 	}
 
 	/**
 	 * Helper method to initiate control sinals
-	 * @param ChannelHandlerContext
+	 * @param ctx
 	 * @return void
 	 */
 	private void initiateControlSignal(ChannelHandlerContext ctx) throws Exception{

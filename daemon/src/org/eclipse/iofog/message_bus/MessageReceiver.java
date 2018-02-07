@@ -44,7 +44,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * @return list of {@link Message}
 	 * @throws Exception
 	 */
-	protected synchronized List<Message> getMessages() throws Exception {
+	synchronized List<Message> getMessages() throws Exception {
 		List<Message> result = new ArrayList<>();
 		
 		if (consumer != null || listener == null) {
@@ -84,7 +84,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * enables real-time receiving for this {@link Element}
 	 * 
 	 */
-	protected void enableRealTimeReceiving() {
+	void enableRealTimeReceiving() {
 		if (consumer == null || consumer.isClosed())
 			return;
 		listener = new MessageListener(new MessageCallback(name));
@@ -99,7 +99,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * disables real-time receiving for this {@link Element}
 	 * 
 	 */
-	protected void disableRealTimeReceiving() {
+	void disableRealTimeReceiving() {
 		try {
 			if (consumer == null || listener == null || consumer.getMessageHandler() == null)
 				return;

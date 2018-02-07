@@ -52,7 +52,7 @@ public class MessagePublisher implements AutoCloseable{
 	 * @param message - {@link Message} to be published
 	 * @throws Exception
 	 */
-	protected synchronized void publish(Message message) throws Exception {
+	synchronized void publish(Message message) throws Exception {
 		byte[] bytes = message.getBytes();
 
 		try {
@@ -73,7 +73,7 @@ public class MessagePublisher implements AutoCloseable{
 		this.producer = producer;
 	}
 	
-	protected void updateRoute(Route route) {
+	void updateRoute(Route route) {
 		this.route = route;
 	}
 

@@ -120,7 +120,7 @@ public class Orchestrator {
 	 * @return {@link Inet4Address}
 	 * @throws Exception
 	 */
-	public static InetAddress getInetAddress() throws SocketException {
+	private static InetAddress getInetAddress() throws SocketException {
 		Enumeration<InetAddress> ipAddresses = NetworkInterface.getByName(eth)
 				.getInetAddresses();
 		while (ipAddresses.hasMoreElements()) {
@@ -176,7 +176,7 @@ public class Orchestrator {
 	 * @return result in Json format
 	 * @throws Exception
 	 */
-	public JsonObject getJSON(String surl) throws Exception {
+	private JsonObject getJSON(String surl) throws Exception {
 		if (!surl.toLowerCase().startsWith("https"))
 			throw new UnknownHostException("unable to connect over non-secure connection");
 		initialize();

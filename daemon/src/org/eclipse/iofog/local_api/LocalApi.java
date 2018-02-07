@@ -30,7 +30,7 @@ import java.util.Map;
 public class LocalApi implements Runnable {
 
 	private final String MODULE_NAME = "Local API";
-	private static LocalApi instance = null;
+	private static volatile LocalApi instance;
 	public boolean isSeverStarted = false; 
 	private LocalApiServer server;
 
@@ -43,15 +43,17 @@ public class LocalApi implements Runnable {
 	 * @return LocalApi
 	 */
 	public static LocalApi getInstance(){
-		if (instance == null) {
+		LocalApi localInstance = instance;
+		if (localInstance == null) {
 			synchronized (LocalApi.class) {
-				if(instance == null){
-					instance = new LocalApi();
+				localInstance = instance;
+				if (localInstance == null) {
+					instance = localInstance = new LocalApi();
 					LoggingService.logInfo("LOCAL API ","Local Api Instantiated");
 				}
 			}
 		}
-		return instance;
+		return localInstance;
 	}
 
 	/**
@@ -83,12 +85,10 @@ public class LocalApi implements Runnable {
 		server = new LocalApiServer();
 		try {
 			server.start();
-			isSeverStarted = true;
 			
 		} catch (Exception e) {
 			try {
 				stopServer();
-				isSeverStarted = false;
 			} catch (Exception e1) {
 				LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e1.getMessage());
 				StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
@@ -97,7 +97,6 @@ public class LocalApi implements Runnable {
 
 			LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e.getMessage());
 			StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
-			return;
 		}
 
 	}
@@ -106,7 +105,7 @@ public class LocalApi implements Runnable {
 	 * Get the containers configuration and store it.
 	 * @return void
 	 */
-	public void retrieveContainerConfig() {
+	private void retrieveContainerConfig() {
 		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration retrieved");
@@ -119,7 +118,7 @@ public class LocalApi implements Runnable {
 	 * Update the containers configuration and store it.
 	 * @return void
 	 */
-	public void updateContainerConfig(){
+	private void updateContainerConfig(){
 		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration updated");
@@ -137,8 +136,8 @@ public class LocalApi implements Runnable {
 		Map<String, String> oldConfigMap = new HashMap<String, String>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
-		Map<String, String> newConfigMap = new HashMap<String, String>();
-		newConfigMap.putAll(ConfigurationMap.containerConfigMap);
+		Map<String, String> newConfigMap = new HashMap<>();
+		ConfigurationMap.containerConfigMap.putAll(newConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		try {
 			handler.initiateControlSignal(oldConfigMap, newConfigMap);
