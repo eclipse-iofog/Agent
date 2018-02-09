@@ -14,7 +14,6 @@ import static org.eclipse.iofog.proxy.ConnectionStatus.*;
  * SSH Proxy Manager Module
  *
  * @author epankov
- *
  */
 public class SshProxyManager {
     private String MODULE_NAME = "SSH Proxy Manager";
@@ -22,12 +21,13 @@ public class SshProxyManager {
     private static SshProxyManager instance;
     private static final int TIMEOUT = 60000;
     private JSch jschSSHChannel;
-    private String user;
+    private String username;
     private String password;
     private String host;
     private String rsaKey;
     private int rport;
     private int lport = 22;
+    private boolean closeFlag;
     private Session session;
     private StringBuilder errorMessage = new StringBuilder();
 
@@ -35,71 +35,25 @@ public class SshProxyManager {
         jschSSHChannel = new JSch();
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getRport() {
-        return rport;
-    }
-
-    public int getLport() {
-        return lport;
-    }
-
-    public String getRsaKey() {
-        return rsaKey;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public void setRsaKey(String rsaKey) {
-        this.rsaKey = rsaKey;
-    }
-
-    public void setRport(int rport) {
-        this.rport = rport;
-    }
-
-    public void setLport(int lport) {
-        this.lport = lport;
-    }
-
-    public void setProxyInfo(String user, String password, String host, int rport, int lport, String rsaKey) {
-        this.user = user;
+    public void setProxyInfo(String username, String password, String host, int rport, int lport, String rsaKey, boolean closeFlag) {
+        this.username = username;
         this.password = password;
         this.host = host;
         this.rport = rport;
         this.lport = lport;
         this.rsaKey = rsaKey;
+        this.closeFlag = closeFlag;
     }
 
     /**
      * opens reverse proxy on specified host
+     *
      * @return Runnable to be executed on separate thread
      */
     public Runnable connect() {
         return () -> {
             try {
-                session = jschSSHChannel.getSession(user, host, lport);
+                session = jschSSHChannel.getSession(username, host, lport);
                 session.setPassword(password);
 
                 session.connect(TIMEOUT);
@@ -115,43 +69,56 @@ public class SshProxyManager {
     }
 
     /**
+     * starts or stops ssh tunnel according to current config
+     */
+    public void update() {
+        if (isConnected() && closeFlag) {
+            close();
+        } else if (!isConnected() && !closeFlag){
+            open();
+        } else if (isConnected() && !closeFlag) {
+            handleAlreadyOpenedTunnel();
+        } else {
+            handleAlreadyClosedTunnel();
+        }
+    }
+
+    /**
+     * reports that the tunnel is already opened
+     */
+    private void handleAlreadyOpenedTunnel() {
+        resetErrorMessages();
+        String errMsg = "The tunnel is already opened. Please close it first.";
+        updateProxyManagerStatus(errMsg, OPEN);
+    }
+
+    /**
+     * reports that the tunnel is already closed
+     */
+    private void handleAlreadyClosedTunnel() {
+        resetErrorMessages();
+        String errMsg = "The tunnel is already closed";
+        updateProxyManagerStatus(errMsg, CLOSED);
+    }
+
+    /**
      * opens ssh tunnel
      */
-    public void open() {
-        if (!isConnected()) {
-            resetErrorMessages();
-            setKnownHost();
-            new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
-            LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
-        };
+    private void open() {
+        resetErrorMessages();
+        setKnownHost();
+        new Thread(connect(), "SshProxyManager : OpenSshChannel").start();
+        LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
     }
 
     /**
      * closes ssh tunnel
      */
-    public void close() {
+    private void close() {
         resetErrorMessages();
-        if (isConnected()) {
-            session.disconnect();
-            setSshProxyManagerStatus(CLOSED);
-        } else {
-            String errMsg = "There is no open ssh tunnel";
-            updateProxyManagerStatus(errMsg, FAILED);
-        }
-    }
-
-    /**
-     * checks whether the tunnel is already opened
-     * @return boolean if tunnel is open
-     */
-    public boolean isTunnelAlreadyOpened() {
-        boolean isConnected = isConnected();
-        if (isConnected) {
-            resetErrorMessages();
-            String errMsg = "The tunnel is already opened. Please close it first.";
-            updateProxyManagerStatus(errMsg, OPEN);
-        }
-        return isConnected;
+        session.disconnect();
+        setSshProxyManagerStatus(CLOSED);
+        LoggingService.logInfo(MODULE_NAME, "closed ssh tunnel");
     }
 
     /**
@@ -169,11 +136,12 @@ public class SshProxyManager {
 
     /**
      * sets current ssh proxy manager status
+     *
      * @param status Connection status of the tunnel
      */
     private void setSshProxyManagerStatus(ConnectionStatus status) {
         StatusReporter.setSshProxyManagerStatus()
-                .setUser(user)
+                .setUsername(username)
                 .setHost(host)
                 .setRemotePort(rport)
                 .setLocalPort(lport)
@@ -190,6 +158,7 @@ public class SshProxyManager {
 
     /**
      * checks if tunnel is open
+     *
      * @return boolean
      */
     private boolean isConnected() {
@@ -198,11 +167,12 @@ public class SshProxyManager {
 
     /**
      * updates ssh proxy manager status
+     *
      * @param errMsg error message
      * @param status connection status
      */
     private void updateProxyManagerStatus(String errMsg, ConnectionStatus status) {
-        errorMessage.append(errorMessage).append(System.getProperty("line.separator"));;
+        errorMessage.append(errorMessage).append(System.getProperty("line.separator"));
         LoggingService.logWarning(MODULE_NAME, errMsg);
         setSshProxyManagerStatus(status);
     }

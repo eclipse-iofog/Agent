@@ -246,11 +246,12 @@ public class FieldAgent {
                 }
                 if (changes.getBoolean("proxy") && !initialization) {
                     getProxyConfig();
-                    sshProxyManager.open();
+                    sshProxyManager.update();
                 }
 
                 initialization = false;
             } catch (Exception e) {
+                LoggingService.logWarning(MODULE_NAME, e.getMessage());
             }
         }
     };
@@ -719,20 +720,15 @@ public class FieldAgent {
                     throw new Exception("error from fog controller");
 
                 JsonObject configs = result.getJsonObject("config");
-                String user = configs.getString("user");
+                String username = configs.getString("username");
                 String password = configs.getString("password");
                 String host = configs.getString("host");
-                String rsaKey = configs.getString("rsaKey");
-                int rport = Integer.parseInt(configs.getString("rport"));
-                int lport = Integer.parseInt(configs.getString("lport"));
-                boolean close = Boolean.parseBoolean((configs.getString("close")));
+                String rsaKey = configs.getString("rsakey");
+                int rport = configs.getInt("rport");
+                int lport = configs.getInt("lport");
+                boolean closeFlag = (configs.getBoolean("close"));
 
-                if (close) {
-                    sshProxyManager.close();
-                } else if (!sshProxyManager.isTunnelAlreadyOpened()) {
-                    sshProxyManager.setProxyInfo(user, password, host, rport, lport, rsaKey);
-                }
-
+                sshProxyManager.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
             } catch (Exception e) {
                 LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
             }
@@ -895,8 +891,8 @@ public class FieldAgent {
             loadRoutes(!isConnected);
         }
 
-        new Thread(pingController, "FieldAgent : Ping").start();
-        new Thread(getChangesList, "FieldAgent : GetChangesList").start();
-        new Thread(postStatus, "FieldAgent : PostStaus").start();
-    }
+		new Thread(pingController, "FieldAgent : Ping").start();
+		new Thread(getChangesList, "FieldAgent : GetChangesList").start();
+		new Thread(postStatus, "FieldAgent : PostStatus").start();
+	}
 }

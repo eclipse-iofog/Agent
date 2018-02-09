@@ -11,17 +11,17 @@ import javax.json.JsonObjectBuilder;
  */
 public class SshProxyManagerStatus {
 
-    private String user;
-    private String host;
-    private int rport;
-    private int lport;
-    private ConnectionStatus status;
-    private String errorMessage;
+    private String username = "";
+    private String host = "";
+    private int rport = 0;
+    private int lport = 0;
+    private ConnectionStatus status = ConnectionStatus.CLOSED;
+    private String errorMessage = "";
 
     public SshProxyManagerStatus() {}
 
-    public SshProxyManagerStatus setUser(String user) {
-        this.user = user;
+    public SshProxyManagerStatus setUsername(String username) {
+        this.username = username;
         return this;
     }
 
@@ -52,12 +52,12 @@ public class SshProxyManagerStatus {
 
     public String getJsonProxyStatus() {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-                    .add("user", this.user)
+                    .add("username", this.username)
                     .add("host", this.host)
                     .add("rport", this.rport)
                     .add("lport", this.lport)
                     .add("status", this.status.toString())
-                    .add("errorMessage", this.errorMessage);
+                    .add("errormessage", this.errorMessage);
         return objectBuilder.build().toString();
     }
 }
