@@ -12,16 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.logging;
 
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.attribute.GroupPrincipal;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.nio.file.attribute.UserPrincipalLookupService;
+import java.nio.file.attribute.*;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,9 +29,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
 
 /**
  * sets up and starts logging

@@ -12,13 +12,13 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientMessage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * receiver {@link Element}

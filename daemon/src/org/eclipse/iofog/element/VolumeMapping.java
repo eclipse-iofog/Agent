@@ -59,4 +59,12 @@ public class VolumeMapping {
         return accessMode;
     }
 
+    @Override
+    public int hashCode() {
+        int result = hostDestination.hashCode();
+        result = 31 * result + containerDestination.hashCode();
+        result = 31 * result + accessMode.hashCode();
+        return result;
+    }
+
 }

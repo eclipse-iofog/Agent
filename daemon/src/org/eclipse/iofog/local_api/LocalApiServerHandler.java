@@ -130,9 +130,9 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 */
 	private void handleHttpRequest(ChannelHandlerContext ctx) throws Exception {
 		String remoteIpAddress = getRemoteIP(ctx);
-		List<Element> elements = ElementManager.getInstance().getElements();
+		List<Element> latestElements = ElementManager.getInstance().getLatestElements();
 		boolean found;
-		for(Element e: elements){
+		for(Element e: latestElements){
 			if(e.getContainerIpAddress() != null && e.getContainerIpAddress().equals(remoteIpAddress)) {
 				found = true; 
 				break;

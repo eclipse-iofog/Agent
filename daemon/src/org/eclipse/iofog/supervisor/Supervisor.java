@@ -12,20 +12,23 @@
  *******************************************************************************/
 package org.eclipse.iofog.supervisor;
 
-import java.lang.Thread.State;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
+import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ModulesStatus;
-import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import static java.lang.System.currentTimeMillis;
+import static java.lang.Thread.State.TERMINATED;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.eclipse.iofog.utils.Constants.*;
+import static org.eclipse.iofog.utils.Constants.ModulesStatus.RUNNING;
+import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
 
 /**
  * Supervisor module
@@ -33,7 +36,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class Supervisor {
+public class Supervisor implements IOFogModule {
 
 	private final String MODULE_NAME = "Supervisor";
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -51,15 +54,14 @@ public class Supervisor {
 	 */
 	private Runnable checkLocalApiStatus = () -> {
 		try {
-			if (localApiThread != null && localApiThread.getState() == State.TERMINATED) {
+			if (localApiThread != null && localApiThread.getState() == TERMINATED) {
 				localApiThread = new Thread(localApi, "Local Api");
 				localApiThread.start();
 			}
 		} catch (Exception e) {}
 	};
 
-	public Supervisor() {
-	}
+	public Supervisor() {}
 	
 	/**
 	 * starts Supervisor module
@@ -67,75 +69,61 @@ public class Supervisor {
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
-		Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, "shutdown hook"));
-		
-		LoggingService.logInfo(MODULE_NAME, "starting status reporter");
-		StatusReporter.start();
-		StatusReporter.setSupervisorStatus().setModuleStatus(Constants.STATUS_REPORTER, ModulesStatus.RUNNING);
-		
-		StatusReporter.setSupervisorStatus()
-				.setDaemonStatus(ModulesStatus.STARTING)
-				.setDaemonLastStart(System.currentTimeMillis())
-				.setOperationDuration(0);
+        Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, "shutdown hook"));
 
-		// TODO: start other modules
-		// TODO: after starting each module, set SupervisorStatus.modulesStatus
-		
-		// starting Resource Consumption Manager
-		LoggingService.logInfo(MODULE_NAME, "starting resource consumption manager");
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.RESOURCE_CONSUMPTION_MANAGER, ModulesStatus.STARTING);
+        logInfo("starting status reporter");
+        StatusReporter.start();
+        StatusReporter.setSupervisorStatus().setModuleStatus(STATUS_REPORTER, RUNNING);
+
+        StatusReporter.setSupervisorStatus()
+                .setDaemonStatus(STARTING)
+                .setDaemonLastStart(currentTimeMillis())
+                .setOperationDuration(0);
+
+        // TODO: start other modules
+        // TODO: after starting each module, set SupervisorStatus.modulesStatus
+
+        // starting Resource Consumption Manager
 		resourceConsumptionManager = ResourceConsumptionManager.getInstance();
-		resourceConsumptionManager.start();
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.RESOURCE_CONSUMPTION_MANAGER, ModulesStatus.RUNNING);
+        startModule(resourceConsumptionManager);
+        fieldAgent = FieldAgent.getInstance();
+        startModule(fieldAgent);
+        processManager = ProcessManager.getInstance();
+        startModule(processManager);
+        messageBus = MessageBus.getInstance();
+        startModule(messageBus);
 
-		// starting Field Agent
-		LoggingService.logInfo(MODULE_NAME, "starting field agent");
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.FIELD_AGENT, ModulesStatus.STARTING);
-		fieldAgent = FieldAgent.getInstance();
-		fieldAgent.start();
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.FIELD_AGENT, ModulesStatus.RUNNING);
+        localApi = LocalApi.getInstance();
+        localApiThread = new Thread(localApi, "Local Api");
+        localApiThread.start();
+        scheduler.scheduleAtFixedRate(checkLocalApiStatus, 0, 10, SECONDS);
 
-		// starting Process Manager
-		LoggingService.logInfo(MODULE_NAME, "starting process manager");
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.PROCESS_MANAGER, ModulesStatus.STARTING);
-		processManager = ProcessManager.getInstance();
-		processManager.start();
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.PROCESS_MANAGER,	ModulesStatus.RUNNING);
-		
-		// starting Message Bus
-		LoggingService.logInfo(MODULE_NAME, "starting message bus");
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.MESSAGE_BUS, ModulesStatus.STARTING);
-		messageBus = MessageBus.getInstance();
-		StatusReporter.setSupervisorStatus()
-				.setModuleStatus(Constants.MESSAGE_BUS,	ModulesStatus.RUNNING);
-		
-		LocalApi localApi = LocalApi.getInstance();
-		localApiThread = new Thread(localApi, "Local Api");
-		localApiThread.start();
-		scheduler.scheduleAtFixedRate(checkLocalApiStatus, 0, 10, TimeUnit.SECONDS);
+        StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
+        logInfo("started");
 
-		StatusReporter.setSupervisorStatus()
-				.setDaemonStatus(ModulesStatus.RUNNING);
-		LoggingService.logInfo(MODULE_NAME, "started");
-		
-		while (true) {
-			try {
-				Thread.sleep(Constants.STATUS_REPORT_FREQ_SECONDS * 1000);
-			} catch (InterruptedException e) {
-				LoggingService.logWarning(MODULE_NAME, e.getMessage());
-				System.exit(1);
-			}
-			StatusReporter.setSupervisorStatus()
-					.setOperationDuration(System.currentTimeMillis());
-		}
-	}
+        operationDuration();
+
+    }
+
+	private void startModule(IOFogModule ioFogModule) throws Exception {
+        logInfo(" starting " + ioFogModule.getModuleName());
+        StatusReporter.setSupervisorStatus().setModuleStatus(ioFogModule.getModuleIndex(), STARTING);
+        ioFogModule.start();
+        StatusReporter.setSupervisorStatus().setModuleStatus(ioFogModule.getModuleIndex(), RUNNING);
+    }
+
+    private void operationDuration(){
+        while (true) {
+            try {
+                Thread.sleep(STATUS_REPORT_FREQ_SECONDS * 1000);
+            } catch (InterruptedException e) {
+                logWarning(e.getMessage());
+                System.exit(1);
+            }
+            StatusReporter.setSupervisorStatus()
+                    .setOperationDuration(currentTimeMillis());
+        }
+    }
 
 	/**
 	 * shutdown hook to stop {@link MessageBus} and {@link LocalApi}
@@ -148,5 +136,15 @@ public class Supervisor {
 			messageBus.stop();
 		} catch (Exception e) {}
 	};
+
+	@Override
+	public int getModuleIndex() {
+		return MESSAGE_BUS;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
+	}
 
 }

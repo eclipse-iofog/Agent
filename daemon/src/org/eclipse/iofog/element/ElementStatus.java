@@ -63,4 +63,17 @@ public class ElementStatus {
 		return System.currentTimeMillis() - startTime;
 	}
 
+	@Override
+    public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ElementStatus that = (ElementStatus) o;
+		return status == that.status;
+	}
+
+	@Override
+    public int hashCode() {
+		return status != null ? status.hashCode() : 0;
+	}
+
 }
