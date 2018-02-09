@@ -27,7 +27,7 @@ import org.hornetq.api.core.client.ClientSession;
  * @author saeid
  *
  */
-public class MessagePublisher {
+public class MessagePublisher implements AutoCloseable{
 	private final MessageArchive archive;
 	private final String name;
 	private ClientProducer producer;
@@ -52,7 +52,7 @@ public class MessagePublisher {
 	 * @param message - {@link Message} to be published
 	 * @throws Exception
 	 */
-	protected synchronized void publish(Message message) throws Exception {
+	synchronized void publish(Message message) throws Exception {
 		byte[] bytes = message.getBytes();
 
 		try {
@@ -73,7 +73,7 @@ public class MessagePublisher {
 		this.producer = producer;
 	}
 	
-	protected void updateRoute(Route route) {
+	void updateRoute(Route route) {
 		this.route = route;
 	}
 

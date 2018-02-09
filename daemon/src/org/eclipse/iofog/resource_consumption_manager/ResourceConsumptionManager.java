@@ -12,18 +12,17 @@
  *******************************************************************************/
 package org.eclipse.iofog.resource_consumption_manager;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
+import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.configuration.Configuration;
+
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
+import static org.eclipse.iofog.utils.Constants.GET_USAGE_DATA_FREQ_SECONDS;
+import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 
 /**
  * Resource Consumption Manager module
@@ -31,13 +30,24 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class ResourceConsumptionManager {
+public class ResourceConsumptionManager implements IOFogModule {
+
 	private String MODULE_NAME = "Resource Consumption Manager";
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
-	
+
 	private ResourceConsumptionManager() {}
-	
+
+	@Override
+	public int getModuleIndex() {
+		return RESOURCE_CONSUMPTION_MANAGER;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
+	}
+
 	public static ResourceConsumptionManager getInstance() {
 		if (instance == null) {
 			synchronized (ResourceConsumptionManager.class) {
@@ -57,9 +67,9 @@ public class ResourceConsumptionManager {
 	private Runnable getUsageData = () -> {
 		while (true) {
 			try {
-				Thread.sleep(Constants.GET_USAGE_DATA_FREQ_SECONDS * 1000);
+				Thread.sleep(GET_USAGE_DATA_FREQ_SECONDS * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "get usage data");
+				logInfo("get usage data");
 
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();
@@ -77,7 +87,9 @@ public class ResourceConsumptionManager {
 					float amount = diskUsage - (diskLimit * 0.75f);
 					removeArchives(amount);
 				}
-			} catch (Exception e) {}
+			} catch (Exception e) {
+			    logInfo("Error getting usage data : " + e.getMessage());
+            }
 		}
 	};
 
@@ -140,48 +152,52 @@ public class ResourceConsumptionManager {
 		long utimeBefore, utimeAfter, totalBefore, totalAfter;
 		float usage = 0;
 		try {
-			BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"));
-			String line = br.readLine();
-			utimeBefore = Long.parseLong(line.split(" ")[13]);
-			br.close();
+			String line;
+			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
+				line = br.readLine();
+				utimeBefore = Long.parseLong(line.split(" ")[13]);
+			}
 
 			totalBefore = 0;
-			br = new BufferedReader(new FileReader("/proc/stat"));
-			line = br.readLine();
-			while (line != null) {
-				String[] items = line.split(" ");
-				if (items[0].equals("cpu")) {
-					for (int i = 1; i < items.length; i++)
-						if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-							totalBefore += Long.parseLong(items[i]);
-					break;
-				}
-			}
-			br.close();
+            try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
+                line = br.readLine();
+                while (line != null) {
+                    String[] items = line.split(" ");
+                    if (items[0].equals("cpu")) {
+                        for (int i = 1; i < items.length; i++)
+                            if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
+                                totalBefore += Long.parseLong(items[i]);
+                        break;
+                    }
+                }
+            }
 
 			Thread.sleep(1000);
 
-			br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"));
-			line = br.readLine();
-			utimeAfter = Long.parseLong(line.split(" ")[13]);
-			br.close();
+			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
+				line = br.readLine();
+				utimeAfter = Long.parseLong(line.split(" ")[13]);
+			}
 
 			totalAfter = 0;
-			br = new BufferedReader(new FileReader("/proc/stat"));
-			line = br.readLine();
-			while (line != null) {
-				String[] items = line.split(" ");
-				if (items[0].equals("cpu")) {
-					for (int i = 1; i < items.length; i++)
-						if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-							totalAfter += Long.parseLong(items[i]);
-					break;
+
+			try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
+				line = br.readLine();
+				while (line != null) {
+					String[] items = line.split(" ");
+					if (items[0].equals("cpu")) {
+						for (int i = 1; i < items.length; i++)
+							if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
+								totalAfter += Long.parseLong(items[i]);
+						break;
+					}
 				}
 			}
-			br.close();
 
 			usage = 100f * (utimeAfter - utimeBefore) / (totalAfter - totalBefore);
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			logWarning("Error getting CPU usage : " + e.getMessage());
+		}
 		return usage;
 	}
 
@@ -226,7 +242,7 @@ public class ResourceConsumptionManager {
 
 		new Thread(getUsageData, "ResourceConsumptionManager : GetUsageData").start();
 
-		LoggingService.logInfo(MODULE_NAME, "started");
+		logInfo("started");
 	}
 
 }

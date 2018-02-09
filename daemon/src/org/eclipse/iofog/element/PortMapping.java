@@ -19,8 +19,8 @@ package org.eclipse.iofog.element;
  *
  */
 public class PortMapping {
-	final String outside;
-	final String inside;
+	private final String outside;
+	private final String inside;
 
 	public PortMapping(String outside, String inside) {
 		this.outside = outside;

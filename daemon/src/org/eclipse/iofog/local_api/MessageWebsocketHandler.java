@@ -42,6 +42,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
  * @since 2016
  */
 public class MessageWebsocketHandler {
+	private final String MODULE_NAME = "Local API";
 
 	private static final Byte OPCODE_PING = 0x9;
 	private static final Byte OPCODE_PONG = 0xA;
@@ -49,20 +50,16 @@ public class MessageWebsocketHandler {
 	private static final Byte OPCODE_MSG = 0xD;
 	private static final Byte OPCODE_RECEIPT = 0xE;
 
-	private final String MODULE_NAME = "Local API";
 	private static final String WEBSOCKET_PATH = "/v2/message/socket";
-
-	private WebSocketServerHandshaker handshaker;
 
 	/**
 	 * Handler to open the websocket for the real-time message websocket
 	 * 
-	 * @param ChannelHandlerContext,
-	 *            FullHttpRequest
+	 * @param ctx,req
 	 * @return void
 	 */
 	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
-		String uri = req.getUri();
+		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
 		String publisherId;
@@ -77,7 +74,7 @@ public class MessageWebsocketHandler {
 		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(req),
 				null, true, Integer.MAX_VALUE);
-		handshaker = wsFactory.newHandshaker(req);
+		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
 		} else {
@@ -90,15 +87,13 @@ public class MessageWebsocketHandler {
 		MessageBus.getInstance().enableRealTimeReceiving(publisherId);
 
 		LoggingService.logInfo(MODULE_NAME, "Handshake end....");
-		return;
 	}
 
 	/**
 	 * Handler for the real-time messages Receive ping and send pong Sending and
 	 * receiving real-time messages
 	 * 
-	 * @param ChannelHandlerContext,
-	 *            WebSocketFrame
+	 * @param ctx, frame
 	 * @return void
 	 */
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
@@ -190,15 +185,13 @@ public class MessageWebsocketHandler {
 			.disableRealTimeReceiving(WebsocketUtil.getIdForWebsocket(ctx, WebSocketMap.messageWebsocketMap));
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.messageWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
-			return;
 		}
 	}
 
 	/**
 	 * Helper to send real-time messages
 	 * 
-	 * @param String,
-	 *            Message
+	 * @param receiverId, message
 	 * @return void
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
@@ -237,7 +230,7 @@ public class MessageWebsocketHandler {
 	/**
 	 * Websocket path
 	 * 
-	 * @param FullHttpRequest
+	 * @param req
 	 * @return void
 	 */
 	private static String getWebSocketLocation(HttpRequest req) {

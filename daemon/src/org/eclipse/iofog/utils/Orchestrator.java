@@ -22,12 +22,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.NoContentException;
 import java.io.*;
@@ -36,256 +38,248 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * provides methods for IOFog controller
- *
+ * 
  * @author saeid
+ *
  */
 public class Orchestrator {
-    private final int CONNECTION_TIMEOUT = 5000;
-    private String controllerUrl;
-    private String instanceId;
-    private String accessToken;
-    private Certificate controllerCert;
-    private static String eth;
-    private CloseableHttpClient client;
+	private final int CONNECTION_TIMEOUT = 5000;
+	private String controllerUrl;
+	private String instanceId;
+	private String accessToken;
+	private Certificate controllerCert;
+	private static String eth;
+	private CloseableHttpClient client;
 
-    public Orchestrator() {
-        this.update();
-    }
+	private static final String MODULE_NAME = "Orchestrator";
+	
+	public Orchestrator() {
+		this.update();
+	}
 
-    /**
-     * ping IOFog controller
-     *
-     * @return ping result
-     * @throws Exception
-     */
-    public boolean ping() throws Exception {
-        try {
-            JsonObject result = getJSON(controllerUrl + "status");
-            return result.getString("status").equals("ok");
-        } catch (Exception e) {
-            throw e;
-        }
-    }
+	/**
+	 * ping IOFog controller
+	 * 
+	 * @return ping result
+	 * @throws Exception
+	 */
+	public boolean ping() throws Exception {
+		try {
+			JsonObject result = getJSON(controllerUrl + "status");
+			return result.getString("status").equals("ok");
+		} catch (Exception e) {
+			throw e;
+		} 
+	}
 
-    /**
-     * does provisioning
-     *
-     * @param key - provisioning key
-     * @return result in Json format
-     * @throws Exception
-     */
-    public JsonObject provision(String key) throws Exception {
-        JsonObject result = null;
-        try {
-            result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Constants.FOG_TYPE);
-        } catch (Exception e) {
-            throw e;
-        }
-        return result;
-    }
+	/**
+	 * does provisioning
+	 * 
+	 * @param key - provisioning key
+	 * @return result in Json format
+	 * @throws Exception
+	 */
+	public JsonObject provision(String key) throws Exception {
+		JsonObject result;
+		try {
+			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Constants.FOG_TYPE);
+		} catch (Exception e) {
+			throw e;
+		} 
+		return result;
+	}
 
-    /**
-     * returns IPv4 address of IOFog network interface
-     *
-     * @return {@link Inet4Address}
-     * @throws Exception
-     */
-    public static InetAddress getInetAddress() throws Exception {
-        InetAddress address = null;
-        try {
-            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-            while (networkInterfaces.hasMoreElements()) {
-                NetworkInterface networkInterface = networkInterfaces.nextElement();
-                if (networkInterface.getName().equals(eth)) {
-                    Enumeration<InetAddress> ipAddresses = networkInterface.getInetAddresses();
-                    while (ipAddresses.hasMoreElements()) {
-                        address = ipAddresses.nextElement();
-                        if (address instanceof Inet4Address) {
-                            return address;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-        }
-        throw new ConnectException(String.format("unable to get ip address \"%s\"", eth));
-    }
+	/**
+	 * returns IPv4 host address of IOFog network interface
+	 *
+	 * @return {@link Inet4Address}
+	 * @throws Exception
+	 */
+	public static String getCurrentIpAddress() {
+		Optional<InetAddress> inetAddress = getLocalIp();
+		return inetAddress.map(InetAddress::getHostAddress).orElse("");
+	}
 
-    private RequestConfig getRequestConfig() throws Exception {
-        return RequestConfig.copy(RequestConfig.DEFAULT)
-                .setLocalAddress(getInetAddress())
-//				.setConnectionRequestTimeout(CONNECTION_TIMEOUT)
-//				.setSocketTimeout(CONNECTION_TIMEOUT)
-                .setConnectTimeout(CONNECTION_TIMEOUT)
-                .build();
-    }
+	private static Optional<InetAddress> getLocalIp(){
+		Optional<InetAddress> inetAddress = Optional.empty();
+		try {
+			inetAddress = Optional.of(Orchestrator.getInetAddress());
+		} catch (SocketException exp) {
+			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + exp.getMessage());
+		}
+		return inetAddress;
+	}
 
-    /**
-     * initialize {@link TrustManager}
-     *
-     * @throws Exception
-     */
-    private void initialize() throws Exception {
-        TrustManager[] trustManager = new TrustManager[]{
-                new X509TrustManager() {
-                    private X509Certificate[] certs;
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return certs;
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
-                        boolean verified = false;
-                        for (X509Certificate cert : certs) {
-                            if (cert.equals(controllerCert)) {
-                                verified = true;
-                                break;
-                            }
-                        }
-                        if (!verified)
-                            throw new CertificateException();
-                    }
-
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
-                    }
-                }
-        };
+	/**
+	 * returns IPv4 address of IOFog network interface
+	 * 
+	 * @return {@link Inet4Address}
+	 * @throws Exception
+	 */
+	private static InetAddress getInetAddress() throws SocketException {
+		Enumeration<InetAddress> ipAddresses = NetworkInterface.getByName(eth)
+				.getInetAddresses();
+		while (ipAddresses.hasMoreElements()) {
+			InetAddress address = ipAddresses.nextElement();
+			if (address instanceof Inet4Address) {
+				return address;
+			}
+		}
+		throw new ConnectException(String.format("unable to get ip address \"%s\"", eth));
+	}
+	
+	private RequestConfig getRequestConfig() throws Exception {
+		return RequestConfig.copy(RequestConfig.DEFAULT)
+				.setLocalAddress(getInetAddress())
+				.setConnectTimeout(CONNECTION_TIMEOUT)
+				.build();
+	}
+	
+	/**
+	 * initialize {@link TrustManager}
+	 * 
+	 * @throws Exception
+	 */
+	private void initialize() throws Exception {
+		TrustManager[] trustManager = new TrustManager[] {new X509TrustManagerImpl(controllerCert)};
         SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustManager, new SecureRandom());
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-        client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-    }
+		sslContext.init(null, trustManager, new SecureRandom());
+		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+	    client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+	}
+	
+	/**
+	 * converts {@link InputStream} to {@link Certificate}
+	 * 
+	 * @param is - {@link InputStream}
+	 * @return {@link Certificate}
+	 */
+	private Certificate getCert(InputStream is) {
+		Certificate result = null;
+		try {
+			CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+			result = certificateFactory.generateCertificate(is);
+		} catch (CertificateException exp) {
+			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+		}
+		return result;
+	}
+	
+	/**
+	 * gets Json result of a IOFog Controller endpoint
+	 * 
+	 * @param surl - endpoind to be called
+	 * @return result in Json format
+	 * @throws Exception
+	 */
+	private JsonObject getJSON(String surl) throws Exception {
+		if (!surl.toLowerCase().startsWith("https"))
+			throw new UnknownHostException("unable to connect over non-secure connection");
+		initialize();
+		RequestConfig config = getRequestConfig();
+		HttpPost post = new HttpPost(surl);
+		post.setConfig(config);
 
-    /**
-     * converts {@link InputStream} to {@link Certificate}
-     *
-     * @param is - {@link InputStream}
-     * @return {@link Certificate}
-     */
-    private Certificate getCert(InputStream is) {
-        try {
-            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-            Certificate result = certificateFactory.generateCertificate(is);
-            return result;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+		JsonObject result;
+		
+		try (CloseableHttpResponse response = client.execute(post)) {
 
-    /**
-     * gets Json result of a IOFog Controller endpoint
-     *
-     * @param surl - endpoind to be called
-     * @return result in Json format
-     * @throws Exception
-     */
-    public JsonObject getJSON(String surl) throws Exception {
-        if (!surl.toLowerCase().startsWith("https"))
-            throw new UnknownHostException("unable to connect over non-secure connection");
-        initialize();
-        RequestConfig config = getRequestConfig();
-        HttpPost post = new HttpPost(surl);
-        post.setConfig(config);
+			if (response.getStatusLine().getStatusCode() != 200) {
+				if (response.getStatusLine().getStatusCode() == 404)
+					throw new UnknownHostException();
+				else
+					throw new Exception();
+			}
 
-        CloseableHttpResponse response = client.execute(post);
+			try(Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+				JsonReader jsonReader = Json.createReader(in)){
+				result = jsonReader.readObject();
+			}
 
-        if (response.getStatusLine().getStatusCode() != 200) {
-            if (response.getStatusLine().getStatusCode() == 404)
-                throw new UnknownHostException();
-            else
-                throw new Exception();
-        }
+		}
+		return result;
+	}
 
-        Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+	/**
+	 * calls IOFog Controller endpoind and returns Json result
+	 * 
+	 * @param command - endpoint to be called
+	 * @param queryParams - query string parameters
+	 * @param postParams - post parameters
+	 * @return result in Json format
+	 * @throws Exception
+	 */
+	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
+		if (!controllerUrl.toLowerCase().startsWith("https"))
+			throw new Exception("unable to connect over non-secure connection");
+		JsonObject result;
+		
+		StringBuilder uri = new StringBuilder(controllerUrl);
+		
+		uri.append("instance/")
+			.append(command)
+			.append("/id/").append(instanceId)
+			.append("/token/").append(accessToken);
+		
+		if (queryParams != null)
+			queryParams.forEach((key, value) -> uri.append("/").append(key)
+					.append("/").append(value));
 
-        JsonObject result = Json.createReader(in).readObject();
-
-        response.close();
-        return result;
-    }
-
-    /**
-     * calls IOFog Controller endpoind and returns Json result
-     *
-     * @param command     - endpoint to be called
-     * @param queryParams - query string parameters
-     * @param postParams  - post parameters
-     * @return result in Json format
-     * @throws Exception
-     */
-    public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
-        if (!controllerUrl.toLowerCase().startsWith("https"))
-            throw new Exception("unable to connect over non-secure connection");
-        JsonObject result = null;
-
-        StringBuilder uri = new StringBuilder(controllerUrl);
-
-        uri.append("instance/")
-                .append(command)
-                .append("/id/").append(instanceId)
-                .append("/token/").append(accessToken);
-
-        if (queryParams != null)
-            queryParams.forEach((key, value) -> uri.append("/").append(key)
-                    .append("/").append(value));
-
-        List<NameValuePair> postData = new ArrayList<NameValuePair>();
-        if (postParams != null)
-            postParams.forEach((key, value1) -> {
-                String value = value1.toString();
-                if (value == null)
-                    value = "";
-                postData.add(new BasicNameValuePair(key, value));
-            });
+		List<NameValuePair> postData = new ArrayList<NameValuePair>();		
+		if (postParams != null)
+			postParams.forEach((key, value1) -> {
+				String value = value1.toString();
+				if (value == null)
+					value = "";
+				postData.add(new BasicNameValuePair(key, value));
+			});
 
 
-        initialize();
-        RequestConfig config = getRequestConfig();
-        HttpPost post = new HttpPost(uri.toString());
-        post.setConfig(config);
-        post.setEntity(new UrlEncodedFormEntity(postData));
+		initialize();
+		RequestConfig config = getRequestConfig();
+		HttpPost post = new HttpPost(uri.toString());
+		post.setConfig(config);
+		post.setEntity(new UrlEncodedFormEntity(postData));
 
-        CloseableHttpResponse response = client.execute(post);
+		try (CloseableHttpResponse response = client.execute(post);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+			 JsonReader jsonReader = Json.createReader(in)) {
 
-        if (response.getStatusLine().getStatusCode() == 403) {
-            throw new ForbiddenException();
-        } else if (response.getStatusLine().getStatusCode() == 204) {
-            throw new NoContentException("");
-        }
+			if (response.getStatusLine().getStatusCode() == 403) {
+				throw new ForbiddenException();
+			} else if (response.getStatusLine().getStatusCode() == 204) {
+				throw new NoContentException("");
+			}
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-        result = Json.createReader(in).readObject();
 
-        return result;
-    }
+			result = jsonReader.readObject();
+		} catch (Exception e) {
+			throw e;
+		}
+		
+		return result;
+	}
 
-    /**
-     * updates local variables when changes applied
-     */
-    public void update() {
-        instanceId = Configuration.getInstanceId();
-        accessToken = Configuration.getAccessToken();
-        controllerUrl = Configuration.getControllerUrl();
-        try {
-            controllerCert = getCert(new FileInputStream(Configuration.getControllerCert()));
-        } catch (FileNotFoundException e) {
-            controllerCert = null;
-        }
-        eth = Configuration.getNetworkInterface();
-        try {
-            initialize();
-        } catch (Exception e) {
-        }
-    }
+	/**
+	 * updates local variables when changes applied
+	 * 
+	 */
+	public void update() {
+		instanceId = Configuration.getInstanceId();
+		accessToken = Configuration.getAccessToken();
+		controllerUrl = Configuration.getControllerUrl();
+		try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
+			controllerCert = getCert(fileInputStream);
+		} catch (IOException e) {
+			controllerCert = null;
+		} 
+		eth = Configuration.getNetworkInterface();
+		try {
+			initialize();
+		} catch (Exception e) {}
+	}
 }

@@ -22,7 +22,7 @@ public class Registry {
 	private String url;
 	private boolean secure;
 	private String certificate;
-	private boolean requiersCertificate;
+	private boolean requiresCertificate;
 	private String userName;
 	private String password;
 	private String userEmail;
@@ -51,12 +51,12 @@ public class Registry {
 		this.certificate = certificate;
 	}
 
-	public boolean isRequiersCertificate() {
-		return requiersCertificate;
+	public boolean isRequiresCertificate() {
+		return requiresCertificate;
 	}
 
-	public void setRequiersCertificate(boolean requiersCertificate) {
-		this.requiersCertificate = requiersCertificate;
+	public void setRequiresCertificate(boolean requiresCertificate) {
+		this.requiresCertificate = requiresCertificate;
 	}
 
 	public String getUserName() {
@@ -88,4 +88,11 @@ public class Registry {
 		Registry other = ((Registry) o);
         return this.url.equalsIgnoreCase(other.url) && this.userEmail.equalsIgnoreCase(other.userEmail);
     }
+
+	@Override
+	public int hashCode() {
+		int result = url.hashCode();
+		result = 31 * result + userEmail.hashCode();
+		return result;
+	}
 }
