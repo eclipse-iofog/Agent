@@ -239,8 +239,8 @@ public class FieldAgent {
 				if (changes.getBoolean("config") && !initialization) {
                     getFogConfig();
                 }
-                if (!"".equals(changes.getString("version")) && !initialization) {
-				    changeVersion(changes.getString("version"));
+                if (changes.getBoolean("version") && !initialization) {
+				    changeVersion();
                 }
 				if (changes.getBoolean("registries") || initialization) {
 					loadRegistries(false);
@@ -268,17 +268,30 @@ public class FieldAgent {
      * performs change version operation, received from ioFog controller
      *
      */
-	private void changeVersion(String command) {
-        LoggingService.logInfo(MODULE_NAME, "changing version");
+	private void changeVersion() throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "get change version action");
+		if (notWorking()) return;
 
         try {
-            VersionCommand versionCommand = parseCommandString(command);
+			JsonObject result = orchestrator.doCommand("version", null, null);
 
-            executeChangeVersionScript(versionCommand);
+			if (!result.getString("status").equals("ok"))
+				throw new Exception("error from fog controller");
+
+			JsonObject versionData = result.getJsonObject("version");
+
+            VersionCommand versionCommand = parseJson(versionData);
+            String provisionKey = versionData.getString("provisionKey");
+
+            executeChangeVersionScript(versionCommand, provisionKey);
 
         } catch (UnknownVersionCommandException e) {
             LoggingService.logWarning(MODULE_NAME, e.getMessage());
-        }
+        } catch (CertificateException|SSLHandshakeException e) {
+			verficationFailed();
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
+		}
     }
 
     /**
@@ -286,10 +299,11 @@ public class FieldAgent {
      *
      * @param command {@link VersionCommand}
      */
-    private void executeChangeVersionScript(VersionCommand command) {
+    private void executeChangeVersionScript(VersionCommand command, String provisionKey) {
         final String SCRIPTS_ROOT_DIR_PATH = "/usr/share/iofog/";
         final String UPGRADE_FILE_NAME = "upgrade.sh";
         final String ROLLBACK_FILE_NAME = "rollback.sh";
+        final String MAX_STARTING_TIMEOUT = "20";
 
         String shToExecute = null;
 
@@ -305,7 +319,7 @@ public class FieldAgent {
         }
 
         try {
-            ProcessBuilder pb = new ProcessBuilder("/bin/sh", shToExecute);
+            ProcessBuilder pb = new ProcessBuilder("/bin/sh", shToExecute, provisionKey, MAX_STARTING_TIMEOUT);
             Process p = pb.start();
         } catch (IOException e) {
             LoggingService.logWarning(MODULE_NAME, e.getMessage());
