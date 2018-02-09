@@ -77,28 +77,21 @@ public class SshProxyManager {
         } else if (!isConnected() && !closeFlag){
             open();
         } else if (isConnected() && !closeFlag) {
-            handleAlreadyOpenedTunnel();
+            handleUnexpectedTunnelState("The tunnel is already opened. Please close it first.", OPEN);
         } else {
-            handleAlreadyClosedTunnel();
+            handleUnexpectedTunnelState("The tunnel is already closed", CLOSED);
         }
     }
 
-    /**
-     * reports that the tunnel is already opened
-     */
-    private void handleAlreadyOpenedTunnel() {
-        resetErrorMessages();
-        String errMsg = "The tunnel is already opened. Please close it first.";
-        updateProxyManagerStatus(errMsg, OPEN);
-    }
 
     /**
-     * reports that the tunnel is already closed
+     * handles unexpected situations like tunnel is already opened or closed
+     * @param errMsg error message
+     * @param status connection status
      */
-    private void handleAlreadyClosedTunnel() {
+    private void handleUnexpectedTunnelState(String errMsg, ConnectionStatus status) {
         resetErrorMessages();
-        String errMsg = "The tunnel is already closed";
-        updateProxyManagerStatus(errMsg, CLOSED);
+        updateProxyManagerStatus(errMsg, status);
     }
 
     /**
