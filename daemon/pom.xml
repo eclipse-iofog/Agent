@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>org.eclipse</groupId>
 		<artifactId>iofog</artifactId>
-		<version>0.52</version>
+		<version>0.53</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -86,10 +86,10 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${basedir}/../target</outputDirectory>
+							<outputDirectory>${project.build.directory}</outputDirectory>
 							<resources>
 								<resource>
-									<directory>${basedir}/target</directory>
+									<directory>${project.build.directory}</directory>
 									<filtering>false</filtering>
 								</resource>
 							</resources>
@@ -124,6 +124,11 @@
 			<groupId>org.glassfish</groupId>
 			<artifactId>javax.json</artifactId>
 			<version>1.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jcraft</groupId>
+			<artifactId>jsch</artifactId>
+			<version>0.1.54</version>
 		</dependency>
 	</dependencies>
 

@@ -12,19 +12,18 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
-
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.Registry;
 import org.eclipse.iofog.utils.Constants.DockerStatus;
 import org.eclipse.iofog.utils.Constants.LinkStatus;
+
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * represents Process Manager status
@@ -52,10 +51,9 @@ public class ProcessManagerStatus {
 	 */
 	public String getJsonElementsStatus() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		elementsStatus.entrySet().forEach(entry -> {
-			ElementStatus status = entry.getValue();
+		elementsStatus.forEach((key, status) -> {
 			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-					.add("id", entry.getKey())
+					.add("id", key)
 					.add("status", status.getStatus().toString())
 					.add("starttime", status.getStartTime())
 					.add("operatingduration", status.getOperatingDuration())
@@ -73,12 +71,12 @@ public class ProcessManagerStatus {
 	 */
 	public String getJsonRegistriesStatus() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		registriesStatus.entrySet().forEach(entry -> {
+		registriesStatus.forEach((key, value) -> {
 			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-					.add("url", entry.getKey())
-					.add("linkstatus", entry.getValue().toString());
+					.add("url", key)
+					.add("linkstatus", value.toString());
 			arrayBuilder.add(objectBuilder);
-					
+
 		});
 		return arrayBuilder.build().toString();
 	}

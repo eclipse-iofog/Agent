@@ -27,7 +27,7 @@ import org.eclipse.iofog.message_bus.Message;
 public class RestReceiveTest {
 	private int delay;
 	private String receiver;
-	int counter;
+	private int counter;
 	
 	public RestReceiveTest(String receiver, int delay) {
 		this.delay = delay;

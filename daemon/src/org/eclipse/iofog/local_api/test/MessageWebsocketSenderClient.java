@@ -37,7 +37,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 public class MessageWebsocketSenderClient implements Runnable{
 	
 	private String id = "";
-	final String URL;
+	private final String URL;
 	
 	public MessageWebsocketSenderClient(String cid) {
 		this.id = cid;

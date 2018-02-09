@@ -93,7 +93,6 @@ public class WebSocketClientHandlerControl extends SimpleChannelInboundHandler<O
 			if(opcode == OPCODE_PONG.intValue()){
 				System.out.println("Received pong and done....");
 			}
-			return;
 		}
 		
 	}

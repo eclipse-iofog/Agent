@@ -29,16 +29,12 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
+import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Handler to deliver the messages to the receiver, if found any. Messages are
@@ -47,7 +43,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @author ashita
  * @since 2016
  */
-public class QueryMessageReceiverHandler implements Callable<Object> {
+public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
@@ -63,19 +59,18 @@ public class QueryMessageReceiverHandler implements Callable<Object> {
 	/**
 	 * Handler method to deliver the messages to the receiver as per the query.
 	 * Get the messages from message bus
-	 * 
-	 * @param None
+	 *
 	 * @return Object
 	 */
-	public Object handleQueryMessageRequest() throws Exception {
+	private FullHttpResponse handleQueryMessageRequest() throws Exception {
 		HttpHeaders headers = req.headers();
 
-		if (req.getMethod() != POST) {
+		if (req.method() != POST) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
 		}
 
-		if (!(headers.get(HttpHeaders.Names.CONTENT_TYPE).equals("application/json"))) {
+		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).equals("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
 			outputBuffer.writeBytes(errorMsg.getBytes());
@@ -134,14 +129,14 @@ public class QueryMessageReceiverHandler implements Callable<Object> {
 		String result = builder.build().toString();
 		outputBuffer.writeBytes(result.getBytes());
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		HttpHeaders.setContentLength(res, outputBuffer.readableBytes());
+		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;
 	}
 
 	/**
 	 * Validate the request and the query for the messages
 	 * 
-	 * @param JsonObject
+	 * @param message
 	 * @return String
 	 */
 	private void validateMessageQueryInput(JsonObject message) throws Exception{
@@ -178,12 +173,11 @@ public class QueryMessageReceiverHandler implements Callable<Object> {
 
 	/**
 	 * Overriden method of the Callable interface which call the handler method
-	 * 
-	 * @param None
+	 *
 	 * @return Object
 	 */
 	@Override
-	public Object call() throws Exception {
+	public FullHttpResponse call() throws Exception {
 		return handleQueryMessageRequest();
 	}
 }

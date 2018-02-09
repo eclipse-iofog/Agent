@@ -12,23 +12,17 @@
  *******************************************************************************/
 package org.eclipse.iofog;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-
 import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.configuration.ConfigurationItemException;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 
 public class Daemon {
 
