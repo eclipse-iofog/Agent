@@ -17,6 +17,7 @@ import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.Orchestrator;
@@ -45,9 +46,8 @@ import static org.eclipse.iofog.utils.Constants.*;
 
 /**
  * Field Agent module
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class FieldAgent implements IOFogModule {
 
@@ -55,6 +55,7 @@ public class FieldAgent implements IOFogModule {
 	private final String filesPath = SNAP_COMMON + "/etc/iofog/";
 
 	private Orchestrator orchestrator;
+	private SshProxyManager sshProxyManager;
 	private long lastGetChangesList;
 	private ElementManager elementManager;
 	private static FieldAgent instance;
@@ -79,7 +80,7 @@ public class FieldAgent implements IOFogModule {
 	public static FieldAgent getInstance() {
 		if (instance == null) {
 			synchronized (FieldAgent.class) {
-				if (instance == null) 
+				if (instance == null)
 					instance = new FieldAgent();
 			}
 		}
@@ -88,8 +89,8 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * creates IOFog status report
-	 * 
-	 * @return	Map
+	 *
+	 * @return Map
 	 */
 	private Map<String, Object> getFogStatus() {
 		Map<String, Object> result = new HashMap<>();
@@ -113,6 +114,7 @@ public class FieldAgent implements IOFogModule {
 		result.put("elementmessagecounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerElement());
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
 		result.put("lastcommandtime", StatusReporter.getFieldAgentStatus().getLastCommandTime());
+		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
 		result.put("version", VERSION);
 
 		return result;
@@ -120,19 +122,18 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * checks if IOFog is not provisioned
-	 * 
-	 * @return	boolean
+	 *
+	 * @return boolean
 	 */
 	private boolean notProvisioned() {
 		boolean notProvisioned = StatusReporter.getFieldAgentStatus().getContollerStatus().equals(NOT_PROVISIONED);
-		if(notProvisioned)
+		if (notProvisioned)
 			logWarning("not provisioned");
 		return notProvisioned;
 	}
 
 	/**
 	 * sends IOFog instance status to IOFog controller
-	 * 
 	 */
 	private final Runnable postStatus = () -> {
 		while (true) {
@@ -150,23 +151,23 @@ public class FieldAgent implements IOFogModule {
 				//					continue;
 				//				}
 				connected = isControllerConnected(false);
-				if(!connected)
+				if (!connected)
 					continue;
 				logInfo("verified");
 
 				logInfo("sending...");
-					JsonObject result = orchestrator.doCommand("status", null, status);
-					if (!result.getString("status").equals("ok")){
-						throw new Exception("error from fog controller");
-					}
-					
-					if (!connected) {
-						connected = true;
-						postFogConfig();
-					}
+				JsonObject result = orchestrator.doCommand("status", null, status);
+				if (!result.getString("status").equals("ok")) {
+					throw new Exception("error from fog controller");
+				}
+
+				if (!connected) {
+					connected = true;
+					postFogConfig();
+				}
 			} catch (CertificateException | SSLHandshakeException e) {
 				verificationFailed();
-			} catch(ForbiddenException e){
+			} catch (ForbiddenException e) {
 				deProvision();
 			} catch (Exception e) {
 				logWarning("unable to send status : " + e.getMessage());
@@ -176,9 +177,8 @@ public class FieldAgent implements IOFogModule {
 	};
 
 	/**
-	 * logs and sets appropriate status when controller 
+	 * logs and sets appropriate status when controller
 	 * certificate is not verified
-	 * 
 	 */
 	private void verificationFailed() {
 		connected = false;
@@ -191,7 +191,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * retrieves IOFog changes list from IOFog controller
-	 * 
 	 */
 	private final Runnable getChangesList = () -> {
 		while (true) {
@@ -211,7 +210,7 @@ public class FieldAgent implements IOFogModule {
 					result = orchestrator.doCommand("changes", queryParams, null);
 					if (!result.getString("status").equals("ok"))
 						throw new Exception("error from fog controller");
-				} catch (CertificateException|SSLHandshakeException e) {
+				} catch (CertificateException | SSLHandshakeException e) {
 					verificationFailed();
 					continue;
 				} catch (Exception e) {
@@ -242,6 +241,10 @@ public class FieldAgent implements IOFogModule {
 					loadRoutes(false);
 					MessageBus.getInstance().update();
 				}
+				if (changes.getBoolean("proxy") && !initialization) {
+					getProxyConfig();
+					sshProxyManager.update();
+				}
 
 				initialization = false;
 			} catch (Exception e) {
@@ -252,7 +255,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * gets list of registries from file or IOFog controller
-	 * 
+	 *
 	 * @param fromFile - load from file
 	 */
 	public void loadRegistries(boolean fromFile) {
@@ -272,7 +275,7 @@ public class FieldAgent implements IOFogModule {
 				}
 			} else {
 				JsonObject result = orchestrator.doCommand("registries", null, null);
-				if (!result.getString("status").equals("ok"))				
+				if (!result.getString("status").equals("ok"))
 					throw new Exception("error from fog controller");
 
 				registriesList = result.getJsonArray("registries");
@@ -293,7 +296,7 @@ public class FieldAgent implements IOFogModule {
 				registries.add(result);
 			}
 			elementManager.setRegistries(registries);
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get registries : " + e.getMessage());
@@ -302,16 +305,16 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * gets list of IOElement configurations from file or IOFog controller
-	 * 
+	 *
 	 * @param fromFile - load from file
 	 */
 	private void loadElementsConfig(boolean fromFile) {
 		logInfo("get elements config");
-		if (notProvisioned() ) {
+		if (notProvisioned()) {
 			return;
 		}
 
-		if(!isControllerConnected(fromFile))
+		if (!isControllerConnected(fromFile))
 			return;
 
 		String filename = "configs.json";
@@ -340,7 +343,7 @@ public class FieldAgent implements IOFogModule {
 				cfg.put(id, configString);
 			}
 			elementManager.setConfigs(cfg);
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get elements config : " + e.getMessage());
@@ -349,7 +352,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * gets list of IOElement routings from file or IOFog controller
-	 * 
+	 *
 	 * @param fromFile - load from file
 	 */
 	private void loadRoutes(boolean fromFile) {
@@ -391,7 +394,7 @@ public class FieldAgent implements IOFogModule {
 				r.put(container, elementRoute);
 			}
 			elementManager.setRoutes(r);
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get routing" + e.getMessage());
@@ -400,7 +403,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * gets list of IOElements from file or IOFog controller
-	 * 
+	 *
 	 * @param fromFile - load from file
 	 */
 	private void loadElementsList(boolean fromFile) {
@@ -449,7 +452,7 @@ public class FieldAgent implements IOFogModule {
 					}
 				}
 				element.setPortMappings(pms);
-				if(container.containsKey("volumemappings")) {
+				if (container.containsKey("volumemappings")) {
 					JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
 					JsonObject object = jsonReader.readObject();
 
@@ -470,7 +473,7 @@ public class FieldAgent implements IOFogModule {
 				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
 			}
 			elementManager.setLatestElements(latestElements);
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get containers list" + e.getMessage());
@@ -479,7 +482,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * pings IOFog controller
-	 *
 	 */
 	private boolean ping() {
 		if (notProvisioned()) {
@@ -492,7 +494,7 @@ public class FieldAgent implements IOFogModule {
 				StatusReporter.setFieldAgentStatus().setControllerVerified(true);
 				return true;
 			}
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.BROKEN);
@@ -503,7 +505,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * pings IOFog controller
-	 *
 	 */
 	private final Runnable pingController = () -> {
 		while (true) {
@@ -519,7 +520,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * computes SHA1 checksum
-	 * 
+	 *
 	 * @param data - input data
 	 * @return String
 	 */
@@ -543,7 +544,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * reads json data from file and compare data checksum
 	 * if checksum failed, returns null
-	 * 
+	 *
 	 * @param filename - file name to read data from
 	 * @return JsonArray
 	 */
@@ -564,11 +565,11 @@ public class FieldAgent implements IOFogModule {
 		return data;
 	}
 
-	private JsonObject readObject(String filename){
+	private JsonObject readObject(String filename) {
 		JsonObject object = null;
-		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))){
+		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))) {
 			object = reader.readObject();
-		} catch (FileNotFoundException ex){
+		} catch (FileNotFoundException ex) {
 			LoggingService.logWarning(MODULE_NAME, "Invalid file: " + filename);
 		}
 		return object;
@@ -576,9 +577,9 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * saves data and checksum to json file
-	 * 
-	 * @param data - data to be written into file
-	 * @param filename - file name 
+	 *
+	 * @param data     - data to be written into file
+	 * @param filename - file name
 	 */
 	private void saveFile(JsonArray data, String filename) {
 		String checksum = checksum(data.toString());
@@ -596,7 +597,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * gets IOFog instance configuration from IOFog controller
-	 *
 	 */
 	private void getFogConfig() {
 		logInfo("get fog config");
@@ -670,7 +670,7 @@ public class FieldAgent implements IOFogModule {
 			if (!instanceConfig.isEmpty())
 				Configuration.setConfig(instanceConfig, false);
 
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get fog config : " + e.getMessage());
@@ -679,7 +679,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * sends IOFog instance configuration to IOFog controller
-	 *
 	 */
 	public void postFogConfig() {
 		logInfo("post fog config");
@@ -706,7 +705,7 @@ public class FieldAgent implements IOFogModule {
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
 			if (!result.getString("status").equals("ok"))
 				throw new Exception("error from fog controller");
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to post fog config : " + e.getMessage());
@@ -714,11 +713,41 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	/**
+	 * gets IOFog proxy configuration from IOFog controller
+	 */
+	public void getProxyConfig() {
+		LoggingService.logInfo(MODULE_NAME, "get proxy config");
+
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		try {
+			JsonObject result = orchestrator.doCommand("proxyconfig", null, null);
+			if (!result.getString("status").equals("ok"))
+				throw new Exception("error from fog controller");
+
+			JsonObject configs = result.getJsonObject("config");
+			String username = configs.getString("username");
+			String password = configs.getString("password");
+			String host = configs.getString("host");
+			String rsaKey = configs.getString("rsakey");
+			int rport = configs.getInt("rport");
+			int lport = configs.getInt("lport");
+			boolean closeFlag = (configs.getBoolean("close"));
+
+			sshProxyManager.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
+		}
+	}
+
+	/**
 	 * does the provisioning.
-	 * If successfully provisioned, updates Instance ID and Access Token in 
+	 * If successfully provisioned, updates Instance ID and Access Token in
 	 * configuration file and loads IOElement data, otherwise sets appropriate
-	 * status.  
-	 * 
+	 * status.
+	 *
 	 * @param key - provisioning key sent by command-line
 	 * @return String
 	 */
@@ -744,7 +773,7 @@ public class FieldAgent implements IOFogModule {
 				notifyModules();
 
 			}
-		} catch (CertificateException | SSLHandshakeException e ) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 			provisioningResult = buildProvisionFailResponse("Certificate error", e);
 		} catch (ConnectException e) {
@@ -769,7 +798,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * notifies other modules
-	 * 
 	 */
 	private void notifyModules() {
 		MessageBus.getInstance().update();
@@ -778,8 +806,8 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	/**
-	 * does de-provisioning  
-	 * 
+	 * does de-provisioning
+	 *
 	 * @return String
 	 */
 	public String deProvision() {
@@ -808,7 +836,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * sends IOFog configuration when any changes applied
-	 * 
 	 */
 	public void instanceConfigUpdated() {
 		try {
@@ -821,7 +848,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * starts Field Agent module
-	 *
 	 */
 	public void start() {
 		if (isNullOrEmpty(Configuration.getInstanceId()) || isNullOrEmpty(Configuration.getAccessToken()))
@@ -829,6 +855,7 @@ public class FieldAgent implements IOFogModule {
 
 		elementManager = ElementManager.getInstance();
 		orchestrator = new Orchestrator();
+		sshProxyManager = new SshProxyManager();
 
 		boolean isConnected = ping();
 		getFogConfig();
@@ -844,13 +871,13 @@ public class FieldAgent implements IOFogModule {
 		new Thread(postStatus, "FieldAgent : PostStatus").start();
 	}
 
-    /**
-     * checks if IOFog controller connection is broken
-     *
-     * @param fromFile
-     * @return	boolean
-     */
-    private boolean isControllerConnected(boolean fromFile) {
+	/**
+	 * checks if IOFog controller connection is broken
+	 *
+	 * @param fromFile
+	 * @return boolean
+	 */
+	private boolean isControllerConnected(boolean fromFile) {
 		if ((!StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping()) && !fromFile) {
 			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
 				logWarning("connection to controller has broken");
