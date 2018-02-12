@@ -12,26 +12,20 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import static io.netty.handler.codec.http.HttpMethod.*;
-import static io.netty.handler.codec.http.HttpResponseStatus.*;
-import static io.netty.handler.codec.http.HttpVersion.*;
-
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Callable;
-
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-
+import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import io.netty.buffer.ByteBuf;
+import javax.json.*;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
+
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * Handler to publish the messages from the container to message bus
@@ -177,7 +171,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	}
 
 	/**
-	 * Overriden method of the Callable interface which openSshTunnel the handler method
+	 * Overriden method of the Callable interface which call the handler method
 	 *
 	 * @return Object
 	 */

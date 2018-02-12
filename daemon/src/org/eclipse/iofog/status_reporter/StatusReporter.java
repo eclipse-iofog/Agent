@@ -46,7 +46,7 @@ public final class StatusReporter {
 	private static MessageBusStatus messageBusStatus = new MessageBusStatus();
 	private static SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
 
-	private static String MODULE_NAME = "Status Reporter";
+	private final static String MODULE_NAME = "Status Reporter";
 	
 	/**
 	 * sets system time property

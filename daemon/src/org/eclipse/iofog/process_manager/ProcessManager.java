@@ -77,7 +77,7 @@ public class ProcessManager implements IOFogModule {
 	
 	/**
 	 * updates {@link Container} base on changes applied to list of {@link Element}
-	 * Field Agent openSshTunnel this method when any changes applied
+	 * Field Agent call this method when any changes applied
 	 * 
 	 */
 	public void update() {
