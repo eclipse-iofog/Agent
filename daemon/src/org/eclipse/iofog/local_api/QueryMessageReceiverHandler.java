@@ -172,7 +172,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	}
 
 	/**
-	 * Overriden method of the Callable interface which call the handler method
+	 * Overriden method of the Callable interface which openSshTunnel the handler method
 	 *
 	 * @return Object
 	 */

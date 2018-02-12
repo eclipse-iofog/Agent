@@ -125,7 +125,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 
 	/**
 	 * Method to be called if the request is HttpRequest 
-	 * Pass the request to the handler call as per the request URI
+	 * Pass the request to the handler openSshTunnel as per the request URI
 	 * @param ctx ChannelHandlerContext
 	 */
 	private void handleHttpRequest(ChannelHandlerContext ctx) throws Exception {
