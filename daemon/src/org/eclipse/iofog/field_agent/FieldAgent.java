@@ -18,6 +18,7 @@ import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.*;
@@ -243,8 +244,7 @@ public class FieldAgent implements IOFogModule {
 					MessageBus.getInstance().update();
 				}
 				if (changes.getBoolean("proxy") && !initialization) {
-					getProxyConfig();
-					sshProxyManager.update();
+					getProxyConfig().ifPresent(configs -> sshProxyManager.update(configs));
 				}
 
 				initialization = false;
@@ -717,30 +717,22 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * gets IOFog proxy configuration from IOFog controller
 	 */
-	public void getProxyConfig() {
+	public Optional<JsonObject> getProxyConfig() {
 		LoggingService.logInfo(MODULE_NAME, "get proxy config");
 
 		if (notProvisioned() || !isControllerConnected(false)) {
-			return;
+			return Optional.empty();
 		}
 
 		try {
 			JsonObject result = orchestrator.doCommand("proxyconfig", null, null);
-			if (!result.getString("status").equals("ok"))
+			if (!result.getString("status").equals("ok")) {
 				throw new Exception("error from fog controller");
-
-			JsonObject configs = result.getJsonObject("config");
-			String username = configs.getString("username");
-			String password = configs.getString("password");
-			String host = configs.getString("host");
-			String rsaKey = configs.getString("rsakey");
-			int rport = configs.getInt("rport");
-			int lport = configs.getInt("lport");
-			boolean closeFlag = (configs.getBoolean("close"));
-
-			sshProxyManager.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
+			}
+			return Optional.of(result.getJsonObject("config"));
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
+			return Optional.empty();
 		}
 	}
 
@@ -780,10 +772,10 @@ public class FieldAgent implements IOFogModule {
 			provisioningResult = buildProvisionFailResponse("Certificate error", e);
 		} catch (ConnectException e) {
 			StatusReporter.setFieldAgentStatus().setControllerVerified(true);
-			provisioningResult = buildProvisionFailResponse("Connection error: invalid network interface.", e);
+			provisioningResult = buildProvisionFailResponse("SshConnection error: invalid network interface.", e);
 		} catch (UnknownHostException e) {
 			StatusReporter.setFieldAgentStatus().setControllerVerified(false);
-			provisioningResult = buildProvisionFailResponse("Connection error: unable to connect to fog controller.", e);
+			provisioningResult = buildProvisionFailResponse("SshConnection error: unable to connect to fog controller.", e);
 		} catch (Exception e) {
 			provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
 		}
@@ -857,7 +849,7 @@ public class FieldAgent implements IOFogModule {
 
 		elementManager = ElementManager.getInstance();
 		orchestrator = new Orchestrator();
-		sshProxyManager = new SshProxyManager();
+		sshProxyManager = new SshProxyManager(new SshConnection());
 
 		boolean isConnected = ping();
 		getFogConfig();

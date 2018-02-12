@@ -6,7 +6,7 @@ package org.eclipse.iofog.proxy;
  * @author epankov
  *
  */
-public enum ConnectionStatus {
+public enum SshConnectionStatus {
     OPEN,
     FAILED,
     CLOSED

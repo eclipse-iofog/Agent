@@ -12,7 +12,23 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.network.IOFogNetworkInterface;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,24 +40,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import io.netty.handler.codec.http.*;
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.util.CharsetUtil;
-import io.netty.util.concurrent.EventExecutorGroup;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * Provide handler for the rest api and real-time websocket depending on the request.
@@ -130,6 +129,32 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * @param ctx ChannelHandlerContext
 	 */
 	private void handleHttpRequest(ChannelHandlerContext ctx) throws Exception {
+		String remoteIpAddress = getRemoteIP(ctx);
+		List<Element> latestElements = ElementManager.getInstance().getLatestElements();
+		boolean found;
+		for(Element e: latestElements){
+			if(e.getContainerIpAddress() != null && e.getContainerIpAddress().equals(remoteIpAddress)) {
+				found = true; 
+				break;
+			}
+		}
+
+		if(getLocalIp().equals(remoteIpAddress) || remoteIpAddress.equals("127.0.0.1") || remoteIpAddress.equals("0.0.0.0")) {
+			found = true;
+		}
+		
+		//To be removed later
+		found = true;
+		//To be removed later
+
+		if(!found){
+			String errorMsg = "IP address " + remoteIpAddress + " not found as registered\n";
+			LoggingService.logWarning(MODULE_NAME, errorMsg);
+			ByteBuf	errorMsgBytes = ctx.alloc().buffer();
+			errorMsgBytes.writeBytes(errorMsg.getBytes());
+			sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
+			return;
+		}
 
 		if (request.uri().equals("/v2/config/get")) {
 			Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
@@ -263,5 +288,42 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
 			f.addListener(ChannelFutureListener.CLOSE);
 		}
+	}
+
+	/**
+	 * Return the client IP address in the request channel
+	 * @param ctx
+	 * @return String
+	 */
+	private String getRemoteIP(ChannelHandlerContext ctx) {
+		InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+		InetAddress inetaddress = socketAddress.getAddress();
+		return inetaddress.getHostAddress();
+	}
+
+	/**
+	 * Return the local host IP address
+	 * @return String
+	 */
+	private String getLocalIp() throws Exception {
+		InetAddress address;
+		try {
+			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+			while (networkInterfaces.hasMoreElements()) {
+				NetworkInterface networkInterface = networkInterfaces.nextElement();
+				if (networkInterface.getName().equals(Configuration.getNetworkInterface())) {
+					Enumeration<InetAddress> ipAddresses = networkInterface.getInetAddresses();
+					while (ipAddresses.hasMoreElements()) {
+						address = ipAddresses.nextElement();
+						if (address instanceof Inet4Address) {
+							return address.getHostAddress();
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, " Problem retrieving local ip " + e.getMessage());
+		}
+		return "127.0.0.1";
 	}
 }
