@@ -21,7 +21,7 @@ public enum CommandLineConfigParam {
     CONTROLLER_URL ("https://iotracks.com/api/v2/", "a","controller_url", ""),
     CONTROLLER_CERT ("/etc/iofog/cert.crt", "ac","controller_cert", ""),
     DOCKER_URL ("unix:///var/run/docker.sock", "c","docker_url", "dockerurl"),
-    NETWORK_INTERFACE ("eth0", "n","network_interface", "networkinterface"),
+    NETWORK_INTERFACE ("dynamic", "n","network_interface", "networkinterface"),
     LOG_DISK_CONSUMPTION_LIMIT ("10", "l","log_disk_consumption_limit", "loglimit"),
     LOG_DISK_DIRECTORY ("/var/log/iofog/", "ld","log_disk_directory", "logdirectory"),
     LOG_FILE_COUNT ("10", "lc","log_file_count", "logfilecount"),

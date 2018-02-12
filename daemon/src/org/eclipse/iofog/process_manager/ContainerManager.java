@@ -17,9 +17,9 @@ import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.ElementState;
-import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
@@ -92,7 +92,7 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, "creating container");
 			String hostName = EMPTY;
 			if (!element.isRootHostAccess())
-				hostName = Orchestrator.getCurrentIpAddress();
+				hostName = IOFogNetworkInterface.getCurrentIpAddress();
 			String id = docker.createContainer(element, hostName);
 			element.setContainerId(id);
 			element.setContainerIpAddress(docker.getContainerIpAddress(id));

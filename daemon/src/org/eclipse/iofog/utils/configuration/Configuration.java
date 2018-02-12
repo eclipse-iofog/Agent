@@ -15,6 +15,7 @@ package org.eclipse.iofog.utils.configuration;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.utils.Orchestrator;
@@ -557,7 +558,8 @@ public final class Configuration {
 	 * @return info report
 	 */
 	public static String getConfigReport() {
-		String ipAddress = Orchestrator.getCurrentIpAddress();
+		String ipAddress = IOFogNetworkInterface.getCurrentIpAddress();
+		String networkInterface = IOFogNetworkInterface.getNetworkInterface();
 		ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
 		StringBuilder result = new StringBuilder();
