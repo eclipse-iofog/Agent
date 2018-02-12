@@ -6,11 +6,11 @@ import java.util.function.Function;
  * Created by ekrylovich
  * on 2/7/18.
  */
-public class CommandLineResultSet<E, V> {
+public class CommandShellResultSet<E, V> {
 	private final E error;
 	private final V value;
 
-	public CommandLineResultSet(V value, E error) {
+	public CommandShellResultSet(V value, E error) {
 		this.value = value;
 		this.error = error;
 	}
@@ -23,7 +23,7 @@ public class CommandLineResultSet<E, V> {
 		return value;
 	}
 
-	public <M,T> CommandLineResultSet<M, T> map(Function<CommandLineResultSet<E, V>, CommandLineResultSet<M, T>> mapper){
+	public <M,T> CommandShellResultSet<M, T> map(Function<CommandShellResultSet<E, V>, CommandShellResultSet<M, T>> mapper){
 		return mapper.apply(this);
 	}
 
@@ -38,7 +38,7 @@ public class CommandLineResultSet<E, V> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		CommandLineResultSet<?, ?> that = (CommandLineResultSet<?, ?>) o;
+		CommandShellResultSet<?, ?> that = (CommandShellResultSet<?, ?>) o;
 
 		if (error != null ? !error.equals(that.error) : that.error != null) return false;
 		return value != null ? value.equals(that.value) : that.value == null;

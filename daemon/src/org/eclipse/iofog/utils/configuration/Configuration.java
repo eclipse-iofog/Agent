@@ -559,7 +559,7 @@ public final class Configuration {
 	 */
 	public static String getConfigReport() {
 		String ipAddress = IOFogNetworkInterface.getCurrentIpAddress();
-		String networkInterface = IOFogNetworkInterface.getNetworkInterface();
+		String networkInterface = getNetworkInterfaceInfo();
 		ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
 		StringBuilder result = new StringBuilder();
@@ -600,6 +600,12 @@ public final class Configuration {
 
 	private static String buildReportLine(String messageDescription, String value) {
 		return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
+	}
+
+	private static String getNetworkInterfaceInfo(){
+		return NETWORK_INTERFACE.getDefaultValue().equals(networkInterface) ?
+				IOFogNetworkInterface.getNetworkInterface() + "(" + NETWORK_INTERFACE.getDefaultValue() + ")" :
+				networkInterface;
 	}
 
 }

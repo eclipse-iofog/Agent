@@ -1,6 +1,6 @@
 package org.eclipse.iofog.network;
 
-import org.eclipse.iofog.command_line.util.CommandLineResultSet;
+import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -67,7 +67,7 @@ public class IOFogNetworkInterface {
 
 
 	private static String getOSNetworkInterface(){
-		final CommandLineResultSet<List<String>, List<String>> interfaces = execute(NETWORK_BASH_COMMAND);
+		final CommandShellResultSet<List<String>, List<String>> interfaces = execute(NETWORK_BASH_COMMAND);
 		return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
 			"enp0s25" :
 			interfaces.getValue().get(0);

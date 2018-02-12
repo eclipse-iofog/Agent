@@ -1,5 +1,7 @@
 package org.eclipse.iofog.command_line.util;
 
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,26 +15,27 @@ import java.util.function.Function;
  * on 2/7/18.
  */
 public class CommandShellExecutor {
+	private static final String MODULE_NAME = "CommandShellExecutor";
 	private static final String CMD = "/bin/sh";
 
 
-	public static CommandLineResultSet<List<String>, List<String>> execute(String command) {
-		CommandLineResultSet<List<String>, List<String>> resultSet = null;
+	public static CommandShellResultSet<List<String>, List<String>> execute(String command) {
+		CommandShellResultSet<List<String>, List<String>> resultSet = null;
 		String[] script = computeScript(command);
 		try {
 			Process process = Runtime.getRuntime().exec(script);
 			List<String> value = readOutput(process, Process::getInputStream);
 			List<String> errors = readOutput(process, Process::getErrorStream);
-			resultSet = new CommandLineResultSet<>(value, errors);
+			resultSet = new CommandShellResultSet<>(value, errors);
 		} catch (IOException e) {
-			e.printStackTrace();
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		}
 
 		return resultSet;
 	}
 
 
-	public static <V, E> CommandLineResultSet<V, E> execute(String command, Function<CommandLineResultSet<List<String>, List<String>>, CommandLineResultSet<V, E>> mapper) {
+	public static <V, E> CommandShellResultSet<V, E> execute(String command, Function<CommandShellResultSet<List<String>, List<String>>, CommandShellResultSet<V, E>> mapper) {
 		return execute(command).map(mapper);
 	}
 
