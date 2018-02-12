@@ -16,8 +16,8 @@ public class SshConnection {
 	private String password;
 	private String host;
 	private String rsaKey;
-	private int rport;
-	private int lport = 22;
+	private int remotePort;
+	private int localPort = 22;
 	private boolean closeFlag;
 	private Session session;
 
@@ -31,10 +31,10 @@ public class SshConnection {
 	public Supplier<Void> openSshTunnel() {
 		return () -> {
 			try {
-				session = jschSSHChannel.getSession(username, host, lport);
+				session = jschSSHChannel.getSession(username, host, localPort);
 				session.setPassword(password);
 				session.connect(TIMEOUT);
-				session.setPortForwardingR(host, rport, LOCAL_HOST, lport);
+				session.setPortForwardingR(host, remotePort, LOCAL_HOST, localPort);
 			} catch (JSchException jschX) {
 				session.disconnect();
 				throw new RuntimeException(jschX.getMessage());
@@ -58,8 +58,8 @@ public class SshConnection {
 		this.username = username;
 		this.password = password;
 		this.host = host;
-		this.rport = rport;
-		this.lport = lport;
+		this.remotePort = rport;
+		this.localPort = lport;
 		this.rsaKey = rsaKey;
 		this.closeFlag = closeFlag;
 	}
@@ -96,11 +96,11 @@ public class SshConnection {
 		return host;
 	}
 
-	public int getRport() {
-		return rport;
+	public int getRemotePort() {
+		return remotePort;
 	}
 
-	public int getLport() {
-		return lport;
+	public int getLocalPort() {
+		return localPort;
 	}
 }

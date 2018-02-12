@@ -15,9 +15,9 @@ import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
  * @author epankov
  */
 public class SshProxyManager {
-    private String MODULE_NAME = "SSH Proxy Manager";
-    private SshConnection connection;
+    private static final String MODULE_NAME = "SSH Proxy Manager";
     private static final String EMPTY = "";
+    private SshConnection connection;
 
     public SshProxyManager(SshConnection connection) {
         this.connection = connection;
@@ -75,15 +75,24 @@ public class SshProxyManager {
      */
     private void openSshTunnel() {
         CompletableFuture.supplyAsync(connection.openSshTunnel())
-                .thenRun(() -> {
-                    setSshProxyManagerStatus(OPEN, EMPTY);
-                    LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
-                })
                 .whenComplete((val, ex) -> {
-                    String errMsg = String.format("Unable to connect to the server:%n %s", ex.getMessage());
-                    LoggingService.logWarning(MODULE_NAME, errMsg);
-                    setSshProxyManagerStatus(FAILED, errMsg);
+                    if (ex != null) {
+                        onError(ex);
+                    } else {
+                        onSuccess();
+                    }
                 });
+    }
+
+    private void onSuccess() {
+        setSshProxyManagerStatus(OPEN, EMPTY);
+        LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
+    }
+
+    private void onError(Throwable ex) {
+        String errMsg = String.format("Unable to connect to the server:%n %s", ex.getMessage());
+        LoggingService.logWarning(MODULE_NAME, errMsg);
+        setSshProxyManagerStatus(FAILED, errMsg);
     }
 
     /**
@@ -104,8 +113,8 @@ public class SshProxyManager {
         StatusReporter.setSshProxyManagerStatus()
                 .setUsername(connection.getUsername())
                 .setHost(connection.getHost())
-                .setRemotePort(connection.getRport())
-                .setLocalPort(connection.getLport())
+                .setRemotePort(connection.getRemotePort())
+                .setLocalPort(connection.getLocalPort())
                 .setConnectionStatus(status)
                 .setErrorMessage(errMsg);
     }
