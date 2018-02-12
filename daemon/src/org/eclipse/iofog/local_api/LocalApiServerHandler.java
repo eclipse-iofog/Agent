@@ -28,6 +28,7 @@ import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.network.IOFogNetworkInterface;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -128,33 +129,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * @param ctx ChannelHandlerContext
 	 */
 	private void handleHttpRequest(ChannelHandlerContext ctx) throws Exception {
-		String remoteIpAddress = getRemoteIP(ctx);
-		List<Element> latestElements = ElementManager.getInstance().getLatestElements();
-		boolean found;
-		for(Element e: latestElements){
-			if(e.getContainerIpAddress() != null && e.getContainerIpAddress().equals(remoteIpAddress)) {
-				found = true; 
-				break;
-			}
-		}
-
-		if(getLocalIp().equals(remoteIpAddress) || remoteIpAddress.equals("127.0.0.1") || remoteIpAddress.equals("0.0.0.0")) {
-			found = true;
-		}
-		
-		//To be removed later
-		found = true;
-		//To be removed later
-
-		if(!found){
-			String errorMsg = "IP address " + remoteIpAddress + " not found as registered\n";
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			ByteBuf	errorMsgBytes = ctx.alloc().buffer();
-			errorMsgBytes.writeBytes(errorMsg.getBytes());
-			sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
-			return;
-		}
-
 		if (request.uri().equals("/v2/config/get")) {
 			Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
@@ -287,42 +261,5 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
 			f.addListener(ChannelFutureListener.CLOSE);
 		}
-	}
-
-	/**
-	 * Return the client IP address in the request channel
-	 * @param ctx
-	 * @return String
-	 */
-	private String getRemoteIP(ChannelHandlerContext ctx) {
-		InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-		InetAddress inetaddress = socketAddress.getAddress();
-		return inetaddress.getHostAddress();
-	}
-
-	/**
-	 * Return the local host IP address
-	 * @return String
-	 */
-	private String getLocalIp() throws Exception {
-		InetAddress address;
-		try {
-			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-			while (networkInterfaces.hasMoreElements()) {
-				NetworkInterface networkInterface = networkInterfaces.nextElement();
-				if (networkInterface.getName().equals(Configuration.getNetworkInterface())) {
-					Enumeration<InetAddress> ipAddresses = networkInterface.getInetAddresses();
-					while (ipAddresses.hasMoreElements()) {
-						address = ipAddresses.nextElement();
-						if (address instanceof Inet4Address) {
-							return address.getHostAddress();
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, " Problem retrieving local ip " + e.getMessage());
-		}
-		return "127.0.0.1";
 	}
 }
