@@ -17,6 +17,7 @@ import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.ElementState;
@@ -146,7 +147,7 @@ public class FogContainer {
 			docker.pullImage(element.getImageName());
 			LoggingService.logInfo(MODULE_NAME, format("pulled \"%s\"", element.getImageName()));
 
-			String hostName = Orchestrator.getCurrentIpAddress();
+			String hostName = IOFogNetworkInterface.getCurrentIpAddress();
 			containerId = docker.createContainer(element, hostName);
 			element.setContainerId(containerId);
 			element.setContainerIpAddress(docker.getContainerIpAddress(containerId));

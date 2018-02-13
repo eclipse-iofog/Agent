@@ -15,7 +15,7 @@ public class SshProxyManagerStatus {
     private String host = "";
     private int rport = 0;
     private int lport = 0;
-    private ConnectionStatus status = ConnectionStatus.CLOSED;
+    private SshConnectionStatus status = SshConnectionStatus.CLOSED;
     private String errorMessage = "";
 
     public SshProxyManagerStatus() {}
@@ -40,7 +40,7 @@ public class SshProxyManagerStatus {
         return this;
     }
 
-    public SshProxyManagerStatus setConnectionStatus(ConnectionStatus status) {
+    public SshProxyManagerStatus setConnectionStatus(SshConnectionStatus status) {
         this.status = status;
         return this;
     }
