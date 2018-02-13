@@ -13,6 +13,8 @@
 package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.command_line.util.CommandShellExecutor;
+import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -263,12 +265,11 @@ public class FieldAgent implements IOFogModule {
      *
      */
     private void reboot() {
-        try {
-            LoggingService.logInfo(MODULE_NAME, "start rebooting");
-            Runtime.getRuntime().exec("shutdown -r now");
-        } catch (IOException e) {
-            LoggingService.logWarning(MODULE_NAME, "can't start rebooting: \n" + e.getMessage());
-        }
+		LoggingService.logInfo(MODULE_NAME, "start rebooting");
+		CommandShellResultSet<List<String>, List<String>> result =  CommandShellExecutor.execute("shutdown -r now");
+		if (result.getError().size() > 0) {
+			LoggingService.logWarning(MODULE_NAME, result.toString());
+		}
     }
 
 	/**
