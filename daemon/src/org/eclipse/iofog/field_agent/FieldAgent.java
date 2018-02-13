@@ -13,6 +13,8 @@
 package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.command_line.util.CommandShellExecutor;
+import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -224,7 +226,11 @@ public class FieldAgent implements IOFogModule {
 				StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
 				JsonObject changes = result.getJsonObject("changes");
-				if (changes.getBoolean("config") && !initialization)
+                if (changes.getBoolean("reboot") && !initialization) {
+                    reboot();
+                }
+
+                if (changes.getBoolean("config") && !initialization)
 					getFogConfig();
 
 				if (changes.getBoolean("registries") || initialization) {
@@ -253,6 +259,18 @@ public class FieldAgent implements IOFogModule {
 			}
 		}
 	};
+
+    /**
+     * Remote reboot of Linux machine from IOFog controller
+     *
+     */
+    private void reboot() {
+		LoggingService.logInfo(MODULE_NAME, "start rebooting");
+		CommandShellResultSet<List<String>, List<String>> result =  CommandShellExecutor.execute("shutdown -r now");
+		if (result.getError().size() > 0) {
+			LoggingService.logWarning(MODULE_NAME, result.toString());
+		}
+    }
 
 	/**
 	 * gets list of registries from file or IOFog controller
