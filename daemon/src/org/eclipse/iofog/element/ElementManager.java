@@ -25,14 +25,16 @@ import java.util.Map;
  */
 public class ElementManager {
 
-	private List<Element> elements;
+	private List<Element> latestElements;
+	private List<Element> currentElements;
 	private Map<String, Route> routes;
 	private Map<String, String> configs;
 	private List<Registry> registries;
 	private static ElementManager instance = null;
 	
 	private ElementManager() {
-		elements = new ArrayList<>();
+		latestElements = new ArrayList<>();
+		currentElements = new ArrayList<>();
 		routes = new HashMap<>();
 		configs = new HashMap<>();
 		registries = new ArrayList<>();
@@ -48,9 +50,15 @@ public class ElementManager {
 		return instance;
 	}
 	
-	public List<Element> getElements() {
+	public List<Element> getLatestElements() {
 		synchronized (ElementManager.class) {
-			return elements;
+			return latestElements;
+		}
+	}
+
+	public List<Element> getCurrentElements() {
+		synchronized (ElementManager.class) {
+			return currentElements;
 		}
 	}
 
@@ -92,9 +100,15 @@ public class ElementManager {
 		}
 	}
 
-	public void setElements(List<Element> elements) {
+	public void setLatestElements(List<Element> latestElements) {
 		synchronized (ElementManager.class) {
-			this.elements = elements;
+			this.latestElements = latestElements;
+		}
+	}
+
+	public void setCurrentElements(List<Element> currentElements) {
+		synchronized (ElementManager.class) {
+			this.currentElements = currentElements;
 		}
 	}
 
@@ -104,28 +118,29 @@ public class ElementManager {
 		}
 	}
 
-	public boolean elementExists(String elementId) {
-		for (Element element : elements)
-			if (element.getElementId().equals(elementId))
-				return true;
-				
-		return false;
+	public boolean elementExists(List<Element> elements, String elementId) {
+		return getLatestElementById(elements, elementId) != null;
 	}
 
 	public void clear() {
 		synchronized (ElementManager.class) {
-			elements.clear();
+			latestElements.clear();
+			currentElements.clear();
 			routes.clear();
 			configs.clear();
 			registries.clear();
 		}
 	}
 
-	public Element getElementById(String elementId) {
+	public Element getLatestElementById(String elementId) {
+		return getLatestElementById(latestElements, elementId);
+	}
+
+	public Element getLatestElementById(List<Element> elements, String elementId) {
 		for (Element element : elements)
-			if (element.getElementId().equals(elementId))
+			if (element.getElementId().equals(elementId)) {
 				return element;
-				
+			}
 		return null;
 	}
 

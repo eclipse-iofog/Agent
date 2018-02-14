@@ -12,94 +12,103 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
+import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.Constants.ElementState;
+import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import com.github.dockerjava.api.model.Container;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
+import static org.eclipse.iofog.utils.Constants.ElementState.*;
 
 public class FogContainer {
-	private String containerId = "";
-	private String elementId = "";
+	private String containerId = EMPTY;
+	private String elementId = EMPTY;
 	private ElementStatus status;
 	private Tasks task;
 	private DockerUtil docker;
-	private String MODULE_NAME = "";
+	private String MODULE_NAME = "Fog Container";
 	
 	public FogContainer(String elementId) {
 		this.elementId = elementId;
-		MODULE_NAME = String.format("Process Manager [%s]", elementId);
-		task = Tasks.ADD;
+		MODULE_NAME = format("Process Manager [%s]", elementId);
+		task = ADD;
 	}
 	
 	public void remove() {
-		task = Tasks.REMOVE;
+		task = REMOVE;
 	}
 	
 	private final Runnable checkStatus = () -> {
-		if (ElementManager.getInstance().getElementById(elementId) == null)
+		if (ElementManager.getInstance().getLatestElementById(elementId) == null)
 			remove();
 
-		if (containerId.equals("")) {
+		if (isBlank(containerId)) {
 			Container container = docker.getContainer(elementId);
 			if (container != null)
 				containerId = container.getId();
-			else if (!task.equals(Tasks.REMOVE)) {
+			else if (!task.equals(REMOVE)) {
 				try {
 					create();
 					start();
-					task = Tasks.ADD;
+					task = ADD;
 				} catch (Exception e) {
+					LoggingService.logInfo(MODULE_NAME, "Error create/start : " + e.getMessage());
 					return;
 				}
 			}
 		}
 		
-		if (!task.equals(Tasks.ADD)) {
+		if (!task.equals(ADD)) {
 			try {
 				stop();
 				delete();
-				containerId = "";
-			} catch (Exception e) {}
+				containerId = EMPTY;
+			} catch (Exception e) {
+				LoggingService.logInfo(MODULE_NAME, "Error stop/delete container : " + e.getMessage());
+			}
 			return;
 		}
 		
 		try {
 			status = docker.getContainerStatus(containerId);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
-			if (!status.getStatus().equals(ElementState.RUNNING)) {
+			if (!status.getStatus().equals(RUNNING)) {
 				LoggingService.logInfo(MODULE_NAME, "container is not running, restarting...");
 				start();
 				status = docker.getContainerStatus(containerId);
 				LoggingService.logInfo(MODULE_NAME, "started");
 			}
 		} catch (Exception e) {
-			TaskManager.getInstance().addTask(new ContainerTask(Tasks.UPDATE, containerId));
+			TaskManager.getInstance().addTask(new ContainerTask(UPDATE, containerId));
 		}
 	};
 	
 	public void start() throws Exception {
-		status.setStatus(ElementState.STARTING);
+		status.setStatus(STARTING);
 		StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		LoggingService.logInfo(MODULE_NAME, "starting container");
 		try {
 			docker.startContainer(containerId);
 			LoggingService.logInfo(MODULE_NAME, "started");
-			status.setStatus(ElementState.RUNNING);
+			status.setStatus(RUNNING);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, String.format("container not found : %s", e.getMessage()));
-			status.setStatus(ElementState.STOPPED);
+			LoggingService.logWarning(MODULE_NAME, format("container not found : %s", e.getMessage()));
+			status.setStatus(STOPPED);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		}
 	}
@@ -115,13 +124,13 @@ public class FogContainer {
 	}
 	
 	public void create() throws Exception {
-		Element element = ElementManager.getInstance().getElementById(elementId);
+		Element element = ElementManager.getInstance().getLatestElementById(elementId);
 		LoggingService.logWarning(MODULE_NAME, "creating container...");
 
 		try {
 			Registry registry = ElementManager.getInstance().getRegistry(element.getRegistry());
 			if (registry == null) {
-				LoggingService.logWarning(MODULE_NAME, String.format("registry not found \"%s\"", element.getRegistry()));
+				LoggingService.logWarning(MODULE_NAME, format("registry not found \"%s\"", element.getRegistry()));
 				throw new Exception();
 			}
 			docker.login(registry);
@@ -134,11 +143,11 @@ public class FogContainer {
 		StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		
 		try {
-			LoggingService.logInfo(MODULE_NAME, String.format("pulling \"%s\" from registry", element.getImageName()));
+			LoggingService.logInfo(MODULE_NAME, format("pulling \"%s\" from registry", element.getImageName()));
 			docker.pullImage(element.getImageName());
-			LoggingService.logInfo(MODULE_NAME, String.format("pulled \"%s\"", element.getImageName()));
+			LoggingService.logInfo(MODULE_NAME, format("pulled \"%s\"", element.getImageName()));
 
-			String hostName = Orchestrator.getInetAddress().getHostAddress();
+			String hostName = IOFogNetworkInterface.getCurrentIpAddress();
 			containerId = docker.createContainer(element, hostName);
 			element.setContainerId(containerId);
 			element.setContainerIpAddress(docker.getContainerIpAddress(containerId));
@@ -176,10 +185,10 @@ public class FogContainer {
 		status = new ElementStatus();
 
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-		scheduler.scheduleAtFixedRate(checkStatus, 0, 5, TimeUnit.SECONDS);
+		scheduler.scheduleAtFixedRate(checkStatus, 0, 5, SECONDS);
 	}
 
 	public void update() {
-		task = Tasks.UPDATE;
+		task = UPDATE;
 	}
 }

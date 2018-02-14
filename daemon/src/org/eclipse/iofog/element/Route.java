@@ -45,4 +45,17 @@ public class Route {
 		in += "]";
 		return "{" + in + "}";
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Route route = (Route) o;
+		return receivers.equals(route.receivers);
+	}
+
+	@Override
+	public int hashCode() {
+		return receivers.hashCode();
+	}
 }

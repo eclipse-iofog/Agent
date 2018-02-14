@@ -12,25 +12,28 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
+import com.github.dockerjava.api.model.Container;
+import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.Registry;
-import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ControllerStatus;
-import org.eclipse.iofog.utils.Constants.ElementState;
-import org.eclipse.iofog.utils.Constants.LinkStatus;
-import org.eclipse.iofog.utils.Constants.ModulesStatus;
+import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
 
-import com.github.dockerjava.api.model.Container;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
+import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
+import static org.eclipse.iofog.utils.Constants.ElementState.RUNNING;
+import static org.eclipse.iofog.utils.Constants.LinkStatus.CONNECTED;
+import static org.eclipse.iofog.utils.Constants.LinkStatus.FAILED_LOGIN;
+import static org.eclipse.iofog.utils.Constants.*;
 
 /**
  * Process Manager module
@@ -38,20 +41,30 @@ import com.github.dockerjava.api.model.Container;
  * @author saeid
  *
  */
-public class ProcessManager {
+public class ProcessManager implements IOFogModule {
 	
 	private final String MODULE_NAME = "Process Manager";
 	private ElementManager elementManager;
 	private Queue<ContainerTask> tasks;
 	public static Boolean updated = true;
-	private Object containersMonitorLock = new Object();
+	private final Object containersMonitorLock = new Object();
 //	private Object checkTasksLock = new Object();
 	private DockerUtil docker;
 	private ContainerManager containerManager;
 	private static ProcessManager instance;
 
 	private ProcessManager() {}
-	
+
+	@Override
+	public int getModuleIndex() {
+		return PROCESS_MANAGER;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
+	}
+
 	public static ProcessManager getInstance() {
 		if (instance == null) {
 			synchronized (ProcessManager.class) {
@@ -74,13 +87,14 @@ public class ProcessManager {
 			try {
 				docker.connect();
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "unable to connect to docker daemon");
+				logWarning("unable to connect to docker daemon");
 				return;
 			}
 		}
-		
-		List<Element> elements = elementManager.getElements();
-		for (Element element : elements) {
+
+		List<Element> latestElements = elementManager.getLatestElements();
+
+		for (Element element : latestElements) {
 			Container container =  docker.getContainer(element.getElementId());
 			if (container != null && !element.isRebuild()) {
 				element.setContainerId(container.getId());
@@ -91,10 +105,11 @@ public class ProcessManager {
 				}
 				long elementLastModified = element.getLastModified();
 				long containerCreated = container.getCreated();
-				if (elementLastModified > containerCreated || !docker.comprarePorts(element))
-					addTask(new ContainerTask(Tasks.UPDATE, element));
+				if (elementLastModified > containerCreated || !docker.comparePorts(element)) {
+					addTask(new ContainerTask(UPDATE, element));
+				}
 			} else {
-				addTask(new ContainerTask(Tasks.ADD, element));
+				addTask(new ContainerTask(ADD, element));
 			}
 		}
 	}
@@ -109,62 +124,73 @@ public class ProcessManager {
 	private final Runnable containersMonitor = () -> {
 		while (true) {
 			try {
-				Thread.sleep(Constants.MONITOR_CONTAINERS_STATUS_FREQ_SECONDS * 1000);
+				Thread.sleep(MONITOR_CONTAINERS_STATUS_FREQ_SECONDS * 1000);
+			} catch (InterruptedException e) {
+				logInfo("Error while sleeping thread : " + e.getMessage());
+			}
 
-				LoggingService.logInfo(MODULE_NAME, "monitoring containers");
+			logInfo("monitoring containers");
 
-				if (!docker.isConnected()) {
-					try {
-						docker.connect();
-					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME, "unable to connect to docker daemon");
-						continue;
+			if (!docker.isConnected()) {
+				try {
+					docker.connect();
+				} catch (Exception e) {
+					logWarning("unable to connect to docker daemon");
+					continue;
+				}
+			}
+
+			synchronized (containersMonitorLock) {
+
+				List<Element> latestElements = elementManager.getLatestElements();
+				List<Element> currentElements = elementManager.getCurrentElements();
+
+				for (Element element : latestElements) {
+					if (!docker.hasContainer(element.getElementId()) || element.isRebuild()) {
+						addTask(new ContainerTask(ADD, element));
 					}
 				}
+				StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
 
-				synchronized (containersMonitorLock) {
-					for (Element element : elementManager.getElements())
-						if (!docker.hasContainer(element.getElementId()) || element.isRebuild())
-							addTask(new ContainerTask(Tasks.ADD, element));
-					StatusReporter.setProcessManagerStatus().setRunningElementsCount(elementManager.getElements().size());
+				List<Container> containers = docker.getContainers();
+				for (Container container : containers) {
+					String containerId = container.getNames()[0].substring(1);
+					Element element = elementManager.getLatestElementById(latestElements, containerId);
 
-					List<Container> containers = docker.getContainers();
-					for (Container container : containers) {
-						Element element = elementManager.getElementById(container.getNames()[0].substring(1));
-
-						// element does not exist, remove container
-						if (element == null) {
-							addTask(new ContainerTask(Tasks.REMOVE, container.getId()));
-							continue;
+					boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
+					// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
+					if (element == null) {
+						if (isIsolatedDockerContainers || elementManager.elementExists(currentElements, containerId)) {
+							addTask(new ContainerTask(REMOVE, container.getId()));
 						}
-
-						element.setContainerId(container.getId());
-						element.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
+					} else {
 						try {
+							element.setContainerId(container.getId());
+							element.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
 							String containerName = container.getNames()[0].substring(1);
 							ElementStatus status = docker.getContainerStatus(container.getId());
 							StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
-							if (status.getStatus().equals(ElementState.RUNNING)) {
-								LoggingService.logInfo(MODULE_NAME, String.format("\"%s\": running", element.getElementId()));
+							if (status.getStatus().equals(RUNNING)) {
+								logInfo(format("\"%s\": running", element.getElementId()));
 							} else {
-								LoggingService.logInfo(MODULE_NAME,
-										String.format("\"%s\": container stopped", containerName));
+								logInfo(format("\"%s\": container stopped", containerName));
 								try {
-									LoggingService.logInfo(MODULE_NAME, String.format("\"%s\": starting", containerName));
+									logInfo(format("\"%s\": starting", containerName));
 									docker.startContainer(container.getId());
 									StatusReporter.setProcessManagerStatus()
 											.setElementsStatus(containerName, docker.getContainerStatus(container.getId()));
-									LoggingService.logInfo(MODULE_NAME, String.format("\"%s\": started", containerName));
+									logInfo(format("\"%s\": started", containerName));
 								} catch (Exception startException) {
 									// unable to start the container, update it!
-									addTask(new ContainerTask(Tasks.UPDATE, container.getId()));
+									addTask(new ContainerTask(UPDATE, container.getId()));
 								}
 							}
 						} catch (Exception e) {
+							logInfo("Error getting docker container info : " + e.getMessage());
 						}
 					}
 				}
-			} catch (Exception e) {
+				elementManager.setCurrentElements(latestElements);
 			}
 		}
 	};
@@ -177,7 +203,7 @@ public class ProcessManager {
 	private void addTask(ContainerTask task) {
 		synchronized (tasks) {
 			if (!tasks.contains(task)) {
-                LoggingService.logInfo(MODULE_NAME, "NEW TASK ADDED");
+                logInfo("NEW TASK ADDED");
                 tasks.offer(task);
                 tasks.notifyAll();
             }
@@ -196,31 +222,33 @@ public class ProcessManager {
 				synchronized (tasks) {
 					newTask = tasks.poll();
                     if (newTask == null) {
-                        LoggingService.logInfo(MODULE_NAME, "WAITING FOR NEW TASK");
+                        logInfo("WAITING FOR NEW TASK");
                         tasks.wait();
-                        LoggingService.logInfo(MODULE_NAME, "NEW TASK RECEIVED");
+                        logInfo("NEW TASK RECEIVED");
                         newTask = tasks.poll();
                     }
 				}
                 boolean taskResult = containerManager.execute(newTask);
-                if (!taskResult && (StatusReporter.getFieldAgentStatus().getContollerStatus().equals(ControllerStatus.OK) || newTask.action.equals(Tasks.REMOVE))) {
+                if (!taskResult &&
+						(StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK)
+								|| newTask.action.equals(REMOVE))) {
                     if (newTask.retries < 5) {
                         newTask.retries++;
                         addTask(newTask);
                     } else {
-                        String msg = "";
+                        String msg = EMPTY;
                         switch (newTask.action) {
                             case REMOVE:
-                                msg = String.format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
+                                msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
                                 break;
                             case UPDATE:
-                                msg = String.format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
+                                msg = format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
                                 break;
                             case ADD:
-                                msg = String.format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
+                                msg = format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
                                 break;
                         }
-                        LoggingService.logWarning(MODULE_NAME, msg);
+                        logWarning(msg);
                     }
                 }
 			} catch (Exception e) {
@@ -237,17 +265,17 @@ public class ProcessManager {
 			try {
 				for (Registry registry : elementManager.getRegistries()) {
 					try {
-						LoggingService.logInfo(MODULE_NAME, "monitoring registry: " + registry.getUrl());
+						logInfo("monitoring registry: " + registry.getUrl());
 						docker.login(registry);
-						StatusReporter.setProcessManagerStatus().setRegistriesStatus(registry.getUrl(), LinkStatus.CONNECTED);
-						LoggingService.logInfo(MODULE_NAME, "registry login successful: " + registry.getUrl());
+						StatusReporter.setProcessManagerStatus().setRegistriesStatus(registry.getUrl(), CONNECTED);
+						logInfo("registry login successful: " + registry.getUrl());
 					} catch (Exception e) {
-						StatusReporter.setProcessManagerStatus().setRegistriesStatus(registry.getUrl(), LinkStatus.FAILED_LOGIN);
-						LoggingService.logInfo(MODULE_NAME, "registry login failed: " + registry.getUrl());
+						StatusReporter.setProcessManagerStatus().setRegistriesStatus(registry.getUrl(), FAILED_LOGIN);
+						logInfo("registry login failed: " + registry.getUrl());
 					}
 				}
 
-				Thread.sleep(Constants.MONITOR_REGISTRIES_STATUS_FREQ_SECONDS * 1000);
+				Thread.sleep(MONITOR_REGISTRIES_STATUS_FREQ_SECONDS * 1000);
 			} catch (Exception e) {
 			}
 		}
@@ -263,7 +291,9 @@ public class ProcessManager {
 			docker.close();
 		try {
 			docker.connect();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			logInfo("Error connecting to Docker : " + e.getMessage());
+		}
 	}
 	
 	/**
@@ -274,7 +304,9 @@ public class ProcessManager {
 		docker = DockerUtil.getInstance();
 		try {
 			docker.connect();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			logInfo("Error connecting to Docker : " + e.getMessage());
+		}
 
 //		tasks = new PriorityQueue<>(new TaskComparator());
 		tasks = new LinkedList<>();
@@ -285,6 +317,6 @@ public class ProcessManager {
 		new Thread(checkTasks, "ProcessManager : CheckTasks").start();
 		new Thread(registriesMonitor, "ProcessManager : RegistriesMonitor").start();
 
-		StatusReporter.setSupervisorStatus().setModuleStatus(Constants.PROCESS_MANAGER, ModulesStatus.RUNNING);
+		StatusReporter.setSupervisorStatus().setModuleStatus(PROCESS_MANAGER, ModulesStatus.RUNNING);
 	}
 }

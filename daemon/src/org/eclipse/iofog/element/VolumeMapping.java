@@ -19,9 +19,9 @@ package org.eclipse.iofog.element;
  */
 public class VolumeMapping {
 
-    final String hostDestination;
-    final String containerDestination;
-    final String accessMode;
+    private final String hostDestination;
+    private final String containerDestination;
+    private final String accessMode;
 
     public VolumeMapping(String hostDestination, String containerDestination, String accessMode) {
         this.hostDestination = hostDestination;
@@ -57,6 +57,14 @@ public class VolumeMapping {
 
     public String getAccessMode() {
         return accessMode;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hostDestination.hashCode();
+        result = 31 * result + containerDestination.hashCode();
+        result = 31 * result + accessMode.hashCode();
+        return result;
     }
 
 }

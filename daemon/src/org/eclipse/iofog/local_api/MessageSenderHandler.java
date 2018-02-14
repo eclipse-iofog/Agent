@@ -12,30 +12,20 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import static io.netty.handler.codec.http.HttpMethod.*;
-import static io.netty.handler.codec.http.HttpResponseStatus.*;
-import static io.netty.handler.codec.http.HttpVersion.*;
-
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Callable;
-
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import javax.json.*;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
+
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * Handler to publish the messages from the container to message bus
@@ -43,7 +33,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @author ashita
  * @since 2016
  */
-public class MessageSenderHandler implements Callable<Object> {
+public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
@@ -58,19 +48,18 @@ public class MessageSenderHandler implements Callable<Object> {
 
 	/**
 	 * Handler method to publish the messages from the container to message bus
-	 * 
-	 * @param None
+	 *
 	 * @return Object
 	 */
-	public Object handleMessageSenderRequest() throws Exception {
+	private FullHttpResponse handleMessageSenderRequest() throws Exception {
 		HttpHeaders headers = req.headers();
 
-		if (req.getMethod() != POST) {
+		if (req.method() != POST) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
 		}
 
-		if (!(headers.get(HttpHeaders.Names.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
+		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
 			outputBuffer.writeBytes(errorMsg.getBytes());
@@ -111,14 +100,14 @@ public class MessageSenderHandler implements Callable<Object> {
 		String sendMessageResult = builder.build().toString();
 		outputBuffer.writeBytes(sendMessageResult.getBytes());
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		HttpHeaders.setContentLength(res, outputBuffer.readableBytes());
+		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;
 	}
 
 	/**
 	 * Validate the request and the message to be publish
 	 * 
-	 * @param JsonObject
+	 * @param message
 	 */
 	private void validateMessage(JsonObject message) throws Exception {
 
@@ -183,12 +172,11 @@ public class MessageSenderHandler implements Callable<Object> {
 
 	/**
 	 * Overriden method of the Callable interface which call the handler method
-	 * 
-	 * @param None
+	 *
 	 * @return Object
 	 */
 	@Override
-	public Object call() throws Exception {
+	public FullHttpResponse call() throws Exception {
 		return handleMessageSenderRequest();
 	}
 }
