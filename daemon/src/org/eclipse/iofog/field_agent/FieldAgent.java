@@ -278,10 +278,9 @@ public class FieldAgent {
 			if (!result.getString("status").equals("ok"))
 				throw new Exception("error from fog controller");
 
-			JsonObject versionData = result.getJsonObject("version");
 
-            VersionCommand versionCommand = parseJson(versionData);
-            String provisionKey = versionData.getString("provisionKey");
+            VersionCommand versionCommand = parseJson(result);
+            String provisionKey = result.getString("provisionKey");
 
             executeChangeVersionScript(versionCommand, provisionKey);
 

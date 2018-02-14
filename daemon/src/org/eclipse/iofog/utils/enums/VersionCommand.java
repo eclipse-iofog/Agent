@@ -24,7 +24,7 @@ public enum VersionCommand {
     }
 
     public static VersionCommand parseJson(JsonObject versionData) throws UnknownVersionCommandException {
-        String versionCommandStr = versionData.getString("action");
+        String versionCommandStr = versionData.getString("versionCommand");
         return parseCommandString(versionCommandStr);
     }
 }
