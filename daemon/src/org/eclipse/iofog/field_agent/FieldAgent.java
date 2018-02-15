@@ -50,6 +50,8 @@ import org.eclipse.iofog.utils.enums.VersionCommand;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.util.internal.StringUtil;
+import org.eclipse.iofog.utils.shell.BashFogCommands;
+import org.eclipse.iofog.utils.shell.BashUtil;
 
 import static org.eclipse.iofog.utils.enums.VersionCommand.*;
 
@@ -282,6 +284,7 @@ public class FieldAgent {
             VersionCommand versionCommand = parseJson(result);
             String provisionKey = result.getString("provisionKey");
 
+//			LoggingService.logInfo(MODULE_NAME, result.toString());
             executeChangeVersionScript(versionCommand, provisionKey);
 
         } catch (UnknownVersionCommandException e) {
@@ -299,32 +302,50 @@ public class FieldAgent {
      * @param command {@link VersionCommand}
      */
     private void executeChangeVersionScript(VersionCommand command, String provisionKey) {
-        final String SCRIPTS_ROOT_DIR_PATH = "/usr/share/iofog/";
-        final String UPGRADE_FILE_NAME = "upgrade.sh";
-        final String ROLLBACK_FILE_NAME = "rollback.sh";
-        final String MAX_STARTING_TIMEOUT = "20";
-
         String shToExecute = null;
 
-        switch (command) {
+        //TODO: maybe it's better to throw IllegalStateException?
+		if (!isValidChangeVersionOperation(command)) return;
+
+		switch (command) {
             case UPGRADE:
-                shToExecute = SCRIPTS_ROOT_DIR_PATH + UPGRADE_FILE_NAME;
+                shToExecute = Constants.UPGRADE_VERSION_SCRIPT;
                 break;
             case ROLLBACK:
-                shToExecute = SCRIPTS_ROOT_DIR_PATH + ROLLBACK_FILE_NAME;
+                shToExecute = Constants.ROLLBACK_VERSION_SCRIPT;
                 break;
             default:
                 break;
         }
 
-        try {
-            ProcessBuilder pb = new ProcessBuilder("/bin/sh", shToExecute, provisionKey, MAX_STARTING_TIMEOUT);
-            Process p = pb.start();
-        } catch (IOException e) {
-            LoggingService.logWarning(MODULE_NAME, e.getMessage());
-        }
+		String[] shRunCommand = {
+        		shToExecute,
+				provisionKey,
+				Constants.MAX_RESTARTING_TIMEOUT
+		};
 
+		try {
+			BashUtil.executeShellScript(shRunCommand);
+		} catch (InterruptedException | IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
     }
+
+	private boolean isValidChangeVersionOperation(VersionCommand command) {
+		try {
+			if (UPGRADE.equals(command)
+					&& BashFogCommands.getFogInstalledVersion().equals(BashFogCommands.getFogCandidateVersion())) {
+				return false;
+			} else if (ROLLBACK.equals(command)
+					//TODO: create more correct file checking
+					&& (new File(Constants.BACKUPS_DIR)).list().length == 0) {
+				return false;
+			}
+		} catch (IOException | InterruptedException e) {
+			return false;
+		}
+		return true;
+	}
 
 	/**
 	 * gets list of registries from file or IOFog controller

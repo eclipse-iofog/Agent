@@ -87,6 +87,10 @@ public class Constants {
 	public static String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
 	public static String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";
 	
-	
+	public static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
+	public static String CHANGE_VERSION_SCRIPTS_DIR = SNAP_COMMON + "/usr/share/iofog/";
+	public static String UPGRADE_VERSION_SCRIPT = CHANGE_VERSION_SCRIPTS_DIR + "upgrade.sh";
+	public static String ROLLBACK_VERSION_SCRIPT = CHANGE_VERSION_SCRIPTS_DIR + "rollback.sh";
+	public static String MAX_RESTARTING_TIMEOUT = "20";
 }
 
