@@ -31,6 +31,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import javax.json.*;
 import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.HttpMethod;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
@@ -907,7 +908,7 @@ public class FieldAgent implements IOFogModule {
 
     public void sendUSBInfoFromHalToController() throws Exception {
         if (!notProvisioned()) {
-            String usbInfo = callToHal(URL_TO_GET_USB_INFO_FROM_HAL);
+            String usbInfo = requestToHal(URL_TO_GET_USB_INFO_FROM_HAL);
             StatusReporter.setResourceManagerStatus().setUsbConnectionsInfo(usbInfo);
 
             Map<String, Object> postParams = new HashMap<>();
@@ -921,7 +922,7 @@ public class FieldAgent implements IOFogModule {
         if (!notProvisioned()) {
             String hwInfo = null;
             try {
-                hwInfo = callToHal(URL_TO_GET_HW_INFO_FROM_HAL);
+                hwInfo = requestToHal(URL_TO_GET_HW_INFO_FROM_HAL);
             } catch (Exception e) {
                 LoggingService.logWarning(MODULE_NAME, e.getMessage());
             }
@@ -941,10 +942,10 @@ public class FieldAgent implements IOFogModule {
         }
     }
 
-    private String callToHal(String spec) throws Exception {
+    private String requestToHal(String spec) throws Exception {
         URL url = new URL(spec);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
+        connection.setRequestMethod(HttpMethod.GET);
 
         int status = connection.getResponseCode();
 

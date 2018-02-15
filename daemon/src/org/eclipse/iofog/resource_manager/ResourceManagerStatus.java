@@ -1,7 +1,7 @@
 package org.eclipse.iofog.resource_manager;
 
 /**
- * @author Kate Lukashick
+ * @author elukashick
  */
 public class ResourceManagerStatus {
 

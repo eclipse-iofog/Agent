@@ -6,7 +6,7 @@ import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
- * @author Kate Lukashick
+ * @author elukashick
  */
 public class ResourceManager implements IOFogModule {
 
