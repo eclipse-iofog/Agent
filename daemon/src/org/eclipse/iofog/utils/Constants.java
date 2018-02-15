@@ -29,10 +29,6 @@ public class Constants {
 		NOT_PRESENT, RUNNING, STOPPED
 	}
 
-	public enum ElementState {
-		BUILDING, FAILED_VERIFICATION, STARTING, RUNNING, STOPPED 
-	}
-	
 	public enum LinkStatus {
 		FAILED_VERIFICATION, FAILED_LOGIN, CONNECTED
 	}
