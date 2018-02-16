@@ -553,7 +553,7 @@ public class FieldAgent implements IOFogModule {
             MessageDigest md = MessageDigest.getInstance("SHA1");
             md.update(base64);
             byte[] mdbytes = md.digest();
-            StringBuffer sb = new StringBuffer("");
+            StringBuilder sb = new StringBuilder("");
             for (byte mdbyte : mdbytes) {
                 sb.append(Integer.toString((mdbyte & 0xff) + 0x100, 16).substring(1));
             }
@@ -649,6 +649,7 @@ public class FieldAgent implements IOFogModule {
             int logFileCount = Integer.parseInt(configs.getString(LOG_FILE_COUNT.getJsonProperty()));
             int statusUpdateFreq = Integer.parseInt(configs.getString(STATUS_UPDATE_FREQ.getJsonProperty()));
             int getChangesFreq = Integer.parseInt(configs.getString(GET_CHANGES_FREQ.getJsonProperty()));
+            int scanDevicesFreq = Integer.parseInt(configs.getString(SCAN_DEVICES_FREQ.getJsonProperty()));
             String isolatedDockerContainerValue = configs.getString(ISOLATED_DOCKER_CONTAINER.getJsonProperty());
             boolean isIsolatedDockerContainer = !isolatedDockerContainerValue.equals("off");
 
@@ -688,6 +689,9 @@ public class FieldAgent implements IOFogModule {
             if (Configuration.getGetChangesFreq() != getChangesFreq)
                 instanceConfig.put(GET_CHANGES_FREQ.getCommandName(), getChangesFreq);
 
+            if (Configuration.getScanDevicesFreq() != scanDevicesFreq)
+                instanceConfig.put(SCAN_DEVICES_FREQ.getCommandName(), scanDevicesFreq);
+
             if (Configuration.isIsolatedDockerContainers() != isIsolatedDockerContainer)
                 instanceConfig.put(ISOLATED_DOCKER_CONTAINER.getCommandName(), isolatedDockerContainerValue);
 
@@ -723,6 +727,7 @@ public class FieldAgent implements IOFogModule {
         postParams.put(LOG_FILE_COUNT.getJsonProperty(), Configuration.getLogFileCount());
         postParams.put(STATUS_UPDATE_FREQ.getJsonProperty(), Configuration.getStatusUpdateFreq());
         postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
+        postParams.put(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq());
         postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
 
         try {

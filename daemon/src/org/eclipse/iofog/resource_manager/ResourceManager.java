@@ -3,6 +3,7 @@ package org.eclipse.iofog.resource_manager;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
@@ -41,7 +42,7 @@ public class ResourceManager implements IOFogModule {
 
         while (true) {
             try {
-                Thread.sleep(Constants.GET_USAGE_DATA_FREQ_SECONDS * 1000);
+                Thread.sleep(Configuration.getScanDevicesFreq() * 1000);
                 FieldAgent.getInstance().sendUSBInfoFromHalToController();
 
             } catch (Exception e) {

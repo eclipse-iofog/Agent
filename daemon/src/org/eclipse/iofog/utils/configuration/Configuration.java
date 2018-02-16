@@ -18,7 +18,6 @@ import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
-import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,7 +33,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.net.NetworkInterface;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static java.io.File.separatorChar;
 import static java.lang.String.format;
@@ -77,6 +79,7 @@ public final class Configuration {
 	private static int logFileCount;
 	private static int statusUpdateFreq;
 	private static int getChangesFreq;
+	private static int scanDevicesFreq;
 	private static boolean isolatedDockerContainers;
 	private static Map<String, Object> defaultConfig;
 	
@@ -110,6 +113,14 @@ public final class Configuration {
 
 	public static void setGetChangesFreq(int getChangesFreq) {
 		Configuration.getChangesFreq = getChangesFreq;
+	}
+
+	public static int getScanDevicesFreq() {
+		return scanDevicesFreq;
+	}
+
+	public static void setScanDevicesFreq(int scanDevicesFreq) {
+		Configuration.scanDevicesFreq = scanDevicesFreq;
 	}
 
 	public static void resetToDefault() throws Exception {
@@ -195,8 +206,8 @@ public final class Configuration {
 	 * @throws Exception
 	 */
 	public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
-		
-		HashMap<String, String> messageMap = new HashMap<String, String>();
+
+		HashMap<String, String> messageMap = new HashMap<>();
 				
 		for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
 			String option = command.getKey();
@@ -328,6 +339,20 @@ public final class Configuration {
 					setNode(GET_CHANGES_FREQ.getXmlTag(), value);
 					setGetChangesFreq(Integer.parseInt(value));
 					break;
+				case SCAN_DEVICES_FREQ:
+					try {
+						Integer.parseInt(value);
+					} catch (Exception e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
+					}
+					if (Integer.parseInt(value) < 1) {
+						messageMap.put(option, "Get scan devices frequency must be greater than 1");
+						break;
+					}
+					setNode(SCAN_DEVICES_FREQ.getXmlTag(), value);
+					setScanDevicesFreq(Integer.parseInt(value));
+					break;
 				case ISOLATED_DOCKER_CONTAINER:
 					setNode(ISOLATED_DOCKER_CONTAINER.getXmlTag(), value);
 					setIsolatedDockerContainers(!value.equals("off"));
@@ -407,6 +432,12 @@ public final class Configuration {
 		} catch (ConfigurationItemException e) {
 			setGetChangesFreq(20);
 			createConfigProperty(GET_CHANGES_FREQ);
+		}
+		try {
+			setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ.getXmlTag())));
+		} catch (ConfigurationItemException e) {
+			setScanDevicesFreq(60);
+			createConfigProperty(SCAN_DEVICES_FREQ);
 		}
 		try {
 			setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ.getXmlTag())));
@@ -593,6 +624,8 @@ public final class Configuration {
 		result.append(buildReportLine(getConfigParamMessage(STATUS_UPDATE_FREQ), format("%d", statusUpdateFreq)));
 		// status update frequency
 		result.append(buildReportLine(getConfigParamMessage(GET_CHANGES_FREQ), format("%d", getChangesFreq)));
+		// scan devices frequency
+		result.append(buildReportLine(getConfigParamMessage(SCAN_DEVICES_FREQ), format("%d", scanDevicesFreq)));
 		// log file directory
 		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
 		return result.toString();
