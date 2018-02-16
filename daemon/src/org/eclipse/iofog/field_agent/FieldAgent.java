@@ -250,7 +250,9 @@ public class FieldAgent implements IOFogModule {
 					MessageBus.getInstance().update();
 				}
 				if (changes.getBoolean("proxy") && !initialization) {
-					getProxyConfig().ifPresent(configs -> sshProxyManager.update(configs));
+					getProxyConfig().ifPresent(configs -> {
+						sshProxyManager.update(configs).thenRun(this::postProxyConfig);
+					});
 				}
 
 				initialization = false;

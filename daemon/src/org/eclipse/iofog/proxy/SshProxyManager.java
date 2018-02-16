@@ -26,17 +26,19 @@ public class SshProxyManager {
     /**
      * starts or stops ssh tunnel according to current config
      */
-    public void update(JsonObject configs) {
+    public CompletableFuture<Void> update(JsonObject configs) {
+        CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
         setSshConnection(configs);
         if (connection.isConnected() && connection.isCloseFlag()) {
             close();
         } else if (!connection.isConnected() && !connection.isCloseFlag()){
-            open();
+            completableFuture = open();
         } else if (connection.isConnected() && !connection.isCloseFlag()) {
             handleUnexpectedTunnelState("The tunnel is already opened. Please close it first.", OPEN);
         } else {
             handleUnexpectedTunnelState("The tunnel is already closed", CLOSED);
         }
+        return completableFuture;
     }
 
 
@@ -53,9 +55,9 @@ public class SshProxyManager {
     /**
      * opens ssh tunnel
      */
-    private void open() {
+    private CompletableFuture<Void> open() {
         setKnownHost();
-        openSshTunnel();
+        return openSshTunnel();
     }
 
     /**
@@ -73,8 +75,8 @@ public class SshProxyManager {
     /**
      * opens ssh tunnel asynchronously
      */
-    private void openSshTunnel() {
-        CompletableFuture.supplyAsync(connection.openSshTunnel())
+    private CompletableFuture<Void> openSshTunnel() {
+        return CompletableFuture.supplyAsync(connection.openSshTunnel())
                 .whenComplete((val, ex) -> {
                     if (ex != null) {
                         onError(ex);
