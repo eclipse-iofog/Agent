@@ -732,6 +732,26 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
+	public void postProxyConfig() {
+		logInfo("post proxy config");
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		Map<String, Object> postParams = new HashMap<>();
+		postParams.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
+
+		try {
+			JsonObject result = orchestrator.doCommand("proxyconfig/changes", null, postParams);
+			if (!result.getString("status").equals("ok"))
+				throw new Exception("error from fog controller");
+		} catch (CertificateException | SSLHandshakeException e) {
+			verificationFailed();
+		} catch (Exception e) {
+			logWarning("unable to post proxy config : " + e.getMessage());
+		}
+	}
+
 	/**
 	 * gets IOFog proxy configuration from IOFog controller
 	 */
