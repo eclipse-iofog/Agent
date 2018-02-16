@@ -25,6 +25,8 @@ public class SshProxyManager {
 
     /**
      * starts or stops ssh tunnel according to current config
+     * @param configs json object with proxy configs
+     * @return completable future of type void
      */
     public CompletableFuture<Void> update(JsonObject configs) {
         CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
@@ -54,6 +56,7 @@ public class SshProxyManager {
 
     /**
      * opens ssh tunnel
+     * @return completable future of type void
      */
     private CompletableFuture<Void> open() {
         setKnownHost();
@@ -74,6 +77,7 @@ public class SshProxyManager {
 
     /**
      * opens ssh tunnel asynchronously
+     * @return completable future of type void
      */
     private CompletableFuture<Void> openSshTunnel() {
         return CompletableFuture.supplyAsync(connection.openSshTunnel())

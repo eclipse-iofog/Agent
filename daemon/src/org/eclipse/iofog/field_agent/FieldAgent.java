@@ -734,6 +734,9 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
+	/**
+	 * sends proxy status information to Fog Controller
+	 */
 	public void postProxyConfig() {
 		logInfo("post proxy config");
 		if (notProvisioned() || !isControllerConnected(false)) {
