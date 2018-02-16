@@ -161,10 +161,6 @@ public class FieldAgent implements IOFogModule {
 
 				logInfo("sending...");
 				JsonObject result = orchestrator.doCommand("status", null, status);
-				if (!result.getString("status").equals("ok")) {
-					throw new Exception("error from fog controller");
-				}
-
 				if (!connected) {
 					connected = true;
 					postFogConfig();
@@ -212,8 +208,6 @@ public class FieldAgent implements IOFogModule {
 				JsonObject result;
 				try {
 					result = orchestrator.doCommand("changes", queryParams, null);
-					if (!result.getString("status").equals("ok"))
-						throw new Exception("error from fog controller");
 				} catch (CertificateException | SSLHandshakeException e) {
 					verificationFailed();
 					continue;
@@ -296,9 +290,6 @@ public class FieldAgent implements IOFogModule {
 				}
 			} else {
 				JsonObject result = orchestrator.doCommand("registries", null, null);
-				if (!result.getString("status").equals("ok"))
-					throw new Exception("error from fog controller");
-
 				registriesList = result.getJsonArray("registries");
 				saveFile(registriesList, filesPath + filename);
 			}
@@ -349,8 +340,6 @@ public class FieldAgent implements IOFogModule {
 				}
 			} else {
 				JsonObject result = orchestrator.doCommand("containerconfig", null, null);
-				if (!result.getString("status").equals("ok"))
-					throw new Exception("error from fog controller");
 				configs = result.getJsonArray("containerconfig");
 				saveFile(configs, filesPath + filename);
 			}
@@ -393,8 +382,6 @@ public class FieldAgent implements IOFogModule {
 				}
 			} else {
 				JsonObject result = orchestrator.doCommand("routing", null, null);
-				if (!result.getString("status").equals("ok"))
-					throw new Exception("error from fog controller");
 				routes = result.getJsonArray("routing");
 				saveFile(routes, filesPath + filename);
 			}
@@ -444,8 +431,6 @@ public class FieldAgent implements IOFogModule {
 				}
 			} else {
 				JsonObject result = orchestrator.doCommand("containerlist", null, null);
-				if (!result.getString("status").equals("ok"))
-					throw new Exception("error from fog controller");
 				containers = result.getJsonArray("containerlist");
 				saveFile(containers, filesPath + filename);
 			}
@@ -632,8 +617,6 @@ public class FieldAgent implements IOFogModule {
 
 		try {
 			JsonObject result = orchestrator.doCommand("config", null, null);
-			if (!result.getString("status").equals("ok"))
-				throw new Exception("error from fog controller");
 
 			JsonObject configs = result.getJsonObject("config");
 			String networkInterface = configs.getString(NETWORK_INTERFACE.getJsonProperty());
@@ -725,8 +708,6 @@ public class FieldAgent implements IOFogModule {
 
 		try {
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
-			if (!result.getString("status").equals("ok"))
-				throw new Exception("error from fog controller");
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
@@ -748,8 +729,6 @@ public class FieldAgent implements IOFogModule {
 
 		try {
 			JsonObject result = orchestrator.doCommand("proxyconfig/changes", null, postParams);
-			if (!result.getString("status").equals("ok"))
-				throw new Exception("error from fog controller");
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
@@ -769,9 +748,6 @@ public class FieldAgent implements IOFogModule {
 
 		try {
 			JsonObject result = orchestrator.doCommand("proxyconfig", null, null);
-			if (!result.getString("status").equals("ok")) {
-				throw new Exception("error from fog controller");
-			}
 			return Optional.of(result.getJsonObject("config"));
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
