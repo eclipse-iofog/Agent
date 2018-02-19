@@ -941,6 +941,9 @@ public class FieldAgent implements IOFogModule {
 			return;
 		}
 		String usbInfo = response.get().toString();
+		if (usbInfo.isEmpty()) {
+			return;
+		}
 		StatusReporter.setResourceManagerStatus().setUsbConnectionsInfo(usbInfo);
 
 		Map<String, Object> postParams = new HashMap<>();
