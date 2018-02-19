@@ -50,9 +50,8 @@ import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 
 /**
  * holds IOFog instance configuration
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public final class Configuration {
 
@@ -82,9 +81,9 @@ public final class Configuration {
 	private static int scanDevicesFreq;
 	private static boolean isolatedDockerContainers;
 	private static Map<String, Object> defaultConfig;
-	
+
 	public static boolean debugging = false;
-	
+
 
 	static {
 		defaultConfig = new HashMap<>();
@@ -129,7 +128,7 @@ public final class Configuration {
 
 	/**
 	 * return XML node value
-	 * 
+	 *
 	 * @param name - node name
 	 * @return node value
 	 * @throws ConfigurationItemException
@@ -140,8 +139,8 @@ public final class Configuration {
 
 	/**
 	 * sets XML node value
-	 * 
-	 * @param name - node name
+	 *
+	 * @param name    - node name
 	 * @param content - node value
 	 * @throws ConfigurationItemException
 	 */
@@ -166,11 +165,11 @@ public final class Configuration {
 		return nodes.item(0);
 	}
 
-	public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters) throws ConfigurationItemException{
+	public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters) throws ConfigurationItemException {
 
 		HashMap<String, String> result = new HashMap<>();
 
-		for(String option : parameters){
+		for (String option : parameters) {
 			CommandLineConfigParam cmdOption = getCommandByName(option)
 					.orElseThrow(() -> new ConfigurationItemException("Invalid parameter -" + option));
 			result.put(cmdOption.getCommandName(), getNode(cmdOption.getXmlTag()));
@@ -182,7 +181,7 @@ public final class Configuration {
 	/**
 	 * saves configuration data to config.xml
 	 * and informs other modules
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public static void saveConfigUpdates() throws Exception {
@@ -201,37 +200,41 @@ public final class Configuration {
 
 	/**
 	 * sets configuration base on commandline parameters
-	 * 
+	 *
 	 * @param commandLineMap - map of config parameters
 	 * @throws Exception
 	 */
 	public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
 
 		HashMap<String, String> messageMap = new HashMap<>();
-				
+
 		for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
 			String option = command.getKey();
 			CommandLineConfigParam cmdOption = CommandLineConfigParam.getCommandByName(option).get();
 			String value = command.getValue().toString();
-			
-			if(value.startsWith("+")) value = value.substring(1);
-			
-			if(isBlank(option) || isBlank(value)){
-				if(!option.equals(CONTROLLER_CERT.getCommandName())){
-					messageMap.put("Parameter error", "Command or value is invalid"); break;
+
+			if (value.startsWith("+")) value = value.substring(1);
+
+			if (isBlank(option) || isBlank(value)) {
+				if (!option.equals(CONTROLLER_CERT.getCommandName())) {
+					messageMap.put("Parameter error", "Command or value is invalid");
+					break;
 				}
 			}
-			
+
+			int intValue;
 			switch (cmdOption) {
 				case DISK_CONSUMPTION_LIMIT:
-					try{
+					try {
 						Float.parseFloat(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					} catch (Exception e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
 
-					if(Float.parseFloat(value) < 1 || Float.parseFloat(value) > 1048576){
-						messageMap.put(option, "Disk limit range must be 1 to 1048576 GB"); break;
+					if (Float.parseFloat(value) < 1 || Float.parseFloat(value) > 1048576) {
+						messageMap.put(option, "Disk limit range must be 1 to 1048576 GB");
+						break;
 					}
 					setDiskLimit(Float.parseFloat(value));
 					setNode(DISK_CONSUMPTION_LIMIT.getXmlTag(), value);
@@ -243,25 +246,29 @@ public final class Configuration {
 					setNode(DISK_DIRECTORY.getXmlTag(), value);
 					break;
 				case MEMORY_CONSUMPTION_LIMIT:
-					try{
+					try {
 						Float.parseFloat(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					} catch (Exception e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
-					if(Float.parseFloat(value) < 128 || Float.parseFloat(value) > 1048576){
-						messageMap.put(option, "Memory limit range must be 128 to 1048576 MB"); break;
+					if (Float.parseFloat(value) < 128 || Float.parseFloat(value) > 1048576) {
+						messageMap.put(option, "Memory limit range must be 128 to 1048576 MB");
+						break;
 					}
 					setMemoryLimit(Float.parseFloat(value));
 					setNode(MEMORY_CONSUMPTION_LIMIT.getXmlTag(), value);
 					break;
 				case PROCESSOR_CONSUMPTION_LIMIT:
-					try{
+					try {
 						Float.parseFloat(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					} catch (Exception e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
-					if(Float.parseFloat(value) < 5 || Float.parseFloat(value) > 100){
-						messageMap.put(option, "CPU limit range must be 5% to 100%"); break;
+					if (Float.parseFloat(value) < 5 || Float.parseFloat(value) > 100) {
+						messageMap.put(option, "CPU limit range must be 5% to 100%");
+						break;
 					}
 					setCpuLimit(Float.parseFloat(value));
 					setNode(PROCESSOR_CONSUMPTION_LIMIT.getXmlTag(), value);
@@ -283,17 +290,20 @@ public final class Configuration {
 						setNode(NETWORK_INTERFACE.getXmlTag(), value);
 						setNetworkInterface(value);
 					} else {
-						messageMap.put(option, "Invalid network interface"); break;
+						messageMap.put(option, "Invalid network interface");
+						break;
 					}
 					break;
 				case LOG_DISK_CONSUMPTION_LIMIT:
-					try{
+					try {
 						Float.parseFloat(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					} catch (Exception e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
-					if(Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 1024){
-						messageMap.put(option, "Log disk limit range must be 0.5 to 1024 GB"); break;
+					if (Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 1024) {
+						messageMap.put(option, "Log disk limit range must be 0.5 to 1024 GB");
+						break;
 					}
 					setNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag(), value);
 					setLogDiskLimit(Float.parseFloat(value));
@@ -304,49 +314,55 @@ public final class Configuration {
 					setLogDiskDirectory(value);
 					break;
 				case LOG_FILE_COUNT:
-					try{
-						Integer.parseInt(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					try {
+						intValue = Integer.parseInt(value);
+					} catch (NumberFormatException e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
-					if(Integer.parseInt(value) < 1 || Integer.parseInt(value) > 100){
-						messageMap.put(option, "Log file count range must be 1 to 100"); break;
+					if (intValue < 1 || intValue > 100) {
+						messageMap.put(option, "Log file count range must be 1 to 100");
+						break;
 					}
 					setNode(LOG_FILE_COUNT.getXmlTag(), value);
 					setLogFileCount(Integer.parseInt(value));
 					break;
 				case STATUS_UPDATE_FREQ:
-					try{
-						Integer.parseInt(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					try {
+						intValue = Integer.parseInt(value);
+					} catch (NumberFormatException e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
-					if(Integer.parseInt(value) < 1){
-						messageMap.put(option, "Status update frequency must be greater than 1"); break;
+					if (intValue < 1) {
+						messageMap.put(option, "Status update frequency must be greater than 1");
+						break;
 					}
 					setNode(STATUS_UPDATE_FREQ.getXmlTag(), value);
 					setStatusUpdateFreq(Integer.parseInt(value));
 					break;
 				case GET_CHANGES_FREQ:
-					try{
-						Integer.parseInt(value);
-					}catch(Exception e){
-						messageMap.put(option, "Option -" + option + " has invalid value: " + value); break;
+					try {
+						intValue = Integer.parseInt(value);
+					} catch (NumberFormatException e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
 					}
-					if(Integer.parseInt(value) < 1){
-						messageMap.put(option, "Get changes frequency must be greater than 1"); break;
+					if (intValue < 1) {
+						messageMap.put(option, "Get changes frequency must be greater than 1");
+						break;
 					}
 					setNode(GET_CHANGES_FREQ.getXmlTag(), value);
 					setGetChangesFreq(Integer.parseInt(value));
 					break;
 				case SCAN_DEVICES_FREQ:
 					try {
-						Integer.parseInt(value);
-					} catch (Exception e) {
+						intValue = Integer.parseInt(value);
+					} catch (NumberFormatException e) {
 						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
 						break;
 					}
-					if (Integer.parseInt(value) < 1) {
+					if (intValue < 1) {
 						messageMap.put(option, "Get scan devices frequency must be greater than 1");
 						break;
 					}
@@ -359,37 +375,37 @@ public final class Configuration {
 					break;
 				default:
 					throw new ConfigurationItemException("Invalid parameter -" + option);
-				}
+			}
 		}
 		saveConfigUpdates();
-		
+
 		return messageMap;
 	}
-	
+
 	/**
 	 * checks if given network interface is valid
-	 * 
+	 *
 	 * @param eth - network interface
 	 * @return
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
 		try {
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-	        for (NetworkInterface networkInterface : list(networkInterfaces)) {
-	        	if (networkInterface.getName().equalsIgnoreCase(eth))
-	        		return true;
-	        }
+			for (NetworkInterface networkInterface : list(networkInterfaces)) {
+				if (networkInterface.getName().equalsIgnoreCase(eth))
+					return true;
+			}
 		} catch (Exception e) {
 			LoggingService.logInfo(MODULE_NAME, "Error validating network interface : " + e.getMessage());
 		}
 		return false;
 	}
-	
+
 	/**
-	 * adds file separator to end of directory names, if not exists 
-	 * 
+	 * adds file separator to end of directory names, if not exists
+	 *
 	 * @param value - name of directory
-	 * @return directory containing file separator at the end 
+	 * @return directory containing file separator at the end
 	 */
 	private static String addSeparator(String value) {
 		if (value.charAt(value.length() - 1) == separatorChar)
@@ -398,10 +414,10 @@ public final class Configuration {
 			return value + separatorChar;
 	}
 
-	
+
 	/**
 	 * loads configuration from config.xml file
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public static void loadConfig() throws Exception {
@@ -585,7 +601,7 @@ public final class Configuration {
 
 	/**
 	 * returns report for "info" commandline parameter
-	 * 
+	 *
 	 * @return info report
 	 */
 	public static String getConfigReport() {
@@ -635,7 +651,7 @@ public final class Configuration {
 		return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
 	}
 
-	private static String getNetworkInterfaceInfo(){
+	private static String getNetworkInterfaceInfo() {
 		return NETWORK_INTERFACE.getDefaultValue().equals(networkInterface) ?
 				IOFogNetworkInterface.getNetworkInterface() + "(" + NETWORK_INTERFACE.getDefaultValue() + ")" :
 				networkInterface;
