@@ -81,12 +81,13 @@ public class SshProxyManager {
      */
     private CompletableFuture<Void> openSshTunnel() {
         return CompletableFuture.supplyAsync(connection.openSshTunnel())
-                .whenComplete((val, ex) -> {
+                .handle((val, ex) -> {
                     if (ex != null) {
                         onError(ex);
                     } else {
                         onSuccess();
                     }
+                    return null;
                 });
     }
 
