@@ -17,6 +17,8 @@ import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 public class SshProxyManager {
     private static final String MODULE_NAME = "SSH Proxy Manager";
     private static final String EMPTY = "";
+    private static final int DEFAULT_LOCAL_PORT = 22;
+    private static final int DEFAULT_REMOTE_PORT = 9999;
     private SshConnection connection;
 
     public SshProxyManager(SshConnection connection) {
@@ -25,18 +27,22 @@ public class SshProxyManager {
 
     /**
      * starts or stops ssh tunnel according to current config
+     * @param configs json object with proxy configs
+     * @return completable future of type void
      */
-    public void update(JsonObject configs) {
+    public CompletableFuture<Void> update(JsonObject configs) {
+        CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
         setSshConnection(configs);
         if (connection.isConnected() && connection.isCloseFlag()) {
             close();
         } else if (!connection.isConnected() && !connection.isCloseFlag()){
-            open();
+            completableFuture = open();
         } else if (connection.isConnected() && !connection.isCloseFlag()) {
             handleUnexpectedTunnelState("The tunnel is already opened. Please close it first.", OPEN);
         } else {
             handleUnexpectedTunnelState("The tunnel is already closed", CLOSED);
         }
+        return completableFuture;
     }
 
 
@@ -52,10 +58,11 @@ public class SshProxyManager {
 
     /**
      * opens ssh tunnel
+     * @return completable future of type void
      */
-    private void open() {
+    private CompletableFuture<Void> open() {
         setKnownHost();
-        openSshTunnel();
+        return openSshTunnel();
     }
 
     /**
@@ -72,15 +79,17 @@ public class SshProxyManager {
 
     /**
      * opens ssh tunnel asynchronously
+     * @return completable future of type void
      */
-    private void openSshTunnel() {
-        CompletableFuture.supplyAsync(connection.openSshTunnel())
-                .whenComplete((val, ex) -> {
+    private CompletableFuture<Void> openSshTunnel() {
+        return CompletableFuture.supplyAsync(connection.openSshTunnel())
+                .handle((val, ex) -> {
                     if (ex != null) {
                         onError(ex);
                     } else {
                         onSuccess();
                     }
+                    return null;
                 });
     }
 
@@ -111,10 +120,7 @@ public class SshProxyManager {
      */
     private void setSshProxyManagerStatus(SshConnectionStatus status, String errMsg) {
         StatusReporter.setSshProxyManagerStatus()
-                .setUsername(connection.getUsername())
-                .setHost(connection.getHost())
-                .setRemotePort(connection.getRemotePort())
-                .setLocalPort(connection.getLocalPort())
+                .setProxyConfig(connection.getUsername(), connection.getHost(), connection.getRemotePort(), connection.getLocalPort())
                 .setConnectionStatus(status)
                 .setErrorMessage(errMsg);
     }
@@ -128,8 +134,8 @@ public class SshProxyManager {
         String password = configs.getString("password");
         String host = configs.getString("host");
         String rsaKey = configs.getString("rsakey");
-        int rport = configs.getInt("rport");
-        int lport = configs.getInt("lport");
+        int rport = configs.getInt("rport", DEFAULT_REMOTE_PORT);
+        int lport = configs.getInt("lport", DEFAULT_LOCAL_PORT);
         boolean closeFlag = (configs.getBoolean("close"));
         connection.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
     }
