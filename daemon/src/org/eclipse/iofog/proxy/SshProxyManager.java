@@ -17,6 +17,8 @@ import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 public class SshProxyManager {
     private static final String MODULE_NAME = "SSH Proxy Manager";
     private static final String EMPTY = "";
+    private static final int DEFAULT_LOCAL_PORT = 22;
+    private static final int DEFAULT_REMOTE_PORT = 9999;
     private SshConnection connection;
 
     public SshProxyManager(SshConnection connection) {
@@ -135,8 +137,8 @@ public class SshProxyManager {
         String password = configs.getString("password");
         String host = configs.getString("host");
         String rsaKey = configs.getString("rsakey");
-        int rport = configs.getInt("rport");
-        int lport = configs.getInt("lport");
+        int rport = configs.getInt("rport", DEFAULT_REMOTE_PORT);
+        int lport = configs.getInt("lport", DEFAULT_LOCAL_PORT);
         boolean closeFlag = (configs.getBoolean("close"));
         connection.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
     }
