@@ -344,7 +344,7 @@ public class FieldAgent {
 
 	private boolean isReadyToUpgrade() {
 		try {
-			return BashFogCommands.getFogInstalledVersion().equals(BashFogCommands.getFogCandidateVersion());
+			return !(BashFogCommands.getFogInstalledVersion().equals(BashFogCommands.getFogCandidateVersion()));
 		} catch (IOException | InterruptedException e) {
 			return false;
 		}

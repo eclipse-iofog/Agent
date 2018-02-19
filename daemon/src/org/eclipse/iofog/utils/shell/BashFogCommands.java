@@ -5,6 +5,7 @@ import java.io.IOException;
 public final class BashFogCommands {
     private BashFogCommands() {}
 
+    //TODO: this is only debian commands. create redhat commands later
     public static String GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy iofog | grep Installed | awk '{print $2}'";
     public static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy iofog | grep Candidate | awk '{print $2}'";
 
