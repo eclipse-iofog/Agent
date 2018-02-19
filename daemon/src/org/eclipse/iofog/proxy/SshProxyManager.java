@@ -120,10 +120,7 @@ public class SshProxyManager {
      */
     private void setSshProxyManagerStatus(SshConnectionStatus status, String errMsg) {
         StatusReporter.setSshProxyManagerStatus()
-                .setUsername(connection.getUsername())
-                .setHost(connection.getHost())
-                .setRemotePort(connection.getRemotePort())
-                .setLocalPort(connection.getLocalPort())
+                .setProxyConfig(connection.getUsername(), connection.getHost(), connection.getRemotePort(), connection.getLocalPort())
                 .setConnectionStatus(status)
                 .setErrorMessage(errMsg);
     }
