@@ -911,59 +911,82 @@ public class FieldAgent implements IOFogModule {
 		return true;
 	}
 
-	public void sendUSBInfoFromHalToController() throws Exception {
-		if (!notProvisioned()) {
-			String usbInfo = requestToHal(URL_TO_GET_USB_INFO_FROM_HAL);
-			StatusReporter.setResourceManagerStatus().setUsbConnectionsInfo(usbInfo);
+	public void sendUSBInfoFromHalToController() {
+		if (notProvisioned()) {
+			return;
+		}
+		Optional<StringBuilder> response = getResponse(USB_INFO_URL);
+		if (!response.isPresent()) {
+			return;
+		}
+		String usbInfo = response.get().toString();
+		StatusReporter.setResourceManagerStatus().setUsbConnectionsInfo(usbInfo);
 
-			Map<String, Object> postParams = new HashMap<>();
-			postParams.put("info", usbInfo);
-			orchestrator.doCommand(COMMAND_TO_SEND_USB_INFO_TO_CONTROLLER, null, postParams);
+		Map<String, Object> postParams = new HashMap<>();
+		postParams.put("info", usbInfo);
+		try {
+			orchestrator.doCommand(COMMAND_USB_INFO, null, postParams);
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		}
 	}
-
 
 	public void sendHWInfoFromHalToController() {
-		if (!notProvisioned()) {
-			String hwInfo = null;
-			try {
-				hwInfo = requestToHal(URL_TO_GET_HW_INFO_FROM_HAL);
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, e.getMessage());
-			}
-			StatusReporter.setResourceManagerStatus().setHwInfo(hwInfo);
-
-			Map<String, Object> postParams = new HashMap<>();
-			postParams.put("info", hwInfo);
-			JsonObject jsonSendHWInfoResult = null;
-			try {
-				jsonSendHWInfoResult = orchestrator.doCommand(COMMAND_TO_SEND_HW_INFO_TO_CONTROLLER, null, postParams);
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, e.getMessage());
-			}
-
-			LoggingService.logInfo(MODULE_NAME, jsonSendHWInfoResult == null ?
-					"Can't get HW Info from HAL." : jsonSendHWInfoResult.toString());
+		if (notProvisioned()) {
+			return;
 		}
+		Optional<StringBuilder> response = getResponse(HW_INFO_URL);
+		if (!response.isPresent()) {
+			return;
+		}
+		String hwInfo = response.get().toString();
+		StatusReporter.setResourceManagerStatus().setHwInfo(hwInfo);
+
+		Map<String, Object> postParams = new HashMap<>();
+		postParams.put("info", hwInfo);
+		JsonObject jsonSendHWInfoResult = null;
+		try {
+			jsonSendHWInfoResult = orchestrator.doCommand(COMMAND_HW_INFO, null, postParams);
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
+
+		LoggingService.logInfo(MODULE_NAME, jsonSendHWInfoResult == null ?
+				"Can't get HW Info from HAL." : jsonSendHWInfoResult.toString());
+
 	}
 
-	private String requestToHal(String spec) throws Exception {
-		URL url = new URL(spec);
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-		connection.setRequestMethod(HttpMethod.GET);
-
-		int status = connection.getResponseCode();
-
-		BufferedReader in = new BufferedReader(
-				new InputStreamReader(connection.getInputStream()));
-		String inputLine;
-		StringBuilder content = new StringBuilder();
-		while ((inputLine = in.readLine()) != null) {
-			content.append(inputLine);
+	private Optional<StringBuilder> getResponse(String spec) {
+		Optional<HttpURLConnection> connection = sendHttpGetReq(spec);
+		StringBuilder content = null;
+		if (connection.isPresent()) {
+			content = new StringBuilder();
+			try (BufferedReader in = new BufferedReader(
+					new InputStreamReader(connection.get().getInputStream()))) {
+				String inputLine;
+				content = new StringBuilder();
+				while ((inputLine = in.readLine()) != null) {
+					content.append(inputLine);
+				}
+			} catch (IOException exc) {
+				LoggingService.logInfo(MODULE_NAME, exc.getMessage());
+			}
+			connection.get().disconnect();
 		}
-		in.close();
-		connection.disconnect();
+		return Optional.ofNullable(content);
+	}
 
-		return content.toString();
+	private Optional<HttpURLConnection> sendHttpGetReq(String spec) {
+		HttpURLConnection connection = null;
+		try {
+			URL url = new URL(spec);
+			connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod(HttpMethod.GET);
+			connection.getResponseCode();
+		} catch (IOException exc) {
+			LoggingService.logInfo(MODULE_NAME, exc.getMessage());
+
+		}
+		return Optional.ofNullable(connection);
 	}
 }

@@ -12,13 +12,14 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 public class ResourceManager implements IOFogModule {
 
     private static final String MODULE_NAME = ResourceManager.class.getSimpleName();
-    public static final ResourceManager RESOURCE_MANAGER = new ResourceManager();
-    //public static final String URL_TO_GET_HW_INFO_FROM_HAL = "http://192.168.56.101:54331/hal/hwc/lshw"; //todo comment
-    public static final String URL_TO_GET_HW_INFO_FROM_HAL = "http://localhost:54331/hal/hwc/lshw";
-    //public static final String URL_TO_GET_USB_INFO_FROM_HAL = "http://192.168.56.101:54331/hal/hwc/lsusb"; //todo comment
-    public static final String URL_TO_GET_USB_INFO_FROM_HAL = "http://localhost:54331/hal/hwc/lsusb";
-    public static final String COMMAND_TO_SEND_HW_INFO_TO_CONTROLLER = "hw_info";
-    public static final String COMMAND_TO_SEND_USB_INFO_TO_CONTROLLER = "usb_info";
+    public static final ResourceManager RESOURCE_MANAGER_INSTANCE = new ResourceManager();
+    public static final String HW_INFO_URL = "http://localhost:54331/hal/hwc/lshw";
+    public static final String USB_INFO_URL = "http://localhost:54331/hal/hwc/lsusb";
+    public static final String COMMAND_HW_INFO = "hw_info";
+    public static final String COMMAND_USB_INFO = "usb_info";
+
+    private ResourceManager() {
+    }
 
 
     @Override
@@ -41,10 +42,10 @@ public class ResourceManager implements IOFogModule {
         FieldAgent.getInstance().sendHWInfoFromHalToController();
 
         while (true) {
-            try {
                 FieldAgent.getInstance().sendUSBInfoFromHalToController();
+            try {
                 Thread.sleep(Configuration.getScanDevicesFreq() * 1000);
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 LoggingService.logWarning(MODULE_NAME, e.getMessage());
             }
         }

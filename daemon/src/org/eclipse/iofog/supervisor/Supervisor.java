@@ -34,7 +34,7 @@ import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
 
 /**
  * Supervisor module
- * 
+ *
  * @author saeid
  *
  */
@@ -42,18 +42,13 @@ public class Supervisor implements IOFogModule {
 
 	private final String MODULE_NAME = "Supervisor";
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	
-	private ProcessManager processManager;
-	private ResourceConsumptionManager resourceConsumptionManager;
-	private ResourceManager resourceManager;
-	private FieldAgent fieldAgent;
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
-	
+
 	/**
 	 * monitors {@link LocalApi} module status
-	 * 
+	 *
 	 */
 	private Runnable checkLocalApiStatus = () -> {
 		try {
@@ -67,10 +62,10 @@ public class Supervisor implements IOFogModule {
 	};
 
 	public Supervisor() {}
-	
+
 	/**
 	 * starts Supervisor module
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
@@ -87,17 +82,13 @@ public class Supervisor implements IOFogModule {
 
 		//start modules
 		//after starting each module, set SupervisorStatus.modulesStatus
-		resourceConsumptionManager = ResourceConsumptionManager.getInstance();
-        startModule(resourceConsumptionManager);
-        fieldAgent = FieldAgent.getInstance();
-        startModule(fieldAgent);
-        processManager = ProcessManager.getInstance();
-        startModule(processManager);
+		startModule(ResourceConsumptionManager.getInstance());
+		startModule(FieldAgent.getInstance());
+		startModule(ProcessManager.getInstance());
+		startModule(ResourceManager.RESOURCE_MANAGER_INSTANCE);
+
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
-
-		resourceManager = ResourceManager.RESOURCE_MANAGER;
-		startModule(resourceManager);
 
         localApi = LocalApi.getInstance();
         localApiThread = new Thread(localApi, "Local Api");
@@ -133,7 +124,7 @@ public class Supervisor implements IOFogModule {
 
 	/**
 	 * shutdown hook to stop {@link MessageBus} and {@link LocalApi}
-	 * 
+	 *
 	 */
 	private final Runnable shutdownHook = () -> {
 		try {
