@@ -33,7 +33,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 public class WebSocketClientControl {
 
-	static final String URL = System.getProperty("url", "ws://127.0.0.1:54321/v2/control/socket/id/viewer");
+	private static final String URL = System.getProperty("url", "ws://127.0.0.1:54321/v2/control/socket/id/viewer");
 
 	public static void main(String[] args) throws Exception {
 		URI uri = new URI(URL);

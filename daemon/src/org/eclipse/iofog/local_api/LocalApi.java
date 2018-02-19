@@ -31,7 +31,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 public class LocalApi implements Runnable {
 
 	private final String MODULE_NAME = "Local API";
-	private static LocalApi instance = null;
+	private static volatile LocalApi instance;
 	public boolean isSeverStarted = false; 
 	private LocalApiServer server;
 
@@ -41,24 +41,24 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Instantiate local api - singleton
-	 * @param None
 	 * @return LocalApi
 	 */
 	public static LocalApi getInstance(){
-		if (instance == null) {
+		LocalApi localInstance = instance;
+		if (localInstance == null) {
 			synchronized (LocalApi.class) {
-				if(instance == null){
-					instance = new LocalApi();
+				localInstance = instance;
+				if (localInstance == null) {
+					instance = localInstance = new LocalApi();
 					LoggingService.logInfo("LOCAL API ","Local Api Instantiated");
 				}
 			}
 		}
-		return instance;
+		return localInstance;
 	}
 
 	/**
 	 * Stop local api server
-	 * @param None
 	 * @return void
 	 */
 	public void stopServer() throws Exception {
@@ -69,7 +69,6 @@ public class LocalApi implements Runnable {
 	/**
 	 * Start local api server
 	 * Instantiate websocket map and configuration map
-	 * @param None
 	 * @return void
 	 */
 	@Override
@@ -79,12 +78,6 @@ public class LocalApi implements Runnable {
 		WebSocketMap.getInstance();
 		ConfigurationMap.getInstance();
 
-		try {
-			StatusReporter.setLocalApiStatus().setCurrentIpAddress(Orchestrator.getInetAddress());
-		} catch (Exception e2) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + e2.getMessage());
-		}
-
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(WebSocketMap.messageWebsocketMap.size());
 
@@ -93,12 +86,10 @@ public class LocalApi implements Runnable {
 		server = new LocalApiServer();
 		try {
 			server.start();
-			isSeverStarted = true;
 			
 		} catch (Exception e) {
 			try {
 				stopServer();
-				isSeverStarted = false;
 			} catch (Exception e1) {
 				LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e1.getMessage());
 				StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
@@ -107,17 +98,15 @@ public class LocalApi implements Runnable {
 
 			LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e.getMessage());
 			StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
-			return;
 		}
 
 	}
 
 	/**
 	 * Get the containers configuration and store it.
-	 * @param None
 	 * @return void
 	 */
-	public void retrieveContainerConfig() {
+	private void retrieveContainerConfig() {
 		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration retrieved");
@@ -128,10 +117,9 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Update the containers configuration and store it.
-	 * @param None
 	 * @return void
 	 */
-	public void updateContainerConfig(){
+	private void updateContainerConfig(){
 		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration updated");
@@ -143,21 +131,14 @@ public class LocalApi implements Runnable {
 	/**
 	 * Initiate the real-time control signal when the cofiguration changes.
 	 * Called by field-agtent.
-	 * @param None
 	 * @return void
 	 */
 	public void update(){
-		try {
-			StatusReporter.setLocalApiStatus().setCurrentIpAddress(Orchestrator.getInetAddress());
-		} catch (Exception e2) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + e2.getMessage());
-		}
-
 		Map<String, String> oldConfigMap = new HashMap<String, String>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
-		Map<String, String> newConfigMap = new HashMap<String, String>();
-		newConfigMap.putAll(ConfigurationMap.containerConfigMap);
+		Map<String, String> newConfigMap = new HashMap<>();
+		ConfigurationMap.containerConfigMap.putAll(newConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		try {
 			handler.initiateControlSignal(oldConfigMap, newConfigMap);

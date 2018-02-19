@@ -12,12 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.status_reporter;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.eclipse.iofog.field_agent.FieldAgentStatus;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBusStatus;
@@ -27,6 +21,12 @@ import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Status Reporter module
@@ -43,8 +43,8 @@ public final class StatusReporter {
 	private static ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
 	private static LocalApiStatus localApiStatus = new LocalApiStatus();
 	private static MessageBusStatus messageBusStatus = new MessageBusStatus();
-	
-	private static String MODULE_NAME = "Status Reporter";
+
+	private final static String MODULE_NAME = "Status Reporter";
 	
 	/**
 	 * sets system time property
@@ -118,7 +118,7 @@ public final class StatusReporter {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return processManagerStatus;
 	}
-	
+
 	public static ProcessManagerStatus getProcessManagerStatus() {
 		return processManagerStatus;
 	}

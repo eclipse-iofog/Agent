@@ -109,7 +109,7 @@ public class FieldAgent {
 		result.put("repositorystatus", StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus());
 		result.put("systemtime", StatusReporter.getStatusReporterStatus().getSystemTime());
 		result.put("laststatustime", StatusReporter.getStatusReporterStatus().getLastUpdate());
-		result.put("ipaddress", StatusReporter.getLocalApiStatus().getCurrentIpAddress());
+		result.put("ipaddress", Orchestrator.getCurrentIpAddress());
 		result.put("processedmessages", StatusReporter.getMessageBusStatus().getProcessedMessages());
 		result.put("elementmessagecounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerElement());
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
@@ -155,10 +155,6 @@ public class FieldAgent {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
 				LoggingService.logInfo(MODULE_NAME, "post status");
-				//				if (notProvisioned()) {
-				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-				//					continue;
-				//				}
 				if (controllerNotConnected()) {
 					connected = false;
 					if (StatusReporter.getFieldAgentStatus().isControllerVerified())
@@ -361,7 +357,7 @@ public class FieldAgent {
 	 * @param fromFile - load from file 	
 	 * @throws Exception
 	 */
-	public void loadRegistries(boolean fromFile) throws Exception {
+	private void loadRegistries(boolean fromFile) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get registries");
         if (notWorking(fromFile)) return;
 
@@ -662,26 +658,30 @@ public class FieldAgent {
 	 * @return JsonArray
 	 */
 	private JsonArray readFile(String filename) {
-		try {
-			if (!Files.exists(Paths.get(filename), LinkOption.NOFOLLOW_LINKS))
-				return null;
-
-			JsonReader reader = Json.createReader(new FileReader(new File(filename)));
-			JsonObject object = reader.readObject();
-			reader.close();
-			String checksum = object.getString("checksum");
-			JsonArray data = object.getJsonArray("data");
-			if (!checksum(data.toString()).equals(checksum))
-				return null;
-			long timestamp = object.getJsonNumber("timestamp").longValue();
-			if (lastGetChangesList == 0)
-				lastGetChangesList = timestamp;
-			else
-				lastGetChangesList = Long.min(timestamp, lastGetChangesList);
-			return data;
-		} catch (Exception e) {
+		if (!Files.exists(Paths.get(filename), LinkOption.NOFOLLOW_LINKS))
 			return null;
+
+		JsonObject object = readObject(filename);
+		String checksum = object.getString("checksum");
+		JsonArray data = object.getJsonArray("data");
+		if (!checksum(data.toString()).equals(checksum))
+			return null;
+		long timestamp = object.getJsonNumber("timestamp").longValue();
+		if (lastGetChangesList == 0)
+			lastGetChangesList = timestamp;
+		else
+			lastGetChangesList = Long.min(timestamp, lastGetChangesList);
+		return data;
+	}
+
+	private JsonObject readObject(String filename){
+		JsonObject object = null;
+		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))){
+			object = reader.readObject();
+		} catch (FileNotFoundException ex){
+			LoggingService.logWarning(MODULE_NAME, "Invalid file: " + filename);
 		}
+		return object;
 	}
 
 	/**
@@ -691,17 +691,17 @@ public class FieldAgent {
 	 * @param filename - file name 
 	 */
 	private void saveFile(JsonArray data, String filename) {
-		try {
-			String checksum = checksum(data.toString());
-			JsonObject object = Json.createObjectBuilder()
-					.add("checksum", checksum)
-					.add("timestamp", lastGetChangesList)
-					.add("data", data)
-					.build();
-			JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)));
+		String checksum = checksum(data.toString());
+		JsonObject object = Json.createObjectBuilder()
+				.add("checksum", checksum)
+				.add("timestamp", lastGetChangesList)
+				.add("data", data)
+				.build();
+		try (JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)))) {
 			writer.writeObject(object);
-			writer.close();
-		} catch (Exception e) {}
+		} catch (IOException ex) {
+			LoggingService.logWarning(MODULE_NAME, ex.getMessage());
+		}
 	}
 
 	/**
@@ -789,7 +789,7 @@ public class FieldAgent {
 	 * 
 	 * @throws Exception
 	 */
-	public void postFogConfig() throws Exception {
+	private void postFogConfig() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "post fog config");
 		if (notProvisioned()) {
 			LoggingService.logWarning(MODULE_NAME, "not provisioned");
@@ -843,14 +843,6 @@ public class FieldAgent {
 		
 		try {
 			provisioningResult = orchestrator.provision(key);
-			
-//			try{
-//			if(provisioningResult.getString("id").equals("")) return "";
-//			}catch(Exception e){
-//				return "";
-//			}
-//			if (!notProvisioned())
-//				deProvision();
 
 			if (provisioningResult.getString("status").equals("ok")) { 
 				StatusReporter.setFieldAgentStatus().setContollerStatus(ControllerStatus.OK);

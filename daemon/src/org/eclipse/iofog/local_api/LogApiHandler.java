@@ -26,16 +26,12 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
+import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
-public class LogApiHandler implements Callable<Object> {
+public class LogApiHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
@@ -49,15 +45,15 @@ public class LogApiHandler implements Callable<Object> {
 	}
 
 	@Override
-	public Object call() throws Exception {
+	public FullHttpResponse call() throws Exception {
 		HttpHeaders headers = req.headers();
 
-		if (req.getMethod() != POST) {
+		if (req.method() != POST) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
 		}
 
-		if (!(headers.get(HttpHeaders.Names.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
+		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
 			outputBuffer.writeBytes(errorMsg.getBytes());
@@ -95,7 +91,7 @@ public class LogApiHandler implements Callable<Object> {
 		String sendMessageResult = builder.build().toString();
 		outputBuffer.writeBytes(sendMessageResult.getBytes());
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		HttpHeaders.setContentLength(res, outputBuffer.readableBytes());
+		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;
 	}
 

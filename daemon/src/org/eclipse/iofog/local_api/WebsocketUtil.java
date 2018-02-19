@@ -30,7 +30,8 @@ public class WebsocketUtil {
 	
 	/**
 	 * Remove inactive websocket from the open websocket map
-	 * @param ChannelHandlerContext, Hashtable<String, ChannelHandlerContext>
+	 * @param ctx
+	 * @param socketMap
 	 * @return void
 	 */
 	public static synchronized void removeWebsocketContextFromMap(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap){
@@ -45,7 +46,8 @@ public class WebsocketUtil {
 	
 	/**
 	 * Check if the container has open real-time websocket
-	 * @param ChannelHandlerContext, Hashtable<String, ChannelHandlerContext>
+	 * @param ctx
+	 * @param socketMap
 	 * @return boolean
 	 */
 	public static boolean hasContextInMap(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap) throws Exception{
@@ -58,7 +60,8 @@ public class WebsocketUtil {
 	
 	/**
 	 * Get id for the real-time socket channel
-	 * @param ChannelHandlerContext, Hashtable<String, ChannelHandlerContext>
+	 * @param ctx
+	 * @param socketMap
 	 * @return String
 	 */
 	public static String getIdForWebsocket(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap){

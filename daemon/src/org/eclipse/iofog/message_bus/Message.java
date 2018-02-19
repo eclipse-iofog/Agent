@@ -13,11 +13,13 @@
 package org.eclipse.iofog.message_bus;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Base64;
 import javax.json.Json;
 import javax.json.JsonObject;
 
 import org.eclipse.iofog.utils.BytesUtil;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
  * represents IOMessage
@@ -26,7 +28,8 @@ import org.eclipse.iofog.utils.BytesUtil;
  *
  */
 public class Message {
-	private final short VERSION = 4; 
+	private final short VERSION = 4;
+	private static final String MODULE_NAME = "Message";
 
 	private String id;
 	private String tag;
@@ -499,11 +502,10 @@ public class Message {
 	}
 
 	public byte[] getBytes() {
-		ByteArrayOutputStream headerBaos = new ByteArrayOutputStream(); 
-		ByteArrayOutputStream dataBaos = new ByteArrayOutputStream(); 
-		try {
+		try (ByteArrayOutputStream headerBaos = new ByteArrayOutputStream();
+			 ByteArrayOutputStream dataBaos = new ByteArrayOutputStream()){
 			//version
-			headerBaos.write(BytesUtil.shortToBytes((short) VERSION));
+			headerBaos.write(BytesUtil.shortToBytes(VERSION));
 
 			// id
 			int len = getLength(getId());
@@ -640,13 +642,10 @@ public class Message {
 			headerBaos.writeTo(result);
 			dataBaos.writeTo(result);
 			return result.toByteArray();
-		} catch (Exception e) {
-		} finally {
-			try {
-				headerBaos.close();
-				dataBaos.close();
-			} catch (Exception e) {}
+		} catch (IOException exc) {
+			LoggingService.logWarning(MODULE_NAME, exc.getMessage());
 		}
+
 		return new byte[] {};
 	}
 
