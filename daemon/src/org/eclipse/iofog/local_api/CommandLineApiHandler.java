@@ -12,25 +12,21 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Callable;
-
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-
+import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.command_line.CommandLineParser;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import io.netty.buffer.ByteBuf;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
+
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";

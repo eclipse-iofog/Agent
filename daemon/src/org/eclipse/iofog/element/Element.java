@@ -15,7 +15,6 @@ package org.eclipse.iofog.element;
 import org.eclipse.iofog.utils.Constants;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * represents IOElements
@@ -23,6 +22,7 @@ import java.util.Objects;
  * @author saeid
  */
 public class Element {
+
     private final String elementId;
     private final String imageName;
     private List<PortMapping> portMappings;
@@ -109,19 +109,6 @@ public class Element {
         this.lastUpdated = lastUpdated;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Element element = (Element) o;
-        return Objects.equals(elementId, element.elementId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(elementId);
-    }
-
     public boolean isRootHostAccess() {
         return rootHostAccess;
     }
@@ -145,5 +132,18 @@ public class Element {
     public void setVolumeMappings(List<VolumeMapping> volumeMappings) {
         this.volumeMappings = volumeMappings;
     }
+
+	@Override
+	public boolean equals(Object e) {
+		if (e == null)
+			return false;
+		Element element = (Element) e;
+		return this.elementId.equals(element.getElementId());
+	}
+
+	@Override
+	public int hashCode() {
+		return elementId.hashCode();
+	}
 
 }
