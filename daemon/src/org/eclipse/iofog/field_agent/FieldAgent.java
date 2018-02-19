@@ -202,6 +202,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * retrieves IOFog changes list from IOFog controller
+	 *
 	 */
 	private final Runnable getChangesList = () -> {
 		while (true) {
@@ -232,13 +233,13 @@ public class FieldAgent implements IOFogModule {
 				StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
 				JsonObject changes = result.getJsonObject("changes");
-                if (changes.getBoolean("reboot") && !initialization) {
-                    reboot();
-                }
+				if (changes.getBoolean("reboot") && !initialization) {
+					reboot();
+				}
 
-                if (changes.getBoolean("config") && !initialization) {
-	                getFogConfig();
-                }
+				if (changes.getBoolean("config") && !initialization) {
+					getFogConfig();
+				}
 				if (changes.getBoolean("version") && !initialization) {
 					changeVersion();
 				}
