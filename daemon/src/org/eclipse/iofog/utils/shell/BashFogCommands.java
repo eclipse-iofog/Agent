@@ -8,14 +8,12 @@ public final class BashFogCommands {
     public static String GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy iofog | grep Installed | awk '{print $2}'";
     public static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy iofog | grep Candidate | awk '{print $2}'";
 
-    public static Double getFogInstalledVersion() throws IOException, InterruptedException {
-        String verStr = BashUtil.executeShellCommand(GET_IOFOG_PACKAGE_INSTALLED_VERSION);
-        return new Double(verStr);
+    public static String getFogInstalledVersion() throws IOException, InterruptedException {
+        return BashUtil.executeShellCommand(GET_IOFOG_PACKAGE_INSTALLED_VERSION);
     }
 
-    public static Double getFogCandidateVersion() throws IOException, InterruptedException {
-        String verStr = BashUtil.executeShellCommand(GET_IOFOG_PACKAGE_CANDIDATE_VERSION);
-        return new Double(verStr);
+    public static String  getFogCandidateVersion() throws IOException, InterruptedException {
+        return BashUtil.executeShellCommand(GET_IOFOG_PACKAGE_CANDIDATE_VERSION);
     }
 
 }

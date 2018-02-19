@@ -115,6 +115,8 @@ public class FieldAgent {
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
 		result.put("lastcommandtime", StatusReporter.getFieldAgentStatus().getLastCommandTime());
 		result.put("version", Constants.VERSION);
+		result.put("isReadyToUpgrade", isReadyToUpgrade() ? 1 : 0);
+		result.put("isReadyToRollback", isReadyToRollback() ? 1 : 0);
 
 		return result;
 	}
@@ -332,19 +334,25 @@ public class FieldAgent {
     }
 
 	private boolean isValidChangeVersionOperation(VersionCommand command) {
-		try {
-			if (UPGRADE.equals(command)
-					&& BashFogCommands.getFogInstalledVersion().equals(BashFogCommands.getFogCandidateVersion())) {
-				return false;
-			} else if (ROLLBACK.equals(command)
-					//TODO: create more correct file checking
-					&& (new File(Constants.BACKUPS_DIR)).list().length == 0) {
-				return false;
+    	if (UPGRADE.equals(command) && !isReadyToUpgrade()) {
+    		return false;
+    	} else if (ROLLBACK.equals(command)	&& (new File(Constants.BACKUPS_DIR)).list().length == 0) {
+    		return false;
 			}
+		return true;
+	}
+
+	private boolean isReadyToUpgrade() {
+		try {
+			return BashFogCommands.getFogInstalledVersion().equals(BashFogCommands.getFogCandidateVersion());
 		} catch (IOException | InterruptedException e) {
 			return false;
 		}
-		return true;
+	}
+
+	private boolean isReadyToRollback() {
+		//TODO: create more correct file checking
+    	return (new File(Constants.BACKUPS_DIR)).list().length == 0;
 	}
 
 	/**
