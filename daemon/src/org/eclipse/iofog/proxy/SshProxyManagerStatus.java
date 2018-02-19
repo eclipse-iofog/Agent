@@ -20,37 +20,37 @@ public class SshProxyManagerStatus {
 
     public SshProxyManagerStatus() {}
 
-    public SshProxyManagerStatus setUsername(String username) {
+    public synchronized SshProxyManagerStatus setUsername(String username) {
         this.username = username;
         return this;
     }
 
-    public SshProxyManagerStatus setHost(String host) {
+    public synchronized SshProxyManagerStatus setHost(String host) {
         this.host = host;
         return this;
     }
 
-    public SshProxyManagerStatus setRemotePort(int rport) {
+    public synchronized SshProxyManagerStatus setRemotePort(int rport) {
         this.rport = rport;
         return this;
     }
 
-    public SshProxyManagerStatus setLocalPort(int lport) {
+    public synchronized SshProxyManagerStatus setLocalPort(int lport) {
         this.lport = lport;
         return this;
     }
 
-    public SshProxyManagerStatus setConnectionStatus(SshConnectionStatus status) {
+    public synchronized SshProxyManagerStatus setConnectionStatus(SshConnectionStatus status) {
         this.status = status;
         return this;
     }
 
-    public SshProxyManagerStatus setErrorMessage(String errorMessage) {
+    public synchronized SshProxyManagerStatus setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
         return this;
     }
 
-    public String getJsonProxyStatus() {
+    public synchronized String getJsonProxyStatus() {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
                     .add("username", this.username)
                     .add("host", this.host)
