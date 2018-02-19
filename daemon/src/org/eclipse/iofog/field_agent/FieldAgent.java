@@ -272,74 +272,74 @@ public class FieldAgent implements IOFogModule {
 		}
 	};
 
-    /**
-     * Remote reboot of Linux machine from IOFog controller
-     *
-     */
-    private void reboot() {
+	/**
+	 * Remote reboot of Linux machine from IOFog controller
+	 *
+	 */
+	private void reboot() {
 		LoggingService.logInfo(MODULE_NAME, "start rebooting");
 		CommandShellResultSet<List<String>, List<String>> result =  CommandShellExecutor.execute("shutdown -r now");
 		if (result.getError().size() > 0) {
 			LoggingService.logWarning(MODULE_NAME, result.toString());
 		}
-    }
+	}
 
-    /**
-     * performs change version operation, received from ioFog controller
-     *
-     */
+	/**
+	 * performs change version operation, received from ioFog controller
+	 *
+	 */
 	private void changeVersion() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "get change version action");
 		if (notProvisioned() || !isControllerConnected(false)) {
 			return;
 		}
 
-        try {
+		try {
 			JsonObject result = orchestrator.doCommand("version", null, null);
 
 			if (!result.getString("status").equals("ok"))
 				throw new Exception("error from fog controller");
 
 
-            VersionCommand versionCommand = parseJson(result);
-            String provisionKey = result.getString("provisionKey");
+			VersionCommand versionCommand = parseJson(result);
+			String provisionKey = result.getString("provisionKey");
 
 //			LoggingService.logInfo(MODULE_NAME, result.toString());
-            executeChangeVersionScript(versionCommand, provisionKey);
+			executeChangeVersionScript(versionCommand, provisionKey);
 
-        } catch (UnknownVersionCommandException e) {
-            LoggingService.logWarning(MODULE_NAME, e.getMessage());
-        } catch (CertificateException|SSLHandshakeException e) {
+		} catch (UnknownVersionCommandException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
 		}
-    }
+	}
 
-    /**
-     * executes sh script to change iofog version
-     *
-     * @param command {@link VersionCommand}
-     */
-    private void executeChangeVersionScript(VersionCommand command, String provisionKey) {
-        String shToExecute = null;
+	/**
+	 * executes sh script to change iofog version
+	 *
+	 * @param command {@link VersionCommand}
+	 */
+	private void executeChangeVersionScript(VersionCommand command, String provisionKey) {
+		String shToExecute = null;
 
-        //TODO: maybe it's better to throw IllegalStateException?
+		//TODO: maybe it's better to throw IllegalStateException?
 		if (!isValidChangeVersionOperation(command)) return;
 
 		switch (command) {
-            case UPGRADE:
-                shToExecute = UPGRADE_VERSION_SCRIPT;
-                break;
-            case ROLLBACK:
-                shToExecute = ROLLBACK_VERSION_SCRIPT;
-                break;
-            default:
-                break;
-        }
+			case UPGRADE:
+				shToExecute = UPGRADE_VERSION_SCRIPT;
+				break;
+			case ROLLBACK:
+				shToExecute = ROLLBACK_VERSION_SCRIPT;
+				break;
+			default:
+				break;
+		}
 
 		String[] shRunCommand = {
-        		shToExecute,
+				shToExecute,
 				provisionKey,
 				MAX_RESTARTING_TIMEOUT
 		};
@@ -349,13 +349,13 @@ public class FieldAgent implements IOFogModule {
 		} catch (InterruptedException | IOException e) {
 			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		}
-    }
+	}
 
 	private boolean isValidChangeVersionOperation(VersionCommand command) {
-    	if (UPGRADE.equals(command) && !isReadyToUpgrade()) {
-    		return false;
-    	} else if (ROLLBACK.equals(command)	&& (new File(BACKUPS_DIR)).list().length == 0) {
-    		return false;
+		if (UPGRADE.equals(command) && !isReadyToUpgrade()) {
+			return false;
+		} else if (ROLLBACK.equals(command)	&& (new File(BACKUPS_DIR)).list().length == 0) {
+			return false;
 			}
 		return true;
 	}
@@ -370,7 +370,7 @@ public class FieldAgent implements IOFogModule {
 
 	private boolean isReadyToRollback() {
 		//TODO: create more correct file checking
-    	return (new File(BACKUPS_DIR)).list().length == 0;
+		return (new File(BACKUPS_DIR)).list().length == 0;
 	}
 
 	/**
@@ -384,7 +384,7 @@ public class FieldAgent implements IOFogModule {
 			return;
 		}
 
-        String filename = "registries.json";
+		String filename = "registries.json";
 		try {
 			JsonArray registriesList;
 			if (fromFile) {
