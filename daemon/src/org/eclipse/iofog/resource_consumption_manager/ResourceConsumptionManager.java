@@ -32,7 +32,7 @@ import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
  */
 public class ResourceConsumptionManager implements IOFogModule {
 
-	private String MODULE_NAME = "Resource Consumption Manager";
+	private static final String MODULE_NAME = "Resource Consumption Manager";
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
 

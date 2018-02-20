@@ -28,7 +28,7 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
  * @since 2016
  */
 public class ControlWebsocketWorker  implements Runnable{
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 	private static final Byte OPCODE_CONTROL_SIGNAL = 0xC;
 
 	/**

@@ -27,12 +27,11 @@ import java.util.concurrent.Callable;
 
 public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
-	private final String MODULE_NAME = "Bluetooth API";
+	private static final String MODULE_NAME = "Bluetooth API";
 
 	private final FullHttpRequest req;
 	private ByteBuf outputBuffer;
 	private final byte[] content;
-	private static Channel channel;
 	private FullHttpResponse response;
 
 	
@@ -77,7 +76,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                     });
 
             ByteBuf requestContent = Unpooled.copiedBuffer(content);
-            channel = b.connect(host, port).sync().channel();
+			Channel channel = b.connect(host, port).sync().channel();
             String endpoint = req.uri().substring(12);
             FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.method(), endpoint, requestContent);
             request.headers().set(req.headers());

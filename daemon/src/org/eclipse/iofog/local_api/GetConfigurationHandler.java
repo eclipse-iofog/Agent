@@ -33,7 +33,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  */
 public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
 	private ByteBuf outputBuffer;

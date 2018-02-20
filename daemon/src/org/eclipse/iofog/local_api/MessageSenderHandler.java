@@ -34,7 +34,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @since 2016
  */
 public class MessageSenderHandler implements Callable<FullHttpResponse> {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
 	private ByteBuf outputBuffer;

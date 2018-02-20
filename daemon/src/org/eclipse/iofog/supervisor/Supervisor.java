@@ -38,12 +38,9 @@ import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
  */
 public class Supervisor implements IOFogModule {
 
-	private final String MODULE_NAME = "Supervisor";
+	private static final String MODULE_NAME = "Supervisor";
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	
-	private ProcessManager processManager;
-	private ResourceConsumptionManager resourceConsumptionManager;
-	private FieldAgent fieldAgent;
+
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
@@ -84,11 +81,11 @@ public class Supervisor implements IOFogModule {
         // TODO: after starting each module, set SupervisorStatus.modulesStatus
 
         // starting Resource Consumption Manager
-		resourceConsumptionManager = ResourceConsumptionManager.getInstance();
+		ResourceConsumptionManager resourceConsumptionManager = ResourceConsumptionManager.getInstance();
         startModule(resourceConsumptionManager);
-        fieldAgent = FieldAgent.getInstance();
+		FieldAgent fieldAgent = FieldAgent.getInstance();
         startModule(fieldAgent);
-        processManager = ProcessManager.getInstance();
+		ProcessManager processManager = ProcessManager.getInstance();
         startModule(processManager);
         messageBus = MessageBus.getInstance();
         startModule(messageBus);

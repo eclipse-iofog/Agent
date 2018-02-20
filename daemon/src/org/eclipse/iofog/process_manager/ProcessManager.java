@@ -43,7 +43,7 @@ import static org.eclipse.iofog.utils.Constants.*;
  */
 public class ProcessManager implements IOFogModule {
 	
-	private final String MODULE_NAME = "Process Manager";
+	private static final String MODULE_NAME = "Process Manager";
 	private ElementManager elementManager;
 	private Queue<ContainerTask> tasks;
 	public static Boolean updated = true;
