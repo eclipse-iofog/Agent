@@ -27,7 +27,7 @@ import javax.json.JsonObjectBuilder;
  */
 public class MessageBusStatus {
 	private long processedMessages;
-	private Map<String, Long> publishedMessagesPerElement;
+	private final Map<String, Long> publishedMessagesPerElement;
 	private float averageSpeed;
 	
 	public MessageBusStatus() {

@@ -34,8 +34,8 @@ import java.util.Map;
 public class ProcessManagerStatus {
 	private int runningElementsCount;
 	private DockerStatus dockerStatus;
-	private Map<String, ElementStatus> elementsStatus;
-	private Map<String, LinkStatus> registriesStatus;
+	private final Map<String, ElementStatus> elementsStatus;
+	private final Map<String, LinkStatus> registriesStatus;
 
 	public ProcessManagerStatus() {
 		elementsStatus = new HashMap<>();

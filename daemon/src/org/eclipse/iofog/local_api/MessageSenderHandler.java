@@ -37,7 +37,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	private static final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
-	private ByteBuf outputBuffer;
+	private final ByteBuf outputBuffer;
 	private final byte[] content;
 
 	public MessageSenderHandler(HttpRequest req, ByteBuf outputBuffer, byte[] content) {

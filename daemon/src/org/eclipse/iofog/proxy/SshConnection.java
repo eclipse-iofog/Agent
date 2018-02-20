@@ -11,7 +11,7 @@ public class SshConnection {
 
 	private static final String LOCAL_HOST = "localhost";
 	private static final int TIMEOUT = 60000;
-	private JSch jschSSHChannel;
+	private final JSch jschSSHChannel;
 	private String username;
 	private String password;
 	private String host;

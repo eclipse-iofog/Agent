@@ -37,14 +37,14 @@ import java.util.concurrent.TimeUnit;
  */
 public final class StatusReporter {
 	
-	private static SupervisorStatus supervisorStatus = new SupervisorStatus();
-	private static ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = new ResourceConsumptionManagerStatus();
-	private static FieldAgentStatus fieldAgentStatus = new FieldAgentStatus();
-	private static StatusReporterStatus statusReporterStatus = new StatusReporterStatus();
-	private static ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
-	private static LocalApiStatus localApiStatus = new LocalApiStatus();
-	private static MessageBusStatus messageBusStatus = new MessageBusStatus();
-	private static SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
+	private static final SupervisorStatus supervisorStatus = new SupervisorStatus();
+	private static final ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = new ResourceConsumptionManagerStatus();
+	private static final FieldAgentStatus fieldAgentStatus = new FieldAgentStatus();
+	private static final StatusReporterStatus statusReporterStatus = new StatusReporterStatus();
+	private static final ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
+	private static final LocalApiStatus localApiStatus = new LocalApiStatus();
+	private static final MessageBusStatus messageBusStatus = new MessageBusStatus();
+	private static final SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
 
 	private final static String MODULE_NAME = "Status Reporter";
 	
@@ -52,7 +52,7 @@ public final class StatusReporter {
 	 * sets system time property
 	 * 
 	 */
-	private static Runnable setStatusReporterSystemTime = () -> {
+	private static final Runnable setStatusReporterSystemTime = () -> {
 		try {
 			setStatusReporterStatus().setSystemTime(System.currentTimeMillis());
 		} catch (Exception e) {}

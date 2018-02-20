@@ -17,7 +17,7 @@ import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 public class SshProxyManager {
     private static final String MODULE_NAME = "SSH Proxy Manager";
     private static final String EMPTY = "";
-    private SshConnection connection;
+    private final SshConnection connection;
 
     public SshProxyManager(SshConnection connection) {
         this.connection = connection;

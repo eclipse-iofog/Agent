@@ -78,7 +78,7 @@ public final class Configuration {
 	private static int statusUpdateFreq;
 	private static int getChangesFreq;
 	private static boolean isolatedDockerContainers;
-	private static Map<String, Object> defaultConfig;
+	private static final Map<String, Object> defaultConfig;
 	
 	public static boolean debugging = false;
 	

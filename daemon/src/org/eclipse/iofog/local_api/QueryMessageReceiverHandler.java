@@ -39,7 +39,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	private final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
-	private ByteBuf outputBuffer;
+	private final ByteBuf outputBuffer;
 	private final byte[] content;
 
 	public QueryMessageReceiverHandler(HttpRequest req, ByteBuf outputBuffer, byte[] content) {

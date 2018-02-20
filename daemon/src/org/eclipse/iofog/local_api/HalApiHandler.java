@@ -20,7 +20,7 @@ public class HalApiHandler implements Callable<Object> {
     private final String MODULE_NAME = "HAL API";
 
     private final FullHttpRequest req;
-    private ByteBuf outputBuffer;
+    private final ByteBuf outputBuffer;
     private final byte[] content;
     public static Channel channel;
     private HttpResponse response;

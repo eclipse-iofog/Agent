@@ -30,7 +30,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 	private static final String MODULE_NAME = "Bluetooth API";
 
 	private final FullHttpRequest req;
-	private ByteBuf outputBuffer;
+	private final ByteBuf outputBuffer;
 	private final byte[] content;
 	private FullHttpResponse response;
 

@@ -32,7 +32,7 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 	private static final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
-	private ByteBuf outputBuffer;
+	private final ByteBuf outputBuffer;
 	private final byte[] content;
 
 	public CommandLineApiHandler(HttpRequest request, ByteBuf outputBuffer, byte[] content) {

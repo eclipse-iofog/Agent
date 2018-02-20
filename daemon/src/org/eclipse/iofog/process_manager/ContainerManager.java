@@ -36,7 +36,7 @@ public class ContainerManager {
 	private DockerUtil docker;
 	private String containerId;
 	private ContainerTask task;
-	private ElementManager elementManager;
+	private final ElementManager elementManager;
 
 	private final String MODULE_NAME = "Container Manager";
 
