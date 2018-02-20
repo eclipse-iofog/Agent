@@ -12,15 +12,10 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 public class ResourceManager implements IOFogModule {
 
     private static final String MODULE_NAME = ResourceManager.class.getSimpleName();
-    public static final ResourceManager RESOURCE_MANAGER_INSTANCE = new ResourceManager();
     public static final String HW_INFO_URL = "http://localhost:54331/hal/hwc/lshw";
     public static final String USB_INFO_URL = "http://localhost:54331/hal/hwc/lsusb";
     public static final String COMMAND_HW_INFO = "hw_info";
     public static final String COMMAND_USB_INFO = "usb_info";
-
-    private ResourceManager() {
-    }
-
 
     @Override
     public int getModuleIndex() {

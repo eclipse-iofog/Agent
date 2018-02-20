@@ -228,11 +228,11 @@ public class FieldAgent implements IOFogModule {
 				StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
 				JsonObject changes = result.getJsonObject("changes");
-                if (changes.getBoolean("reboot") && !initialization) {
-                    reboot();
-                }
+				if (changes.getBoolean("reboot") && !initialization) {
+					reboot();
+				}
 
-                if (changes.getBoolean("config") && !initialization)
+				if (changes.getBoolean("config") && !initialization)
 					getFogConfig();
 
 				if (changes.getBoolean("registries") || initialization) {
@@ -252,9 +252,9 @@ public class FieldAgent implements IOFogModule {
 					MessageBus.getInstance().update();
 				}
 				if (changes.getBoolean("proxy") && !initialization) {
-					getProxyConfig().ifPresent(configs -> {
-						sshProxyManager.update(configs).thenRun(this::postProxyConfig);
-					});
+					getProxyConfig().ifPresent(configs ->
+							sshProxyManager.update(configs).thenRun(this::postProxyConfig)
+					);
 				}
 
 				initialization = false;
@@ -264,17 +264,16 @@ public class FieldAgent implements IOFogModule {
 		}
 	};
 
-    /**
-     * Remote reboot of Linux machine from IOFog controller
-     *
-     */
-    private void reboot() {
+	/**
+	 * Remote reboot of Linux machine from IOFog controller
+	 */
+	private void reboot() {
 		LoggingService.logInfo(MODULE_NAME, "start rebooting");
-		CommandShellResultSet<List<String>, List<String>> result =  CommandShellExecutor.execute("shutdown -r now");
+		CommandShellResultSet<List<String>, List<String>> result = CommandShellExecutor.execute("shutdown -r now");
 		if (result.getError().size() > 0) {
 			LoggingService.logWarning(MODULE_NAME, result.toString());
 		}
-    }
+	}
 
 	/**
 	 * gets list of registries from file or IOFog controller
@@ -937,21 +936,17 @@ public class FieldAgent implements IOFogModule {
 			return;
 		}
 		Optional<StringBuilder> response = getResponse(USB_INFO_URL);
-		if (!response.isPresent()) {
-			return;
-		}
-		String usbInfo = response.get().toString();
-		if (usbInfo.isEmpty()) {
-			return;
-		}
-		StatusReporter.setResourceManagerStatus().setUsbConnectionsInfo(usbInfo);
+		if (isResponseValid(response)) {
+			String usbInfo = response.get().toString();
+			StatusReporter.setResourceManagerStatus().setUsbConnectionsInfo(usbInfo);
 
-		Map<String, Object> postParams = new HashMap<>();
-		postParams.put("info", usbInfo);
-		try {
-			orchestrator.doCommand(COMMAND_USB_INFO, null, postParams);
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			Map<String, Object> postParams = new HashMap<>();
+			postParams.put("info", usbInfo);
+			try {
+				orchestrator.doCommand(COMMAND_USB_INFO, null, postParams);
+			} catch (Exception e) {
+				LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			}
 		}
 	}
 
@@ -960,24 +955,26 @@ public class FieldAgent implements IOFogModule {
 			return;
 		}
 		Optional<StringBuilder> response = getResponse(HW_INFO_URL);
-		if (!response.isPresent()) {
-			return;
+		if (isResponseValid(response)) {
+			String hwInfo = response.get().toString();
+			StatusReporter.setResourceManagerStatus().setHwInfo(hwInfo);
+
+			Map<String, Object> postParams = new HashMap<>();
+			postParams.put("info", hwInfo);
+			JsonObject jsonSendHWInfoResult = null;
+			try {
+				jsonSendHWInfoResult = orchestrator.doCommand(COMMAND_HW_INFO, null, postParams);
+			} catch (Exception e) {
+				LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			}
+
+			LoggingService.logInfo(MODULE_NAME, jsonSendHWInfoResult == null ?
+					"Can't get HW Info from HAL." : jsonSendHWInfoResult.toString());
 		}
-		String hwInfo = response.get().toString();
-		StatusReporter.setResourceManagerStatus().setHwInfo(hwInfo);
+	}
 
-		Map<String, Object> postParams = new HashMap<>();
-		postParams.put("info", hwInfo);
-		JsonObject jsonSendHWInfoResult = null;
-		try {
-			jsonSendHWInfoResult = orchestrator.doCommand(COMMAND_HW_INFO, null, postParams);
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		}
-
-		LoggingService.logInfo(MODULE_NAME, jsonSendHWInfoResult == null ?
-				"Can't get HW Info from HAL." : jsonSendHWInfoResult.toString());
-
+	private boolean isResponseValid(Optional<StringBuilder> response) {
+		return response.isPresent() && !response.get().toString().isEmpty();
 	}
 
 	private Optional<StringBuilder> getResponse(String spec) {

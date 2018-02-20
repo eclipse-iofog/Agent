@@ -85,7 +85,7 @@ public class Supervisor implements IOFogModule {
 		startModule(ResourceConsumptionManager.getInstance());
 		startModule(FieldAgent.getInstance());
 		startModule(ProcessManager.getInstance());
-		startModule(ResourceManager.RESOURCE_MANAGER_INSTANCE);
+		startModule(new ResourceManager());
 
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
