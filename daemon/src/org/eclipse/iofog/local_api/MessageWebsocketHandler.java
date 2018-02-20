@@ -15,6 +15,7 @@ package org.eclipse.iofog.local_api;
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
 
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -81,7 +82,7 @@ public class MessageWebsocketHandler {
 			handshaker.handshake(ctx.channel(), req);
 		}
 
-		Hashtable<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
+		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 		messageSocketMap.put(publisherId, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
 		MessageBus.getInstance().enableRealTimeReceiving(publisherId);
@@ -196,7 +197,7 @@ public class MessageWebsocketHandler {
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
 		ChannelHandlerContext ctx = null;
-		Hashtable<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
+		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
 		if (messageSocketMap != null && messageSocketMap.containsKey(receiverId)) {
 			ctx = messageSocketMap.get(receiverId);

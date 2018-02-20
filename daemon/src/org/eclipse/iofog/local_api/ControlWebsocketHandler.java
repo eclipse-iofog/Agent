@@ -137,8 +137,8 @@ public class ControlWebsocketHandler {
 		ChannelHandlerContext ctx = null;
 
 		// Compare the old and new config map
-		Hashtable<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
-		ArrayList<String> changedConfigElmtsList = new ArrayList<String>();
+		Map<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
+		ArrayList<String> changedConfigElmtsList = new ArrayList<>();
 
 		for (Map.Entry<String, String> newEntry : newConfigMap.entrySet()) {
 			String newMapKey = newEntry.getKey();
