@@ -27,6 +27,7 @@ public enum CommandLineConfigParam {
     LOG_FILE_COUNT ("10", "lc","log_file_count", "logfilecount"),
     STATUS_UPDATE_FREQ ("10", "sf", "status_update_freq", "poststatusfreq"),
     GET_CHANGES_FREQ ("20", "cf", "get_changes_freq", "getchangesfreq"),
+    SCAN_DEVICES_FREQ("60", "sd", "scan_devices_freq", "scandevicesfreq"),
     ISOLATED_DOCKER_CONTAINER ("on", "idc", "isolated_docker_container", "isolateddockercontainer");
 
     private final String commandName;
