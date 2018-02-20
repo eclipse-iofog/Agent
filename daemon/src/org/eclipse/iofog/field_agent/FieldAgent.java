@@ -926,7 +926,6 @@ public class FieldAgent implements IOFogModule {
 
 	private void checkResponseStatus(JsonObject result) {
 		if (!result.getString("status").equals("ok")) {
-			logWarning("Error from fog controller: bad response status");
 			throw new RuntimeException("error from fog controller");
 		}
 	}

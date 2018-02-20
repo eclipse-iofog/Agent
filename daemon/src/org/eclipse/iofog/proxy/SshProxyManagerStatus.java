@@ -21,7 +21,7 @@ public class SshProxyManagerStatus {
 
     public SshProxyManagerStatus() {}
 
-    public synchronized SshProxyManagerStatus setProxyConfig(String username, String host, int rport, int lport) {
+    synchronized SshProxyManagerStatus setProxyConfig(String username, String host, int rport, int lport) {
         this.username = username;
         this.host = host;
         this.rport = rport;
@@ -39,7 +39,7 @@ public class SshProxyManagerStatus {
         return this;
     }
 
-    public String getJsonProxyStatus() {
+    public synchronized String getJsonProxyStatus() {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
                     .add("username", this.username)
                     .add("host", this.host)
