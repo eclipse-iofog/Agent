@@ -18,8 +18,17 @@ install:
 
 script:
   - mvn clean install
+  - sshpass -p "$DEV_MACHINE_PASSWORD" ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
+  - sudo service iofog stop
+  - rm -rf /usr/bin/iofogd_bckp.jar
+  - rm -rf /usr/bin/iofog_bckp.jar
+  - mv /usr/bin/iofogd.jar /usr/bin/iofogd_bckp.jar
+  - mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar
+  - exit
   - sshpass -p "$DEV_MACHINE_PASSWORD" scp target/iofog-daemon-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofogd.jar
   - sshpass -p "$DEV_MACHINE_PASSWORD" scp target/iofog-client-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog.jar
+  - sshpass -p "$DEV_MACHINE_PASSWORD" ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
+  - sudo service iofog start
 
 env:
   matrix:
