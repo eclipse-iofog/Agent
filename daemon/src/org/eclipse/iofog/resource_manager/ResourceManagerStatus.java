@@ -5,8 +5,8 @@ package org.eclipse.iofog.resource_manager;
  */
 public class ResourceManagerStatus {
 
-    private String hwInfo;
-    private String usbConnectionsInfo;
+    private String hwInfo = "";
+    private String usbConnectionsInfo = "";
 
 
     public String getHwInfo() {
