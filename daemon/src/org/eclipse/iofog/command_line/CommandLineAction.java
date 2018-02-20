@@ -231,8 +231,7 @@ public enum CommandLineAction {
     public static final String MODULE_NAME = "Command Line Parser";
 
     private static String showHelp() {
-        StringBuilder help = new StringBuilder();
-        help.append("Usage 1: iofog [OPTION]\\n" +
+        String help = ("Usage 1: iofog [OPTION]\\n" +
                 "Usage 2: iofog [COMMAND] <Argument>\\n" +
                 "Usage 3: iofog [COMMAND] [Parameter] <Value>\\n" +
                 "\\n" +
@@ -288,6 +287,7 @@ public enum CommandLineAction {
                 "                                         split the log storage limit\\n" +
                 "                 -sf <#seconds>          Set the status update frequency\\n" +
                 "                 -cf <#seconds>          Set the get changes frequency\\n" +
+                "                 -sd <#seconds>          Set the scan devices frequency\\n" +
                 "                 -idc <on/off>           Set the mode on which any not\\n" +
                 "										  registered docker container will be\\n" +
                 "										  shut down\\n" +
@@ -297,7 +297,7 @@ public enum CommandLineAction {
                 "ioFog home page: http://iofog.com\\n" +
                 "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 
-        return help.toString();
+        return help;
     }
 
 }
