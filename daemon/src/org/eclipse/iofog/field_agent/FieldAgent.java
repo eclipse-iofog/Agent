@@ -276,7 +276,7 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private void reboot() {
 		LoggingService.logInfo(MODULE_NAME, "start rebooting");
-		CommandShellResultSet<List<String>, List<String>> result = CommandShellExecutor.execute("shutdown -r now");
+		CommandShellResultSet<List<String>, List<String>> result = CommandShellExecutor.executeCommand("shutdown -r now");
 		if (result.getError().size() > 0) {
 			LoggingService.logWarning(MODULE_NAME, result.toString());
 		}
