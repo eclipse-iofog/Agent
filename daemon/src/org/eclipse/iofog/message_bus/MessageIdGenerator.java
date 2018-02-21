@@ -67,7 +67,7 @@ public class MessageIdGenerator {
 	// uuid
 	private final int PRE_GENERATED_IDS_COUNT = 100_000;
 	private boolean isRefilling = false;
-	private Queue<String> generatedIds = new LinkedList<>();
+	private final Queue<String> generatedIds = new LinkedList<>();
 	/**
 	 * generates unique id based on UUID
 	 * 

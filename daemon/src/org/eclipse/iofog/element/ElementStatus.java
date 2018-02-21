@@ -12,7 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import org.eclipse.iofog.utils.Constants;
+
+import org.eclipse.iofog.process_manager.ElementState;
 
 /**
  * represents IOElement status
@@ -22,7 +23,7 @@ import org.eclipse.iofog.utils.Constants;
  */
 public class ElementStatus {
 
-	private Constants.ElementState status;
+	private ElementState status;
 	private long startTime;
 	private float cpuUsage;
 	private long memoryUsage;
@@ -43,11 +44,11 @@ public class ElementStatus {
 		this.memoryUsage = memoryUsage;
 	}
 
-	public Constants.ElementState getStatus() {
+	public ElementState getStatus() {
 		return status;
 	}
 
-	public void setStatus(Constants.ElementState status) {
+	public void setStatus(ElementState status) {
 		this.status = status;
 	}
 

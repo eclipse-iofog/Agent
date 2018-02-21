@@ -1,0 +1,5 @@
+#!/bin/sh
+
+JAR_FILE_NAME=/usr/bin/iofabric.jar
+cd /usr/bin
+java -jar iofabric.jar $@

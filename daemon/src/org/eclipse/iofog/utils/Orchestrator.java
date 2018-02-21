@@ -48,7 +48,7 @@ import java.util.*;
  *
  */
 public class Orchestrator {
-	private final int CONNECTION_TIMEOUT = 5000;
+	private static final int CONNECTION_TIMEOUT = 5000;
 	private String controllerUrl;
 	private String instanceId;
 	private String accessToken;

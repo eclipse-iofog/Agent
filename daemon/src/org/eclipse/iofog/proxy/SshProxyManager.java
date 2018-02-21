@@ -19,7 +19,7 @@ public class SshProxyManager {
     private static final String EMPTY = "";
     private static final int DEFAULT_LOCAL_PORT = 22;
     private static final int DEFAULT_REMOTE_PORT = 9999;
-    private SshConnection connection;
+    private final SshConnection connection;
 
     public SshProxyManager(SshConnection connection) {
         this.connection = connection;
