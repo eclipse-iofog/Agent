@@ -297,13 +297,12 @@ public class FieldAgent implements IOFogModule {
 
 			checkResponseStatus(result);
 
-			VersionHandler versionHandler = new VersionHandler();
-			versionHandler.changeVersion(result);
+			VersionHandler.changeVersion(result);
 
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
+			LoggingService.logWarning(MODULE_NAME, "unable to get version command : " + e.getMessage());
 		}
 	}
 

@@ -17,12 +17,12 @@ import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 
 public class VersionHandler {
 
-	private final String MODULE_NAME = "Version Handler";
+	private static final String MODULE_NAME = "Version Handler";
 
 	public static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
-	public static String MAX_RESTARTING_TIMEOUT = "20";
+	public static String MAX_RESTARTING_TIMEOUT = "60";
 
-	private static String GET_LINUX_DISTRIBUTIVE_NAME = "cat /etc/*-release| grep = | awk -F\"[=]\" '{print $2}' | sed -n 1p";
+	private static String GET_LINUX_DISTRIBUTIVE_NAME = "cat /etc/os-release| grep = | awk -F\"[=]\" '{print $2}' | sed -n 1p";
 	public static String GET_IOFOG_PACKAGE_INSTALLED_VERSION;
 	public static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 
@@ -35,6 +35,8 @@ public class VersionHandler {
 		} else if (distrName.contains("Fedora") || distrName.contains("Red Hat") || distrName.contains("CentOS")) {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf list iofog | grep iofog | awk '{print $2}' | sed -n 1p";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf list iofog | grep iofog | awk '{print $2}' | sed -n 2p";
+		} else {
+			LoggingService.logWarning(MODULE_NAME, "it looks like your distributive is not supported");
 		}
 	}
 
@@ -45,27 +47,23 @@ public class VersionHandler {
 
 	public static String getFogInstalledVersion() {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_IOFOG_PACKAGE_INSTALLED_VERSION);
-		if (resultSet.getError().size() == 0) {
-			return resultSet.getValue().get(0);
-		} else {
-			return "";
-		}
+		return parseVersionResult(resultSet);
 	}
 
 	public static String  getFogCandidateVersion() {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_IOFOG_PACKAGE_CANDIDATE_VERSION);
-		if (resultSet.getError().size() == 0) {
-			return resultSet.getValue().get(0);
-		} else {
-			return "";
-		}
+		return parseVersionResult(resultSet);
+	}
+
+	private static String parseVersionResult(CommandShellResultSet<List<String>, List<String>> resultSet) {
+		return resultSet.getError().size() == 0 ? resultSet.getValue().get(0) : "";
 	}
 
 	/**
 	 * performs change version operation, received from ioFog controller
 	 *
 	 */
-	public void changeVersion(JsonObject actionData) {
+	public static void changeVersion(JsonObject actionData) {
 		LoggingService.logInfo(MODULE_NAME, "trying to change version action");
 
 		try{
@@ -88,7 +86,7 @@ public class VersionHandler {
 	 * @param command {@link VersionCommand}
 	 * @param provisionKey new provision key (used to restart iofog correctly)
 	 */
-	private void executeChangeVersionScript(VersionCommand command, String provisionKey) {
+	private static void executeChangeVersionScript(VersionCommand command, String provisionKey) {
 
 		String shToExecute = command.getScript();
 
@@ -100,9 +98,15 @@ public class VersionHandler {
 		CommandShellExecutor.executeScript(shToExecute, shArgs);
 	}
 
-	private boolean isValidChangeVersionOperation(VersionCommand command) {
-		return (UPGRADE.equals(command) && isReadyToUpgrade())
-				|| (ROLLBACK.equals(command) && isReadyToRollback());
+	private static boolean isValidChangeVersionOperation(VersionCommand command) {
+		switch (command){
+			case UPGRADE:
+				return isReadyToUpgrade();
+			case ROLLBACK:
+				return isReadyToRollback();
+			default:
+				return false;
+		}
 	}
 
 	public static boolean isReadyToUpgrade() {

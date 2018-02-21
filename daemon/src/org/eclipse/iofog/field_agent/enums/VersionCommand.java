@@ -9,15 +9,25 @@ import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 
 public enum VersionCommand {
 
-	UPGRADE("upgrade") {
+	UPGRADE {
 		@Override
 		public String getScript() {
 			return UPGRADE_VERSION_SCRIPT;
 		}
-	}, ROLLBACK("rollback") {
+
+		@Override
+		public String toString() {
+			return "upgrade";
+		}
+	}, ROLLBACK {
 		@Override
 		public String getScript() {
 			return ROLLBACK_VERSION_SCRIPT;
+		}
+
+		@Override
+		public String toString() {
+			return "rollback";
 		}
 	};
 
@@ -27,23 +37,12 @@ public enum VersionCommand {
 	public static String UPGRADE_VERSION_SCRIPT = CHANGE_VERSION_SCRIPTS_DIR + "upgrade.sh";
 	public static String ROLLBACK_VERSION_SCRIPT = CHANGE_VERSION_SCRIPTS_DIR + "rollback.sh";
 
-	VersionCommand(String commandStr) {
-		this.commandStr = commandStr;
-	}
-
-	public String getCommandStr() {
-		return this.commandStr;
-	}
-
 	public static VersionCommand parseCommandString(String commandStr) throws UnknownVersionCommandException {
-		Optional<VersionCommand> versionCommandOptional =  Arrays.stream(VersionCommand.values())
-				.filter(versionCommand -> versionCommand.getCommandStr().equals(commandStr))
-				.findFirst();
-		if (versionCommandOptional.isPresent()) {
-			return versionCommandOptional.get();
-		} else {
-			throw new UnknownVersionCommandException();
-		}
+		return Optional.of(Arrays.stream(VersionCommand.values())
+				.filter(versionCommand -> versionCommand.toString().equals(commandStr))
+				.findFirst()
+				.orElseThrow(UnknownVersionCommandException::new))
+				.get();
 	}
 
 	public static VersionCommand parseJson(JsonObject versionData) throws UnknownVersionCommandException {
