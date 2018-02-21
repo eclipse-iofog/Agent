@@ -390,7 +390,7 @@ public final class Configuration {
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
 		try {
-			if (CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
+			if (!CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
 				Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 				for (NetworkInterface networkInterface : list(networkInterfaces)) {
 					if (networkInterface.getName().equalsIgnoreCase(eth))
