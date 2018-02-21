@@ -390,10 +390,12 @@ public final class Configuration {
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
 		try {
-			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-			for (NetworkInterface networkInterface : list(networkInterfaces)) {
-				if (networkInterface.getName().equalsIgnoreCase(eth))
-					return true;
+			if (!CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
+				Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+				for (NetworkInterface networkInterface : list(networkInterfaces)) {
+					if (networkInterface.getName().equalsIgnoreCase(eth))
+						return true;
+				}
 			}
 		} catch (Exception e) {
 			LoggingService.logInfo(MODULE_NAME, "Error validating network interface : " + e.getMessage());
