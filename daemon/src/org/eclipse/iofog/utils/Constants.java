@@ -58,7 +58,7 @@ public class Constants {
 	public static final int MiB = 1024 * 1024;
 	public static final int GiB = 1024 * 1024 * 1024;
 
-	public static String osArch = System.getProperty("os.arch");
+	public static final String osArch = System.getProperty("os.arch");
 
 	public static final int STATUS_REPORT_FREQ_SECONDS = osArch.equals("arm") ? 10 : 5;
 
@@ -75,14 +75,14 @@ public class Constants {
 
 	public static final String DOCKER_API_VERSION = osArch.equals("arm") ? "1.23" : "1.23";
 
-	public static int SET_SYSTEM_TIME_FREQ_SECONDS = 60;
+	public static final int SET_SYSTEM_TIME_FREQ_SECONDS = 60;
 	
-	public static int FOG_TYPE = osArch.equals("arm") ? 2 : 1;
+	public static final int FOG_TYPE = osArch.equals("arm") ? 2 : 1;
 	
 	public static String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
-	public static String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
-	public static String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
-	public static String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";
+	public static final String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
+	public static final String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
+	public static final String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";
 	
 	
 }

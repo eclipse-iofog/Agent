@@ -31,6 +31,7 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 
+@Deprecated
 public class FogContainer {
 	private String containerId = EMPTY;
 	private String elementId = EMPTY;
@@ -38,17 +39,20 @@ public class FogContainer {
 	private Tasks task;
 	private DockerUtil docker;
 	private String MODULE_NAME = "Fog Container";
-	
-	public FogContainer(String elementId) {
+
+	@Deprecated
+	private FogContainer(String elementId) {
 		this.elementId = elementId;
 		MODULE_NAME = format("Process Manager [%s]", elementId);
 		task = ADD;
 	}
-	
-	public void remove() {
+
+	@Deprecated
+	private void remove() {
 		task = REMOVE;
 	}
-	
+
+	@Deprecated
 	private final Runnable checkStatus = () -> {
 		if (ElementManager.getInstance().getLatestElementById(elementId) == null)
 			remove();
@@ -68,15 +72,11 @@ public class FogContainer {
 				}
 			}
 		}
-		
+
 		if (!task.equals(ADD)) {
-			try {
-				stop();
-				delete();
-				containerId = EMPTY;
-			} catch (Exception e) {
-				LoggingService.logInfo(MODULE_NAME, "Error stop/delete container : " + e.getMessage());
-			}
+			stop();
+			delete();
+			containerId = EMPTY;
 			return;
 		}
 		
@@ -93,8 +93,9 @@ public class FogContainer {
 			TaskManager.getInstance().addTask(new ContainerTask(UPDATE, containerId));
 		}
 	};
-	
-	public void start() throws Exception {
+
+	@Deprecated
+	private void start() {
 //		status.setStatus(STARTING);
 		StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		LoggingService.logInfo(MODULE_NAME, "starting container");
@@ -109,8 +110,9 @@ public class FogContainer {
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		}
 	}
-	
-	public void stop() throws Exception {
+
+	@Deprecated
+	private void stop() {
 		LoggingService.logInfo(MODULE_NAME, "stopping container");
 		try {
 			docker.stopContainer(containerId);
@@ -119,8 +121,9 @@ public class FogContainer {
 			LoggingService.logWarning(MODULE_NAME, "error stopping container");
 		}
 	}
-	
-	public void create() throws Exception {
+
+	@Deprecated
+	private void create() throws Exception {
 		Element element = ElementManager.getInstance().getLatestElementById(elementId);
 		LoggingService.logWarning(MODULE_NAME, "creating container...");
 
@@ -148,8 +151,9 @@ public class FogContainer {
 			throw e;
 		}
 	}
-	
-	public void delete() throws Exception {
+
+	@Deprecated
+	private void delete() {
 		if (!docker.hasContainer(containerId))
 			return;
 		LoggingService.logInfo(MODULE_NAME, "removing container");
@@ -158,11 +162,11 @@ public class FogContainer {
 			LoggingService.logInfo(MODULE_NAME, "container removed");
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "error removing container");
-			throw e;
 		}
 	}
-	
-	public void init() {
+
+	@Deprecated
+	private void init() {
 		docker = DockerUtil.getInstance();
 		status = new ElementStatus();
 
@@ -170,7 +174,8 @@ public class FogContainer {
 		scheduler.scheduleAtFixedRate(checkStatus, 0, 5, SECONDS);
 	}
 
-	public void update() {
+	@Deprecated
+	private void update() {
 		task = UPDATE;
 	}
 }

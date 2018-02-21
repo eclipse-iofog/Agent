@@ -40,8 +40,8 @@ import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
  */
 public class Supervisor implements IOFogModule {
 
-	private final String MODULE_NAME = "Supervisor";
-	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private static final String MODULE_NAME = "Supervisor";
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;

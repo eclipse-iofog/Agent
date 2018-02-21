@@ -23,7 +23,7 @@ import org.eclipse.iofog.utils.Constants.ModulesStatus;
  */
 public class SupervisorStatus {
 	private ModulesStatus daemonStatus;
-	private ModulesStatus[] modulesStatus;
+	private final ModulesStatus[] modulesStatus;
 	private long daemonLastStart;
 	private long operationDuration;
 	

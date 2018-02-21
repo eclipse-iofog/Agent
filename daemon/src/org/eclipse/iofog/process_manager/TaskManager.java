@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class TaskManager {
-	private Queue<ContainerTask> tasks;
+	private final Queue<ContainerTask> tasks;
 	private static TaskManager instance;
 	
 	private TaskManager() {

@@ -64,7 +64,7 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 	}
 
 	@Override
-	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+	public void channelRead0(ChannelHandlerContext ctx, Object msg) {
 		System.out.println("client channelRead0 "+ctx);
 		Channel ch = ctx.channel();
 		if (!handshaker.isHandshakeComplete()) {
@@ -76,14 +76,14 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		if(msg instanceof WebSocketFrame){
 			WebSocketFrame frame = (WebSocketFrame)msg;
 			if(frame instanceof BinaryWebSocketFrame){
-				handleWebSocketFrame(ctx,  frame);
+				handleWebSocketFrame(frame);
 			}
 			return;
 		}
 		sendRealTimeMessageTest(ctx);
 	}
 
-	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	private void handleWebSocketFrame(WebSocketFrame frame) {
 		System.out.println("In client handleWebSocketFrame.....");
 
 		if (frame instanceof BinaryWebSocketFrame) {

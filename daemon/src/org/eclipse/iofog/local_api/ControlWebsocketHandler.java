@@ -50,7 +50,7 @@ public class ControlWebsocketHandler {
 	 *
 	 * @return void
 	 */
-	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
+	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
 		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
@@ -87,7 +87,7 @@ public class ControlWebsocketHandler {
 	 * @param frame,
 	 * @return void
 	 */
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
@@ -132,13 +132,11 @@ public class ControlWebsocketHandler {
 	 * @param newConfigMap
 	 * @return void
 	 */
-	public void initiateControlSignal(Map<String, String> oldConfigMap, Map<String, String> newConfigMap)
-			throws Exception {
-		ChannelHandlerContext ctx = null;
+	public void initiateControlSignal(Map<String, String> oldConfigMap, Map<String, String> newConfigMap) {
 
 		// Compare the old and new config map
-		Hashtable<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
-		ArrayList<String> changedConfigElmtsList = new ArrayList<String>();
+		Map<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
+		ArrayList<String> changedConfigElmtsList = new ArrayList<>();
 
 		for (Map.Entry<String, String> newEntry : newConfigMap.entrySet()) {
 			String newMapKey = newEntry.getKey();
@@ -156,7 +154,7 @@ public class ControlWebsocketHandler {
 
 		for (String changedConfigElmtId : changedConfigElmtsList) {
 			if (controlMap.containsKey(changedConfigElmtId)) {
-				ctx = controlMap.get(changedConfigElmtId);
+				ChannelHandlerContext ctx = controlMap.get(changedConfigElmtId);
 				WebSocketMap.unackControlSignalsMap.put(ctx, new ControlSignalSentInfo(1, System.currentTimeMillis()));
 
 				ByteBuf buffer1 = ctx.alloc().buffer();
@@ -173,7 +171,7 @@ public class ControlWebsocketHandler {
 	 * @param req
 	 * @return void
 	 */
-	private static String getWebSocketLocation(HttpRequest req) throws Exception {
+	private static String getWebSocketLocation(HttpRequest req) {
 		String location = req.headers().get(HOST) + WEBSOCKET_PATH;
 		if (LocalApiServer.SSL) {
 			return "wss://" + location;
