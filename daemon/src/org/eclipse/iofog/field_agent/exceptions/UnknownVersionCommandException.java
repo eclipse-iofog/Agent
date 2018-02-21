@@ -1,4 +1,4 @@
-package org.eclipse.iofog.utils.exceptions;
+package org.eclipse.iofog.field_agent.exceptions;
 
 public class UnknownVersionCommandException extends IllegalArgumentException {
 

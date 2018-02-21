@@ -16,7 +16,6 @@ import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.element.*;
-import org.eclipse.iofog.utils.exceptions.UnknownVersionCommandException;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
@@ -27,7 +26,6 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.enums.VersionCommand;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
@@ -46,14 +44,11 @@ import static io.netty.util.internal.StringUtil.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
+import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
+import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 import static org.eclipse.iofog.utils.Constants.*;
-
-import org.eclipse.iofog.utils.shell.BashFogCommands;
-import org.eclipse.iofog.utils.shell.BashUtil;
-
-import static org.eclipse.iofog.utils.enums.VersionCommand.*;
 
 /**
  * Field Agent module
@@ -278,7 +273,7 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private void reboot() {
 		LoggingService.logInfo(MODULE_NAME, "start rebooting");
-		CommandShellResultSet<List<String>, List<String>> result =  CommandShellExecutor.execute("shutdown -r now");
+		CommandShellResultSet<List<String>, List<String>> result =  CommandShellExecutor.executeCommand("shutdown -r now");
 		if (result.getError().size() > 0) {
 			LoggingService.logWarning(MODULE_NAME, result.toString());
 		}
@@ -288,7 +283,7 @@ public class FieldAgent implements IOFogModule {
 	 * performs change version operation, received from ioFog controller
 	 *
 	 */
-	private void changeVersion() throws Exception {
+	private void changeVersion() {
 		LoggingService.logInfo(MODULE_NAME, "get change version action");
 		if (notProvisioned() || !isControllerConnected(false)) {
 			return;
@@ -297,80 +292,16 @@ public class FieldAgent implements IOFogModule {
 		try {
 			JsonObject result = orchestrator.doCommand("version", null, null);
 
-			if (!result.getString("status").equals("ok"))
-				throw new Exception("error from fog controller");
+			checkResponseStatus(result);
 
+			VersionHandler versionHandler = new VersionHandler();
+			versionHandler.changeVersion(result);
 
-			VersionCommand versionCommand = parseJson(result);
-			String provisionKey = result.getString("provisionKey");
-
-//			LoggingService.logInfo(MODULE_NAME, result.toString());
-			executeChangeVersionScript(versionCommand, provisionKey);
-
-		} catch (UnknownVersionCommandException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		} catch (CertificateException|SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get fog config : " + e.getMessage());
 		}
-	}
-
-	/**
-	 * executes sh script to change iofog version
-	 *
-	 * @param command {@link VersionCommand}
-	 */
-	private void executeChangeVersionScript(VersionCommand command, String provisionKey) {
-		String shToExecute = null;
-
-		//TODO: maybe it's better to throw IllegalStateException?
-		if (!isValidChangeVersionOperation(command)) return;
-
-		switch (command) {
-			case UPGRADE:
-				shToExecute = UPGRADE_VERSION_SCRIPT;
-				break;
-			case ROLLBACK:
-				shToExecute = ROLLBACK_VERSION_SCRIPT;
-				break;
-			default:
-				break;
-		}
-
-		String[] shRunCommand = {
-				shToExecute,
-				provisionKey,
-				MAX_RESTARTING_TIMEOUT
-		};
-
-		try {
-			BashUtil.executeShellScript(shRunCommand);
-		} catch (InterruptedException | IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		}
-	}
-
-	private boolean isValidChangeVersionOperation(VersionCommand command) {
-		if (UPGRADE.equals(command) && !isReadyToUpgrade()) {
-			return false;
-		} else if (ROLLBACK.equals(command)	&& (new File(BACKUPS_DIR)).list().length == 0) {
-			return false;
-			}
-		return true;
-	}
-
-	private boolean isReadyToUpgrade() {
-		try {
-			return !(BashFogCommands.getFogInstalledVersion().equals(BashFogCommands.getFogCandidateVersion()));
-		} catch (IOException | InterruptedException e) {
-			return false;
-		}
-	}
-
-	private boolean isReadyToRollback() {
-		//TODO: create more correct file checking
-		return (new File(BACKUPS_DIR)).list().length == 0;
 	}
 
 	/**
