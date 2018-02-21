@@ -524,11 +524,11 @@ public final class Configuration {
 		Configuration.dockerUrl = dockerUrl;
 	}
 
-	public static void setDiskLimit(float diskLimit) throws Exception {
+	public static void setDiskLimit(float diskLimit) {
 		Configuration.diskLimit = diskLimit;
 	}
 
-	public static void setMemoryLimit(float memoryLimit) throws Exception {
+	public static void setMemoryLimit(float memoryLimit) {
 		Configuration.memoryLimit = memoryLimit;
 	}
 
@@ -540,15 +540,15 @@ public final class Configuration {
 		Configuration.diskDirectory = SNAP_COMMON + diskDirectory;
 	}
 
-	public static void setCpuLimit(float cpuLimit) throws Exception {
+	public static void setCpuLimit(float cpuLimit) {
 		Configuration.cpuLimit = cpuLimit;
 	}
 
-	public static void setLogDiskLimit(float logDiskLimit) throws Exception {
+	public static void setLogDiskLimit(float logDiskLimit) {
 		Configuration.logDiskLimit = logDiskLimit;
 	}
 
-	public static void setLogFileCount(int logFileCount) throws Exception {
+	public static void setLogFileCount(int logFileCount) {
 		Configuration.logFileCount = logFileCount;
 	}
 

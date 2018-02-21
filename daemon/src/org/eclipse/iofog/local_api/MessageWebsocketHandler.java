@@ -59,7 +59,7 @@ public class MessageWebsocketHandler {
 	 * @param ctx,req
 	 * @return void
 	 */
-	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
+	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
 		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
@@ -97,7 +97,7 @@ public class MessageWebsocketHandler {
 	 * @param ctx, frame
 	 * @return void
 	 */
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();

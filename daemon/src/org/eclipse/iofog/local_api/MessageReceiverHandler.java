@@ -54,7 +54,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 *
 	 * @return Object
 	 */
-	private FullHttpResponse handleMessageRecievedRequest() throws Exception {
+	private FullHttpResponse handleMessageRecievedRequest() {
 		HttpHeaders headers = req.headers();
 
 		if (req.method() != POST) {

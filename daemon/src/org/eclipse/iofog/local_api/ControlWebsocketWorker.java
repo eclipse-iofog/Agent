@@ -48,23 +48,14 @@ public class ControlWebsocketWorker  implements Runnable{
 			long lastSendTime = WebSocketMap.unackControlSignalsMap.get(ctx).getTimeMillis();
 			long timeEllapsed = (System.currentTimeMillis() - lastSendTime)/1000;
 
-			if(timeEllapsed > 20){
-
-				if(tryCount < 10){
-					try {
-						initiateControlSignal(ctx);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}else{
-					LoggingService.logInfo(MODULE_NAME," Initiating control signal expires");
-					try {
-						WebSocketMap.unackControlSignalsMap.remove(ctx);
-						WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.controlWebsocketMap);
-						StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+			if (timeEllapsed > 20) {
+				if (tryCount < 10) {
+					initiateControlSignal(ctx);
+				} else {
+					LoggingService.logInfo(MODULE_NAME, " Initiating control signal expires");
+					WebSocketMap.unackControlSignalsMap.remove(ctx);
+					WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.controlWebsocketMap);
+					StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 					return;
 				}
 			}
@@ -76,8 +67,7 @@ public class ControlWebsocketWorker  implements Runnable{
 	 * @param ctx
 	 * @return void
 	 */
-	private void initiateControlSignal(ChannelHandlerContext ctx) throws Exception{
-
+	private void initiateControlSignal(ChannelHandlerContext ctx) {
 		ControlSignalSentInfo controlSignalSentInfo = WebSocketMap.unackControlSignalsMap.get(ctx);
 		int tryCount = controlSignalSentInfo.getSendTryCount() + 1;
 		WebSocketMap.unackControlSignalsMap.put(ctx, new ControlSignalSentInfo(tryCount, System.currentTimeMillis()));

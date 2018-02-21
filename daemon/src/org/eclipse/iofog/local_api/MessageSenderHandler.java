@@ -51,7 +51,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 *
 	 * @return Object
 	 */
-	private FullHttpResponse handleMessageSenderRequest() throws Exception {
+	private FullHttpResponse handleMessageSenderRequest() {
 		HttpHeaders headers = req.headers();
 
 		if (req.method() != POST) {
@@ -176,7 +176,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	@Override
-	public FullHttpResponse call() throws Exception {
+	public FullHttpResponse call() {
 		return handleMessageSenderRequest();
 	}
 }

@@ -50,7 +50,7 @@ public class WebsocketUtil {
 	 * @param socketMap
 	 * @return boolean
 	 */
-	public static boolean hasContextInMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap) throws Exception{
+	public static boolean hasContextInMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap) {
 		for (ChannelHandlerContext context: socketMap.values()) 
 			if (context.equals(ctx))
 				return true;
