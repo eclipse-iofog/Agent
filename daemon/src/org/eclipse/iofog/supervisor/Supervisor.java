@@ -18,7 +18,9 @@ import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,7 +34,7 @@ import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
 
 /**
  * Supervisor module
- * 
+ *
  * @author saeid
  *
  */
@@ -40,14 +42,13 @@ public class Supervisor implements IOFogModule {
 
 	private static final String MODULE_NAME = "Supervisor";
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
-	
+
 	/**
 	 * monitors {@link LocalApi} module status
-	 * 
+	 *
 	 */
 	private Runnable checkLocalApiStatus = () -> {
 		try {
@@ -55,14 +56,16 @@ public class Supervisor implements IOFogModule {
 				localApiThread = new Thread(localApi, "Local Api");
 				localApiThread.start();
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
 	};
 
 	public Supervisor() {}
-	
+
 	/**
 	 * starts Supervisor module
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
@@ -77,16 +80,13 @@ public class Supervisor implements IOFogModule {
                 .setDaemonLastStart(currentTimeMillis())
                 .setOperationDuration(0);
 
-        // TODO: start other modules
-        // TODO: after starting each module, set SupervisorStatus.modulesStatus
+		//start modules
+		//after starting each module, set SupervisorStatus.modulesStatus
+		startModule(ResourceConsumptionManager.getInstance());
+		startModule(FieldAgent.getInstance());
+		startModule(ProcessManager.getInstance());
+		startModule(new ResourceManager());
 
-        // starting Resource Consumption Manager
-		ResourceConsumptionManager resourceConsumptionManager = ResourceConsumptionManager.getInstance();
-        startModule(resourceConsumptionManager);
-		FieldAgent fieldAgent = FieldAgent.getInstance();
-        startModule(fieldAgent);
-		ProcessManager processManager = ProcessManager.getInstance();
-        startModule(processManager);
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
 
@@ -124,14 +124,16 @@ public class Supervisor implements IOFogModule {
 
 	/**
 	 * shutdown hook to stop {@link MessageBus} and {@link LocalApi}
-	 * 
+	 *
 	 */
 	private final Runnable shutdownHook = () -> {
 		try {
 			scheduler.shutdownNow();
 			localApi.stopServer();
 			messageBus.stop();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
 	};
 
 	@Override

@@ -18,6 +18,7 @@ import org.eclipse.iofog.message_bus.MessageBusStatus;
 import org.eclipse.iofog.process_manager.ProcessManagerStatus;
 import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
+import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
@@ -39,6 +40,7 @@ public final class StatusReporter {
 	
 	private static final SupervisorStatus supervisorStatus = new SupervisorStatus();
 	private static final ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = new ResourceConsumptionManagerStatus();
+	private static final ResourceManagerStatus resourceManagerStatus = new ResourceManagerStatus();
 	private static final FieldAgentStatus fieldAgentStatus = new FieldAgentStatus();
 	private static final StatusReporterStatus statusReporterStatus = new StatusReporterStatus();
 	private static final ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
@@ -55,7 +57,9 @@ public final class StatusReporter {
 	private static final Runnable setStatusReporterSystemTime = () -> {
 		try {
 			setStatusReporterStatus().setSystemTime(System.currentTimeMillis());
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
 	};
 	
 	private StatusReporter() {
@@ -87,7 +91,9 @@ public final class StatusReporter {
 		result.append("\\nConnection to Controller    : " + connectionStatus);
 		result.append(String.format("\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages())); 
 		result.append("\\nSystem Time                 : " + 		dateFormat.format(cal.getTime()));
-		
+		result.append("\\nHW INFO                     : " + resourceManagerStatus.getHwInfo());
+		result.append("\\nUSB Connections INFO                     : " + resourceManagerStatus.getUsbConnectionsInfo());
+
 		return result.toString();
 	}
 	
@@ -99,6 +105,11 @@ public final class StatusReporter {
 	public static ResourceConsumptionManagerStatus setResourceConsumptionManagerStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return resourceConsumptionManagerStatus;
+	}
+
+	public static ResourceManagerStatus setResourceManagerStatus() {
+		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
+		return resourceManagerStatus;
 	}
 
 	public static MessageBusStatus setMessageBusStatus() {
@@ -145,6 +156,10 @@ public final class StatusReporter {
 
 	public static ResourceConsumptionManagerStatus getResourceConsumptionManagerStatus() {
 		return resourceConsumptionManagerStatus;
+	}
+
+	public static ResourceManagerStatus getResourceManagerStatus() {
+		return resourceManagerStatus;
 	}
 
 	public static FieldAgentStatus getFieldAgentStatus() {
