@@ -48,6 +48,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
+import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
+import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 import static org.eclipse.iofog.utils.Constants.*;
@@ -125,6 +127,8 @@ public class FieldAgent implements IOFogModule {
 		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
 		result.put("HW Info", StatusReporter.getResourceManagerStatus().getHwInfo());
 		result.put("version", VERSION);
+		result.put("isReadyToUpgrade", isReadyToUpgrade() ? 1 : 0);
+		result.put("isReadyToRollback", isReadyToRollback() ? 1 : 0);
 
 		return result;
 	}
@@ -198,6 +202,7 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * retrieves IOFog changes list from IOFog controller
+	 *
 	 */
 	private final Runnable getChangesList = () -> {
 		while (true) {
@@ -234,7 +239,9 @@ public class FieldAgent implements IOFogModule {
 
 				if (changes.getBoolean("config") && !initialization)
 					getFogConfig();
-
+				if (changes.getBoolean("version") && !initialization) {
+					changeVersion();
+				}
 				if (changes.getBoolean("registries") || initialization) {
 					loadRegistries(false);
 					ProcessManager.getInstance().update();
@@ -269,9 +276,33 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private void reboot() {
 		LoggingService.logInfo(MODULE_NAME, "start rebooting");
-		CommandShellResultSet<List<String>, List<String>> result = CommandShellExecutor.execute("shutdown -r now");
+		CommandShellResultSet<List<String>, List<String>> result = CommandShellExecutor.executeCommand("shutdown -r now");
 		if (result.getError().size() > 0) {
 			LoggingService.logWarning(MODULE_NAME, result.toString());
+		}
+	}
+
+	/**
+	 * performs change version operation, received from ioFog controller
+	 *
+	 */
+	private void changeVersion() {
+		LoggingService.logInfo(MODULE_NAME, "get change version action");
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		try {
+			JsonObject result = orchestrator.doCommand("version", null, null);
+
+			checkResponseStatus(result);
+
+			VersionHandler.changeVersion(result);
+
+		} catch (CertificateException|SSLHandshakeException e) {
+			verificationFailed();
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "unable to get version command : " + e.getMessage());
 		}
 	}
 
