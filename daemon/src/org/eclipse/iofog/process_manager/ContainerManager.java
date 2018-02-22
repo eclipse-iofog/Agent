@@ -17,6 +17,7 @@ import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -104,9 +105,15 @@ public class ContainerManager {
 		Element element = (Element) task.data;
 		LoggingService.logInfo(MODULE_NAME, String.format("starting container \"%s\"", element.getImageName()));
 		try {
-			docker.startContainer(element.getContainerId());
+			if (!docker.getContainerStatus(element.getContainerId()).getStatus().equals(ElementState.RUNNING)) {
+				docker.startContainer(element.getContainerId());
+			}
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" started", element.getImageName()));
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
+
+			if (element.getImageName().contains("hal-")) {
+				FieldAgent.getInstance().sendHWInfoFromHalToController();
+			}
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
 					String.format("container \"%s\" not found - %s", element.getImageName(), ex.getMessage()));
