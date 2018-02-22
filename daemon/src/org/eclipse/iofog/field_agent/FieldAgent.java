@@ -47,9 +47,9 @@ import static io.netty.util.internal.StringUtil.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
-import static org.eclipse.iofog.resource_manager.ResourceManager.*;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
+import static org.eclipse.iofog.resource_manager.ResourceManager.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 import static org.eclipse.iofog.utils.Constants.*;
@@ -284,7 +284,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * performs change version operation, received from ioFog controller
-	 *
 	 */
 	private void changeVersion() {
 		LoggingService.logInfo(MODULE_NAME, "get change version action");
@@ -299,7 +298,7 @@ public class FieldAgent implements IOFogModule {
 
 			VersionHandler.changeVersion(result);
 
-		} catch (CertificateException|SSLHandshakeException e) {
+		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get version command : " + e.getMessage());
@@ -1020,7 +1019,8 @@ public class FieldAgent implements IOFogModule {
 					content.append(inputLine);
 				}
 			} catch (IOException exc) {
-				LoggingService.logInfo(MODULE_NAME, exc.getMessage());
+				LoggingService.logInfo(MODULE_NAME, new StringBuilder().append("Failed to connect to ")
+						.append(spec).append(". ").append(exc.getMessage()).toString());
 			}
 			connection.get().disconnect();
 		}
@@ -1035,8 +1035,9 @@ public class FieldAgent implements IOFogModule {
 			connection.setRequestMethod(HttpMethod.GET);
 			connection.getResponseCode();
 		} catch (IOException exc) {
-			LoggingService.logInfo(MODULE_NAME, exc.getMessage());
-
+			connection = null;
+			LoggingService.logInfo(MODULE_NAME, new StringBuilder().append("Failed to connect to ")
+					.append(spec).append(". ").append(exc.getMessage()).toString());
 		}
 		return Optional.ofNullable(connection);
 	}
