@@ -22,26 +22,34 @@ public class VersionHandler {
 	public static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
 	public static String MAX_RESTARTING_TIMEOUT = "60";
 
-	private static String GET_LINUX_DISTRIBUTIVE_NAME = "cat /etc/os-release| grep = | awk -F\"[=]\" '{print $2}' | sed -n 1p";
+	private static String GET_LINUX_DISTRIBUTION_NAME = "cat /etc/os-release| grep = | awk -F\"[=]\" '{print $2}' | sed -n 1p";
 	public static String GET_IOFOG_PACKAGE_INSTALLED_VERSION;
 	public static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 
 	static {
-		String distrName = getDistributiveName();
-		if (distrName.contains("Ubuntu") || distrName.contains("Debian") || distrName.contains("Raspbian")) {
+		String distrName = getDistributionName();
+		if (distrName.toLowerCase().contains("ubuntu")
+				|| distrName.toLowerCase().contains("debian")
+				|| distrName.toLowerCase().contains("raspbian")) {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy iofog | grep Installed | awk '{print $2}'";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy iofog | grep Candidate | awk '{print $2}'";
 
-		} else if (distrName.contains("Fedora") || distrName.contains("Red Hat") || distrName.contains("CentOS")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf list iofog | grep iofog | awk '{print $2}' | sed -n 1p";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf list iofog | grep iofog | awk '{print $2}' | sed -n 2p";
+		} else if (distrName.toLowerCase().contains("fedora")) {
+			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list iofog | grep iofog | awk '{print $2}' | sed -n 1p";
+			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list iofog | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+
+		} else if (distrName.toLowerCase().contains("red hat")
+				|| distrName.toLowerCase().contains("centos")) {
+			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list iofog | grep iofog | awk '{print $2}' | sed -n 1p";
+			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list iofog | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+
 		} else {
-			LoggingService.logWarning(MODULE_NAME, "it looks like your distributive is not supported");
+			LoggingService.logWarning(MODULE_NAME, "it looks like your distribution is not supported");
 		}
 	}
 
-	private static String getDistributiveName() {
-		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_LINUX_DISTRIBUTIVE_NAME);
+	private static String getDistributionName() {
+		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_LINUX_DISTRIBUTION_NAME);
 		return resultSet.getValue().get(0);
 	}
 
