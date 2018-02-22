@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 language: java
 jdk: openjdk8
 
@@ -20,7 +20,7 @@ jobs:
   include:
     - stage: build
       before_install:
-        - apt-get install sshpass
+        - sudo apt-get install sshpass
       script:
         - mvn clean install
         - sshpass -p "$DEV_MACHINE_PASSWORD" ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
@@ -36,9 +36,9 @@ jobs:
         - sudo service iofog start
     - stage: package_build
       before_install:
-        - apt-get install ruby ruby-dev rubygems build-essential 
+        - sudo apt-get install ruby ruby-dev rubygems build-essential 
       install:
-        - gem install --no-ri --no-rdoc fpm
+        - sudo gem install --no-ri --no-rdoc fpm
       script: 
         - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
         - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
