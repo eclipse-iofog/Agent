@@ -11,6 +11,8 @@ notifications:
 
 stages:
   - build
+  - name: package_build
+    if: branch = master
   - name: deploy
     if: branch = master
 
@@ -18,7 +20,7 @@ jobs:
   include:
     - stage: build
       before_install:
-        - apt install sshpass
+        - apt-get install sshpass
       script:
         - mvn clean install
         - sshpass -p "$DEV_MACHINE_PASSWORD" ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
@@ -32,7 +34,7 @@ jobs:
         - sshpass -p "$DEV_MACHINE_PASSWORD" scp target/iofog-client-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog.jar
         - sshpass -p "$DEV_MACHINE_PASSWORD" ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
         - sudo service iofog start
-    - stage: deploy
+    - stage: package_build
       before_install:
         - apt-get install ruby ruby-dev rubygems build-essential 
       install:
@@ -46,6 +48,8 @@ jobs:
         - fpm -s dir -t deb -n "iofog" -v $VERSION -a all --deb-no-default-config-files --after-install debian.sh etc usr var
         - cd ../iofog-packaging-rpm
         - fpm -s dir -t rpm -n "iofog" -v $VERSION -a all --rpm-os 'linux' --after-install rpm.sh etc usr var
+    - stage: deploy      
+      script: skip
       env:
         - OS=ubuntu DIST=precise FOLDER=iofog-packaging EXTENSION=deb
         - OS=ubuntu DIST=trusty FOLDER=iofog-packaging EXTENSION=deb
