@@ -125,10 +125,10 @@ public class FieldAgent implements IOFogModule {
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
 		result.put("lastcommandtime", StatusReporter.getFieldAgentStatus().getLastCommandTime());
 		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
-		result.put("HW Info", StatusReporter.getResourceManagerStatus().getHwInfo());
+		result.put("hwinfo", StatusReporter.getResourceManagerStatus().getHwInfo());
 		result.put("version", VERSION);
-		result.put("isReadyToUpgrade", isReadyToUpgrade() ? 1 : 0);
-		result.put("isReadyToRollback", isReadyToRollback() ? 1 : 0);
+		result.put("isreadytoupgrade", isReadyToUpgrade() ? 1 : 0);
+		result.put("isreadytorollback", isReadyToRollback() ? 1 : 0);
 
 		return result;
 	}
