@@ -16,16 +16,22 @@ else
 fi
 #echo "Check for config.xml"
 
+mkdir -p /var/backups/iofog
+
 chown -R :iofog /etc/iofog
 chown -R :iofog /var/log/iofog
 chown -R :iofog /var/lib/iofog
 chown -R :iofog /var/run/iofog
+chown -R :iofog /var/backups/iofog
+chown -R :iofog /usr/share/iofog
 #echo "Changed ownership of directories to iofog group"
 
 chmod 774 -R /etc/iofog
 chmod 774 -R /var/log/iofog
 chmod 774 -R /var/lib/iofog
 chmod 774 -R /var/run/iofog
+chmod 774 -R /var/backups/iofog
+chmod 754 -R /usr/share/iofog
 #echo "Changed permissions of directories"
 
 mv /dev/random /dev/random.real
