@@ -25,9 +25,8 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 
 /**
  * provides methods to manage Docker containers
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class ContainerManager {
 
@@ -41,10 +40,10 @@ public class ContainerManager {
 	public ContainerManager() {
 		elementManager = ElementManager.getInstance();
 	}
-	
+
 	/**
 	 * pulls {@link Image} from {@link Registry} and creates a new {@link Container}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	private void addElement() throws Exception {
@@ -99,19 +98,19 @@ public class ContainerManager {
 
 	/**
 	 * starts a {@link Container} and sets appropriate status
-	 * 
 	 */
 	private void startElement() {
 		Element element = (Element) task.data;
-		LoggingService.logInfo(MODULE_NAME, String.format("starting container \"%s\"", element.getImageName()));
+		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
 		try {
 			if (!docker.getContainerStatus(element.getContainerId()).getStatus().equals(ElementState.RUNNING)) {
 				docker.startContainer(element.getContainerId());
 			}
-			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" started", element.getImageName()));
+			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" starting", element.getImageName())
+					+ "status: " + docker.getContainerStatus(element.getContainerId()).getStatus());
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
 
-			if (element.getImageName().contains("hal-")) {
+			if (element.getImageName().contains("hal-")) { //todo add enum
 				FieldAgent.getInstance().sendHWInfoFromHalToController();
 			}
 		} catch (Exception ex) {
@@ -119,10 +118,9 @@ public class ContainerManager {
 					String.format("container \"%s\" not found - %s", element.getImageName(), ex.getMessage()));
 		}
 	}
-	
+
 	/**
 	 * stops a {@link Container}
-	 * 
 	 */
 	private void stopContainer() {
 		LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", containerId));
@@ -136,7 +134,7 @@ public class ContainerManager {
 
 	/**
 	 * removes a {@link Container}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	private void removeContainer() throws Exception {
@@ -154,7 +152,7 @@ public class ContainerManager {
 
 	/**
 	 * removes an existing {@link Container} and creates a new one
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	private void updateContainer() throws Exception {
@@ -166,7 +164,7 @@ public class ContainerManager {
 
 	/**
 	 * executes assigned task
-	 * 
+	 *
 	 * @param task - taks to be executed
 	 * @return result
 	 */
@@ -182,7 +180,7 @@ public class ContainerManager {
 				} catch (Exception e) {
 					return false;
 				}
-	
+
 			case REMOVE:
 				containerId = task.data.toString();
 				try {
@@ -192,7 +190,7 @@ public class ContainerManager {
 				} catch (Exception e) {
 					return false;
 				}
-	
+
 			case UPDATE:
 				containerId = ((Element) task.data).getContainerId();
 				try {

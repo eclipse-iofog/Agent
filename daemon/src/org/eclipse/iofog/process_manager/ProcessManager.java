@@ -34,22 +34,22 @@ import static org.eclipse.iofog.utils.Constants.PROCESS_MANAGER;
 
 /**
  * Process Manager module
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class ProcessManager implements IOFogModule {
-	
+
 	private static final String MODULE_NAME = "Process Manager";
 	private ElementManager elementManager;
 	private Queue<ContainerTask> tasks;
 	public static Boolean updated = true;
-//	private Object checkTasksLock = new Object();
+	//	private Object checkTasksLock = new Object();
 	private DockerUtil docker;
 	private ContainerManager containerManager;
 	private static ProcessManager instance;
 
-	private ProcessManager() {}
+	private ProcessManager() {
+	}
 
 	@Override
 	public int getModuleIndex() {
@@ -70,11 +70,10 @@ public class ProcessManager implements IOFogModule {
 		}
 		return instance;
 	}
-	
+
 	/**
 	 * updates {@link Container} base on changes applied to list of {@link Element}
 	 * Field Agent call this method when any changes applied
-	 * 
 	 */
 	public void update() {
 		StatusReporter.getProcessManagerStatus().getRegistriesStatus().entrySet()
@@ -83,7 +82,7 @@ public class ProcessManager implements IOFogModule {
 		List<Element> latestElements = elementManager.getLatestElements();
 
 		for (Element element : latestElements) {
-			Container container =  docker.getContainer(element.getElementId());
+			Container container = docker.getContainer(element.getElementId());
 			if (container != null && !element.isRebuild()) {
 				element.setContainerId(container.getId());
 				try {
@@ -101,13 +100,12 @@ public class ProcessManager implements IOFogModule {
 			}
 		}
 	}
-	
+
 	/**
 	 * monitor containers
 	 * removes {@link Container}  if does not exists in list of {@link Element}
 	 * restarts {@link Container} if it has been stopped
 	 * updates {@link Container} if restarting failed!
-	 * 
 	 */
 	private final Runnable containersMonitor = () -> {
 		while (true) {
@@ -148,7 +146,7 @@ public class ProcessManager implements IOFogModule {
 						ElementStatus status = docker.getContainerStatus(container.getId());
 						StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
 						if (status.getStatus().equals(ElementState.RUNNING)) {
-							logInfo(format("\"%s\": running", element.getElementId()));
+							logInfo(format("\"%s\": running", element.getElementId() + containerName));
 						} else {
 							logInfo(format("\"%s\": container stopped", containerName));
 							try {
@@ -170,64 +168,64 @@ public class ProcessManager implements IOFogModule {
 			elementManager.setCurrentElements(latestElements);
 		}
 	};
-	
+
 	/**
-	 * add a new {@link ContainerTask} 
-	 * 
+	 * add a new {@link ContainerTask}
+	 *
 	 * @param task - {@link ContainerTask} to be added
 	 */
 	private void addTask(ContainerTask task) {
 		synchronized (tasks) {
 			if (!tasks.contains(task)) {
-                logInfo("NEW TASK ADDED");
-                tasks.offer(task);
-                tasks.notifyAll();
-            }
+				logInfo("NEW TASK ADDED");
+				tasks.offer(task);
+				tasks.notifyAll();
+			}
 		}
 	}
-	
+
 	/**
 	 * checks and runs new {@link ContainerTask}
-	 * 
 	 */
 	private final Runnable checkTasks = () -> {
 		while (true) {
 			try {
-				ContainerTask newTask = null;
+				ContainerTask newTask;
 
 				synchronized (tasks) {
 					newTask = tasks.poll();
-                    if (newTask == null) {
-                        logInfo("WAITING FOR NEW TASK");
-                        tasks.wait();
-                        logInfo("NEW TASK RECEIVED");
-                        newTask = tasks.poll();
-                    }
+					if (newTask == null) {
+						logInfo("WAITING FOR NEW TASK");
+						tasks.wait();
+						logInfo("NEW TASK RECEIVED");
+						newTask = tasks.poll();
+					}
 				}
-                boolean taskResult = containerManager.execute(newTask);
-                if (!taskResult &&
+				boolean taskResult = containerManager.execute(newTask);
+				if (!taskResult &&
 						(StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK)
 								|| newTask.action.equals(REMOVE))) {
-                    if (newTask.retries < 5) {
-                        newTask.retries++;
-                        addTask(newTask);
-                    } else {
-                        String msg = EMPTY;
-                        switch (newTask.action) {
-                            case REMOVE:
-                                msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
-                                break;
-                            case UPDATE:
-                                msg = format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
-                                break;
-                            case ADD:
-                                msg = format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
-                                break;
-                        }
-                        logWarning(msg);
-                    }
-                }
+					if (newTask.retries < 5) {
+						newTask.retries++;
+						addTask(newTask);
+					} else {
+						String msg = EMPTY;
+						switch (newTask.action) {
+							case REMOVE:
+								msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
+								break;
+							case UPDATE:
+								msg = format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
+								break;
+							case ADD:
+								msg = format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
+								break;
+						}
+						logWarning(msg);
+					}
+				}
 			} catch (Exception e) {
+				logWarning(e.getMessage());
 			}
 		}
 	};
@@ -235,7 +233,6 @@ public class ProcessManager implements IOFogModule {
 	/**
 	 * {@link Configuration} calls this method when any changes applied
 	 * reconnects to Docker daemon using new docker_url
-	 *
 	 */
 	public void instanceConfigUpdated() {
 		docker.reInitDockerClient();
@@ -243,7 +240,6 @@ public class ProcessManager implements IOFogModule {
 
 	/**
 	 * starts Process Manager module
-	 * 
 	 */
 	public void start() {
 		docker = DockerUtil.getInstance();
@@ -251,7 +247,7 @@ public class ProcessManager implements IOFogModule {
 		tasks = new LinkedList<>();
 		elementManager = ElementManager.getInstance();
 		containerManager = new ContainerManager();
-		
+
 		new Thread(containersMonitor, "ProcessManager : ContainersMonitor").start();
 		new Thread(checkTasks, "ProcessManager : CheckTasks").start();
 

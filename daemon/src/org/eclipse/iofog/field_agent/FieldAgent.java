@@ -1019,8 +1019,7 @@ public class FieldAgent implements IOFogModule {
 					content.append(inputLine);
 				}
 			} catch (IOException exc) {
-				LoggingService.logInfo(MODULE_NAME, new StringBuilder().append("Failed to connect to ")
-						.append(spec).append(". ").append(exc.getMessage()).toString());
+				LoggingService.logInfo(MODULE_NAME, "Failed to connect to " + spec + ". " + exc.getMessage());
 			}
 			connection.get().disconnect();
 		}
@@ -1028,7 +1027,7 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	private Optional<HttpURLConnection> sendHttpGetReq(String spec) {
-		HttpURLConnection connection = null;
+		HttpURLConnection connection;
 		try {
 			URL url = new URL(spec);
 			connection = (HttpURLConnection) url.openConnection();
@@ -1036,8 +1035,7 @@ public class FieldAgent implements IOFogModule {
 			connection.getResponseCode();
 		} catch (IOException exc) {
 			connection = null;
-			LoggingService.logInfo(MODULE_NAME, new StringBuilder().append("Failed to connect to ")
-					.append(spec).append(". ").append(exc.getMessage()).toString());
+			LoggingService.logInfo(MODULE_NAME, "Failed to connect to " + spec + ". " + exc.getMessage());
 		}
 		return Optional.ofNullable(connection);
 	}
