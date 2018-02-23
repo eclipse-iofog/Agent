@@ -17,7 +17,6 @@ import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.Registry;
-import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -107,12 +106,8 @@ public class ContainerManager {
 				docker.startContainer(element.getContainerId());
 			}
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" starting", element.getImageName())
-					+ "status: " + docker.getContainerStatus(element.getContainerId()).getStatus());
+					+ ", status: " + docker.getContainerStatus(element.getContainerId()).getStatus());
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
-
-			if (element.getImageName().contains("hal-")) { //todo add enum
-				FieldAgent.getInstance().sendHWInfoFromHalToController();
-			}
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
 					String.format("container \"%s\" not found - %s", element.getImageName(), ex.getMessage()));
@@ -178,6 +173,7 @@ public class ContainerManager {
 					startElement();
 					return true;
 				} catch (Exception e) {
+					LoggingService.logWarning(MODULE_NAME, e.getMessage());
 					return false;
 				}
 
@@ -188,6 +184,7 @@ public class ContainerManager {
 					removeContainer();
 					return true;
 				} catch (Exception e) {
+					LoggingService.logWarning(MODULE_NAME, e.getMessage());
 					return false;
 				}
 
@@ -197,6 +194,7 @@ public class ContainerManager {
 					updateContainer();
 					return true;
 				} catch (Exception e) {
+					LoggingService.logWarning(MODULE_NAME, e.getMessage());
 					return false;
 				}
 		}

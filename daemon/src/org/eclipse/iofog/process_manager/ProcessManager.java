@@ -146,7 +146,7 @@ public class ProcessManager implements IOFogModule {
 						ElementStatus status = docker.getContainerStatus(container.getId());
 						StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
 						if (status.getStatus().equals(ElementState.RUNNING)) {
-							logInfo(format("\"%s\": running", element.getElementId() + containerName));
+							logInfo(format("\"%s\": running ", element.getElementId()) + container.getImage());
 						} else {
 							logInfo(format("\"%s\": container stopped", containerName));
 							try {
