@@ -22,5 +22,6 @@
 	<modules>
 		<module>daemon</module>
 		<module>client</module>
+		<module>iofog_version_controller</module>
 	</modules>
 </project>

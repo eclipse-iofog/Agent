@@ -8,10 +8,9 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.JsonObject;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
-import static org.eclipse.iofog.field_agent.enums.VersionCommand.ROLLBACK;
-import static org.eclipse.iofog.field_agent.enums.VersionCommand.UPGRADE;
 import static org.eclipse.iofog.field_agent.enums.VersionCommand.parseJson;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 
@@ -103,7 +102,11 @@ public class VersionHandler {
 				MAX_RESTARTING_TIMEOUT
 		};
 
-		CommandShellExecutor.executeScript(shToExecute, shArgs);
+		try {
+			Runtime.getRuntime().exec("java -jar /usr/bin/iofogvc.jar " + shToExecute + " " + provisionKey + " " + MAX_RESTARTING_TIMEOUT);
+		} catch (IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
 	}
 
 	private static boolean isValidChangeVersionOperation(VersionCommand command) {
