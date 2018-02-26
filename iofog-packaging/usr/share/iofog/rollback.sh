@@ -5,8 +5,8 @@ timeout=${2:-60}
 
 cd /etc/iofog
 
-iofoglibdir=$(cat config.xml | grep disk_directory | awk -F"[<>]" '{print $3}' | sed -n 1p)
-iofoglogdir=$(cat config.xml | grep disk_directory | awk -F"[<>]" '{print $3}' | sed -n 2p)
+iofoglibdir=$(grep disk_directory config.xml | awk -F"[<>]" '{print $3}' | sed -n 1p)
+iofoglogdir=$(grep disk_directory config.xml | awk -F"[<>]" '{print $3}' | sed -n 2p)
 
 cd /var/backups/iofog
 
@@ -18,7 +18,7 @@ rm -rf $iofoglibdir
 rm -rf $iofoglogdir
 rm -rf /etc/iofog/
 
-iofogversion=$(cat prev_version_data | grep ver | awk '{print $2}')
+iofogversion=$(grep ver prev_version_data | awk '{print $2}')
 apt-get install iofog=$iofogversion -y
 
 rm -rf /etc/iofog/

@@ -21,7 +21,7 @@ public class VersionHandler {
 	public static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
 	public static String MAX_RESTARTING_TIMEOUT = "60";
 
-	private static String GET_LINUX_DISTRIBUTION_NAME = "cat /etc/os-release| grep = | awk -F\"[=]\" '{print $2}' | sed -n 1p";
+	private static String GET_LINUX_DISTRIBUTION_NAME = "grep = /etc/os-release | awk -F\"[=]\" '{print $2}' | sed -n 1p";
 	public static String GET_IOFOG_PACKAGE_INSTALLED_VERSION;
 	public static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 
