@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 public final class LoggingService {
 
 	private static Logger logger = null;
-	private static Map<String, Logger> elementLogger = new HashMap<String, Logger>();
+	private static final Map<String, Logger> elementLogger = new HashMap<String, Logger>();
 
 	private LoggingService() {
 

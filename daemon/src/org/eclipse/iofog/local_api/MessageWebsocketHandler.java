@@ -15,6 +15,7 @@ package org.eclipse.iofog.local_api;
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
 
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -58,7 +59,7 @@ public class MessageWebsocketHandler {
 	 * @param ctx,req
 	 * @return void
 	 */
-	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
+	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
 		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
@@ -81,7 +82,7 @@ public class MessageWebsocketHandler {
 			handshaker.handshake(ctx.channel(), req);
 		}
 
-		Hashtable<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
+		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 		messageSocketMap.put(publisherId, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
 		MessageBus.getInstance().enableRealTimeReceiving(publisherId);
@@ -96,7 +97,7 @@ public class MessageWebsocketHandler {
 	 * @param ctx, frame
 	 * @return void
 	 */
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
@@ -196,7 +197,7 @@ public class MessageWebsocketHandler {
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
 		ChannelHandlerContext ctx = null;
-		Hashtable<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
+		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
 		if (messageSocketMap != null && messageSocketMap.containsKey(receiverId)) {
 			ctx = messageSocketMap.get(receiverId);

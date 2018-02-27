@@ -32,10 +32,10 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import io.netty.buffer.ByteBuf;
 
 public class LogApiHandler implements Callable<FullHttpResponse> {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
-	private ByteBuf outputBuffer;
+	private final ByteBuf outputBuffer;
 	private final byte[] content;
 
 	public LogApiHandler(HttpRequest request, ByteBuf outputBuffer, byte[] content) {

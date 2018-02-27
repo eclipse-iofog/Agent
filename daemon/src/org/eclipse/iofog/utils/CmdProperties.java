@@ -18,7 +18,7 @@ public class CmdProperties {
     private static final String MODULE_NAME = "CmdProperties";
     private static final String FILE_PATH = "cmd_messages.properties";
 
-    private static Properties cmdProperties;
+    private static final Properties cmdProperties;
 
     static {
         cmdProperties = new Properties();

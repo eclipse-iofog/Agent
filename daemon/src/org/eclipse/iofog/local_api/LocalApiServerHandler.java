@@ -128,7 +128,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 * Pass the request to the handler call as per the request URI
 	 * @param ctx ChannelHandlerContext
 	 */
-	private void handleHttpRequest(ChannelHandlerContext ctx) throws Exception {
+	private void handleHttpRequest(ChannelHandlerContext ctx) {
 		if (request.uri().equals("/v2/config/get")) {
 			Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
@@ -204,7 +204,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 
 	}
 
-	private String findContextMapName(ChannelHandlerContext ctx) throws Exception{
+	private String findContextMapName(ChannelHandlerContext ctx) {
 		if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap))
 			return "control";
 		else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap))

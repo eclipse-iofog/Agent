@@ -9,7 +9,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
-import static org.eclipse.iofog.command_line.util.CommandShellExecutor.execute;
+import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCommand;
 
 /**
  * Created by ekrylovich
@@ -67,7 +67,7 @@ public class IOFogNetworkInterface {
 
 
 	private static String getOSNetworkInterface(){
-		final CommandShellResultSet<List<String>, List<String>> interfaces = execute(NETWORK_BASH_COMMAND);
+		final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(NETWORK_BASH_COMMAND);
 		return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
 			"enp0s25" :
 			interfaces.getValue().get(0);
