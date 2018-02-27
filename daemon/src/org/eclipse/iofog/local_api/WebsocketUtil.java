@@ -34,7 +34,7 @@ public class WebsocketUtil {
 	 * @param socketMap
 	 * @return void
 	 */
-	public static synchronized void removeWebsocketContextFromMap(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap){
+	public static synchronized void removeWebsocketContextFromMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
 		for (Iterator<Map.Entry<String,ChannelHandlerContext>> it = socketMap.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<String,ChannelHandlerContext> e = it.next();
 			if (ctx.equals(e.getValue())) {
@@ -50,7 +50,7 @@ public class WebsocketUtil {
 	 * @param socketMap
 	 * @return boolean
 	 */
-	public static boolean hasContextInMap(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap) throws Exception{
+	public static boolean hasContextInMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap) {
 		for (ChannelHandlerContext context: socketMap.values()) 
 			if (context.equals(ctx))
 				return true;
@@ -64,7 +64,7 @@ public class WebsocketUtil {
 	 * @param socketMap
 	 * @return String
 	 */
-	public static String getIdForWebsocket(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap){
+	public static String getIdForWebsocket(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
 		String id = "";
 		for (Iterator<Map.Entry<String,ChannelHandlerContext>> it = socketMap.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<String,ChannelHandlerContext> e = it.next();

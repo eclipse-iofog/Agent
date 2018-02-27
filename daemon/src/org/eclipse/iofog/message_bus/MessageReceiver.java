@@ -30,7 +30,7 @@ public class MessageReceiver implements AutoCloseable{
 	private final String name;
 
 	private MessageListener listener;
-	private ClientConsumer consumer;
+	private final ClientConsumer consumer;
 
 	public MessageReceiver(String name, ClientConsumer consumer) {
 		this.name = name;

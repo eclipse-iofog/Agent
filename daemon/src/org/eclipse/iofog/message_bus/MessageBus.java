@@ -47,7 +47,7 @@ public class MessageBus implements IOFogModule {
 	private MessageIdGenerator idGenerator;
 	private static MessageBus instance;
 	private ElementManager elementManager;
-	private Object updateLock = new Object();
+	private final Object updateLock = new Object();
 	
 	private long lastSpeedTime, lastSpeedMessageCount;
 

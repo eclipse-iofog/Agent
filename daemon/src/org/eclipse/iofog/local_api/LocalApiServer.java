@@ -43,9 +43,7 @@ public final class LocalApiServer {
 
 	/**
 	 * Create and start local api server
-	 * @return void
 	 */
-	
 	public void start() throws Exception {
 		final SslContext sslCtx;
 		if (SSL) {
@@ -71,15 +69,13 @@ public final class LocalApiServer {
 		}finally{
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
-
 		}
 	}
 
 	/**
 	 * Stop local api server
-	 * @return void
 	 */
-	void stop() throws Exception {
+	void stop() {
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 		LoggingService.logInfo(MODULE_NAME, "Local api server stopped\n");

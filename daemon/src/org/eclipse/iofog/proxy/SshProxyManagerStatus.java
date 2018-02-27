@@ -11,46 +11,35 @@ import javax.json.JsonObjectBuilder;
  */
 public class SshProxyManagerStatus {
 
-    private String username = "";
-    private String host = "";
+    private static final String EMPTY = "-";
+    private String username = EMPTY;
+    private String host = EMPTY;
     private int rport = 0;
     private int lport = 0;
     private SshConnectionStatus status = SshConnectionStatus.CLOSED;
-    private String errorMessage = "";
+    private String errorMessage = EMPTY;
 
     public SshProxyManagerStatus() {}
 
-    public SshProxyManagerStatus setUsername(String username) {
+    synchronized SshProxyManagerStatus setProxyConfig(String username, String host, int rport, int lport) {
         this.username = username;
-        return this;
-    }
-
-    public SshProxyManagerStatus setHost(String host) {
         this.host = host;
-        return this;
-    }
-
-    public SshProxyManagerStatus setRemotePort(int rport) {
         this.rport = rport;
-        return this;
-    }
-
-    public SshProxyManagerStatus setLocalPort(int lport) {
         this.lport = lport;
         return this;
     }
 
-    public SshProxyManagerStatus setConnectionStatus(SshConnectionStatus status) {
+    synchronized SshProxyManagerStatus setConnectionStatus(SshConnectionStatus status) {
         this.status = status;
         return this;
     }
 
-    public SshProxyManagerStatus setErrorMessage(String errorMessage) {
+    synchronized SshProxyManagerStatus setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
         return this;
     }
 
-    public String getJsonProxyStatus() {
+    public synchronized String getJsonProxyStatus() {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
                     .add("username", this.username)
                     .add("host", this.host)

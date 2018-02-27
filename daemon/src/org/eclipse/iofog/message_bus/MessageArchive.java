@@ -33,9 +33,9 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  *
  */
 public class MessageArchive implements AutoCloseable{
-	private final byte HEADER_SIZE = 33;
-	private final short MAXIMUM_MESSAGE_PER_FILE = 1000;
-	private final int MAXIMUM_ARCHIVE_SIZE_MB = 1;
+	private static final byte HEADER_SIZE = 33;
+	private static final short MAXIMUM_MESSAGE_PER_FILE = 1000;
+	private static final int MAXIMUM_ARCHIVE_SIZE_MB = 1;
 
 	private final String name;
 	private String diskDirectory;

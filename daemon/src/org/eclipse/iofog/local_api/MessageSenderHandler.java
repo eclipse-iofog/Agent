@@ -34,10 +34,10 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @since 2016
  */
 public class MessageSenderHandler implements Callable<FullHttpResponse> {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private final HttpRequest req;
-	private ByteBuf outputBuffer;
+	private final ByteBuf outputBuffer;
 	private final byte[] content;
 
 	public MessageSenderHandler(HttpRequest req, ByteBuf outputBuffer, byte[] content) {
@@ -51,7 +51,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 *
 	 * @return Object
 	 */
-	private FullHttpResponse handleMessageSenderRequest() throws Exception {
+	private FullHttpResponse handleMessageSenderRequest() {
 		HttpHeaders headers = req.headers();
 
 		if (req.method() != POST) {
@@ -176,7 +176,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	@Override
-	public FullHttpResponse call() throws Exception {
+	public FullHttpResponse call() {
 		return handleMessageSenderRequest();
 	}
 }

@@ -20,8 +20,6 @@ import org.eclipse.iofog.element.Registry;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ContainerTask.Tasks;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants.ElementState;
-import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.concurrent.Executors;
@@ -32,8 +30,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
-import static org.eclipse.iofog.utils.Constants.ElementState.*;
 
+@Deprecated
 public class FogContainer {
 	private String containerId = EMPTY;
 	private String elementId = EMPTY;
@@ -41,17 +39,20 @@ public class FogContainer {
 	private Tasks task;
 	private DockerUtil docker;
 	private String MODULE_NAME = "Fog Container";
-	
-	public FogContainer(String elementId) {
+
+	@Deprecated
+	private FogContainer(String elementId) {
 		this.elementId = elementId;
 		MODULE_NAME = format("Process Manager [%s]", elementId);
 		task = ADD;
 	}
-	
-	public void remove() {
+
+	@Deprecated
+	private void remove() {
 		task = REMOVE;
 	}
-	
+
+	@Deprecated
 	private final Runnable checkStatus = () -> {
 		if (ElementManager.getInstance().getLatestElementById(elementId) == null)
 			remove();
@@ -71,22 +72,18 @@ public class FogContainer {
 				}
 			}
 		}
-		
+
 		if (!task.equals(ADD)) {
-			try {
-				stop();
-				delete();
-				containerId = EMPTY;
-			} catch (Exception e) {
-				LoggingService.logInfo(MODULE_NAME, "Error stop/delete container : " + e.getMessage());
-			}
+			stop();
+			delete();
+			containerId = EMPTY;
 			return;
 		}
 		
 		try {
 			status = docker.getContainerStatus(containerId);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
-			if (!status.getStatus().equals(RUNNING)) {
+			if (!status.getStatus().equals(ElementState.RUNNING)) {
 				LoggingService.logInfo(MODULE_NAME, "container is not running, restarting...");
 				start();
 				status = docker.getContainerStatus(containerId);
@@ -96,24 +93,26 @@ public class FogContainer {
 			TaskManager.getInstance().addTask(new ContainerTask(UPDATE, containerId));
 		}
 	};
-	
-	public void start() throws Exception {
-		status.setStatus(STARTING);
+
+	@Deprecated
+	private void start() {
+//		status.setStatus(STARTING);
 		StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		LoggingService.logInfo(MODULE_NAME, "starting container");
 		try {
 			docker.startContainer(containerId);
 			LoggingService.logInfo(MODULE_NAME, "started");
-			status.setStatus(RUNNING);
+//			status.setStatus(RUNNING);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, format("container not found : %s", e.getMessage()));
-			status.setStatus(STOPPED);
+//			status.setStatus(STOPPED);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		}
 	}
-	
-	public void stop() throws Exception {
+
+	@Deprecated
+	private void stop() {
 		LoggingService.logInfo(MODULE_NAME, "stopping container");
 		try {
 			docker.stopContainer(containerId);
@@ -122,29 +121,19 @@ public class FogContainer {
 			LoggingService.logWarning(MODULE_NAME, "error stopping container");
 		}
 	}
-	
-	public void create() throws Exception {
+
+	@Deprecated
+	private void create() throws Exception {
 		Element element = ElementManager.getInstance().getLatestElementById(elementId);
 		LoggingService.logWarning(MODULE_NAME, "creating container...");
 
-		try {
-			Registry registry = ElementManager.getInstance().getRegistry(element.getRegistry());
-			if (registry == null) {
-				LoggingService.logWarning(MODULE_NAME, format("registry not found \"%s\"", element.getRegistry()));
-				throw new Exception();
-			}
-			docker.login(registry);
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "docker login failed : " + e.getMessage());
-			throw e;
-		}
-
-		status.setStatus(ElementState.BUILDING);
+//		status.setStatus(ElementState.BUILDING);
 		StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		
 		try {
 			LoggingService.logInfo(MODULE_NAME, format("pulling \"%s\" from registry", element.getImageName()));
-			docker.pullImage(element.getImageName());
+			Registry registry = ElementManager.getInstance().getRegistry(element.getRegistry());
+			docker.pullImage(element.getImageName(), registry);
 			LoggingService.logInfo(MODULE_NAME, format("pulled \"%s\"", element.getImageName()));
 
 			String hostName = IOFogNetworkInterface.getCurrentIpAddress();
@@ -157,13 +146,14 @@ public class FogContainer {
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-			status.setStatus(ElementState.FAILED_VERIFICATION);
+//			status.setStatus(ElementState.FAILED_VERIFICATION);
 			StatusReporter.setProcessManagerStatus().setElementsStatus(elementId, status);
 			throw e;
 		}
 	}
-	
-	public void delete() throws Exception {
+
+	@Deprecated
+	private void delete() {
 		if (!docker.hasContainer(containerId))
 			return;
 		LoggingService.logInfo(MODULE_NAME, "removing container");
@@ -172,23 +162,20 @@ public class FogContainer {
 			LoggingService.logInfo(MODULE_NAME, "container removed");
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "error removing container");
-			throw e;
 		}
 	}
-	
-	public void init() {
+
+	@Deprecated
+	private void init() {
 		docker = DockerUtil.getInstance();
-		try {
-			docker.connect();
-		} catch (Exception e) {}
-		
 		status = new ElementStatus();
 
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler.scheduleAtFixedRate(checkStatus, 0, 5, SECONDS);
 	}
 
-	public void update() {
+	@Deprecated
+	private void update() {
 		task = UPDATE;
 	}
 }

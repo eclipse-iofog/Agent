@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Local api point of start using iofog. 
+ * Local api point of start using iofog.
  * Get and update the configuration for local api module.
  * @author ashita
  * @since 2016
@@ -31,12 +31,11 @@ public class LocalApi implements Runnable {
 
 	private final String MODULE_NAME = "Local API";
 	private static volatile LocalApi instance;
-	public boolean isSeverStarted = false; 
 	private LocalApiServer server;
 
 	private LocalApi() {
 
-	} 
+	}
 
 	/**
 	 * Instantiate local api - singleton
@@ -60,7 +59,7 @@ public class LocalApi implements Runnable {
 	 * Stop local api server
 	 * @return void
 	 */
-	public void stopServer() throws Exception {
+	public void stopServer() {
 		server.stop();
 	}
 
@@ -74,9 +73,6 @@ public class LocalApi implements Runnable {
 	public void run() {
 		StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STARTING);
 
-		WebSocketMap.getInstance();
-		ConfigurationMap.getInstance();
-
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(WebSocketMap.messageWebsocketMap.size());
 
@@ -85,18 +81,10 @@ public class LocalApi implements Runnable {
 		server = new LocalApiServer();
 		try {
 			server.start();
-			
 		} catch (Exception e) {
-			try {
 				stopServer();
-			} catch (Exception e1) {
-				LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e1.getMessage());
+				LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e.getMessage());
 				StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
-				return;
-			}
-
-			LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e.getMessage());
-			StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
 		}
 
 	}
@@ -106,25 +94,17 @@ public class LocalApi implements Runnable {
 	 * @return void
 	 */
 	private void retrieveContainerConfig() {
-		try {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration retrieved");
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to retrieve containers configuration: " + e.getMessage());
-		}	  
 	}
 
 	/**
 	 * Update the containers configuration and store it.
 	 * @return void
 	 */
-	private void updateContainerConfig(){
-		try {
-			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
-			LoggingService.logInfo(MODULE_NAME, "Container configuration updated");
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to update containers configuration: " + e.getMessage());
-		}
+	private void updateContainerConfig() {
+		ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
+		LoggingService.logInfo(MODULE_NAME, "Container configuration updated");
 	}
 
 	/**
@@ -139,10 +119,6 @@ public class LocalApi implements Runnable {
 		Map<String, String> newConfigMap = new HashMap<>();
 		ConfigurationMap.containerConfigMap.putAll(newConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
-		try {
-			handler.initiateControlSignal(oldConfigMap, newConfigMap);
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to complete the control signal sending " + e.getMessage());
-		}
+		handler.initiateControlSignal(oldConfigMap, newConfigMap);
 	}
 }
