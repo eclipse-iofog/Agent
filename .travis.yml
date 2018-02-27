@@ -11,6 +11,8 @@ notifications:
 
 stages:
   - build
+  - name: dev_deploy
+    if: branch = develop
   - name: package_build
     if: branch = master
   - name: deploy
@@ -19,10 +21,12 @@ stages:
 jobs:
   include:
     - stage: build
+      script:
+        - mvn clean install
+    - stage: dev_deploy
       before_install:
         - sudo apt-get install sshpass
       script:
-        - mvn clean install
         - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf /usr/bin/iofogd_bckp.jar; sudo rm -rf /usr/bin/iofog_bckp.jar; sudo mv /usr/bin/iofogd.jar /usr/bin/iofogd_bckp.jar; sudo mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar"
         - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT daemon/target/iofog-daemon-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofogd.jar
         - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT client/target/iofog-client-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofog.jar
