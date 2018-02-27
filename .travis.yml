@@ -8,6 +8,11 @@ cache:
 
 notifications:
   email: false
+  slack: 
+    rooms: 
+      - $SLACK_TOKEN
+    on_failure: always
+    on_success: change
 
 stages:
   - name: build
