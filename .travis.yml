@@ -10,8 +10,7 @@ notifications:
   email: false
 
 stages:
-  - build
-  - name: dev_deploy
+  - name: build
     if: branch = develop
   - name: package_build
     if: branch = master
@@ -21,9 +20,6 @@ stages:
 jobs:
   include:
     - stage: build
-      script:
-        - mvn clean install
-    - stage: dev_deploy
       before_install:
         - sudo apt-get install sshpass
       script:
