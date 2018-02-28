@@ -9,9 +9,8 @@ notifications:
   slack:
     rooms:
       secure: taYfHvkkrx/6FbL2FURMvYuu2vUB9thEK2qIo4DZPOzlwdn5XpqzAFmMXD1kCqDLTPGnhsGknbqkx+zMWIjLg3RCsxNm+yPik98QO9NCMu9L+gjEmxt31m/WGfYyCQ0Gf1/cxvxtrC/TK5T1GzF6XKsRExmDctOexwWJIBnFLP77LbWhKKe3F8DAWtzs8NwEsNGgovbhnqT3RMcymfmdWYyel2cheev79+G1EX0tPar76cAb3fBBHIi+TDeek5BEhcofoFFyBJDFQhTVZ/rImhCT8ilNAA9Eq5JWc2MY9UdYBclIVsNPXmqc9XQyU9LcQu8HjfO/afgZvG727kJCOU0UpM3u8LWHx/TxUqXQ7hspR5V0FdDxe9bvARzyMDtmgjWUracG45E9uwtANYSpv4iC+LchAoF9/9ACDN13ubAYBlS6WB6NbwlH2OwVf4IAsu52WCOntT/lvECnDB7Lo01hEu8cd8D64So6ftmokdehfGdhzLf6Ngg0YzfD3nS1ULmwKz0ytHeSJRSbXUdP/1XoEbp1/RaJVMauEoRDh34GEORh5brsBZ5f66C/O4caiYbpgrRLUMGDxHqD5ujKg0U809KG9suJf26eoErjzUDHRsQOg/6PxvpCPZBmi34hAh39W17jiea/C0DLTFdMEaCj7dqfwihr+pr0dtZlox0=
-    on_success: always
-    #on_success: change
-    #on_failure: always
+    on_success: change
+    on_failure: always
 stages:
 - name: build
   if: branch = develop
