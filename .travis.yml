@@ -1,74 +1,83 @@
 sudo: true
 language: java
 jdk: openjdk8
-
 cache:
   directories:
   - "$HOME/.cache"
-
 notifications:
   email: false
-
+  slack:
+    secure: shwttbUZji+zN/vqY4Wo+iNoIpuy9vzZFYTrJG0WWE81h5tx3Wwfq1IhocHGfinKSQ83Vnaya1jUOpC4eKBxWd/zwehno38mfdlNFL5MHPSr/5x3a642CuZkirBUwWqz9cS6qrMna72VvAgwzidciuxQ3IG1pDPxJ3QrB3+57+U/vS6X3s3S/nDDmqBCgacogO2TCNlwvF7JAwsXZYZGI9cJSbNvtMtn3Tqvp9oZCnHVdvKKj+lmUeLH9o2xD2rUhk2sHCX4s4h4EM0UukMtm9ucA7OPEql3TN3EqFbuChAG1pXz62T2KsBOXH2q4OIJ/vGjxZTh8lwUpAnIF3qe8DHkgr2BNdchiA7Ir8lr20c08m/CJhUYqS41BWQrkOAqBZIAeGTiRHxGd5dZy08gGFQ3JRdnTOR1fYe8c9qukjkFm4/LtKd3IMvEK/wj2PqxHnChb1GWRAG6eb/zvkj5/DUzV0mu7uIAU+1J6SZbyjSUUztylynswdEa8CgBDhWAS0LSsh4azi66w7kgUWHf57dCHjk9q/WbV2inIInYQttARe2ca80eRFO8KUaOruT/37jRs70fejOhj9nudLsWQlD2PpjyNLnynTleWEZBJw7HA6+xe8n8aargj8+UNx0IabZ/g/l3lNZC9CKwKIrdS83zw5QBNHDAm3fYuoqzkPw=
+    on_failure: always
 stages:
-  - name: build
-    if: branch = develop
-  - name: package_build
-    if: branch = master
-  - name: deploy
-    if: branch = master
-
+- name: build
+  if: branch = develop
+- name: package_build
+  if: branch = master
+- name: deploy
+  if: branch = master
 jobs:
   include:
-    - stage: build
-      before_install:
-        - sudo apt-get install sshpass
-      script:
-        - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf /usr/bin/iofogd_bckp.jar /usr/bin/iofog_bckp.jar; sudo mv /usr/bin/iofogd.jar /usr/bin/iofogd_bckp.jar; sudo mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar"
-        - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT daemon/target/iofog-daemon-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofogd.jar
-        - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT client/target/iofog-client-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofog.jar
-        - sshpass -p $DEV_MACHINE_PASSWORD ssh -p $DEV_MACHINE_PORT $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo cp /home/owner/iofogd.jar /usr/bin/; sudo cp /home/owner/iofog.jar /usr/bin/; sudo rm -rf /home/owner/iofogd.jar /home/owner/iofog.jar; sudo service iofog start"
-    - stage: package_build
-      before_install:
-        - sudo apt-get install ruby ruby-dev rubygems build-essential 
-      install:
-        - sudo gem install --no-ri --no-rdoc fpm
-      script: 
-        - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
-        - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
-        - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
-        - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofog.jar
-        - cd iofog-packaging
-        - fpm -s dir -t deb -n "iofog" -v $VERSION -a all --deb-no-default-config-files --after-install debian.sh etc usr var
-        - cd ../iofog-packaging-rpm
-        - fpm -s dir -t rpm -n "iofog" -v $VERSION -a all --rpm-os 'linux' --after-install rpm.sh etc usr var
-    - stage: deploy      
-      script: skip
-      env:
-        - OS=ubuntu DIST=precise FOLDER=iofog-packaging EXTENSION=deb
-        - OS=ubuntu DIST=trusty FOLDER=iofog-packaging EXTENSION=deb
-        - OS=ubuntu DIST=utopic FOLDER=iofog-packaging EXTENSION=deb
-        - OS=ubuntu DIST=vivid FOLDER=iofog-packaging EXTENSION=deb
-        - OS=ubuntu DIST=wily FOLDER=iofog-packaging EXTENSION=deb
-        - OS=ubuntu DIST=xenial FOLDER=iofog-packaging EXTENSION=deb
-        - OS=debian DIST=wheezy FOLDER=iofog-packaging EXTENSION=deb
-        - OS=debian DIST=jessie FOLDER=iofog-packaging EXTENSION=deb
-        - OS=debian DIST=stretch FOLDER=iofog-packaging EXTENSION=deb
-        - OS=debian DIST=buster FOLDER=iofog-packaging EXTENSION=deb
-        - OS=raspbian DIST=wheezy FOLDER=iofog-packaging EXTENSION=deb
-        - OS=raspbian DIST=jessie FOLDER=iofog-packaging EXTENSION=deb
-        - OS=raspbian DIST=stretch FOLDER=iofog-packaging EXTENSION=deb
-        - OS=raspbian DIST=buster FOLDER=iofog-packaging EXTENSION=deb
-        - OS=fedora DIST=22 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-        - OS=fedora DIST=23 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-        - OS=fedora DIST=24 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-        - OS=el DIST=7 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-        - OS=el DIST=6 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-      deploy:
-        - provider: packagecloud
-          repository: ${PACKAGECLOUD_REPO}
-          username: ${PACKAGECLOUD_USERNAME}
-          token: ${PACKAGECLOUD_TOKEN}
-          dist: ${OS}/${DIST}
-          package_glob: ${FOLDER}/*.${EXTENSION}
-          on:
-            condition: -n "${OS}" && -n "${DIST}" && -n "${FOLDER}" && -n "${EXTENSION}"
+  - stage: build
+    before_install:
+    - sudo apt-get install sshpass
+    script:
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT
+      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf
+      /usr/bin/iofogd_bckp.jar /usr/bin/iofog_bckp.jar; sudo mv /usr/bin/iofogd.jar
+      /usr/bin/iofogd_bckp.jar; sudo mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar"
+    - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT daemon/target/iofog-daemon-jar-with-dependencies.jar
+      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofogd.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT client/target/iofog-client-jar-with-dependencies.jar
+      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofog.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh -p $DEV_MACHINE_PORT $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
+      "sudo cp /home/owner/iofogd.jar /usr/bin/; sudo cp /home/owner/iofog.jar /usr/bin/;
+      sudo rm -rf /home/owner/iofogd.jar /home/owner/iofog.jar; sudo service iofog
+      start"
+  - stage: package_build
+    before_install:
+    - sudo apt-get install ruby ruby-dev rubygems build-essential
+    install:
+    - sudo gem install --no-ri --no-rdoc fpm
+    script:
+    - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
+    - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
+    - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
+    - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofog.jar
+    - cd iofog-packaging
+    - fpm -s dir -t deb -n "iofog" -v $VERSION -a all --deb-no-default-config-files
+      --after-install debian.sh etc usr var
+    - cd ../iofog-packaging-rpm
+    - fpm -s dir -t rpm -n "iofog" -v $VERSION -a all --rpm-os 'linux' --after-install
+      rpm.sh etc usr var
+  - stage: deploy
+    script: skip
+    env:
+    - OS=ubuntu DIST=precise FOLDER=iofog-packaging EXTENSION=deb
+    - OS=ubuntu DIST=trusty FOLDER=iofog-packaging EXTENSION=deb
+    - OS=ubuntu DIST=utopic FOLDER=iofog-packaging EXTENSION=deb
+    - OS=ubuntu DIST=vivid FOLDER=iofog-packaging EXTENSION=deb
+    - OS=ubuntu DIST=wily FOLDER=iofog-packaging EXTENSION=deb
+    - OS=ubuntu DIST=xenial FOLDER=iofog-packaging EXTENSION=deb
+    - OS=debian DIST=wheezy FOLDER=iofog-packaging EXTENSION=deb
+    - OS=debian DIST=jessie FOLDER=iofog-packaging EXTENSION=deb
+    - OS=debian DIST=stretch FOLDER=iofog-packaging EXTENSION=deb
+    - OS=debian DIST=buster FOLDER=iofog-packaging EXTENSION=deb
+    - OS=raspbian DIST=wheezy FOLDER=iofog-packaging EXTENSION=deb
+    - OS=raspbian DIST=jessie FOLDER=iofog-packaging EXTENSION=deb
+    - OS=raspbian DIST=stretch FOLDER=iofog-packaging EXTENSION=deb
+    - OS=raspbian DIST=buster FOLDER=iofog-packaging EXTENSION=deb
+    - OS=fedora DIST=22 FOLDER=iofog-packaging-rpm EXTENSION=rpm
+    - OS=fedora DIST=23 FOLDER=iofog-packaging-rpm EXTENSION=rpm
+    - OS=fedora DIST=24 FOLDER=iofog-packaging-rpm EXTENSION=rpm
+    - OS=el DIST=7 FOLDER=iofog-packaging-rpm EXTENSION=rpm
+    - OS=el DIST=6 FOLDER=iofog-packaging-rpm EXTENSION=rpm
+    deploy:
+    - provider: packagecloud
+      repository: "${PACKAGECLOUD_REPO}"
+      username: "${PACKAGECLOUD_USERNAME}"
+      token: "${PACKAGECLOUD_TOKEN}"
+      dist: "${OS}/${DIST}"
+      package_glob: "${FOLDER}/*.${EXTENSION}"
+      on:
+        condition: -n "${OS}" && -n "${DIST}" && -n "${FOLDER}" && -n "${EXTENSION}"
