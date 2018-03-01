@@ -21,6 +21,9 @@ import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.ClientProducer;
 import org.hornetq.api.core.client.ClientSession;
 
+import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * publisher {@link Element}
  * 
@@ -80,7 +83,9 @@ public class MessagePublisher implements AutoCloseable{
 	public void close() {
 		try {
 			archive.close();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 	/**

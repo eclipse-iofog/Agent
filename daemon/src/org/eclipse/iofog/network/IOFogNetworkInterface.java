@@ -48,12 +48,15 @@ public class IOFogNetworkInterface {
 	 * @throws Exception
 	 */
 	public static InetAddress getInetAddress() throws SocketException {
-		Enumeration<InetAddress> ipAddresses = NetworkInterface.getByName(getNetworkInterface())
-				.getInetAddresses();
-		while (ipAddresses.hasMoreElements()) {
-			InetAddress address = ipAddresses.nextElement();
-			if (address instanceof Inet4Address) {
-				return address;
+		final NetworkInterface interfaceByName = NetworkInterface.getByName(getNetworkInterface());
+		if (interfaceByName != null) {
+			final Enumeration<InetAddress> ipAddresses = interfaceByName
+					.getInetAddresses();
+			while (ipAddresses.hasMoreElements()) {
+				InetAddress address = ipAddresses.nextElement();
+				if (address instanceof Inet4Address) {
+					return address;
+				}
 			}
 		}
 		throw new ConnectException(String.format("unable to get ip address \"%s\"", getNetworkInterface()));
@@ -64,6 +67,7 @@ public class IOFogNetworkInterface {
 		final String configNetworkInterface = Configuration.getNetworkInterface();
 		return configNetworkInterface.equals("dynamic") ? getOSNetworkInterface() : configNetworkInterface;
 	}
+
 
 
 	private static String getOSNetworkInterface(){

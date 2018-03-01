@@ -20,6 +20,8 @@ import org.hornetq.api.core.client.ClientMessage;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * receiver {@link Element}
  * 
@@ -27,6 +29,8 @@ import java.util.List;
  *
  */
 public class MessageReceiver implements AutoCloseable{
+	private static final String MODULE_NAME = "MessageReceiver";
+
 	private final String name;
 
 	private MessageListener listener;
@@ -105,7 +109,9 @@ public class MessageReceiver implements AutoCloseable{
 				return;
 			listener = null;
 			consumer.setMessageHandler(null);
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 	
 	public void close() {
@@ -114,6 +120,8 @@ public class MessageReceiver implements AutoCloseable{
 		disableRealTimeReceiving();
 		try {
 			consumer.close();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 }

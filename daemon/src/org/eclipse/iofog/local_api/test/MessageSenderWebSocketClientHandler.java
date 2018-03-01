@@ -28,7 +28,11 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHandler<Object>{
+
+	private static final String MODULE_NAME = "MessageSenderWebSocketClientHandler";
 
 	private static int testCounter = 0;
 
@@ -183,7 +187,8 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		byte[] bmsg = null;
 		try {
 			bmsg = m.getBytes();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());}
 		totalMsgLength = bmsg.length;
 		System.out.println("Total message length: "+ totalMsgLength);
 		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));

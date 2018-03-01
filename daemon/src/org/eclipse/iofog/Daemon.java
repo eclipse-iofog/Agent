@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
 public class Daemon {
+	private static  final String MODULE_NAME = "MAIN_DAEMON";
 
 	/**
 	 * check if another instance of iofog is running
@@ -32,6 +33,7 @@ public class Daemon {
 	 * @return boolean
 	 */
 	private static boolean isAnotherInstanceRunning() {
+
 		try {
 			URL url = new URL("http://localhost:54321/v2/commandline");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -143,7 +145,7 @@ public class Daemon {
 			System.out.println("Error starting logging service\n" + e.getMessage());
 			System.exit(1);
 		}
-		LoggingService.logInfo("Main", "configuration loaded.");
+		LoggingService.logInfo(MODULE_NAME, "configuration loaded.");
 
 	}
 
@@ -188,11 +190,13 @@ public class Daemon {
 	
 			outToNull();
 	
-			LoggingService.logInfo("Main", "starting supervisor");
+			LoggingService.logInfo(MODULE_NAME, "starting supervisor");
 			Supervisor supervisor = new Supervisor();
 			try {
 				supervisor.start();
-			} catch (Exception e) {}
+			} catch (Exception exp) {
+				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+			}
 	
 			System.setOut(Constants.systemOut);
 		}

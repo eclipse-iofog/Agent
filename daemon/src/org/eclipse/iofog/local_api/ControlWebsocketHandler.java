@@ -20,7 +20,6 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Map;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;

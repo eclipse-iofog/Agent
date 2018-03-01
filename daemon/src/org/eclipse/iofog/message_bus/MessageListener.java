@@ -16,6 +16,8 @@ import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.MessageHandler;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * listener for real-time receiving
  * 
@@ -23,6 +25,8 @@ import org.hornetq.api.core.client.MessageHandler;
  *
  */
 public class MessageListener implements MessageHandler{
+	private static final String MODULE_NAME = "MessageListener";
+
 	private final MessageCallback callback;
 	
 	public MessageListener(MessageCallback callback) {
@@ -33,7 +37,8 @@ public class MessageListener implements MessageHandler{
 	public void onMessage(ClientMessage msg) {
 		try {
 			msg.acknowledge();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());}
 		
 		Message message = new Message(msg.getBytesProperty("message"));
 		callback.sendRealtimeMessage(message);
