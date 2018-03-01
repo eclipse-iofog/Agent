@@ -41,6 +41,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.*;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * provides methods for IOFog controller
  * 
@@ -71,8 +73,9 @@ public class Orchestrator {
 		try {
 			JsonObject result = getJSON(controllerUrl + "status");
 			return result.getString("status").equals("ok");
-		} catch (Exception e) {
-			throw e;
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
 		} 
 	}
 
@@ -87,8 +90,9 @@ public class Orchestrator {
 		JsonObject result;
 		try {
 			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Constants.FOG_TYPE);
-		} catch (Exception e) {
-			throw e;
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
 		} 
 		return result;
 	}
@@ -125,7 +129,7 @@ public class Orchestrator {
 			CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
 			result = certificateFactory.generateCertificate(is);
 		} catch (CertificateException exp) {
-			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+			logWarning(MODULE_NAME, exp.getMessage());
 		}
 		return result;
 	}
@@ -218,8 +222,9 @@ public class Orchestrator {
 
 
 			result = jsonReader.readObject();
-		} catch (Exception e) {
-			throw e;
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
 		}
 		
 		return result;
@@ -240,6 +245,8 @@ public class Orchestrator {
 		}
 		try {
 			initialize();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 }

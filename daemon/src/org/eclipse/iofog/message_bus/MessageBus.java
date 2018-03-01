@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * Message Bus module
@@ -38,7 +39,7 @@ import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
  */
 public class MessageBus implements IOFogModule {
 	
-	private final String MODULE_NAME = "Message Bus";
+	final static String MODULE_NAME = "Message Bus";
 
 	private MessageBusServer messageBusServer;
 	private Map<String, Route> routes;
@@ -164,7 +165,9 @@ public class MessageBus implements IOFogModule {
 				StatusReporter.setMessageBusStatus().setAverageSpeed(speed);
 				lastSpeedMessageCount = msgs;
 				lastSpeedTime = now;
-			} catch (Exception e) {}
+			} catch (Exception exp) {
+				logWarning(exp.getMessage());
+			}
 		}
 	};
 	
@@ -224,7 +227,8 @@ public class MessageBus implements IOFogModule {
 						}
 					}
 				});
-			} catch (Exception e) {
+			} catch (Exception exp) {
+				logWarning(exp.getMessage());
 			}
 		}
 	};
@@ -318,7 +322,9 @@ public class MessageBus implements IOFogModule {
 		} catch (Exception e) {
 			try {
 				messageBusServer.stopServer();
-			} catch (Exception e1) {}
+			} catch (Exception exp) {
+				logWarning(exp.getMessage());
+			}
 			logWarning("unable to start message bus server --> " + e.getMessage());
 			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
@@ -342,7 +348,9 @@ public class MessageBus implements IOFogModule {
 			publisher.close();
 		try {
 			messageBusServer.stopServer();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(exp.getMessage());
+		}
 	}
 
 	/**

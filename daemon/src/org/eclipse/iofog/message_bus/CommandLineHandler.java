@@ -17,6 +17,9 @@ import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.MessageHandler;
 
+import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * listener for command-line communications
  * 
@@ -24,12 +27,14 @@ import org.hornetq.api.core.client.MessageHandler;
  *
  */
 public class CommandLineHandler implements MessageHandler {
+	private static final String MODULE_NAME = "CommandLineHandler";
 
 	@Override
 	public void onMessage(ClientMessage message) {
 		try {
 			message.acknowledge();
-		} catch (HornetQException e) {
+		} catch (HornetQException exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
 		}
 		String command = message.getStringProperty("command");
 		String result = CommandLineParser.parse(command);
@@ -39,7 +44,8 @@ public class CommandLineHandler implements MessageHandler {
 		
 		try {
 			MessageBusServer.getCommandlineProducer().send(response);
-		} catch (Exception e) {
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
 		}
 	}
 

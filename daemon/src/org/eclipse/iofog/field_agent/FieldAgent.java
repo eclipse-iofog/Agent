@@ -150,7 +150,7 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private final Runnable postStatus = () -> {
 		while (true) {
-			logInfo("start posting");
+			logInfo("start posting IOFog status");
 			Map<String, Object> status = getFogStatus();
 			if (Configuration.debugging) {
 				logInfo(status.toString());
@@ -158,17 +158,13 @@ public class FieldAgent implements IOFogModule {
 			try {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
-				logInfo("post status");
-				//				if (notProvisioned()) {
-				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-				//					continue;
-				//				}
+				logInfo("post IOFog status");
 				connected = isControllerConnected(false);
 				if (!connected)
 					continue;
-				logInfo("verified");
+				logInfo("controller connection verified");
 
-				logInfo("sending...");
+				logInfo("sending IOFog status...");
 				JsonObject result = orchestrator.doCommand("status", null, status);
 				checkResponseStatus(result);
 

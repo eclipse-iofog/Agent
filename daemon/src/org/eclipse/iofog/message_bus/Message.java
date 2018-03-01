@@ -21,6 +21,9 @@ import javax.json.JsonObject;
 import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * represents IOMessage
  * 
@@ -678,7 +681,8 @@ public class Message {
 			infoFormat = result.infoFormat;
 			contextData = result.contextData;
 			contentData = result.contentData;
-		} catch (Exception e) {	}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());}
 	}
 
 	public JsonObject toJson() {

@@ -33,6 +33,8 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  *
  */
 public class MessageArchive implements AutoCloseable{
+	private static final String MODULE_NAME = "MessageArchive";
+
 	private static final byte HEADER_SIZE = 33;
 	private static final short MAXIMUM_MESSAGE_PER_FILE = 1000;
 	private static final int MAXIMUM_ARCHIVE_SIZE_MB = 1;
@@ -137,7 +139,9 @@ public class MessageArchive implements AutoCloseable{
 			if (dataFile != null)
 				dataFile.close();
 			currentFileName = "";
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 	
 	/**
