@@ -440,7 +440,7 @@ public class DockerUtil {
 		}
 		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
 
-		Map<String, String> containerLogConfig = new HashMap<String, String>();
+		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
 		if (element.getLogSize() > 2)
 			logFiles = (int) (element.getLogSize() / 2);

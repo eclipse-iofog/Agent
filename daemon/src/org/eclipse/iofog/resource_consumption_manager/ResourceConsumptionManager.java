@@ -102,19 +102,13 @@ public class ResourceConsumptionManager implements IOFogModule {
 		String archivesDirectory = Configuration.getDiskDirectory() + "messages/archive/";
 		
 		final File workingDirectory = new File(archivesDirectory);
-		File[] filesList = workingDirectory.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String fileName) {
-				return fileName.substring(fileName.indexOf(".")).equals(".idx");
-			}
-		});
+		File[] filesList = workingDirectory.listFiles((dir, fileName) ->
+				fileName.substring(fileName.indexOf(".")).equals(".idx"));
 		
-		Arrays.sort(filesList, new Comparator<File>() {
-			public int compare(File o1, File o2) {
-				String t1 = o1.getName().substring(o1.getName().indexOf('_') + 1, o1.getName().indexOf("."));
-				String t2 = o2.getName().substring(o2.getName().indexOf('_') + 1, o2.getName().indexOf("."));
-				return t1.compareTo(t2);
-			}
+		Arrays.sort(filesList, (o1, o2) -> {
+			String t1 = o1.getName().substring(o1.getName().indexOf('_') + 1, o1.getName().indexOf("."));
+			String t2 = o2.getName().substring(o2.getName().indexOf('_') + 1, o2.getName().indexOf("."));
+			return t1.compareTo(t2);
 		});
 		
 		for (File indexFile : filesList) {

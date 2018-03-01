@@ -14,7 +14,6 @@ package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
 
-import java.util.Hashtable;
 import java.util.Map;
 
 import org.eclipse.iofog.message_bus.Message;

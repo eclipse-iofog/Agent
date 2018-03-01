@@ -23,7 +23,6 @@ import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;

@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

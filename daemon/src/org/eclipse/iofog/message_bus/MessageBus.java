@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * Message Bus module
@@ -193,11 +192,10 @@ public class MessageBus implements IOFogModule {
 					}
 				}
 
-				publishers.entrySet().forEach(entry -> {
-					String publisher = entry.getKey();
+				publishers.forEach((publisher, value) -> {
 					if (messageBusServer.isProducerClosed(publisher)) {
 						logWarning("producer module for " + publisher + " stopped. restarting...");
-						entry.getValue().close();
+						value.close();
 						Route route = routes.get(publisher);
 						if (route.equals(null) || route.getReceivers() == null || route.getReceivers().size() == 0) {
 							publishers.remove(publisher);
@@ -213,11 +211,10 @@ public class MessageBus implements IOFogModule {
 					}
 				});
 
-				receivers.entrySet().forEach(entry -> {
-					String receiver = entry.getKey();
+				receivers.forEach((receiver, value) -> {
 					if (messageBusServer.isConsumerClosed(receiver)) {
 						logWarning("consumer module for " + receiver + " stopped. restarting...");
-						entry.getValue().close();
+						value.close();
 						try {
 							messageBusServer.createCosumer(receiver);
 							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
@@ -257,12 +254,12 @@ public class MessageBus implements IOFogModule {
 					});
 			}
 			
-			publishers.entrySet().forEach(entry -> {
-				if (!newPublishers.contains(entry.getKey())) {
-					entry.getValue().close();
-					messageBusServer.removeProducer(entry.getKey());
+			publishers.forEach((key, value) -> {
+				if (!newPublishers.contains(key)) {
+					value.close();
+					messageBusServer.removeProducer(key);
 				} else {
-					entry.getValue().updateRoute(newRoutes.get(entry.getKey()));
+					value.updateRoute(newRoutes.get(key));
 				}
 			});
 			publishers.entrySet().removeIf(entry -> !newPublishers.contains(entry.getKey()));
@@ -272,10 +269,10 @@ public class MessageBus implements IOFogModule {
 					.collect(Collectors.toMap(publisher -> publisher, 
 							publisher -> new MessagePublisher(publisher, newRoutes.get(publisher), messageBusServer.getProducer(publisher)))));
 
-			receivers.entrySet().forEach(entry -> {
-				if (!newReceivers.contains(entry.getKey())) {
-					entry.getValue().close();
-					messageBusServer.removeConsumer(entry.getKey());
+			receivers.forEach((key, value) -> {
+				if (!newReceivers.contains(key)) {
+					value.close();
+					messageBusServer.removeConsumer(key);
 				}
 			});
 			receivers.entrySet().removeIf(entry -> !newReceivers.contains(entry.getKey()));
@@ -293,7 +290,7 @@ public class MessageBus implements IOFogModule {
 					!elementManager.elementExists(latestElements, entry.getKey()));
 			latestElements.forEach(e -> {
 				if (!StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().entrySet().contains(e.getElementId()))
-						StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().put(e.getElementId(), 0l);
+						StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().put(e.getElementId(), 0L);
 			});
 		}
 	}

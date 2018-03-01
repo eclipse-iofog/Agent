@@ -21,7 +21,6 @@ import javax.json.JsonObject;
 import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**

@@ -23,7 +23,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
 import javax.json.Json;

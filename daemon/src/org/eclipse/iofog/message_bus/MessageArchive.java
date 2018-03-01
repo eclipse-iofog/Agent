@@ -64,12 +64,8 @@ public class MessageArchive implements AutoCloseable{
 		if (!workingDirectory.exists())
 			workingDirectory.mkdirs();
 		
-		FilenameFilter filter = new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String fileName) {
-				return fileName.substring(0, name.length()).equals(name) && fileName.substring(fileName.indexOf(".")).equals(".idx");
-			}
-		};
+		FilenameFilter filter = (dir, fileName) -> fileName.substring(0, name.length()).equals(name)
+				&& fileName.substring(fileName.indexOf(".")).equals(".idx");
 		
 		for (File file : workingDirectory.listFiles(filter)) {
 			if (!file.isFile())
@@ -196,12 +192,8 @@ public class MessageArchive implements AutoCloseable{
 		List<Message> result = new ArrayList<>();
 		
 		File workingDirectory = new File(diskDirectory);
-		FilenameFilter filter = new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String fileName) {
-				return fileName.substring(0, name.length()).equals(name) && fileName.substring(fileName.indexOf(".")).equals(".idx");
-			}
-		};
+		FilenameFilter filter = (dir, fileName) -> fileName.substring(0, name.length()).equals(name)
+				&& fileName.substring(fileName.indexOf(".")).equals(".idx");
 		File[] listOfFiles = workingDirectory.listFiles(filter);
 		Arrays.sort(listOfFiles);
 		

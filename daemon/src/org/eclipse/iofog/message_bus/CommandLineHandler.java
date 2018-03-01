@@ -17,7 +17,6 @@ import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.MessageHandler;
 
-import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
