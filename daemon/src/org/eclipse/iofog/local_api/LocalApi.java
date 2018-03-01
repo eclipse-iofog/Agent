@@ -57,7 +57,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Stop local api server
-	 * @return void
 	 */
 	public void stopServer() {
 		server.stop();
@@ -67,7 +66,6 @@ public class LocalApi implements Runnable {
 	/**
 	 * Start local api server
 	 * Instantiate websocket map and configuration map
-	 * @return void
 	 */
 	@Override
 	public void run() {
@@ -91,7 +89,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Get the containers configuration and store it.
-	 * @return void
 	 */
 	private void retrieveContainerConfig() {
 			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
@@ -100,7 +97,6 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Update the containers configuration and store it.
-	 * @return void
 	 */
 	private void updateContainerConfig() {
 		ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
@@ -110,7 +106,6 @@ public class LocalApi implements Runnable {
 	/**
 	 * Initiate the real-time control signal when the cofiguration changes.
 	 * Called by field-agtent.
-	 * @return void
 	 */
 	public void update(){
 		Map<String, String> oldConfigMap = new HashMap<String, String>();
