@@ -15,9 +15,10 @@ stages:
 - name: build
   if: branch = develop
 - name: package_build
-  if: branch = master
+  if: branch IN (master, dev_package)
 - name: deploy
-  if: branch = master
+  if: branch IN (master, dev_package)
+
 jobs:
   include:
   - stage: build
@@ -37,6 +38,8 @@ jobs:
       sudo rm -rf /home/owner/iofogd.jar /home/owner/iofog.jar; sudo service iofog
       start"
   - stage: package_build
+    if: branch = dev_package
+    env: DEV=-dev
     before_install:
     - sudo apt-get install ruby ruby-dev rubygems build-essential
     install:
@@ -47,10 +50,10 @@ jobs:
     - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
     - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofog.jar
     - cd iofog-packaging
-    - fpm -s dir -t deb -n "iofog" -v $VERSION -a all --deb-no-default-config-files
+    - fpm -s dir -t deb -n "iofog${DEV}" -v $VERSION -a all --deb-no-default-config-files
       --after-install debian.sh etc usr var
     - cd ../iofog-packaging-rpm
-    - fpm -s dir -t rpm -n "iofog" -v $VERSION -a all --rpm-os 'linux' --after-install
+    - fpm -s dir -t rpm -n "iofog${DEV}" -v $VERSION -a all --rpm-os 'linux' --after-install
       rpm.sh etc usr var
   - stage: deploy
     script: skip
