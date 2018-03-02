@@ -45,10 +45,10 @@ jobs:
     install:
     - sudo gem install --no-ri --no-rdoc fpm
     script:
-    - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
-    - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
-    - cp target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
-    - cp target/iofog-client-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofog.jar
+    - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
+    - cp client/target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
+    - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
+    - cp client/target/iofog-client-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofog.jar
     - cd iofog-packaging
     - fpm -s dir -t deb -n "iofog${DEV}" -v $VERSION -a all --deb-no-default-config-files
       --after-install debian.sh etc usr var
