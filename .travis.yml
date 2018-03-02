@@ -45,6 +45,7 @@ jobs:
     install:
     - sudo gem install --no-ri --no-rdoc fpm
     script:
+    - mvn clean install
     - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
     - cp client/target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
     - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
