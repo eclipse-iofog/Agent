@@ -38,8 +38,10 @@ import java.util.logging.Logger;
  */
 public final class LoggingService {
 
+	private static final String MODULE_NAME = "LoggingService";
+
 	private static Logger logger = null;
-	private static final Map<String, Logger> elementLogger = new HashMap<String, Logger>();
+	private static final Map<String, Logger> elementLogger = new HashMap<>();
 
 	private LoggingService() {
 
@@ -174,7 +176,9 @@ public final class LoggingService {
 	public static void instanceConfigUpdated() {
 		try {
 			setupLogger();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 	
 }

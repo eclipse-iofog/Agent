@@ -80,8 +80,6 @@ public class Supervisor implements IOFogModule {
                 .setDaemonLastStart(currentTimeMillis())
                 .setOperationDuration(0);
 
-		//start modules
-		//after starting each module, set SupervisorStatus.modulesStatus
 		startModule(ResourceConsumptionManager.getInstance());
 		startModule(FieldAgent.getInstance());
 		startModule(ProcessManager.getInstance());

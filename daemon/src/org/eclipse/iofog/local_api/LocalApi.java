@@ -108,7 +108,7 @@ public class LocalApi implements Runnable {
 	 * Called by field-agtent.
 	 */
 	public void update(){
-		Map<String, String> oldConfigMap = new HashMap<String, String>();
+		Map<String, String> oldConfigMap = new HashMap<>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
 		Map<String, String> newConfigMap = new HashMap<>();

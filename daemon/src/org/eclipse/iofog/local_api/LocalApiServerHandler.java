@@ -24,20 +24,10 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.util.Enumeration;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -230,15 +220,12 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 	 */
 	private void runTask(Callable<FullHttpResponse> callable, ChannelHandlerContext ctx, HttpRequest req) {
 		final Future<FullHttpResponse> future = executor.submit(callable);
-		future.addListener(new GenericFutureListener<Future<Object>>() {
-			public void operationComplete(Future<Object> future)
-					throws Exception {
-				if (future.isSuccess()) {
-					sendHttpResponse(ctx, req, (FullHttpResponse)future.get());
-				} else {
-					ctx.fireExceptionCaught(future.cause());
-					ctx.close();
-				}
+		future.addListener((GenericFutureListener<Future<Object>>) futureListener -> {
+			if (futureListener.isSuccess()) {
+				sendHttpResponse(ctx, req, (FullHttpResponse) futureListener.get());
+			} else {
+				ctx.fireExceptionCaught(futureListener.cause());
+				ctx.close();
 			}
 		});
 	}

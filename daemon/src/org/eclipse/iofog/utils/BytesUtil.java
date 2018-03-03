@@ -51,8 +51,8 @@ public class BytesUtil {
 
 	public static long bytesToLong(byte[] bytes) {
 		long result = 0;
-		for (int i = 0; i < bytes.length; i++) {
-			result = (result << 8) + (bytes[i] & 0xff);
+		for (byte aByte : bytes) {
+			result = (result << 8) + (aByte & 0xff);
 		}
 		return result;
 	}
@@ -67,8 +67,8 @@ public class BytesUtil {
 
 	public static int bytesToInteger(byte[] bytes) {
 		int result = 0;
-		for (int i = 0; i < bytes.length; i++) {
-			result = (result << 8) + (bytes[i] & 0xff);
+		for (byte aByte : bytes) {
+			result = (result << 8) + (aByte & 0xff);
 		}
 		return result;
 	}
@@ -83,8 +83,8 @@ public class BytesUtil {
 
 	public static short bytesToShort(byte[] bytes) {
 		short result = 0;
-		for (int i = 0; i < bytes.length; i++) {
-			result = (short) ((result << 8) + (bytes[i] & 0xff));
+		for (byte aByte : bytes) {
+			result = (short) ((result << 8) + (aByte & 0xff));
 		}
 		return result;
 	}

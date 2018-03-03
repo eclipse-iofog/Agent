@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * provides methods for Docker commands
@@ -137,7 +138,8 @@ public class DockerUtil {
 		while (!statsCallback.gotStats()) {
 			try {
 				Thread.sleep(50);
-			} catch (InterruptedException e) {
+			} catch (InterruptedException exp) {
+				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
 			}
 		}
 		Map<String, Object> memoryUsage = statsCallback.getStats().getMemoryStats();
@@ -160,7 +162,8 @@ public class DockerUtil {
 		while (!statsCallback.gotStats()) {
 			try {
 				Thread.sleep(2);
-			} catch (InterruptedException e) {
+			} catch (InterruptedException exp) {
+				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
 			}
 		}
 		Map<String, Object> usageBefore = statsCallback.getStats().getCpuStats();
@@ -169,7 +172,8 @@ public class DockerUtil {
 
 		try {
 			Thread.sleep(200);
-		} catch (InterruptedException e) {
+		} catch (InterruptedException exp) {
+			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
 		}
 
 		statsCallback.reset();
@@ -177,7 +181,8 @@ public class DockerUtil {
 		while (!statsCallback.gotStats()) {
 			try {
 				Thread.sleep(2);
-			} catch (InterruptedException e) {
+			} catch (InterruptedException exp) {
+				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
 			}
 		}
 		Map<String, Object> usageAfter = statsCallback.getStats().getCpuStats();
@@ -205,7 +210,6 @@ public class DockerUtil {
 	/**
 	 * generates Docker authConfig
 	 * based on Docker Remote API document
-	 * {@link https://docs.docker.com/engine/reference/api/docker_remote_api/}
 	 *
 	 * @param registry - {@link Registry}
 	 * @return base64 encoded string
@@ -268,8 +272,9 @@ public class DockerUtil {
 		try {
 			InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
 			return inspect.getNetworkSettings().getIpAddress();
-		} catch (Exception e) {
-			throw e;
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
 		}
 	}
 
@@ -326,8 +331,9 @@ public class DockerUtil {
 				result.setStatus(ElementState.STOPPED);
 			}
 			return result;
-		} catch (Exception e) {
-			throw e;
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
 		}
 	}
 
@@ -434,7 +440,7 @@ public class DockerUtil {
 		}
 		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
 
-		Map<String, String> containerLogConfig = new HashMap<String, String>();
+		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
 		if (element.getLogSize() > 2)
 			logFiles = (int) (element.getLogSize() / 2);

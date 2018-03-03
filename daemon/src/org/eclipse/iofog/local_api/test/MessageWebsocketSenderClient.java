@@ -34,6 +34,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 public class MessageWebsocketSenderClient implements Runnable{
 	
 	private String id = "";
@@ -101,13 +103,7 @@ public class MessageWebsocketSenderClient implements Runnable{
 
 			Channel ch = b.connect(uri.getHost(), port).sync().channel();
 			handler.handshakeFuture().sync();
-		} catch (SSLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
+		} catch (SSLException | InterruptedException | URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

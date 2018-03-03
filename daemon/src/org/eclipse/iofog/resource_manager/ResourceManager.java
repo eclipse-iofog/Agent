@@ -34,10 +34,10 @@ public class ResourceManager implements IOFogModule {
     }
 
     private Runnable getUsageData = () -> {
-        FieldAgent.getInstance().sendHWInfoFromHalToController();
 
         while (true) {
                 FieldAgent.getInstance().sendUSBInfoFromHalToController();
+            FieldAgent.getInstance().sendHWInfoFromHalToController();
             try {
                 Thread.sleep(Configuration.getScanDevicesFreq() * 1000);
             } catch (InterruptedException e) {

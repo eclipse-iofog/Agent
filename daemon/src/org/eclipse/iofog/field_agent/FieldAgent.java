@@ -23,7 +23,6 @@ import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants.*;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -150,7 +149,7 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private final Runnable postStatus = () -> {
 		while (true) {
-			logInfo("start posting");
+			logInfo("start posting IOFog status");
 			Map<String, Object> status = getFogStatus();
 			if (Configuration.debugging) {
 				logInfo(status.toString());
@@ -158,17 +157,13 @@ public class FieldAgent implements IOFogModule {
 			try {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
-				logInfo("post status");
-				//				if (notProvisioned()) {
-				//					LoggingService.logWarning(MODULE_NAME, "not provisioned");
-				//					continue;
-				//				}
+				logInfo("post IOFog status");
 				connected = isControllerConnected(false);
 				if (!connected)
 					continue;
-				logInfo("verified");
+				logInfo("controller connection verified");
 
-				logInfo("sending...");
+				logInfo("sending IOFog status...");
 				JsonObject result = orchestrator.doCommand("status", null, status);
 				checkResponseStatus(result);
 
@@ -1018,8 +1013,7 @@ public class FieldAgent implements IOFogModule {
 					content.append(inputLine);
 				}
 			} catch (IOException exc) {
-				LoggingService.logInfo(MODULE_NAME, new StringBuilder().append("Failed to connect to ")
-						.append(spec).append(". ").append(exc.getMessage()).toString());
+				LoggingService.logInfo(MODULE_NAME, "Failed to connect to " + spec + ". " + exc.getMessage());
 			}
 			connection.get().disconnect();
 		}
@@ -1027,7 +1021,7 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	private Optional<HttpURLConnection> sendHttpGetReq(String spec) {
-		HttpURLConnection connection = null;
+		HttpURLConnection connection;
 		try {
 			URL url = new URL(spec);
 			connection = (HttpURLConnection) url.openConnection();
@@ -1035,8 +1029,7 @@ public class FieldAgent implements IOFogModule {
 			connection.getResponseCode();
 		} catch (IOException exc) {
 			connection = null;
-			LoggingService.logInfo(MODULE_NAME, new StringBuilder().append("Failed to connect to ")
-					.append(spec).append(". ").append(exc.getMessage()).toString());
+			LoggingService.logInfo(MODULE_NAME, "Failed to connect to " + spec + ". " + exc.getMessage());
 		}
 		return Optional.ofNullable(connection);
 	}

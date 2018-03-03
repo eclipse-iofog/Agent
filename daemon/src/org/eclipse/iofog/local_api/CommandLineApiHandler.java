@@ -70,7 +70,7 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 			HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 			return res;
 		} catch (Exception e) {
-			String errorMsg = " Log message pasring error, " + e.getMessage();
+			String errorMsg = " Log message parsing error, " + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
 			outputBuffer.writeBytes(errorMsg.getBytes());
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);

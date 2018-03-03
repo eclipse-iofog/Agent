@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -66,10 +65,9 @@ public class WebsocketUtil {
 	 */
 	public static String getIdForWebsocket(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
 		String id = "";
-		for (Iterator<Map.Entry<String,ChannelHandlerContext>> it = socketMap.entrySet().iterator(); it.hasNext();) {
-			Map.Entry<String,ChannelHandlerContext> e = it.next();
+		for (Map.Entry<String, ChannelHandlerContext> e : socketMap.entrySet()) {
 			if (ctx.equals(e.getValue())) {
-				LoggingService.logInfo(MODULE_NAME,"Context found as real-time websocket");
+				LoggingService.logInfo(MODULE_NAME, "Context found as real-time websocket");
 				return e.getKey();
 			}
 		}

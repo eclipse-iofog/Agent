@@ -32,12 +32,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Status Reporter module
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public final class StatusReporter {
-	
+
 	private static final SupervisorStatus supervisorStatus = new SupervisorStatus();
 	private static final ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = new ResourceConsumptionManagerStatus();
 	private static final ResourceManagerStatus resourceManagerStatus = new ResourceManagerStatus();
@@ -49,10 +48,9 @@ public final class StatusReporter {
 	private static final SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
 
 	private final static String MODULE_NAME = "Status Reporter";
-	
+
 	/**
 	 * sets system time property
-	 * 
 	 */
 	private static final Runnable setStatusReporterSystemTime = () -> {
 		try {
@@ -61,42 +59,40 @@ public final class StatusReporter {
 			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		}
 	};
-	
+
 	private StatusReporter() {
 	}
 
 	/**
 	 * returns report for "status" command-line parameter
-	 * 
+	 *
 	 * @return status report
 	 */
 	public static String getStatusReport() {
 		StringBuilder result = new StringBuilder();
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(statusReporterStatus.getSystemTime());
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
-				
+
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
-		String connectionStatus = fieldAgentStatus.getContollerStatus() == ControllerStatus.OK ? "ok" : 
-			(fieldAgentStatus.getContollerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned"); 
-		result.append("ioFog daemon                : " + supervisorStatus.getDaemonStatus().name());
-		result.append("\\nMemory Usage                : about " + String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage()) + " MiB");
+		String connectionStatus = fieldAgentStatus.getContollerStatus() == ControllerStatus.OK ? "ok" :
+				(fieldAgentStatus.getContollerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned");
+		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
+		result.append("\\nMemory Usage                : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage())).append(" MiB");
 		if (diskUsage < 1)
-			result.append("\\nDisk Usage                  : about " + String.format("%.2f", diskUsage * 1024) + " MiB");
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage * 1024)).append(" MiB");
 		else
-			result.append("\\nDisk Usage                  : about " + String.format("%.2f", diskUsage) + " GiB");
-		result.append("\\nCPU Usage                   : about " + String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage()) + "%");
-		result.append("\\nRunning Elements            : " + processManagerStatus.getRunningElementsCount());
-		result.append("\\nConnection to Controller    : " + connectionStatus);
-		result.append(String.format("\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages())); 
-		result.append("\\nSystem Time                 : " + 		dateFormat.format(cal.getTime()));
-		result.append("\\nHW INFO                     : " + resourceManagerStatus.getHwInfo());
-		result.append("\\nUSB Connections INFO                     : " + resourceManagerStatus.getUsbConnectionsInfo());
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage)).append(" GiB");
+		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage())).append("%");
+		result.append("\\nRunning Elements            : ").append(processManagerStatus.getRunningElementsCount());
+		result.append("\\nConnection to Controller    : ").append(connectionStatus);
+		result.append(String.format("\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
+		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
 
 		return result.toString();
 	}
-	
+
 	public static SupervisorStatus setSupervisorStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return supervisorStatus;
@@ -126,7 +122,7 @@ public final class StatusReporter {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return statusReporterStatus;
 	}
-	
+
 	public static ProcessManagerStatus setProcessManagerStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return processManagerStatus;
@@ -140,7 +136,7 @@ public final class StatusReporter {
 	public static ProcessManagerStatus getProcessManagerStatus() {
 		return processManagerStatus;
 	}
-	
+
 	public static LocalApiStatus setLocalApiStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return localApiStatus;
@@ -149,7 +145,7 @@ public final class StatusReporter {
 	public static SupervisorStatus getSupervisorStatus() {
 		return supervisorStatus;
 	}
-	
+
 	public static MessageBusStatus getMessageBusStatus() {
 		return messageBusStatus;
 	}
@@ -180,7 +176,6 @@ public final class StatusReporter {
 
 	/**
 	 * starts Status Reporter module
-	 * 
 	 */
 	public static void start() {
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
