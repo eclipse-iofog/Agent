@@ -124,10 +124,10 @@ public class FieldAgent implements IOFogModule {
 		result.put("messagespeed", StatusReporter.getMessageBusStatus().getAverageSpeed());
 		result.put("lastcommandtime", StatusReporter.getFieldAgentStatus().getLastCommandTime());
 		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
-		result.put("HW Info", StatusReporter.getResourceManagerStatus().getHwInfo());
+		result.put("hwinfo", StatusReporter.getResourceManagerStatus().getHwInfo());
 		result.put("version", VERSION);
-		result.put("isReadyToUpgrade", isReadyToUpgrade() ? 1 : 0);
-		result.put("isReadyToRollback", isReadyToRollback() ? 1 : 0);
+		result.put("isreadytoupgrade", isReadyToUpgrade() ? 1 : 0);
+		result.put("isreadytorollback", isReadyToRollback() ? 1 : 0);
 
 		return result;
 	}
@@ -197,7 +197,6 @@ public class FieldAgent implements IOFogModule {
 
 	/**
 	 * retrieves IOFog changes list from IOFog controller
-	 *
 	 */
 	private final Runnable getChangesList = () -> {
 		while (true) {
@@ -495,23 +494,23 @@ public class FieldAgent implements IOFogModule {
 					}
 				}
 				element.setPortMappings(pms);
-				if (container.containsKey("volumemappings")) {
-					JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
-					JsonObject object = jsonReader.readObject();
 
-					JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
-					List<VolumeMapping> vms = null;
-					if (volumeMappingObj.size() > 0) {
-						vms = new ArrayList<>(volumeMappingObj.size());
-						for (int j = 0; j < volumeMappingObj.size(); j++) {
-							JsonObject volumeMapping = volumeMappingObj.getJsonObject(j);
-							vms.add(new VolumeMapping(volumeMapping.getString("hostdestination"),
-									volumeMapping.getString("containerdestination"),
-									volumeMapping.getString("accessmode")));
-						}
+				JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
+				JsonObject object = jsonReader.readObject();
+
+				JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
+				List<VolumeMapping> vms = null;
+				if (volumeMappingObj.size() > 0) {
+					vms = new ArrayList<>(volumeMappingObj.size());
+					for (int j = 0; j < volumeMappingObj.size(); j++) {
+						JsonObject volumeMapping = volumeMappingObj.getJsonObject(j);
+						vms.add(new VolumeMapping(volumeMapping.getString("hostdestination"),
+								volumeMapping.getString("containerdestination"),
+								volumeMapping.getString("accessmode")));
 					}
-					element.setVolumeMappings(vms);
 				}
+				element.setVolumeMappings(vms);
+
 				latestElements.add(element);
 				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
 			}
