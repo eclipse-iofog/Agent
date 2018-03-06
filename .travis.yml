@@ -41,7 +41,9 @@ jobs:
     if: branch = dev_package
     env: DEV=-dev
     before_install:
-    - sudo apt-get install ruby ruby-dev rubygems build-essential
+    - sudo apt-get install ruby ruby-dev rubygems build-essential rubygems-update
+    - update_rubygems
+    - gem update --system
     install:
     - sudo gem install --no-ri --no-rdoc fpm
     script:
