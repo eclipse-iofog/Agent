@@ -12,10 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
-import org.eclipse.iofog.utils.logging.LoggingService;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * provides methods for "number <=> byte array" conversions
@@ -28,17 +25,7 @@ public class BytesUtil {
 	private static final String MODULE_NAME = "BytesUtil";
 
 	public static byte[] copyOfRange(byte[] src, int from, int to) {
-		if (from < 0 || from >= src.length || to < from || to > src.length)
-			return new byte[] {};
-		byte[] tmp = new byte[from];
-		byte[] result = new byte[to - from];
-		try (ByteArrayInputStream input = new ByteArrayInputStream(src)){
-			input.read(tmp, 0, tmp.length);
-			input.read(result, 0, result.length);
-		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		}
-		return result;
+		return (from < 0 || from >= src.length || to < from || to > src.length) ? new byte[]{} : Arrays.copyOfRange(src, from, to);
 	}
 	
 	public static byte[] longToBytes(long x) {
