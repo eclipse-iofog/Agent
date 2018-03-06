@@ -112,7 +112,7 @@ public class LocalApi implements Runnable {
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
 		Map<String, String> newConfigMap = new HashMap<>();
-		ConfigurationMap.containerConfigMap.putAll(newConfigMap);
+		newConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		handler.initiateControlSignal(oldConfigMap, newConfigMap);
 	}
