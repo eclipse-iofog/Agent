@@ -42,7 +42,9 @@ jobs:
     env: DEV=-dev
     before_install:
     - sudo apt-get update
-    - sudo apt-get install ruby-dev build-essential
+    - sudo apt-get install ruby-dev build-essential rubygems-update
+    - update_rubygems
+    - gem update --system
     install:
     - sudo gem install --no-ri --no-rdoc fpm
     script:
