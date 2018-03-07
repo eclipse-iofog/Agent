@@ -105,7 +105,7 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 				ByteBuf buffer1 = ctx.alloc().buffer();
 
 				buffer1.writeByte(OPCODE_ACK);
-				System.out.println("Message received.. Send acknoledgment");
+				System.out.println("Message received.. Send acknowledgment");
 				ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 			}
 		}
