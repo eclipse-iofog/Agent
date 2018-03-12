@@ -43,10 +43,13 @@ jobs:
     before_install:
     - sudo apt-get update
     - sudo apt-get install ruby-dev build-essential rubygems-update
-    - update_rubygems
-    - gem update --system
+    - ruby --version
+    #- update_rubygems
+    #- gem update --system
     install:
+    - sudo gem install bundler 
     - sudo gem install --no-ri --no-rdoc fpm
+    - bundle
     script:
     - mvn clean install
     - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
