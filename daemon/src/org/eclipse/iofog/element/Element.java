@@ -38,10 +38,7 @@ public class Element {
 
     public Element(String elementId, String imageName) {
         this.elementId = elementId;
-        if (Constants.osArch.equalsIgnoreCase("arm"))
-            this.imageName = imageName + "-arm";
-        else
-            this.imageName = imageName;
+        this.imageName = imageName;
         containerId = "";
     }
 
