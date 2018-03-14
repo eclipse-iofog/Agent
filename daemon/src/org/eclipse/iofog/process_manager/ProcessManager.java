@@ -41,7 +41,8 @@ public class ProcessManager implements IOFogModule {
 
 	private static final String MODULE_NAME = "Process Manager";
 	private ElementManager elementManager;
-	private Queue<ContainerTask> tasks;
+	private final Queue<ContainerTask> tasks = new LinkedList<>();
+	;
 	public static Boolean updated = true;
 	//	private Object checkTasksLock = new Object();
 	private DockerUtil docker;
@@ -157,7 +158,7 @@ public class ProcessManager implements IOFogModule {
 								logInfo(format("\"%s\": started", containerName));
 							} catch (Exception startException) {
 								// unable to start the container, update it!
-								addTask(new ContainerTask(UPDATE, container.getId()));
+								addTask(new ContainerTask(UPDATE, element));
 							}
 						}
 					} catch (Exception e) {
@@ -189,43 +190,43 @@ public class ProcessManager implements IOFogModule {
 	 */
 	private final Runnable checkTasks = () -> {
 		while (true) {
-			try {
-				ContainerTask newTask;
+			ContainerTask newTask;
 
-				synchronized (tasks) {
-					newTask = tasks.poll();
-					if (newTask == null) {
-						logInfo("WAITING FOR NEW TASK");
+			synchronized (tasks) {
+				newTask = tasks.poll();
+				if (newTask == null) {
+					logInfo("WAITING FOR NEW TASK");
+					try {
 						tasks.wait();
-						logInfo("NEW TASK RECEIVED");
-						newTask = tasks.poll();
+					} catch (InterruptedException e) {
+						logWarning(e.getMessage());
 					}
+					logInfo("NEW TASK RECEIVED");
+					newTask = tasks.poll();
 				}
-				boolean taskResult = containerManager.execute(newTask);
-				if (!taskResult &&
-						(StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK)
-								|| newTask.action.equals(REMOVE))) {
-					if (newTask.retries < 5) {
-						newTask.retries++;
-						addTask(newTask);
-					} else {
-						String msg = EMPTY;
-						switch (newTask.action) {
-							case REMOVE:
-								msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
-								break;
-							case UPDATE:
-								msg = format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
-								break;
-							case ADD:
-								msg = format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
-								break;
-						}
-						logWarning(msg);
+			}
+			boolean taskResult = containerManager.execute(newTask);
+			if (!taskResult &&
+					(StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK)
+							|| newTask.action.equals(REMOVE))) {
+				if (newTask.retries < 5) {
+					newTask.retries++;
+					addTask(newTask);
+				} else {
+					String msg = EMPTY;
+					switch (newTask.action) {
+						case REMOVE:
+							msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
+							break;
+						case UPDATE:
+							msg = format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
+							break;
+						case ADD:
+							msg = format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
+							break;
 					}
+					logWarning(msg);
 				}
-			} catch (Exception e) {
-				logWarning(e.getMessage());
 			}
 		}
 	};
@@ -244,7 +245,6 @@ public class ProcessManager implements IOFogModule {
 	public void start() {
 		docker = DockerUtil.getInstance();
 //		tasks = new PriorityQueue<>(new TaskComparator());
-		tasks = new LinkedList<>();
 		elementManager = ElementManager.getInstance();
 		containerManager = new ContainerManager();
 

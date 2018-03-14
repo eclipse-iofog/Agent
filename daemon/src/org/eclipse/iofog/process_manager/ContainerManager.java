@@ -133,15 +133,15 @@ public class ContainerManager {
 	 * @throws Exception
 	 */
 	private void removeContainer() throws Exception {
-		if (!docker.hasContainer(containerId))
-			return;
-		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
-		try {
-			docker.removeContainer(containerId);
-			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
-			throw e;
+		if (docker.hasContainer(containerId)) {
+			LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
+			try {
+				docker.removeContainer(containerId);
+				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
+			} catch (Exception e) {
+				LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
+				throw e;
+			}
 		}
 	}
 
