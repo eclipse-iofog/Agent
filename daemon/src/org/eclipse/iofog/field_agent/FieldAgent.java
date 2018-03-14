@@ -950,7 +950,7 @@ public class FieldAgent implements IOFogModule {
 
 	private void checkResponseStatus(JsonObject result) {
 		if (!result.getString("status").equals("ok")) {
-			throw new RuntimeException("error from fog controller");
+			throw new RuntimeException("error from fog controller, make sure ioFog is provisioned");
 		}
 	}
 
