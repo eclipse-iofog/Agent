@@ -29,18 +29,18 @@ public class ContainerTask {
     }
 
     public Tasks action;
-    public Object data;
+    public String containerId;
     public int retries;
 
-    public ContainerTask(Tasks action, Object data) {
+    public ContainerTask(Tasks action, String containerId) {
         this.action = action;
-        this.data = data;
+        this.containerId = containerId;
         this.retries = 0;
     }
 
-    public ContainerTask(Tasks action, Object data, int retries) {
+    public ContainerTask(Tasks action, String containerId, int retries) {
         this.action = action;
-        this.data = data;
+        this.containerId = containerId;
         this.retries = retries;
     }
 

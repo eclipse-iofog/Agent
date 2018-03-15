@@ -137,10 +137,11 @@ public class ElementManager {
 	}
 
 	public Element getLatestElementById(List<Element> elements, String elementId) {
-		for (Element element : elements)
+		for (Element element : elements) {
 			if (element.getElementId().equals(elementId)) {
 				return element;
 			}
+		}
 		return null;
 	}
 

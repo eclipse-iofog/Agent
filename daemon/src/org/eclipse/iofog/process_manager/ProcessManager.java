@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Queue;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 import static org.eclipse.iofog.utils.Constants.MONITOR_CONTAINERS_STATUS_FREQ_SECONDS;
@@ -94,10 +93,10 @@ public class ProcessManager implements IOFogModule {
 				long elementLastModified = element.getLastModified();
 				long containerCreated = container.getCreated();
 				if (elementLastModified > containerCreated || !docker.comparePorts(element)) {
-					addTask(new ContainerTask(UPDATE, element));
+					addTask(new ContainerTask(UPDATE, element.getContainerId()));
 				}
 			} else {
-				addTask(new ContainerTask(ADD, element));
+				addTask(new ContainerTask(ADD, element.getContainerId()));
 			}
 		}
 	}
@@ -123,7 +122,7 @@ public class ProcessManager implements IOFogModule {
 
 			for (Element element : latestElements) {
 				if (!docker.hasContainer(element.getElementId()) || element.isRebuild()) {
-					addTask(new ContainerTask(ADD, element));
+					addTask(new ContainerTask(ADD, element.getElementId()));
 				}
 			}
 			StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
@@ -158,7 +157,7 @@ public class ProcessManager implements IOFogModule {
 								logInfo(format("\"%s\": started", containerName));
 							} catch (Exception startException) {
 								// unable to start the container, update it!
-								addTask(new ContainerTask(UPDATE, element));
+								addTask(new ContainerTask(UPDATE, containerId));
 							}
 						}
 					} catch (Exception e) {
@@ -213,18 +212,7 @@ public class ProcessManager implements IOFogModule {
 					newTask.retries++;
 					addTask(newTask);
 				} else {
-					String msg = EMPTY;
-					switch (newTask.action) {
-						case REMOVE:
-							msg = format("\"%s\" removing container failed after 5 attemps", newTask.data.toString());
-							break;
-						case UPDATE:
-							msg = format("\"%s\" updating container failed after 5 attemps", ((Element) newTask.data).getElementId());
-							break;
-						case ADD:
-							msg = format("\"%s\" creating container failed after 5 attemps", ((Element) newTask.data).getElementId());
-							break;
-					}
+					String msg = format("container %s %s operation failed after 5 attemps", newTask.containerId, newTask.action.toString());
 					logWarning(msg);
 				}
 			}

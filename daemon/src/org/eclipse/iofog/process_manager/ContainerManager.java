@@ -30,7 +30,6 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 public class ContainerManager {
 
 	private DockerUtil docker;
-	private String containerId;
 	private ContainerTask task;
 	private final ElementManager elementManager;
 
@@ -45,36 +44,51 @@ public class ContainerManager {
 	 *
 	 * @throws Exception
 	 */
-	private void addElement() throws Exception {
-		Element element = (Element) task.data;
-		Registry registry;
-		try {
-			registry = elementManager.getRegistry(element.getRegistry());
-			if (registry == null) {
-				LoggingService.logWarning(MODULE_NAME, String.format("registry is not valid \"%s\"", element.getRegistry()));
-				throw new Exception();
-			}
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "docker login failed : " + e.getMessage());
-			throw e;
-		}
+	public void addElement() throws Exception {
+		Element element = elementManager.getLatestElementById(task.containerId);
+		Registry registry = getRegistry(element);
 		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
 
 		Container container = docker.getContainer(element.getElementId());
-		if (container != null) {
-			if (element.isRebuild()) {
-				containerId = container.getId();
-				try {
-					stopContainer();
-					removeContainer();
-					docker.removeImage(element.getImageName());
-				} catch (Exception e) {
-					return;
-				}
-			} else
-				return;
+		if (container != null && element.isRebuild()) {
+			rebuildContainer(element);
+		} else if (container == null) {
+			createContainer(element, registry);
 		}
+	}
 
+	/**
+	 * updates element with new container info
+	 *
+	 * @throws Exception
+	 */
+	private void updateElement() throws Exception {
+		Element element = elementManager.getLatestElementById(task.containerId);
+		Registry registry = getRegistry(element);
+		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
+		createContainer(element, registry);
+	}
+
+	private Registry getRegistry(Element element) throws Exception {
+		Registry registry;
+			registry = elementManager.getRegistry(element.getRegistry());
+			if (registry == null) {
+				throw new Exception(String.format("registry is not valid \"%s\"", element.getRegistry()));
+			}
+		return registry;
+	}
+
+	private void rebuildContainer(Element element) throws Exception {
+		stopContainer();
+		removeContainer();
+		try {
+			docker.removeImage(element.getImageName());
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, String.format("error removing docker image \"%s\"", element.getImageName()));
+		}
+	}
+
+	private void createContainer(Element element, Registry registry) throws Exception {
 		try {
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
 			docker.pullImage(element.getImageName(), registry);
@@ -98,8 +112,8 @@ public class ContainerManager {
 	/**
 	 * starts a {@link Container} and sets appropriate status
 	 */
-	private void startElement() {
-		Element element = (Element) task.data;
+	public void startElement() {
+		Element element = elementManager.getLatestElementById(task.containerId);
 		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
 		try {
 			if (!docker.getContainerStatus(element.getContainerId()).getStatus().equals(ElementState.RUNNING)) {
@@ -118,12 +132,12 @@ public class ContainerManager {
 	 * stops a {@link Container}
 	 */
 	private void stopContainer() {
-		LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", containerId));
+		LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", task.containerId));
 		try {
-			docker.stopContainer(containerId);
-			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", containerId));
+			docker.stopContainer(task.containerId);
+			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", task.containerId));
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", containerId));
+			LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", task.containerId));
 		}
 	}
 
@@ -133,13 +147,13 @@ public class ContainerManager {
 	 * @throws Exception
 	 */
 	private void removeContainer() throws Exception {
-		if (docker.hasContainer(containerId)) {
-			LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
+		if (docker.hasContainer(task.containerId)) {
+			LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", task.containerId));
 			try {
-				docker.removeContainer(containerId);
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
+				docker.removeContainer(task.containerId);
+				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", task.containerId));
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
+				LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", task.containerId));
 				throw e;
 			}
 		}
@@ -153,7 +167,7 @@ public class ContainerManager {
 	private void updateContainer() throws Exception {
 		stopContainer();
 		removeContainer();
-		addElement();
+		updateElement();
 		startElement();
 	}
 
@@ -178,9 +192,7 @@ public class ContainerManager {
 				}
 
 			case REMOVE:
-				containerId = task.data.toString();
 				try {
-//					stopContainer();
 					removeContainer();
 					return true;
 				} catch (Exception e) {
@@ -189,7 +201,6 @@ public class ContainerManager {
 				}
 
 			case UPDATE:
-				containerId = ((Element) task.data).getContainerId();
 				try {
 					updateContainer();
 					return true;

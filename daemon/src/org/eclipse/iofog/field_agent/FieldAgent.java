@@ -41,17 +41,20 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.util.stream.Collectors.toList;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
+import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
-import static org.eclipse.iofog.utils.Constants.*;
 
 /**
  * Field Agent module
@@ -450,7 +453,7 @@ public class FieldAgent implements IOFogModule {
 	 * @param fromFile - load from file
 	 */
 	private void loadElementsList(boolean fromFile) {
-		logInfo("get elements");
+		logInfo("loading elements...");
 		if (notProvisioned() || !isControllerConnected(fromFile)) {
 			return;
 		}
@@ -471,55 +474,63 @@ public class FieldAgent implements IOFogModule {
 				saveFile(containers, filesPath + filename);
 			}
 
-			List<Element> latestElements = new ArrayList<>();
-			for (int i = 0; i < containers.size(); i++) {
-				JsonObject container = containers.getJsonObject(i);
+			List<Element> latestElements = IntStream.range(0, containers.size())
+					.boxed()
+					.map(containers::getJsonObject)
+					.map(containerJsonObjectToElementFunction())
+					.collect(toList());
 
-				Element element = new Element(container.getString("id"), container.getString("imageid"));
-				element.setRebuild(container.getBoolean("rebuild"));
-				element.setRootHostAccess(container.getBoolean("roothostaccess"));
-				element.setRegistry(container.getString("registryurl"));
-				element.setLastModified(container.getJsonNumber("lastmodified").longValue());
-				element.setLogSize(container.getJsonNumber("logsize").longValue());
-
-				JsonArray portMappingObjs = container.getJsonArray("portmappings");
-				List<PortMapping> pms = null;
-				if (portMappingObjs.size() > 0) {
-					pms = new ArrayList<>();
-					for (int j = 0; j < portMappingObjs.size(); j++) {
-						JsonObject portMapping = portMappingObjs.getJsonObject(j);
-						PortMapping pm = new PortMapping(portMapping.getString("outsidecontainer"),
-								portMapping.getString("insidecontainer"));
-						pms.add(pm);
-					}
-				}
-				element.setPortMappings(pms);
-
-				JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
-				JsonObject object = jsonReader.readObject();
-
-				JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
-				List<VolumeMapping> vms = null;
-				if (volumeMappingObj.size() > 0) {
-					vms = new ArrayList<>(volumeMappingObj.size());
-					for (int j = 0; j < volumeMappingObj.size(); j++) {
-						JsonObject volumeMapping = volumeMappingObj.getJsonObject(j);
-						vms.add(new VolumeMapping(volumeMapping.getString("hostdestination"),
-								volumeMapping.getString("containerdestination"),
-								volumeMapping.getString("accessmode")));
-					}
-				}
-				element.setVolumeMappings(vms);
-
-				latestElements.add(element);
-				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
-			}
 			elementManager.setLatestElements(latestElements);
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get containers list" + e.getMessage());
 		}
+	}
+
+	private Function<JsonObject, Element> containerJsonObjectToElementFunction() {
+		return container -> {
+			Element element = new Element(container.getString("id"), container.getString("imageid"));
+			element.setRebuild(container.getBoolean("rebuild"));
+			element.setRootHostAccess(container.getBoolean("roothostaccess"));
+			element.setRegistry(container.getString("registryurl"));
+			element.setLastModified(container.getJsonNumber("lastmodified").longValue());
+			element.setLogSize(container.getJsonNumber("logsize").longValue());
+
+			JsonArray portMappingObjs = container.getJsonArray("portmappings");
+			List<PortMapping> pms = portMappingObjs.size() > 0
+					? IntStream.range(0, portMappingObjs.size())
+						.boxed()
+						.map(portMappingObjs::getJsonObject)
+						.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
+								portMapping.getString("insidecontainer")))
+						.collect(toList())
+					: null;
+
+			element.setPortMappings(pms);
+
+			JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
+			JsonObject object = jsonReader.readObject();
+
+			JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
+			List<VolumeMapping> vms = volumeMappingObj.size() > 0
+					? IntStream.range(0, volumeMappingObj.size())
+						.boxed()
+						.map(volumeMappingObj::getJsonObject)
+						.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
+								volumeMapping.getString("containerdestination"),
+								volumeMapping.getString("accessmode")))
+						.collect(toList())
+					: null;
+
+			element.setVolumeMappings(vms);
+			try {
+				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
+			} catch (IOException e) {
+				logWarning("error at setting up element logger");
+			}
+			return element;
+		};
 	}
 
 	/**
