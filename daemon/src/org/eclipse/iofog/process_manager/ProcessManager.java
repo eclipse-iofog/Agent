@@ -93,10 +93,10 @@ public class ProcessManager implements IOFogModule {
 				long elementLastModified = element.getLastModified();
 				long containerCreated = container.getCreated();
 				if (elementLastModified > containerCreated || !docker.comparePorts(element)) {
-					addTask(new ContainerTask(UPDATE, element.getContainerId()));
+					addTask(new ContainerTask(UPDATE, element.getElementId(), container.getId()));
 				}
 			} else {
-				addTask(new ContainerTask(ADD, element.getContainerId()));
+				addTask(new ContainerTask(ADD, element.getElementId(), null));
 			}
 		}
 	}
@@ -122,7 +122,7 @@ public class ProcessManager implements IOFogModule {
 
 			for (Element element : latestElements) {
 				if (!docker.hasContainer(element.getElementId()) || element.isRebuild()) {
-					addTask(new ContainerTask(ADD, element.getElementId()));
+					addTask(new ContainerTask(ADD, element.getElementId(), null));
 				}
 			}
 			StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
@@ -136,7 +136,7 @@ public class ProcessManager implements IOFogModule {
 				// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
 				if (element == null) {
 					if (isIsolatedDockerContainers || elementManager.elementExists(currentElements, containerId)) {
-						addTask(new ContainerTask(REMOVE, container.getId()));
+						addTask(new ContainerTask(REMOVE, null, container.getId()));
 					}
 				} else {
 					try {
@@ -157,7 +157,7 @@ public class ProcessManager implements IOFogModule {
 								logInfo(format("\"%s\": started", containerName));
 							} catch (Exception startException) {
 								// unable to start the container, update it!
-								addTask(new ContainerTask(UPDATE, containerId));
+								addTask(new ContainerTask(UPDATE, element.getElementId(), null));
 							}
 						}
 					} catch (Exception e) {
@@ -204,15 +204,15 @@ public class ProcessManager implements IOFogModule {
 					newTask = tasks.poll();
 				}
 			}
-			boolean taskResult = containerManager.execute(newTask);
-			if (!taskResult &&
+			ContainerTaskResult taskResult = containerManager.execute(newTask);
+			if (!taskResult.isSuccessful() &&
 					(StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK)
-							|| newTask.action.equals(REMOVE))) {
-				if (newTask.retries < 5) {
-					newTask.retries++;
+							|| newTask.getAction().equals(REMOVE))) {
+				if (newTask.getRetries() < 5) {
+					newTask.incrementRetries();
 					addTask(newTask);
 				} else {
-					String msg = format("container %s %s operation failed after 5 attemps", newTask.containerId, newTask.action.toString());
+					String msg = format("container %s %s operation failed after 5 attemps", taskResult.getContainerId(), newTask.getAction().toString());
 					logWarning(msg);
 				}
 			}

@@ -28,20 +28,32 @@ public class ContainerTask {
         REMOVE
     }
 
-    public Tasks action;
-    public String containerId;
-    public int retries;
+    private Tasks action;
+    private String elementId;
+    private String containerId;
+    private int retries;
 
-    public ContainerTask(Tasks action, String containerId) {
+    public ContainerTask(Tasks action, String elementId, String containerId) {
         this.action = action;
+        this.elementId = elementId;
         this.containerId = containerId;
         this.retries = 0;
     }
 
-    public ContainerTask(Tasks action, String containerId, int retries) {
-        this.action = action;
-        this.containerId = containerId;
-        this.retries = retries;
+    public Tasks getAction() {
+        return action;
+    }
+
+    public int getRetries() {
+        return retries;
+    }
+
+    public String getId(){
+        return action == Tasks.ADD || action == Tasks.UPDATE ? elementId : containerId;
+    }
+
+    public void incrementRetries() {
+        this.retries++;
     }
 
     @Override
