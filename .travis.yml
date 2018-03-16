@@ -46,7 +46,11 @@ jobs:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
     - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
     - mvn clean install
-    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-daemon-jar-with-dependencies.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofogd.jar
     - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofog.jar
@@ -55,19 +59,19 @@ jobs:
     - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofog.jar
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf iofog${DEV}_${VERSION}_all.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a
-      all --deb-no-default-config-files --after-install debian.sh etc usr var; package_cloud push iotracks/iofog/ubuntu/precise
-      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb;
-      package_cloud push iotracks/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push
-      iotracks/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/wily
-      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/xenial iofog${DEV}_${VERSION}_all.deb;
-      package_cloud push iotracks/iofog/debian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push
-      iotracks/iofog/debian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/debian/stretch
-      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/debian/buster iofog${DEV}_${VERSION}_all.deb;
-      package_cloud push iotracks/iofog/raspbian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push
-      iotracks/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/stretch
-      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb;
-      cd /iofog-packaging-rpm; rm -rf iofog${DEV}-${VERSION}-1.noarch.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' --after-install
-      rpm.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud
-      push iotracks/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/fedora/24
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf iofog${DEV}_${VERSION}_all.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a 
+      all --deb-no-default-config-files --after-install debian.sh etc usr var; package_cloud push iotracks/iofog/ubuntu/precise 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iotracks/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iotracks/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/wily 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/xenial iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iotracks/iofog/debian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iotracks/iofog/debian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/debian/stretch 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/debian/buster iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iotracks/iofog/raspbian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iotracks/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/stretch 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
+      cd /iofog-packaging-rpm; rm -rf iofog${DEV}-${VERSION}-1.noarch.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' --after-install 
+      rpm.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
+      push iotracks/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/fedora/24 
       iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
