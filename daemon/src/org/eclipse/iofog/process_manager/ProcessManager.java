@@ -121,7 +121,7 @@ public class ProcessManager implements IOFogModule {
 			List<Element> currentElements = elementManager.getCurrentElements();
 
 			for (Element element : latestElements) {
-				if (!docker.hasContainer(element.getElementId()) || element.isRebuild()) {
+				if (!docker.getContainerStatus(element.getElementId()).isPresent() || element.isRebuild()) {
 					addTask(new ContainerTask(ADD, element));
 				}
 			}
@@ -143,7 +143,7 @@ public class ProcessManager implements IOFogModule {
 						element.setContainerId(container.getId());
 						element.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
 						String containerName = container.getNames()[0].substring(1);
-						ElementStatus status = docker.getContainerStatus(container.getId());
+						ElementStatus status = docker.getFullContainerStatus(container.getId());
 						StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
 						if (status.getStatus().equals(ElementState.RUNNING)) {
 							logInfo(format("\"%s\": running ", element.getElementId()) + container.getImage());
@@ -153,7 +153,7 @@ public class ProcessManager implements IOFogModule {
 								logInfo(format("\"%s\": starting", containerName));
 								docker.startContainer(container.getId());
 								StatusReporter.setProcessManagerStatus()
-										.setElementsStatus(containerName, docker.getContainerStatus(container.getId()));
+										.setElementsStatus(containerName, docker.getFullContainerStatus(container.getId()));
 								logInfo(format("\"%s\": started", containerName));
 							} catch (Exception startException) {
 								// unable to start the container, update it!

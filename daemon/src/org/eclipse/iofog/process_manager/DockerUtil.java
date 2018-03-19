@@ -13,11 +13,8 @@
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
-import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -42,6 +39,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -124,49 +123,22 @@ public class DockerUtil {
 	}
 
 	/**
-	 * gets memory usage of given {@link Container}
+	 * set in {@link ElementStatus} cpu usage and memory usage of given {@link Container}
 	 *
 	 * @param containerId - id of {@link Container}
-	 * @return memory usage in bytes
-	 */
-	public long getMemoryUsage(String containerId) {
-		if (!hasContainer(containerId))
-			return 0;
-
-		StatsCallback statsCallback = new StatsCallback();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
-		}
-		Map<String, Object> memoryUsage = statsCallback.getStats().getMemoryStats();
-		return Long.parseLong(memoryUsage.get("usage").toString());
-	}
-
-	/**
-	 * computes cpu usage of given {@link Container}
-	 *
-	 * @param containerId - id of {@link Container}
-	 * @return a float number between 0-100
+	 * @param status - status of {@link ElementStatus}
 	 */
 	@SuppressWarnings("unchecked")
-	public float getCpuUsage(String containerId) {
-		if (!hasContainer(containerId))
-			return 0;
-
-		StatsCallback statsCallback = new StatsCallback();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
+	private ElementStatus setUsage(String containerId, ElementStatus status) {
+		if (!getContainerStatus(containerId).isPresent()) {
+			return status;
 		}
-		Map<String, Object> usageBefore = statsCallback.getStats().getCpuStats();
+
+		Optional<Statistics> statisticsBefore = statsContainer(containerId);
+		if (!statisticsBefore.isPresent()) {
+			return status;
+		}
+		Map<String, Object> usageBefore = statisticsBefore.get().getCpuStats();
 		float totalBefore = Long.parseLong(((Map<String, Object>) usageBefore.get("cpu_usage")).get("total_usage").toString());
 		float systemBefore = Long.parseLong((usageBefore.get("system_cpu_usage")).toString());
 
@@ -176,21 +148,31 @@ public class DockerUtil {
 			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
 		}
 
-		statsCallback.reset();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
+		Optional<Statistics> statisticsAfter = statsContainer(containerId);
+		if (!statisticsAfter.isPresent()) {
+			return status;
 		}
-		Map<String, Object> usageAfter = statsCallback.getStats().getCpuStats();
+		Map<String, Object> usageAfter = statisticsAfter.get().getCpuStats();
 		float totalAfter = Long.parseLong(((Map<String, Object>) usageAfter.get("cpu_usage")).get("total_usage").toString());
 		float systemAfter = Long.parseLong((usageAfter.get("system_cpu_usage")).toString());
+		status.setCpuUsage(Math.abs(1000f * ((totalAfter - totalBefore) / (systemAfter - systemBefore))));
 
+		Map<String, Object> memoryUsage = statisticsAfter.get().getMemoryStats();
+		status.setMemoryUsage(Long.parseLong(memoryUsage.get("usage").toString()));
 
-		return Math.abs(1000f * ((totalAfter - totalBefore) / (systemAfter - systemBefore)));
+		return status;
+	}
+
+	private Optional<Statistics> statsContainer(String containerId) {
+		StatsCmd statsCmd = this.dockerClient.statsCmd(containerId);
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		StatsCallback stats = new StatsCallback(countDownLatch);
+		try (StatsCallback statscallback = statsCmd.exec(stats)) {
+			countDownLatch.await(5, TimeUnit.SECONDS);
+		} catch (InterruptedException | IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
+		return Optional.of(stats.getStats());
 	}
 
 	/**
@@ -199,7 +181,7 @@ public class DockerUtil {
 	 * @param imageName - name of {@link Image}
 	 * @return {@link Image}
 	 */
-	public Image getImage(String imageName) {
+	private Image getImage(String imageName) {
 		List<Image> images = dockerClient.listImagesCmd().exec();
 		Optional<Image> result = images.stream()
 				.filter(image -> image.getRepoTags()[0].equals(imageName)).findFirst();
@@ -313,19 +295,18 @@ public class DockerUtil {
 	/**
 	 * gets {@link Container} status
 	 *
-	 * @param id - id of {@link Container}
+	 * @param containerId - containerId of {@link Container}
 	 * @return {@link ElementStatus}
 	 * @throws Exception
 	 */
-	public ElementStatus getContainerStatus(String id) throws Exception {
+	public ElementStatus getFullContainerStatus(String containerId) throws Exception {
 		try {
-			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
+			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 			ContainerState status = inspectInfo.getState();
 			ElementStatus result = new ElementStatus();
-			if (status.getRunning()) {
+			if (status != null && status.getRunning()) {
+				setUsage(containerId, result);
 				result.setStartTime(getStartedTime(status.getStartedAt()));
-				result.setCpuUsage(0);
-				result.setMemoryUsage(0);
 				result.setStatus(ElementState.fromText(status.getStatus()));
 			} else {
 				result.setStatus(ElementState.STOPPED);
@@ -335,6 +316,22 @@ public class DockerUtil {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
 		}
+	}
+
+	public Optional<String> getContainerStatus(String containerId) {
+		try {
+			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+			ContainerState status = inspectInfo.getState();
+			return Optional.of(status.getStatus());
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
+		return Optional.empty();
+	}
+
+	public boolean isContainerRunning(String containerId) {
+		Optional<String> status = getContainerStatus(containerId);
+		return status.isPresent() && status.get().equals(ElementState.RUNNING);
 	}
 
 	/**
@@ -357,21 +354,6 @@ public class DockerUtil {
 		if (image == null)
 			return;
 		dockerClient.removeImageCmd(image.getId()).withForce(true).exec();
-	}
-
-	/**
-	 * returns whether the {@link Container} exists or not
-	 *
-	 * @param containerId - id of {@link Container}
-	 * @return
-	 */
-	public boolean hasContainer(String containerId) {
-		try {
-			getContainerStatus(containerId);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
 	}
 
 	/**

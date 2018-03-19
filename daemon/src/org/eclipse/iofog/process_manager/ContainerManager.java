@@ -102,11 +102,11 @@ public class ContainerManager {
 		Element element = (Element) task.data;
 		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
 		try {
-			if (!docker.getContainerStatus(element.getContainerId()).getStatus().equals(ElementState.RUNNING)) {
+			if (!docker.isContainerRunning(element.getContainerId())) {
 				docker.startContainer(element.getContainerId());
 			}
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" starting", element.getImageName())
-					+ ", status: " + docker.getContainerStatus(element.getContainerId()).getStatus());
+					+ ", status: " + docker.getFullContainerStatus(element.getContainerId()).getStatus());
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
@@ -133,8 +133,9 @@ public class ContainerManager {
 	 * @throws Exception
 	 */
 	private void removeContainer() throws Exception {
-		if (!docker.hasContainer(containerId))
+		if (!docker.getContainerStatus(containerId).isPresent()) {
 			return;
+		}
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
 			docker.removeContainer(containerId);
