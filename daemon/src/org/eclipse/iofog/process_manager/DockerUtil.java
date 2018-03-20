@@ -41,7 +41,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -338,6 +341,50 @@ public class DockerUtil {
 	}
 
 	/**
+	 * return container last start epoch time
+	 * @param id container id
+	 * @return long epoch time
+	 */
+	public long getContainerStartedAt(String id) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
+		String startedAt = inspectInfo.getState().getStartedAt();
+		return startedAt != null ? DateTimeFormatter.ISO_INSTANT.parse(startedAt, Instant::from).toEpochMilli() : Instant.now().toEpochMilli();
+	}
+
+	/**
+	 * compares if element port mapping is equal to container port mapping
+	 * @param containerId container id
+	 * @param element element
+	 * @return boolean
+	 */
+	public boolean isPortMappingEqual(String containerId, Element element) {
+		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		Ports ports = hostConfig.getPortBindings();
+		return comparePortMapping(elementPorts, ports.getBindings());
+	}
+
+	private boolean comparePortMapping(List<PortMapping> elementPorts, Map<ExposedPort, Ports.Binding[]> portBindings) {
+
+		List<PortMapping> containerPorts = portBindings.entrySet().stream()
+				.map(entity -> {
+					String exposedPort = String.valueOf(entity.getKey().getPort());
+					String hostPort = entity.getValue()[0].getHostPortSpec();
+					return new PortMapping(hostPort, exposedPort);
+				})
+				.collect(Collectors.toList());
+
+		for (PortMapping portMapping : elementPorts) {
+			boolean contains = containerPorts.contains(portMapping);
+			if (!contains) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * returns list of {@link Container} installed on Docker daemon
 	 *
 	 * @return list of {@link Container}
@@ -469,43 +516,4 @@ public class DockerUtil {
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
-
-	/**
-	 * compares whether an {@link Element} {@link PortMapping} is
-	 * same as its corresponding {@link Container} or not
-	 *
-	 * @param element - {@link Element}
-	 * @return boolean
-	 */
-	public boolean comparePorts(Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings();
-		Container container = getContainer(element.getElementId());
-		if (container == null)
-			return false;
-		ContainerPort[] containerPorts = container.getPorts();
-
-		if (elementPorts == null && containerPorts == null)
-			return true;
-		else if (containerPorts == null)
-			return elementPorts.size() == 0;
-		else if (elementPorts == null)
-			return containerPorts.length == 0;
-		else if (elementPorts.size() != containerPorts.length)
-			return false;
-
-		for (PortMapping elementPort : elementPorts) {
-			boolean found = false;
-			for (ContainerPort containerPort : containerPorts)
-				if (containerPort.getPrivatePort().toString().equals(elementPort.getInside()))
-					if (containerPort.getPublicPort().toString().equals(elementPort.getOutside())) {
-						found = true;
-						break;
-					}
-			if (!found)
-				return false;
-		}
-
-		return true;
-	}
-
 }

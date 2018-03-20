@@ -28,6 +28,7 @@ public class ContainerTask {
         REMOVE
     }
 
+    private static final String EMPTY = "";
     private Tasks action;
     private String elementId;
     private String containerId;
@@ -35,8 +36,8 @@ public class ContainerTask {
 
     public ContainerTask(Tasks action, String elementId, String containerId) {
         this.action = action;
-        this.elementId = elementId;
-        this.containerId = containerId;
+        this.elementId = elementId != null ? elementId : EMPTY;
+        this.containerId = containerId != null ? containerId : EMPTY;
         this.retries = 0;
     }
 
@@ -48,8 +49,12 @@ public class ContainerTask {
         return retries;
     }
 
-    public String getId(){
-        return action == Tasks.ADD || action == Tasks.UPDATE ? elementId : containerId;
+    public String getElementId() {
+        return elementId;
+    }
+
+    public String getContainerId() {
+        return containerId;
     }
 
     public void incrementRetries() {

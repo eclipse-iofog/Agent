@@ -70,6 +70,7 @@ public class FieldAgent implements IOFogModule {
 	private SshProxyManager sshProxyManager;
 	private long lastGetChangesList;
 	private ElementManager elementManager;
+	private ProcessManager processManager;
 	private static FieldAgent instance;
 	private boolean initialization;
 	private boolean connected = false;
@@ -241,7 +242,6 @@ public class FieldAgent implements IOFogModule {
 				}
 				if (changes.getBoolean("registries") || initialization) {
 					loadRegistries(false);
-					ProcessManager.getInstance().update();
 				}
 				if (changes.getBoolean("containerconfig") || initialization) {
 					loadElementsConfig(false);
@@ -249,7 +249,7 @@ public class FieldAgent implements IOFogModule {
 				}
 				if (changes.getBoolean("containerlist") || initialization) {
 					loadElementsList(false);
-					ProcessManager.getInstance().update();
+
 				}
 				if (changes.getBoolean("routing") || initialization) {
 					loadRoutes(false);
@@ -480,7 +480,9 @@ public class FieldAgent implements IOFogModule {
 					.map(containerJsonObjectToElementFunction())
 					.collect(toList());
 
+			processManager.update(latestElements);
 			elementManager.setLatestElements(latestElements);
+
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
@@ -489,15 +491,15 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	private Function<JsonObject, Element> containerJsonObjectToElementFunction() {
-		return container -> {
-			Element element = new Element(container.getString("id"), container.getString("imageid"));
-			element.setRebuild(container.getBoolean("rebuild"));
-			element.setRootHostAccess(container.getBoolean("roothostaccess"));
-			element.setRegistry(container.getString("registryurl"));
-			element.setLastModified(container.getJsonNumber("lastmodified").longValue());
-			element.setLogSize(container.getJsonNumber("logsize").longValue());
+		return jsonObj -> {
+			Element element = new Element(jsonObj.getString("id"), jsonObj.getString("imageid"));
+			element.setRebuild(jsonObj.getBoolean("rebuild"));
+			element.setRootHostAccess(jsonObj.getBoolean("roothostaccess"));
+			element.setRegistry(jsonObj.getString("registryurl"));
+			element.setLastModified(jsonObj.getJsonNumber("lastmodified").longValue());
+			element.setLogSize(jsonObj.getJsonNumber("logsize").longValue());
 
-			JsonArray portMappingObjs = container.getJsonArray("portmappings");
+			JsonArray portMappingObjs = jsonObj.getJsonArray("portmappings");
 			List<PortMapping> pms = portMappingObjs.size() > 0
 					? IntStream.range(0, portMappingObjs.size())
 						.boxed()
@@ -509,7 +511,7 @@ public class FieldAgent implements IOFogModule {
 
 			element.setPortMappings(pms);
 
-			JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
+			JsonReader jsonReader = Json.createReader(new StringReader(jsonObj.getString("volumemappings")));
 			JsonObject object = jsonReader.readObject();
 
 			JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
@@ -873,7 +875,7 @@ public class FieldAgent implements IOFogModule {
 	private void notifyModules() {
 		MessageBus.getInstance().update();
 		LocalApi.getInstance().update();
-		ProcessManager.getInstance().update();
+		ProcessManager.getInstance().updateRegistriesStatus();
 	}
 
 	/**
@@ -925,6 +927,7 @@ public class FieldAgent implements IOFogModule {
 			StatusReporter.setFieldAgentStatus().setContollerStatus(NOT_PROVISIONED);
 
 		elementManager = ElementManager.getInstance();
+		processManager = ProcessManager.getInstance();
 		orchestrator = new Orchestrator();
 		sshProxyManager = new SshProxyManager(new SshConnection());
 
@@ -1002,8 +1005,9 @@ public class FieldAgent implements IOFogModule {
 				LoggingService.logWarning(MODULE_NAME, e.getMessage());
 			}
 
-			LoggingService.logInfo(MODULE_NAME, jsonSendHWInfoResult == null ?
-					"Can't get HW Info from HAL." : jsonSendHWInfoResult.toString());
+			if (jsonSendHWInfoResult == null ) {
+				LoggingService.logInfo(MODULE_NAME, "Can't get HW Info from HAL.");
+			}
 		}
 	}
 

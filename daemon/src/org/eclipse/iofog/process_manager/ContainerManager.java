@@ -43,20 +43,21 @@ public class ContainerManager {
 	 *
 	 * @throws Exception
 	 */
-	public String addElement(Element element) throws Exception {
+	public String addContainer(Element element) throws Exception {
 		Registry registry = getRegistry(element);
 		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
 
 		Container container = !element.getContainerId().equals(EMPTY)
-				? docker.getContainer(element.getContainerId())
+				? docker.getContainer(element.getElementId())
 				: null;
 
 		String containerId = container != null ? container.getId() : null;
 		if (container != null && element.isRebuild()) {
-			rebuildContainer(element);
-			containerId = createContainer(element, registry);
+			containerId = rebuildContainer(element, registry);
+			startContainer(element);
 		} else if (container == null) {
 			containerId = createContainer(element, registry);
+			startContainer(element);
 		}
 		return containerId;
 	}
@@ -66,7 +67,7 @@ public class ContainerManager {
 	 *
 	 * @throws Exception
 	 */
-	private String updateElement(Element element) throws Exception {
+	private String createContainer(Element element) throws Exception {
 		Registry registry = getRegistry(element);
 		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
 		return createContainer(element, registry);
@@ -81,7 +82,7 @@ public class ContainerManager {
 		return registry;
 	}
 
-	private void rebuildContainer(Element element) throws Exception {
+	private String rebuildContainer(Element element, Registry registry) throws Exception {
 		stopContainer(element.getContainerId());
 		removeContainer(element.getContainerId());
 		try {
@@ -89,6 +90,7 @@ public class ContainerManager {
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, String.format("error removing docker image \"%s\"", element.getImageName()));
 		}
+		return createContainer(element, registry);
 	}
 
 	private String createContainer(Element element, Registry registry) throws Exception {
@@ -165,12 +167,12 @@ public class ContainerManager {
 	/**
 	 * removes an existing {@link Container} and creates a new one
 	 *
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public String updateContainer(Element element) throws Exception {
 		stopContainer(element.getContainerId());
 		removeContainer(element.getContainerId());
-		String containerId = updateElement(element);
+		String containerId = createContainer(element);
 		startContainer(element);
 		return containerId;
 	}
@@ -184,13 +186,12 @@ public class ContainerManager {
 	public ContainerTaskResult execute(ContainerTask task) {
 		docker = DockerUtil.getInstance();
 		this.task = task;
-		Element element = elementManager.getLatestElementById(task.getId());
+		Element element = elementManager.getLatestElementById(task.getElementId());
 		ContainerTaskResult result = null;
 		switch (task.getAction()) {
 			case ADD:
 				try {
-					String containerId = addElement(element);
-					startContainer(element);
+					String containerId = addContainer(element);
 					result = new ContainerTaskResult(containerId, true);
 					break;
 				} catch (Exception e) {
@@ -209,13 +210,12 @@ public class ContainerManager {
 					break;
 				}
 			case REMOVE:
-				String containerId = task.getId();
 				try {
-					removeContainer(containerId);
-					result = new ContainerTaskResult(containerId, true);
+					removeContainer(task.getContainerId());
+					result = new ContainerTaskResult(task.getContainerId(), true);
 					break;
 				} catch (Exception e) {
-					result = new ContainerTaskResult(containerId, false);
+					result = new ContainerTaskResult(task.getContainerId(), false);
 					LoggingService.logWarning(MODULE_NAME, e.getMessage());
 					break;
 				}
