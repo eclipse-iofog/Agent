@@ -14,6 +14,8 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
+
 /**
  * represents tasks applied on a {@link Container}
  *
@@ -26,7 +28,6 @@ public class ContainerTask {
         REMOVE
     }
 
-    private static final String EMPTY = "";
     private Tasks action;
     private String elementId;
     private String containerId;

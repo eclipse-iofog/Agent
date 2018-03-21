@@ -42,7 +42,7 @@ public class ProcessManager implements IOFogModule {
 	private static final String MODULE_NAME = "Process Manager";
 	private ElementManager elementManager;
 	private final Queue<ContainerTask> tasks = new LinkedList<>();
-	;
+
 	private DockerUtil docker;
 	private ContainerManager containerManager;
 	private static ProcessManager instance;

@@ -134,8 +134,12 @@ public class ElementManager {
 	}
 
 	public Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
-		return elements.stream()
-				.filter(element -> element.getElementId().equals(elementId))
-				.findAny();
+		Optional<Element> result = Optional.empty();
+		for (Element element : elements) {
+			if (element.getElementId().equals(elementId)) {
+				return Optional.of(element);
+			}
+		}
+		return result;
 	}
 }

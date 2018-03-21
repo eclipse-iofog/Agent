@@ -22,6 +22,8 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Optional;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
+
 /**
  * provides methods to manage Docker containers
  *
@@ -29,7 +31,6 @@ import java.util.Optional;
  */
 public class ContainerManager {
 
-	private static final String EMPTY = "";
 	private DockerUtil docker;
 	private final ElementManager elementManager;
 
@@ -52,10 +53,9 @@ public class ContainerManager {
 		String containerId = containerOptional.isPresent() ? containerOptional.get().getId() : null;
 		if (containerOptional.isPresent() && element.isRebuild()) {
 			containerId = rebuildContainer(element);
-			startContainer(element);
 		} else if (!containerOptional.isPresent()) {
 			containerId = createContainer(element);
-			startContainer(element);
+
 		}
 		return containerId;
 	}
@@ -95,13 +95,14 @@ public class ContainerManager {
 			element.setContainerIpAddress(docker.getContainerIpAddress(id));
 			element.setRebuild(false);
 			LoggingService.logInfo(MODULE_NAME, "created");
+			startContainer(element);
 			return id;
 	}
 
 	/**
 	 * starts a {@link Container} and sets appropriate status
 	 */
-	public void startContainer(Element element) {
+	private void startContainer(Element element) {
 		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
 		try {
 			if (!docker.getContainerStatus(element.getContainerId()).getStatus().equals(ElementState.RUNNING)) {
@@ -145,14 +146,7 @@ public class ContainerManager {
 
 		if (containerOptional.isPresent()) {
 			String containerId = containerOptional.get().getId();
-			LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
-			try {
-				docker.removeContainer(containerId);
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
-				throw e;
-			}
+			removeContainer(containerId);
 		}
 	}
 
@@ -163,14 +157,18 @@ public class ContainerManager {
 	 */
 	private void removeContainerByContainerId(String containerId) throws Exception {
 		if (docker.hasContainerWithContainerId(containerId)) {
-			LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
-			try {
-				docker.removeContainer(containerId);
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
-				throw e;
-			}
+			removeContainer(containerId);
+		}
+	}
+
+	private void removeContainer(String containerId) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
+		try {
+			docker.removeContainer(containerId);
+			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
+			throw e;
 		}
 	}
 
@@ -182,9 +180,7 @@ public class ContainerManager {
 	public String updateContainer(Element element) throws Exception {
 		stopContainer(element.getElementId());
 		removeContainerByElementId(element.getElementId());
-		String containerId = createContainer(element);
-		startContainer(element);
-		return containerId;
+		return createContainer(element);
 	}
 
 	/**
