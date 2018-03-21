@@ -375,13 +375,8 @@ public class DockerUtil {
 				})
 				.collect(Collectors.toList());
 
-		for (PortMapping portMapping : elementPorts) {
-			boolean contains = containerPorts.contains(portMapping);
-			if (!contains) {
-				return false;
-			}
-		}
-		return true;
+		return elementPorts.stream()
+				.allMatch(containerPorts::contains);
 	}
 
 	/**
