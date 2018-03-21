@@ -38,7 +38,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -260,17 +263,20 @@ public class DockerUtil {
 		}
 	}
 
+	public String getContainerName(Container container) {
+		return container.getNames()[0].substring(1);
+	}
+
 	/**
 	 * returns a {@link Container} if exists
 	 *
 	 * @param elementId - name of {@link Container} (id of {@link Element})
-	 * @return
+	 * @return Optional<Container>
 	 */
-	public Container getContainer(String elementId) {
+	public Optional<Container> getContainerByElementId(String elementId) {
 		List<Container> containers = getContainers();
-		Optional<Container> result = containers.stream()
-				.filter(c -> c.getNames()[0].trim().substring(1).equals(elementId)).findFirst();
-		return result.orElse(null);
+		return containers.stream()
+				.filter(c -> getContainerName(c).equals(elementId)).findFirst();
 	}
 
 	/**
@@ -295,16 +301,16 @@ public class DockerUtil {
 	/**
 	 * gets {@link Container} status
 	 *
-	 * @param containerId - containerId of {@link Container}
+	 * @param id - id of {@link Container}
 	 * @return {@link ElementStatus}
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public ElementStatus getFullContainerStatus(String containerId) throws Exception {
 		try {
 			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 			ContainerState status = inspectInfo.getState();
 			ElementStatus result = new ElementStatus();
-			if (status != null && status.getRunning()) {
+			if (status != null && status.getRunning() != null && status.getRunning()) {
 				setUsage(containerId, result);
 				result.setStartTime(getStartedTime(status.getStartedAt()));
 				result.setStatus(ElementState.fromText(status.getStatus()));
@@ -318,6 +324,36 @@ public class DockerUtil {
 		}
 	}
 
+	/**
+	 * compares if element port mapping is equal to container port mapping
+	 *
+	 * @param containerId container id
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isPortMappingEqual(String containerId, Element element) {
+		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		Ports ports = hostConfig.getPortBindings();
+		return comparePortMapping(elementPorts, ports.getBindings());
+	}
+
+	private boolean comparePortMapping(List<PortMapping> elementPorts, Map<ExposedPort, Ports.Binding[]> portBindings) {
+
+		List<PortMapping> containerPorts = portBindings.entrySet().stream()
+				.map(entity -> {
+					String exposedPort = String.valueOf(entity.getKey().getPort());
+					String hostPort = entity.getValue()[0].getHostPortSpec();
+					return new PortMapping(hostPort, exposedPort);
+				})
+				.collect(Collectors.toList());
+
+		return elementPorts.stream()
+				.allMatch(containerPorts::contains);
+	}
+
+	//todo with elementId
 	public Optional<String> getContainerStatus(String containerId) {
 		try {
 			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
@@ -451,43 +487,4 @@ public class DockerUtil {
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
-
-	/**
-	 * compares whether an {@link Element} {@link PortMapping} is
-	 * same as its corresponding {@link Container} or not
-	 *
-	 * @param element - {@link Element}
-	 * @return boolean
-	 */
-	public boolean comparePorts(Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings();
-		Container container = getContainer(element.getElementId());
-		if (container == null)
-			return false;
-		ContainerPort[] containerPorts = container.getPorts();
-
-		if (elementPorts == null && containerPorts == null)
-			return true;
-		else if (containerPorts == null)
-			return elementPorts.size() == 0;
-		else if (elementPorts == null)
-			return containerPorts.length == 0;
-		else if (elementPorts.size() != containerPorts.length)
-			return false;
-
-		for (PortMapping elementPort : elementPorts) {
-			boolean found = false;
-			for (ContainerPort containerPort : containerPorts)
-				if (containerPort.getPrivatePort().toString().equals(elementPort.getInside()))
-					if (containerPort.getPublicPort().toString().equals(elementPort.getOutside())) {
-						found = true;
-						break;
-					}
-			if (!found)
-				return false;
-		}
-
-		return true;
-	}
-
 }

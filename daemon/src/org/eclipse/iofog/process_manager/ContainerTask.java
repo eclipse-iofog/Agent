@@ -14,7 +14,7 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 
-import java.util.Objects;
+import static org.apache.commons.lang.StringUtils.EMPTY;
 
 /**
  * represents tasks applied on a {@link Container}
@@ -28,34 +28,58 @@ public class ContainerTask {
         REMOVE
     }
 
-    public Tasks action;
-    public Object data;
-    public int retries;
+    private Tasks action;
+    private String elementId;
+    private String containerId;
+    private int retries;
 
-    public ContainerTask(Tasks action, Object data) {
+    public ContainerTask(Tasks action, String elementId, String containerId) {
         this.action = action;
-        this.data = data;
+        this.elementId = elementId != null ? elementId : EMPTY;
+        this.containerId = containerId != null ? containerId : EMPTY;
         this.retries = 0;
     }
 
-    public ContainerTask(Tasks action, Object data, int retries) {
-        this.action = action;
-        this.data = data;
-        this.retries = retries;
+    public Tasks getAction() {
+        return action;
+    }
+
+    public int getRetries() {
+        return retries;
+    }
+
+    public String getElementId() {
+        return elementId;
+    }
+
+    public String getContainerId() {
+        return containerId;
+    }
+
+    public void incrementRetries() {
+        this.retries++;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         ContainerTask that = (ContainerTask) o;
-        return retries == that.retries &&
-                Objects.equals(action, that.action);
+
+        if (retries != that.retries) return false;
+        if (action != that.action) return false;
+        if (!elementId.equals(that.elementId)) return false;
+        return containerId.equals(that.containerId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(action, retries);
+        int result = action.hashCode();
+        result = 31 * result + elementId.hashCode();
+        result = 31 * result + containerId.hashCode();
+        result = 31 * result + retries;
+        return result;
     }
 }
 
