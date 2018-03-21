@@ -12,10 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * IOElements common repository
@@ -119,7 +116,7 @@ public class ElementManager {
 	}
 
 	public boolean elementExists(List<Element> elements, String elementId) {
-		return getLatestElementById(elements, elementId) != null;
+		return getLatestElementById(elements, elementId).isPresent();
 	}
 
 	public void clear() {
@@ -132,16 +129,13 @@ public class ElementManager {
 		}
 	}
 
-	public Element getLatestElementById(String elementId) {
+	public Optional<Element> getLatestElementById(String elementId) {
 		return getLatestElementById(latestElements, elementId);
 	}
 
-	public Element getLatestElementById(List<Element> elements, String elementId) {
-		for (Element element : elements) {
-			if (element.getElementId().equals(elementId)) {
-				return element;
-			}
-		}
-		return null;
+	public Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
+		return elements.stream()
+				.filter(element -> element.getElementId().equals(elementId))
+				.findAny();
 	}
 }

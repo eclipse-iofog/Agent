@@ -14,8 +14,6 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 
-import java.util.Objects;
-
 /**
  * represents tasks applied on a {@link Container}
  *
@@ -65,14 +63,22 @@ public class ContainerTask {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         ContainerTask that = (ContainerTask) o;
-        return retries == that.retries &&
-                Objects.equals(action, that.action);
+
+        if (retries != that.retries) return false;
+        if (action != that.action) return false;
+        if (!elementId.equals(that.elementId)) return false;
+        return containerId.equals(that.containerId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(action, retries);
+        int result = action.hashCode();
+        result = 31 * result + elementId.hashCode();
+        result = 31 * result + containerId.hashCode();
+        result = 31 * result + retries;
+        return result;
     }
 }
 

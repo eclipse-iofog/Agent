@@ -23,6 +23,7 @@ import org.eclipse.iofog.utils.configuration.Configuration;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 
 import static java.lang.String.format;
@@ -42,8 +43,6 @@ public class ProcessManager implements IOFogModule {
 	private ElementManager elementManager;
 	private final Queue<ContainerTask> tasks = new LinkedList<>();
 	;
-	public static Boolean updated = true;
-	//	private Object checkTasksLock = new Object();
 	private DockerUtil docker;
 	private ContainerManager containerManager;
 	private static ProcessManager instance;
@@ -71,7 +70,7 @@ public class ProcessManager implements IOFogModule {
 		return instance;
 	}
 
-	public void updateRegistriesStatus() {
+	private void updateRegistriesStatus() {
 		StatusReporter.getProcessManagerStatus().getRegistriesStatus().entrySet()
 				.removeIf(entry -> (elementManager.getRegistry(entry.getKey()) == null));
 	}
@@ -80,28 +79,30 @@ public class ProcessManager implements IOFogModule {
 	 * updates {@link Container} base on changes applied to list of {@link Element}
 	 * Field Agent call this method when any changes applied
 	 */
-	public void update(List<Element> latestElements) {
+	public void update() {
 
+		updateRegistriesStatus();
+
+		List<Element> latestElements = elementManager.getLatestElements();
 		for (Element element : latestElements) {
-			Container container = docker.getContainer(element.getElementId());
-			if (container != null && !element.isRebuild()) {
-				element.setContainerId(container.getId());
+			Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
+			if (containerOptional.isPresent() && !element.isRebuild()) {
+				String containerId = containerOptional.get().getId();
+				element.setContainerId(containerId);
 				try {
-					element.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
+					element.setContainerIpAddress(docker.getContainerIpAddress(containerId));
 				} catch (Exception e) {
 					element.setContainerIpAddress("0.0.0.0");
 				}
 				long elementLastModified = element.getLastModified();
-				long containerStartedAt = docker.getContainerStartedAt(container.getId());
-				if (elementLastModified > containerStartedAt || !docker.isPortMappingEqual(container.getId(), element)) {
-					addTask(new ContainerTask(UPDATE, element.getElementId(), container.getId()));
+				long containerStartedAt = docker.getContainerStartedAt(containerId);
+				if (elementLastModified > containerStartedAt || !docker.isPortMappingEqual(containerId, element)) {
+					addTask(new ContainerTask(UPDATE, element.getElementId(), containerId));
 				}
 			} else {
 				addTask(new ContainerTask(ADD, element.getElementId(), null));
 			}
 		}
-
-		updateRegistriesStatus();
 	}
 
 	/**
@@ -123,8 +124,9 @@ public class ProcessManager implements IOFogModule {
 			List<Element> latestElements = elementManager.getLatestElements();
 			List<Element> currentElements = elementManager.getCurrentElements();
 
+
 			for (Element element : latestElements) {
-				if (!docker.hasContainer(element.getContainerId()) || element.isRebuild()) {
+				if (!docker.hasContainerByElementId(element.getElementId()) || element.isRebuild()) {
 					addTask(new ContainerTask(ADD, element.getElementId(), null));
 				}
 			}
@@ -132,24 +134,24 @@ public class ProcessManager implements IOFogModule {
 
 			List<Container> containers = docker.getContainers();
 			for (Container container : containers) {
-				String elementId = container.getNames()[0].substring(1);
-				Element element = elementManager.getLatestElementById(elementId);
+				String elementId = docker.getContainerName(container);
+				Optional<Element> elementOptional = elementManager.getLatestElementById(elementId);
 
 				boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
 				// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
-				if (element == null) {
+				if (!elementOptional.isPresent()) {
 					if (isIsolatedDockerContainers || elementManager.elementExists(currentElements, elementId)) {
 						addTask(new ContainerTask(REMOVE, null, container.getId()));
 					}
 				} else {
 					try {
-						element.setContainerId(container.getId());
-						element.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
-						String containerName = container.getNames()[0].substring(1);
+						elementOptional.get().setContainerId(container.getId());
+						elementOptional.get().setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
+						String containerName = docker.getContainerName(container);
 						ElementStatus status = docker.getContainerStatus(container.getId());
 						StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
 						if (status.getStatus().equals(ElementState.RUNNING)) {
-							logInfo(format("\"%s\": running ", element.getElementId()) + container.getImage());
+							logInfo(format("\"%s\": running ", elementOptional.get().getElementId()) + container.getImage());
 						} else {
 							logInfo(format("\"%s\": container stopped", containerName));
 							try {
@@ -158,13 +160,14 @@ public class ProcessManager implements IOFogModule {
 								StatusReporter.setProcessManagerStatus()
 										.setElementsStatus(containerName, docker.getContainerStatus(container.getId()));
 								logInfo(format("\"%s\": started", containerName));
-							} catch (Exception startException) {
+							} catch (Exception ex) {
 								// unable to start the container, update it!
-								addTask(new ContainerTask(UPDATE, element.getElementId(), null));
+								logWarning(ex.getMessage());
+								addTask(new ContainerTask(UPDATE, elementOptional.get().getElementId(), null));
 							}
 						}
 					} catch (Exception e) {
-						logInfo("Error getting docker container info : " + e.getMessage());
+						logInfo("Unable to get docker container info : " + e.getMessage());
 					}
 				}
 			}

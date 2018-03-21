@@ -70,7 +70,6 @@ public class FieldAgent implements IOFogModule {
 	private SshProxyManager sshProxyManager;
 	private long lastGetChangesList;
 	private ElementManager elementManager;
-	private ProcessManager processManager;
 	private static FieldAgent instance;
 	private boolean initialization;
 	private boolean connected = false;
@@ -242,6 +241,7 @@ public class FieldAgent implements IOFogModule {
 				}
 				if (changes.getBoolean("registries") || initialization) {
 					loadRegistries(false);
+					ProcessManager.getInstance().update();
 				}
 				if (changes.getBoolean("containerconfig") || initialization) {
 					loadElementsConfig(false);
@@ -249,7 +249,7 @@ public class FieldAgent implements IOFogModule {
 				}
 				if (changes.getBoolean("containerlist") || initialization) {
 					loadElementsList(false);
-
+					ProcessManager.getInstance().update();
 				}
 				if (changes.getBoolean("routing") || initialization) {
 					loadRoutes(false);
@@ -480,7 +480,6 @@ public class FieldAgent implements IOFogModule {
 					.map(containerJsonObjectToElementFunction())
 					.collect(toList());
 
-			processManager.update(latestElements);
 			elementManager.setLatestElements(latestElements);
 
 		} catch (CertificateException | SSLHandshakeException e) {
@@ -875,7 +874,7 @@ public class FieldAgent implements IOFogModule {
 	private void notifyModules() {
 		MessageBus.getInstance().update();
 		LocalApi.getInstance().update();
-		ProcessManager.getInstance().updateRegistriesStatus();
+		ProcessManager.getInstance().update();
 	}
 
 	/**
@@ -927,7 +926,6 @@ public class FieldAgent implements IOFogModule {
 			StatusReporter.setFieldAgentStatus().setContollerStatus(NOT_PROVISIONED);
 
 		elementManager = ElementManager.getInstance();
-		processManager = ProcessManager.getInstance();
 		orchestrator = new Orchestrator();
 		sshProxyManager = new SshProxyManager(new SshConnection());
 

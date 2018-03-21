@@ -133,7 +133,7 @@ public class DockerUtil {
 	 * @return memory usage in bytes
 	 */
 	public long getMemoryUsage(String containerId) {
-		if (!hasContainer(containerId))
+		if (!hasContainerByContainerId(containerId))
 			return 0;
 
 		StatsCallback statsCallback = new StatsCallback();
@@ -157,7 +157,7 @@ public class DockerUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public float getCpuUsage(String containerId) {
-		if (!hasContainer(containerId))
+		if (!hasContainerByContainerId(containerId))
 			return 0;
 
 		StatsCallback statsCallback = new StatsCallback();
@@ -281,17 +281,20 @@ public class DockerUtil {
 		}
 	}
 
+	public String getContainerName(Container container) {
+		return container.getNames()[0].substring(1);
+	}
+
 	/**
 	 * returns a {@link Container} if exists
 	 *
 	 * @param elementId - name of {@link Container} (id of {@link Element})
-	 * @return
+	 * @return Optional<Container>
 	 */
-	public Container getContainer(String elementId) {
+	public Optional<Container> getContainerByElementId(String elementId) {
 		List<Container> containers = getContainers();
-		Optional<Container> result = containers.stream()
-				.filter(c -> c.getNames()[0].trim().substring(1).equals(elementId)).findFirst();
-		return result.orElse(null);
+		return containers.stream()
+				.filter(c -> getContainerName(c).equals(elementId)).findFirst();
 	}
 
 	/**
@@ -318,30 +321,26 @@ public class DockerUtil {
 	 *
 	 * @param id - id of {@link Container}
 	 * @return {@link ElementStatus}
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public ElementStatus getContainerStatus(String id) throws Exception {
-		try {
-			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
-			ContainerState status = inspectInfo.getState();
-			ElementStatus result = new ElementStatus();
-			if (status.getRunning()) {
-				result.setStartTime(getStartedTime(status.getStartedAt()));
-				result.setCpuUsage(0);
-				result.setMemoryUsage(0);
-				result.setStatus(ElementState.fromText(status.getStatus()));
-			} else {
-				result.setStatus(ElementState.STOPPED);
-			}
-			return result;
-		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
-			throw exp;
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
+		ContainerState status = inspectInfo.getState();
+		ElementStatus result = new ElementStatus();
+		if (status.getRunning() != null && status.getRunning()) {
+			result.setStartTime(getStartedTime(status.getStartedAt()));
+			result.setCpuUsage(0);
+			result.setMemoryUsage(0);
+			result.setStatus(ElementState.fromText(status.getStatus()));
+		} else {
+			result.setStatus(ElementState.STOPPED);
 		}
+		return result;
 	}
 
 	/**
 	 * return container last start epoch time
+	 *
 	 * @param id container id
 	 * @return long epoch time
 	 */
@@ -353,8 +352,9 @@ public class DockerUtil {
 
 	/**
 	 * compares if element port mapping is equal to container port mapping
+	 *
 	 * @param containerId container id
-	 * @param element element
+	 * @param element     element
 	 * @return boolean
 	 */
 	public boolean isPortMappingEqual(String containerId, Element element) {
@@ -409,16 +409,28 @@ public class DockerUtil {
 	/**
 	 * returns whether the {@link Container} exists or not
 	 *
-	 * @param containerId - id of {@link Container}
-	 * @return
+	 * @param elementId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
 	 */
-	public boolean hasContainer(String containerId) {
-		try {
-			getContainerStatus(containerId);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
+	public boolean hasContainerByElementId(String elementId) {
+		List<Container> containers = getContainers();
+		Optional<Container> containerOptional = containers.stream()
+				.filter(c -> getContainerName(c).equals(elementId)).findFirst();
+		return containerOptional.isPresent();
+	}
+
+	/**
+	 * returns whether the {@link Container} exists or not
+	 *
+	 * @param containerId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerByContainerId(String containerId) {
+		List<Container> containers = getContainers();
+		Optional<Container> containerOptional = containers.stream()
+				.filter(container -> container.getId().equals(containerId))
+				.findAny();
+		return containerOptional.isPresent();
 	}
 
 	/**
