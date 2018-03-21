@@ -162,7 +162,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void removeContainerByContainerId(String containerId) throws Exception {
-		if (docker.hasContainerByContainerId(containerId)) {
+		if (docker.hasContainerWithContainerId(containerId)) {
 			LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 			try {
 				docker.removeContainer(containerId);

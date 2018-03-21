@@ -126,7 +126,7 @@ public class ProcessManager implements IOFogModule {
 
 
 			for (Element element : latestElements) {
-				if (!docker.hasContainerByElementId(element.getElementId()) || element.isRebuild()) {
+				if (!docker.hasContainerWithElementId(element.getElementId()) || element.isRebuild()) {
 					addTask(new ContainerTask(ADD, element.getElementId(), null));
 				}
 			}

@@ -133,7 +133,7 @@ public class DockerUtil {
 	 * @return memory usage in bytes
 	 */
 	public long getMemoryUsage(String containerId) {
-		if (!hasContainerByContainerId(containerId))
+		if (!hasContainerWithContainerId(containerId))
 			return 0;
 
 		StatsCallback statsCallback = new StatsCallback();
@@ -157,7 +157,7 @@ public class DockerUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public float getCpuUsage(String containerId) {
-		if (!hasContainerByContainerId(containerId))
+		if (!hasContainerWithContainerId(containerId))
 			return 0;
 
 		StatsCallback statsCallback = new StatsCallback();
@@ -412,7 +412,7 @@ public class DockerUtil {
 	 * @param elementId - id of {@link Element}
 	 * @return boolean true if exists and false in other case
 	 */
-	public boolean hasContainerByElementId(String elementId) {
+	public boolean hasContainerWithElementId(String elementId) {
 		List<Container> containers = getContainers();
 		Optional<Container> containerOptional = containers.stream()
 				.filter(c -> getContainerName(c).equals(elementId)).findFirst();
@@ -425,7 +425,7 @@ public class DockerUtil {
 	 * @param containerId - id of {@link Element}
 	 * @return boolean true if exists and false in other case
 	 */
-	public boolean hasContainerByContainerId(String containerId) {
+	public boolean hasContainerWithContainerId(String containerId) {
 		List<Container> containers = getContainers();
 		Optional<Container> containerOptional = containers.stream()
 				.filter(container -> container.getId().equals(containerId))
