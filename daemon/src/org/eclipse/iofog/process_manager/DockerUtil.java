@@ -410,7 +410,8 @@ public class DockerUtil {
 	public boolean hasContainerWithElementId(String elementId) {
 		List<Container> containers = getContainers();
 		Optional<Container> containerOptional = containers.stream()
-				.filter(c -> getContainerName(c).equals(elementId)).findFirst();
+				.filter(c -> getContainerName(c).equals(elementId))
+				.findAny();
 		return containerOptional.isPresent();
 	}
 
