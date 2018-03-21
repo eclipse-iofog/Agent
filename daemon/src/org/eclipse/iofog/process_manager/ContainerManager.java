@@ -45,31 +45,19 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	public String addContainer(Element element) throws Exception {
-		Registry registry = getRegistry(element);
 		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
 
 		Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
 
 		String containerId = containerOptional.isPresent() ? containerOptional.get().getId() : null;
 		if (containerOptional.isPresent() && element.isRebuild()) {
-			containerId = rebuildContainer(element, registry);
+			containerId = rebuildContainer(element);
 			startContainer(element);
 		} else if (!containerOptional.isPresent()) {
-			containerId = createContainer(element, registry);
+			containerId = createContainer(element);
 			startContainer(element);
 		}
 		return containerId;
-	}
-
-	/**
-	 * updates element with new container info
-	 *
-	 * @throws Exception exception
-	 */
-	private String createContainer(Element element) throws Exception {
-		Registry registry = getRegistry(element);
-		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
-		return createContainer(element, registry);
 	}
 
 	private Registry getRegistry(Element element) throws Exception {
@@ -81,7 +69,7 @@ public class ContainerManager {
 		return registry;
 	}
 
-	private String rebuildContainer(Element element, Registry registry) throws Exception {
+	private String rebuildContainer(Element element) throws Exception {
 		stopContainer(element.getElementId());
 		removeContainerByElementId(element.getElementId());
 		try {
@@ -89,11 +77,11 @@ public class ContainerManager {
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, String.format("error removing docker image \"%s\"", element.getImageName()));
 		}
-		return createContainer(element, registry);
+		return createContainer(element);
 	}
 
-	private String createContainer(Element element, Registry registry) throws Exception {
-		try {
+	private String createContainer(Element element) throws Exception {
+			Registry registry = getRegistry(element);
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
 			docker.pullImage(element.getImageName(), registry);
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
@@ -108,10 +96,6 @@ public class ContainerManager {
 			element.setRebuild(false);
 			LoggingService.logInfo(MODULE_NAME, "created");
 			return id;
-		} catch (Exception ex) {
-			LoggingService.logWarning(MODULE_NAME, ex.getMessage());
-			throw ex;
-		}
 	}
 
 	/**
