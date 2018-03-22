@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class Element {
 
-    private final String elementId;
+    private final String elementId; //container name
     private final String imageName;
     private List<PortMapping> portMappings;
     private long lastModified;

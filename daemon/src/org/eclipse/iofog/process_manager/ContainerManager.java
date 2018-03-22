@@ -45,7 +45,7 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	public String addContainer(Element element) throws Exception {
+	private String addContainer(Element element) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
 
 		Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
@@ -156,7 +156,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void removeContainerByContainerId(String containerId) throws Exception {
-		if (docker.hasContainerWithContainerId(containerId)) {
+		if (docker.getContainerStatus(containerId).isPresent()) {
 			removeContainer(containerId);
 		}
 	}
@@ -177,7 +177,7 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	public String updateContainer(Element element) throws Exception {
+	private String updateContainer(Element element) throws Exception {
 		stopContainer(element.getElementId());
 		removeContainerByElementId(element.getElementId());
 		return createContainer(element);

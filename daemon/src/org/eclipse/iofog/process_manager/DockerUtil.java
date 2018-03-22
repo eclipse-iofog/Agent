@@ -41,9 +41,9 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -322,6 +322,18 @@ public class DockerUtil {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
 		}
+	}
+
+	/**
+	 * return container last start epoch time
+	 *
+	 * @param id container id
+	 * @return long epoch time
+	 */
+	public long getContainerStartedAt(String id) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
+		String startedAt = inspectInfo.getState().getStartedAt();
+		return startedAt != null ? DateTimeFormatter.ISO_INSTANT.parse(startedAt, Instant::from).toEpochMilli() : Instant.now().toEpochMilli();
 	}
 
 	/**
