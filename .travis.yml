@@ -1,9 +1,6 @@
 sudo: true
 language: java
 jdk: openjdk8
-cache:
-  directories:
-  - "$HOME/.cache"
 notifications:
   email: false
   slack:
@@ -12,19 +9,19 @@ notifications:
     on_success: change
     on_failure: always
 stages:
-- name: build
+- name: dev_build
   if: branch = develop
 - name: package_build
-  if: branch IN (master, dev_package)
-- name: deploy
   if: branch IN (master, dev_package)
 
 jobs:
   include:
-  - stage: build
+  - stage: dev_build
     before_install:
-    - sudo apt-get install sshpass
+    - sudo apt-get install sshpass xml-twig-tools
     script:
+    - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
+    - mvn clean install
     - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf
       /usr/bin/iofogd_bckp.jar /usr/bin/iofog_bckp.jar; sudo mv /usr/bin/iofogd.jar
@@ -38,58 +35,43 @@ jobs:
       sudo rm -rf /home/owner/iofogd.jar /home/owner/iofog.jar; sudo service iofog
       start"
   - stage: package_build
-    if: branch = dev_package
-    env: DEV=-dev
     before_install:
-    - sudo apt-get update
-    - sudo apt-get install ruby-dev build-essential rubygems-update
-    - ruby --version
-    #- update_rubygems
-    #- gem update --system
+    - rvm install 1.9.3
+    - sudo apt-get install sshpass xml-twig-tools ruby ruby-dev rubygems-integration build-essential rpm
     install:
     - sudo gem install bundler 
     - sudo gem install --no-ri --no-rdoc fpm
     - bundle
     script:
+    - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
+    - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
     - mvn clean install
-    - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging/usr/bin/iofogd.jar
-    - cp client/target/iofog-client-jar-with-dependencies.jar iofog-packaging/usr/bin/iofog.jar
-    - cp daemon/target/iofog-daemon-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofogd.jar
-    - cp client/target/iofog-client-jar-with-dependencies.jar iofog-packaging-rpm/usr/bin/iofog.jar
-    - cd iofog-packaging
-    - fpm -s dir -t deb -n "iofog${DEV}" -v $VERSION -a all --deb-no-default-config-files
-      --after-install debian.sh etc usr var
-    - cd ../iofog-packaging-rpm
-    - fpm -s dir -t rpm -n "iofog${DEV}" -v $VERSION -a all --rpm-os 'linux' --after-install
-      rpm.sh etc usr var
-  - stage: deploy
-    script: skip
-    env:
-    - OS=ubuntu DIST=precise FOLDER=iofog-packaging EXTENSION=deb
-    - OS=ubuntu DIST=trusty FOLDER=iofog-packaging EXTENSION=deb
-    - OS=ubuntu DIST=utopic FOLDER=iofog-packaging EXTENSION=deb
-    - OS=ubuntu DIST=vivid FOLDER=iofog-packaging EXTENSION=deb
-    - OS=ubuntu DIST=wily FOLDER=iofog-packaging EXTENSION=deb
-    - OS=ubuntu DIST=xenial FOLDER=iofog-packaging EXTENSION=deb
-    - OS=debian DIST=wheezy FOLDER=iofog-packaging EXTENSION=deb
-    - OS=debian DIST=jessie FOLDER=iofog-packaging EXTENSION=deb
-    - OS=debian DIST=stretch FOLDER=iofog-packaging EXTENSION=deb
-    - OS=debian DIST=buster FOLDER=iofog-packaging EXTENSION=deb
-    - OS=raspbian DIST=wheezy FOLDER=iofog-packaging EXTENSION=deb
-    - OS=raspbian DIST=jessie FOLDER=iofog-packaging EXTENSION=deb
-    - OS=raspbian DIST=stretch FOLDER=iofog-packaging EXTENSION=deb
-    - OS=raspbian DIST=buster FOLDER=iofog-packaging EXTENSION=deb
-    - OS=fedora DIST=22 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-    - OS=fedora DIST=23 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-    - OS=fedora DIST=24 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-    - OS=el DIST=7 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-    - OS=el DIST=6 FOLDER=iofog-packaging-rpm EXTENSION=rpm
-    deploy:
-    - provider: packagecloud
-      repository: "${PACKAGECLOUD_REPO}"
-      username: "${PACKAGECLOUD_USERNAME}"
-      token: "${PACKAGECLOUD_TOKEN}"
-      dist: "${OS}/${DIST}"
-      package_glob: "${FOLDER}/*.${EXTENSION}"
-      on:
-        condition: -n "${OS}" && -n "${DIST}" && -n "${FOLDER}" && -n "${EXTENSION}"
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofogd.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofog.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofogd.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofog.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf iofog${DEV}_${VERSION}_all.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a 
+      all --deb-no-default-config-files --after-install debian.sh etc usr var; package_cloud push iotracks/iofog/ubuntu/precise 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iotracks/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iotracks/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/wily 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/xenial iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iotracks/iofog/debian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iotracks/iofog/debian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/debian/stretch 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/debian/buster iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iotracks/iofog/raspbian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iotracks/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/stretch 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
+      cd /iofog-packaging-rpm; rm -rf iofog${DEV}-${VERSION}-1.noarch.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' --after-install 
+      rpm.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
+      push iotracks/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/fedora/24 
+      iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
