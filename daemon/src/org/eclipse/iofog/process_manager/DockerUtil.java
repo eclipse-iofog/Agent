@@ -294,7 +294,8 @@ public class DockerUtil {
 	public Optional<Container> getContainerByElementId(String elementId) {
 		List<Container> containers = getContainers();
 		return containers.stream()
-				.filter(c -> getContainerName(c).equals(elementId)).findFirst();
+				.filter(c -> getContainerName(c).equals(elementId))
+				.findAny();
 	}
 
 	/**
