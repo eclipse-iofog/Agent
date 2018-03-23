@@ -241,8 +241,7 @@ public class MessageBus implements IOFogModule {
 			List<String> newPublishers = new ArrayList<>();
 			List<String> newReceivers = new ArrayList<>();
 			
-			if (newRoutes != null) {
-				newRoutes.entrySet()
+			newRoutes.entrySet()
 					.stream()
 					.filter(route -> route.getValue() != null)
 					.filter(route -> route.getValue().getReceivers() != null)
@@ -252,8 +251,7 @@ public class MessageBus implements IOFogModule {
 								.stream().filter(item -> !newReceivers.contains(item))
 								.collect(Collectors.toList()));
 					});
-			}
-			
+
 			publishers.forEach((key, value) -> {
 				if (!newPublishers.contains(key)) {
 					value.close();
@@ -285,12 +283,12 @@ public class MessageBus implements IOFogModule {
 			routes = newRoutes;
 
 			List<Element> latestElements = elementManager.getLatestElements();
-			StatusReporter.getMessageBusStatus()
-				.getPublishedMessagesPerElement().entrySet().removeIf(entry ->
-					!elementManager.elementExists(latestElements, entry.getKey()));
+			Map<String, Long> publishedMessagesPerElement = StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement();
+			publishedMessagesPerElement.keySet().removeIf(key -> !elementManager.elementExists(latestElements, key));
 			latestElements.forEach(e -> {
-				if (!StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().entrySet().contains(e.getElementId()))
-						StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().put(e.getElementId(), 0L);
+				if (!publishedMessagesPerElement.keySet().contains(e.getElementId())) {
+					publishedMessagesPerElement.put(e.getElementId(), 0L);
+				}
 			});
 		}
 	}
