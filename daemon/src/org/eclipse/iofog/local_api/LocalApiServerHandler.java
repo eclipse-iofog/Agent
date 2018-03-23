@@ -161,12 +161,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 			return;
 		}
 
-		if (request.uri().startsWith("/v2/commandline")) {
-			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
-
 		String uri = request.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
