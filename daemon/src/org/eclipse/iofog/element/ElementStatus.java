@@ -27,6 +27,7 @@ public class ElementStatus {
 	private long startTime;
 	private float cpuUsage;
 	private long memoryUsage;
+	private String containerId;
 
 	public float getCpuUsage() {
 		return cpuUsage;
@@ -77,4 +78,11 @@ public class ElementStatus {
 		return status != null ? status.hashCode() : 0;
 	}
 
+	public String getContainerId() {
+		return containerId;
+	}
+
+	public void setContainerId(String containerId) {
+		this.containerId = containerId;
+	}
 }

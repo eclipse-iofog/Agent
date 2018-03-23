@@ -16,9 +16,8 @@ import java.util.*;
 
 /**
  * IOElements common repository
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class ElementManager {
 
@@ -28,7 +27,7 @@ public class ElementManager {
 	private Map<String, String> configs;
 	private List<Registry> registries;
 	private static ElementManager instance = null;
-	
+
 	private ElementManager() {
 		latestElements = new ArrayList<>();
 		currentElements = new ArrayList<>();
@@ -36,7 +35,7 @@ public class ElementManager {
 		configs = new HashMap<>();
 		registries = new ArrayList<>();
 	}
-	
+
 	public static ElementManager getInstance() {
 		if (instance == null) {
 			synchronized (ElementManager.class) {
@@ -46,7 +45,7 @@ public class ElementManager {
 		}
 		return instance;
 	}
-	
+
 	public List<Element> getLatestElements() {
 		synchronized (ElementManager.class) {
 			return latestElements;
@@ -76,7 +75,7 @@ public class ElementManager {
 			return registries;
 		}
 	}
-	
+
 	public Registry getRegistry(String name) {
 		for (Registry registry : registries) {
 			if (registry.getUrl().equalsIgnoreCase(name))
@@ -84,7 +83,7 @@ public class ElementManager {
 		}
 		return null;
 	}
-	
+
 	public void setRegistries(List<Registry> registries) {
 		synchronized (ElementManager.class) {
 			this.registries = registries;

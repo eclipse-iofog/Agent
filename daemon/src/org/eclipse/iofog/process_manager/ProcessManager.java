@@ -149,7 +149,7 @@ public class ProcessManager implements IOFogModule {
 						elementOptional.get().setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
 						String containerName = docker.getContainerName(container);
 						ElementStatus status = docker.getFullContainerStatus(container.getId());
-						StatusReporter.setProcessManagerStatus().setElementsStatus(container.getId(), status);
+						StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
 						if (status.getStatus().equals(ElementState.RUNNING)) {
 							logInfo(format("\"%s\": running ", elementOptional.get().getElementId()) + container.getImage());
 						} else {
@@ -158,7 +158,7 @@ public class ProcessManager implements IOFogModule {
 								logInfo(format("\"%s\": starting", containerName));
 								docker.startContainer(container.getId());
 								StatusReporter.setProcessManagerStatus()
-										.setElementsStatus(container.getId(), docker.getFullContainerStatus(container.getId()));
+										.setElementsStatus(containerName, docker.getFullContainerStatus(container.getId()));
 								logInfo(format("\"%s\": started", containerName));
 							} catch (Exception ex) {
 								// unable to start the container, update it!

@@ -302,7 +302,7 @@ public class DockerUtil {
 	/**
 	 * gets {@link Container} status
 	 *
-	 * @param id - id of {@link Container}
+	 * @param containerId - id of {@link Container}
 	 * @return {@link ElementStatus}
 	 * @throws Exception exception
 	 */
@@ -315,6 +315,7 @@ public class DockerUtil {
 				setUsage(containerId, result);
 				result.setStartTime(getStartedTime(status.getStartedAt()));
 				result.setStatus(ElementState.fromText(status.getStatus()));
+				result.setContainerId(containerId);
 			} else {
 				result.setStatus(ElementState.STOPPED);
 			}
