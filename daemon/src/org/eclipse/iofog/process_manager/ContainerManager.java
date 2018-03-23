@@ -62,10 +62,10 @@ public class ContainerManager {
 
 	private Registry getRegistry(Element element) throws Exception {
 		Registry registry;
-			registry = elementManager.getRegistry(element.getRegistry());
-			if (registry == null) {
-				throw new Exception(String.format("registry is not valid \"%s\"", element.getRegistry()));
-			}
+		registry = elementManager.getRegistry(element.getRegistry());
+		if (registry == null) {
+			throw new Exception(String.format("registry is not valid \"%s\"", element.getRegistry()));
+		}
 		return registry;
 	}
 
@@ -81,22 +81,22 @@ public class ContainerManager {
 	}
 
 	private String createContainer(Element element) throws Exception {
-			Registry registry = getRegistry(element);
-			LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
-			docker.pullImage(element.getImageName(), registry);
-			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
+		Registry registry = getRegistry(element);
+		LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
+		docker.pullImage(element.getImageName(), registry);
+		LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
 
-			LoggingService.logInfo(MODULE_NAME, "creating container");
-			String hostName = EMPTY;
-			if (!element.isRootHostAccess())
-				hostName = IOFogNetworkInterface.getCurrentIpAddress();
-			String id = docker.createContainer(element, hostName);
-			element.setContainerId(id);
-			element.setContainerIpAddress(docker.getContainerIpAddress(id));
-			element.setRebuild(false);
-			LoggingService.logInfo(MODULE_NAME, "created");
-			startContainer(element);
-			return id;
+		LoggingService.logInfo(MODULE_NAME, "creating container");
+		String hostName = EMPTY;
+		if (!element.isRootHostAccess())
+			hostName = IOFogNetworkInterface.getCurrentIpAddress();
+		String id = docker.createContainer(element, hostName);
+		element.setContainerId(id);
+		element.setContainerIpAddress(docker.getContainerIpAddress(id));
+		element.setRebuild(false);
+		LoggingService.logInfo(MODULE_NAME, "created");
+		startContainer(element);
+		return id;
 	}
 
 	/**
@@ -119,6 +119,7 @@ public class ContainerManager {
 
 	/**
 	 * stops a {@link Container}
+	 *
 	 * @param elementId id of the {@link Element}
 	 */
 	private void stopContainer(String elementId) {
@@ -156,7 +157,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void removeContainerByContainerId(String containerId) throws Exception {
-		if (docker.getContainerStatus(containerId).isPresent()) {
+		if (docker.hasContainerWithContainerId(containerId)) {
 			removeContainer(containerId);
 		}
 	}

@@ -129,11 +129,11 @@ public class DockerUtil {
 	 * set in {@link ElementStatus} cpu usage and memory usage of given {@link Container}
 	 *
 	 * @param containerId - id of {@link Container}
-	 * @param status - status of {@link ElementStatus}
+	 * @param status      - status of {@link ElementStatus}
 	 */
 	@SuppressWarnings("unchecked")
 	private ElementStatus setUsage(String containerId, ElementStatus status) {
-		if (!getContainerStatus(containerId).isPresent()) {
+		if (!hasContainerWithContainerId(containerId)) {
 			return status;
 		}
 
@@ -367,7 +367,6 @@ public class DockerUtil {
 				.allMatch(containerPorts::contains);
 	}
 
-	//todo with elementId
 	public Optional<String> getContainerStatus(String containerId) {
 		try {
 			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
@@ -377,6 +376,20 @@ public class DockerUtil {
 			logWarning(MODULE_NAME, exp.getMessage());
 		}
 		return Optional.empty();
+	}
+
+	/**
+	 * returns whether the {@link Container} exists or not
+	 *
+	 * @param containerId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerWithContainerId(String containerId) {
+		List<Container> containers = getContainers();
+		Optional<Container> containerOptional = containers.stream()
+				.filter(container -> container.getId().equals(containerId))
+				.findAny();
+		return containerOptional.isPresent();
 	}
 
 	public boolean isContainerRunning(String containerId) {
