@@ -495,7 +495,9 @@ public class FieldAgent implements IOFogModule {
 			element.setRebuild(jsonObj.getBoolean("rebuild"));
 			element.setRootHostAccess(jsonObj.getBoolean("roothostaccess"));
 			element.setRegistry(jsonObj.getString("registryurl"));
-			element.setLastModified(jsonObj.getJsonNumber("lastmodified").longValue());
+			if (jsonObj.get("lastmodified").getValueType() != JsonValue.ValueType.NULL) {
+				element.setLastModified(jsonObj.getJsonNumber("lastmodified").longValue());
+			}
 			element.setLogSize(jsonObj.getJsonNumber("logsize").longValue());
 
 			JsonArray portMappingObjs = jsonObj.getJsonArray("portmappings");
@@ -780,7 +782,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * sends proxy status information to Fog Controller
 	 */
-	public void postProxyConfig() {
+	private void postProxyConfig() {
 		logInfo("post proxy config");
 		if (notProvisioned() || !isControllerConnected(false)) {
 			return;
