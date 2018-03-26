@@ -466,6 +466,11 @@ public final class Configuration {
 	 * @return
 	 */
 	private static boolean isValidCoordinates(String gpsCoordinates) {
+
+		if ("".equals(gpsCoordinates)) {
+			return true;
+		}
+
 		String[] latLon = gpsCoordinates.split(",");
 
 		if (latLon.length != 2) {
