@@ -161,6 +161,13 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 			return;
 		}
 
+		if (request.uri().startsWith("/v2/gps")) {
+			Callable<FullHttpResponse> callable = new GpsApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		//TODO from MaksimChepelev: strange code. check later
 		String uri = request.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");

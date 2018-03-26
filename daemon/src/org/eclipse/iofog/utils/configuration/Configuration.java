@@ -219,7 +219,7 @@ public final class Configuration {
 	 *
 	 * @throws Exception
 	 */
-	private static void  updateConfigFile() throws Exception {
+	private static void updateConfigFile() throws Exception {
 		Transformer transformer = TransformerFactory.newInstance().newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		StreamResult result = new StreamResult(new File(CONFIG_DIR));
@@ -436,13 +436,61 @@ public final class Configuration {
 		}
 
 		if (gpsCoordinates == null) {
-			throw new ConfigurationItemException("Can't perform "+ gpsCoordinatesCommand + " action for gps config");
+			throw new ConfigurationItemException("Can't perform " + gpsCoordinatesCommand + " action for gps config");
 		} else {
-			setNode(GPS_COORDINATES.getXmlTag(), gpsCoordinates);
-			setGpsCoordinates(gpsCoordinates.trim());
-			setNode(GPS_MODE.getXmlTag(), currentMode.getValue());
-			setGpsMode(currentMode);
+			writeGpsToConfig(currentMode, gpsCoordinates);
 		}
+	}
+
+	/**
+	 * Writes GPS coordinates and GPS mode to config file
+	 *
+	 * @param currentMode
+	 * @param gpsCoordinates
+	 * @throws ConfigurationItemException
+	 */
+	public static void writeGpsToConfig(GpsMode currentMode, String gpsCoordinates) throws ConfigurationItemException {
+		if (!isValidCoordinates(gpsCoordinates)) {
+			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates);
+		}
+		setNode(GPS_COORDINATES.getXmlTag(), gpsCoordinates);
+		setGpsCoordinates(gpsCoordinates.trim());
+		setNode(GPS_MODE.getXmlTag(), currentMode.getValue());
+		setGpsMode(currentMode);
+	}
+
+	/**
+	 * Checks is string a valid DD GPS coordinates
+	 *
+	 * @param gpsCoordinates
+	 * @return
+	 */
+	private static boolean isValidCoordinates(String gpsCoordinates) {
+		String[] latLon = gpsCoordinates.split(",");
+
+		if (latLon.length != 2) {
+			return false;
+		}
+
+		double lat = 0;
+		double lon = 0;
+
+		try {
+			lat = Double.parseDouble(latLon[0]);
+			lon = Double.parseDouble(latLon[1]);
+		} catch (NumberFormatException e) {
+			return  false;
+		}
+
+		if (lat > 90 || lat < -90) {
+			return false;
+		}
+
+		if (lon > 180 || lon < -180) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

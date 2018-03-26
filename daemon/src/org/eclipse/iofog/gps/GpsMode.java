@@ -5,7 +5,8 @@ import java.util.Arrays;
 public enum GpsMode {
 	AUTO("auto"),
 	MANUAL("manual"),
-	OFF("off");
+	OFF("off"),
+	DYNAMIC("dynamic");
 
 	private final String value;
 
