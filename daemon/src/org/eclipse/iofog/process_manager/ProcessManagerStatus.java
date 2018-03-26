@@ -54,6 +54,7 @@ public class ProcessManagerStatus {
 		elementsStatus.forEach((key, status) -> {
 			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
 					.add("id", key)
+					.add("containerId", status.getContainerId())
 					.add("status", status.getStatus().toString())
 					.add("starttime", status.getStartTime())
 					.add("operatingduration", status.getOperatingDuration())
