@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+//TODO 3.27.18: move to gps microservice
 public class GpsWebHandler {
 
 	/**

@@ -39,6 +39,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static java.io.File.separatorChar;
 import static java.lang.String.format;
@@ -437,9 +438,9 @@ public final class Configuration {
 
 		if (gpsCoordinates == null) {
 			throw new ConfigurationItemException("Can't perform " + gpsCoordinatesCommand + " action for gps config");
-		} else {
-			writeGpsToConfig(currentMode, gpsCoordinates);
 		}
+
+		writeGpsToConfig(currentMode, gpsCoordinates);
 	}
 
 	/**
@@ -451,7 +452,8 @@ public final class Configuration {
 	 */
 	public static void writeGpsToConfig(GpsMode currentMode, String gpsCoordinates) throws ConfigurationItemException {
 		if (!isValidCoordinates(gpsCoordinates)) {
-			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates);
+			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
+					+ "Correct format is <DDD.DDDDD,DDD.DDDDD> (GPS DD format)");
 		}
 		setNode(GPS_COORDINATES.getXmlTag(), gpsCoordinates);
 		setGpsCoordinates(gpsCoordinates.trim());
@@ -467,35 +469,25 @@ public final class Configuration {
 	 */
 	private static boolean isValidCoordinates(String gpsCoordinates) {
 
-		if ("".equals(gpsCoordinates)) {
-			return true;
+		boolean isValid = true;
+
+		String fpRegex = "[+-]?[0-9]+(.?[0-9]+)?,?" +
+				"[+-]?[0-9]+(.?[0-9]+)?";
+
+		if (Pattern.matches(fpRegex, gpsCoordinates)) {
+
+			String[] latLon = gpsCoordinates.split(",");
+			double lat = Double.parseDouble(latLon[0]);
+			double lon = Double.parseDouble(latLon[1]);
+
+			if (lat > 90 || lat < -90 || lon > 180 || lon < -180) {
+				isValid = false;
+			}
+		} else {
+			isValid = gpsCoordinates.isEmpty();
 		}
 
-		String[] latLon = gpsCoordinates.split(",");
-
-		if (latLon.length != 2) {
-			return false;
-		}
-
-		double lat = 0;
-		double lon = 0;
-
-		try {
-			lat = Double.parseDouble(latLon[0]);
-			lon = Double.parseDouble(latLon[1]);
-		} catch (NumberFormatException e) {
-			return  false;
-		}
-
-		if (lat > 90 || lat < -90) {
-			return false;
-		}
-
-		if (lon > 180 || lon < -180) {
-			return false;
-		}
-
-		return true;
+		return isValid;
 	}
 
 	/**
