@@ -157,7 +157,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void removeContainerByContainerId(ContainerTask task) throws Exception {
-		if (docker.hasContainerWithElementId(task.getElementId())) {
+		if (docker.hasContainerWithContainerId(task.getContainerId())) {
 			removeContainer(task.getContainerId());
 		}
 	}
