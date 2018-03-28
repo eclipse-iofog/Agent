@@ -86,42 +86,62 @@ public class ElementStatus {
 	 * set in {@link ElementStatus} cpu usage and memory usage of given {@link Container}
 	 *
 	 * @param containerId - id of {@link Container}
-	 * @param status      - status of {@link ElementStatus}
 	 */
-	@SuppressWarnings("unchecked")
-	public ElementStatus setUsage(String containerId, ElementStatus status) {
+	public void setUsage(String containerId) {
 		DockerUtil docker = DockerUtil.getInstance();
-		if (!docker.hasContainerWithContainerId(containerId)) {
-			return status;
+		if (docker.hasContainerWithContainerId(containerId)) {
+			Optional<Statistics> statisticsBefore = docker.getContainerStats(containerId);
+
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException exp) {
+				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+			}
+
+			Optional<Statistics> statisticsAfter = docker.getContainerStats(containerId);
+
+			if (statisticsBefore.isPresent() && statisticsAfter.isPresent()) {
+				Map<String, Object> usageBefore = statisticsBefore.get().getCpuStats();
+				float totalUsageBefore = extractTotalUsage(usageBefore);
+				float systemCpuUsageBefore = extractSystemCpuUsage(usageBefore);
+
+				Map<String, Object> usageAfter = statisticsAfter.get().getCpuStats();
+				float totalUsageAfter = extractTotalUsage(usageAfter);
+				float systemCpuUsageAfter = extractSystemCpuUsage(usageAfter);
+				setCpuUsage(Math.abs(1000f * ((totalUsageAfter - totalUsageBefore) / (systemCpuUsageAfter - systemCpuUsageBefore))));
+
+				Map<String, Object> memoryUsage = statisticsAfter.get().getMemoryStats();
+				setMemoryUsage(extractMemoryUsage(memoryUsage));
+			}
 		}
+	}
 
-		Optional<Statistics> statisticsBefore = docker.statsContainer(containerId);
-		if (!statisticsBefore.isPresent()) {
-			return status;
+	private long extractMemoryUsage(Map<String, Object> memoryUsage) {
+		long usage = 0;
+		if (memoryUsage.containsKey("usage")) {
+			usage = Long.parseLong(memoryUsage.get("usage").toString());
 		}
-		Map<String, Object> usageBefore = statisticsBefore.get().getCpuStats();
-		float totalBefore = Long.parseLong(((Map<String, Object>) usageBefore.get("cpu_usage")).get("total_usage").toString());
-		float systemBefore = Long.parseLong((usageBefore.get("system_cpu_usage")).toString());
+		return usage;
+	}
 
-		try {
-			Thread.sleep(200);
-		} catch (InterruptedException exp) {
-			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+	@SuppressWarnings("unchecked")
+	private float extractTotalUsage(Map<String, Object> statistics) {
+		float totalUsage = 0;
+		if (statistics.containsKey("cpu_usage")) {
+			Map<String, Object> cpuUsage = (Map<String, Object>) statistics.get("cpu_usage");
+			if (cpuUsage.containsKey("total_usage")) {
+				totalUsage = Long.parseLong(cpuUsage.get("total_usage").toString());
+			}
 		}
+		return totalUsage;
+	}
 
-		Optional<Statistics> statisticsAfter = docker.statsContainer(containerId);
-		if (!statisticsAfter.isPresent()) {
-			return status;
+	private float extractSystemCpuUsage(Map<String, Object> statistics) {
+		float systemCpuUsage = 0;
+		if (statistics.containsKey("system_cpu_usage")) {
+			systemCpuUsage =  Long.parseLong((statistics.get("system_cpu_usage")).toString());
 		}
-		Map<String, Object> usageAfter = statisticsAfter.get().getCpuStats();
-		float totalAfter = Long.parseLong(((Map<String, Object>) usageAfter.get("cpu_usage")).get("total_usage").toString());
-		float systemAfter = Long.parseLong((usageAfter.get("system_cpu_usage")).toString());
-		status.setCpuUsage(Math.abs(1000f * ((totalAfter - totalBefore) / (systemAfter - systemBefore))));
-
-		Map<String, Object> memoryUsage = statisticsAfter.get().getMemoryStats();
-		status.setMemoryUsage(Long.parseLong(memoryUsage.get("usage").toString()));
-
-		return status;
+		return systemCpuUsage;
 	}
 
 	@Override

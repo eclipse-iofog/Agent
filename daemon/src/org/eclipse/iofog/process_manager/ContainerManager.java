@@ -108,8 +108,9 @@ public class ContainerManager {
 			if (!docker.isContainerRunning(element.getContainerId())) {
 				docker.startContainer(element.getContainerId());
 			}
-			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" starting", element.getImageName())
-					+ ", status: " + docker.getContainerStatus(element.getContainerId()));
+			Optional<String> statusOptional = docker.getContainerStatus(element.getContainerId());
+			String status = statusOptional.orElse("unknown");
+			LoggingService.logInfo(MODULE_NAME, String.format("starting %s, status: %s", element.getImageName(), status));
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,

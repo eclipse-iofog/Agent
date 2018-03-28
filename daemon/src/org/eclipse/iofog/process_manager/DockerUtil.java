@@ -256,8 +256,8 @@ public class DockerUtil {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 		ContainerState status = inspectInfo.getState();
 		ElementStatus result = new ElementStatus();
-		if (status != null && status.getRunning() != null && status.getRunning()) {
-			result.setUsage(containerId, result);
+		if (status.getRunning() != null && status.getRunning()) {
+			result.setUsage(containerId);
 			if (status.getStartedAt() != null) {
 				result.setStartTime(getStartedTime(status.getStartedAt()));
 			}
@@ -271,8 +271,8 @@ public class DockerUtil {
 		return result;
 	}
 
-	public Optional<Statistics> statsContainer(String containerId) {
-		StatsCmd statsCmd = this.dockerClient.statsCmd(containerId);
+	public Optional<Statistics> getContainerStats(String containerId) {
+		StatsCmd statsCmd = dockerClient.statsCmd(containerId);
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 		StatsCallback stats = new StatsCallback(countDownLatch);
 		try (StatsCallback statscallback = statsCmd.exec(stats)) {
@@ -325,14 +325,15 @@ public class DockerUtil {
 	}
 
 	public Optional<String> getContainerStatus(String containerId) {
+		Optional<String> result = Optional.empty();
 		try {
 			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 			ContainerState status = inspectInfo.getState();
-			return Optional.ofNullable(status.getStatus());
+			result = Optional.ofNullable(status.getStatus());
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 		}
-		return Optional.empty();
+		return result;
 	}
 
 	/**
@@ -363,7 +364,7 @@ public class DockerUtil {
 
 	public boolean isContainerRunning(String containerId) {
 		Optional<String> status = getContainerStatus(containerId);
-		return status.isPresent() && status.get().equals(ElementState.RUNNING);
+		return status.isPresent() && status.get().equalsIgnoreCase(ElementState.RUNNING.toString());
 	}
 
 	/**
