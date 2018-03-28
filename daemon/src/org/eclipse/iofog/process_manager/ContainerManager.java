@@ -157,9 +157,9 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	private void removeContainerByContainerId(ContainerTask task) throws Exception {
-		if (docker.hasContainerWithContainerId(task.getContainerId())) {
-			removeContainer(task.getContainerId());
+	private void removeContainerByContainerId(String containerId) throws Exception {
+		if (docker.hasContainerWithContainerId(containerId)) {
+			removeContainer(containerId);
 		}
 	}
 
@@ -222,7 +222,7 @@ public class ContainerManager {
 				}
 			case REMOVE:
 				try {
-					removeContainerByContainerId(task);
+					removeContainerByContainerId(task.getContainerId());
 					result = new ContainerTaskResult(task.getContainerId(), true);
 					break;
 				} catch (Exception e) {
