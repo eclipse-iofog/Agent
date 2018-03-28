@@ -161,29 +161,22 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 			return;
 		}
 
-		if (request.uri().startsWith("/v2/commandline")) {
-			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
+		if (request.uri().equals("/v2/gps")) {
+			Callable<FullHttpResponse> callable = new GpsApiHandler(request, ctx.alloc().buffer(), content);
 			runTask(callable, ctx, request);
 			return;
 		}
 
-		String uri = request.uri();
-		uri = uri.substring(1);
-		String[] tokens = uri.split("/");
-		if(tokens.length >= 3){
-			String url = "/"+tokens[0]+"/"+tokens[1]+"/"+tokens[2];
+		if (request.uri().startsWith("/v2/control/socket")) {
+			ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
+			controlSocket.handle(ctx, request);
+			return;
+		}
 
-			if (url.equals("/v2/control/socket")) {
-				ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
-				controlSocket.handle(ctx, request);
-				return;
-			}
-
-			if (url.equals("/v2/message/socket")) {
-				MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
-				messageSocket.handle(ctx, request);
-				return;
-			}
+		if (request.uri().startsWith("/v2/message/socket")) {
+			MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
+			messageSocket.handle(ctx, request);
+			return;
 		}
 
 		LoggingService.logWarning(MODULE_NAME, "Error: Request not found");

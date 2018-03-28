@@ -684,6 +684,7 @@ public class FieldAgent implements IOFogModule {
 			int scanDevicesFreq = Integer.parseInt(configs.getString(SCAN_DEVICES_FREQ.getJsonProperty()));
 			String isolatedDockerContainerValue = configs.getString(ISOLATED_DOCKER_CONTAINER.getJsonProperty());
 			boolean isIsolatedDockerContainer = !isolatedDockerContainerValue.equals("off");
+			String gpsCoordinates = configs.getString(GPS_COORDINATES.getJsonProperty());
 
 			Map<String, Object> instanceConfig = new HashMap<>();
 
@@ -727,6 +728,10 @@ public class FieldAgent implements IOFogModule {
 			if (Configuration.isIsolatedDockerContainers() != isIsolatedDockerContainer)
 				instanceConfig.put(ISOLATED_DOCKER_CONTAINER.getCommandName(), isolatedDockerContainerValue);
 
+			if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
+				instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
+			}
+
 			if (!instanceConfig.isEmpty())
 				Configuration.setConfig(instanceConfig, false);
 
@@ -761,6 +766,8 @@ public class FieldAgent implements IOFogModule {
 		postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
 		postParams.put(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq());
 		postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
+		postParams.put(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().getValue());
+		postParams.put(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates());
 
 		try {
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
