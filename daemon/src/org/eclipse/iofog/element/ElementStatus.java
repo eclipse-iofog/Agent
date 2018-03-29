@@ -117,11 +117,9 @@ public class ElementStatus {
 	}
 
 	private long extractMemoryUsage(Map<String, Object> memoryUsage) {
-		long usage = 0;
-		if (memoryUsage.containsKey("usage")) {
-			usage = Long.parseLong(memoryUsage.get("usage").toString());
-		}
-		return usage;
+		return memoryUsage.containsKey("usage")
+				? Long.parseLong(memoryUsage.get("usage").toString())
+				: 0;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -137,11 +135,9 @@ public class ElementStatus {
 	}
 
 	private float extractSystemCpuUsage(Map<String, Object> statistics) {
-		float systemCpuUsage = 0;
-		if (statistics.containsKey("system_cpu_usage")) {
-			systemCpuUsage =  Long.parseLong((statistics.get("system_cpu_usage")).toString());
-		}
-		return systemCpuUsage;
+		return statistics.containsKey("system_cpu_usage")
+				? Long.parseLong((statistics.get("system_cpu_usage")).toString())
+				: 0;
 	}
 
 	@Override
