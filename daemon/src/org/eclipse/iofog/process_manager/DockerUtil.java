@@ -176,7 +176,8 @@ public class DockerUtil {
 
 	private void removeContainersWithSameImage(Element element) {
 		getContainers().stream()
-				.filter(c -> c.getImage().equals(element.getImageName()) && !c.getNames()[0].contains(element.getElementId()))
+				.filter(container ->
+						container.getImage().equals(element.getImageName()) && !element.getElementId().equals(getContainerName(container)))
 				.forEach(oldContainer -> {
 					try {
 						stopContainer(oldContainer.getId());
