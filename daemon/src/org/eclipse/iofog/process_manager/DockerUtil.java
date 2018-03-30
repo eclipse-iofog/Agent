@@ -159,10 +159,10 @@ public class DockerUtil {
 	/**
 	 * starts a {@link Container}
 	 *
-	 * @param id - id of {@link Container}
+	 * @param element
 	 * @throws Exception
 	 */
-	public void startContainer(String id) throws Exception {
+	public void startContainer(Element element) throws Exception {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -170,7 +170,21 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		dockerClient.startContainerCmd(id).exec();
+		removeContainersWithSameImage(element);
+		dockerClient.startContainerCmd(element.getContainerId()).exec();
+	}
+
+	private void removeContainersWithSameImage(Element element) {
+		getContainers().stream()
+				.filter(c -> c.getImage().equals(element.getImageName()) && !c.getNames()[0].contains(element.getElementId()))
+				.forEach(oldContainer -> {
+					try {
+						stopContainer(oldContainer.getId());
+						removeContainer(oldContainer.getId());
+					} catch (Exception e) {
+						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
+					}
+				});
 	}
 
 	/**
