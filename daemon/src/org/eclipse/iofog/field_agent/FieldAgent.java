@@ -485,7 +485,7 @@ public class FieldAgent implements IOFogModule {
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			logWarning("unable to get containers list" + e.getMessage());
+			logWarning("unable to get containers list " + e.getMessage());
 		}
 	}
 

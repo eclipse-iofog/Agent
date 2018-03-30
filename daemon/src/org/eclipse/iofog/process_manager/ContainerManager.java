@@ -108,8 +108,9 @@ public class ContainerManager {
 			if (!docker.isContainerRunning(element.getContainerId())) {
 				docker.startContainer(element.getContainerId());
 			}
-			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" starting", element.getImageName())
-					+ ", status: " + docker.getContainerStatus(element.getContainerId()));
+			Optional<String> statusOptional = docker.getContainerStatus(element.getContainerId());
+			String status = statusOptional.orElse("unknown");
+			LoggingService.logInfo(MODULE_NAME, String.format("starting %s, status: %s", element.getImageName(), status));
 			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
@@ -156,9 +157,9 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	private void removeContainerByContainerId(ContainerTask task) throws Exception {
-		if (docker.hasContainerWithElementId(task.getElementId())) {
-			removeContainer(task.getContainerId());
+	private void removeContainerByContainerId(String containerId) throws Exception {
+		if (docker.hasContainerWithContainerId(containerId)) {
+			removeContainer(containerId);
 		}
 	}
 
@@ -221,7 +222,7 @@ public class ContainerManager {
 				}
 			case REMOVE:
 				try {
-					removeContainerByContainerId(task);
+					removeContainerByContainerId(task.getContainerId());
 					result = new ContainerTaskResult(task.getContainerId(), true);
 					break;
 				} catch (Exception e) {
