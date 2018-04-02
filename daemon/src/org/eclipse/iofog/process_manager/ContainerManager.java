@@ -46,7 +46,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private String addContainer(Element element) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
+		LoggingService.logInfo(MODULE_NAME, "rebuilding/creating \"" + element.getImageName() + "\" if it's needed");
 
 		Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
 
@@ -94,7 +94,7 @@ public class ContainerManager {
 		element.setContainerId(id);
 		element.setContainerIpAddress(docker.getContainerIpAddress(id));
 		element.setRebuild(false);
-		LoggingService.logInfo(MODULE_NAME, "created");
+		LoggingService.logInfo(MODULE_NAME, "container is created");
 		startContainer(element);
 		return id;
 	}
@@ -106,7 +106,7 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
 		try {
 			if (!docker.isContainerRunning(element.getContainerId())) {
-				docker.startContainer(element.getContainerId());
+				docker.startContainer(element);
 			}
 			Optional<String> statusOptional = docker.getContainerStatus(element.getContainerId());
 			String status = statusOptional.orElse("unknown");

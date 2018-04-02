@@ -29,4 +29,8 @@
 	<status_update_freq>30</status_update_freq>
 
 	<get_changes_freq>60</get_changes_freq>
+
+	<gps_mode>auto</gps_mode>
+
+	<gps_coordinates></gps_coordinates>
 </config>

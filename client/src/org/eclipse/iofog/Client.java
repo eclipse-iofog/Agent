@@ -150,10 +150,10 @@ public class Client {
 				+ "                 -idc <on/off>           Set the mode on which any not\\n"
 				+ "                                         registered docker container will be\n"
 				+ "                                         shutted down\n" + "\n" + "\n"
-				+ "                 -gps <auto/off/lat,lon> Set gps location of fog.\n"
-				+ "                                         Use auto to get coordinates by IP,\n"
+				+ "                 -gps <auto/off          Set gps location of fog.\n"
+				+ "                     /#GPS DD.DDD,DD.DDD Use auto to get coordinates by IP,\n"
 				+ "                                         use off to forbid gps,\n"
-				+ "                                         use lat,lon to set gps manually (in DD format)\n" + "\n" + "\n"
+				+ "                                         use GPS coordinates in DD format to set them manually\n" + "\n" + "\n"
 				+ "Report bugs to: bugs@iotracks.com\n" + "ioFog home page: http://iofog.com\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 

@@ -52,15 +52,17 @@ public class ProcessManagerStatus {
 	public String getJsonElementsStatus() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 		elementsStatus.forEach((key, status) -> {
-			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-					.add("id", key)
-					.add("containerId", status.getContainerId())
-					.add("status", status.getStatus().toString())
-					.add("starttime", status.getStartTime())
-					.add("operatingduration", status.getOperatingDuration())
-					.add("cpuusage", String.format("%.2f", status.getCpuUsage()))
-					.add("memoryusage", String.format("%d", status.getMemoryUsage()));
-			arrayBuilder.add(objectBuilder);
+			if (status.getContainerId() != null) {
+				JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
+						.add("id", key)
+						.add("containerId", status.getContainerId())
+						.add("status", status.getStatus().toString())
+						.add("starttime", status.getStartTime())
+						.add("operatingduration", status.getOperatingDuration())
+						.add("cpuusage", String.format("%.2f", status.getCpuUsage()))
+						.add("memoryusage", String.format("%d", status.getMemoryUsage()));
+				arrayBuilder.add(objectBuilder);
+			}
 		});
 		return arrayBuilder.build().toString();
 	}
