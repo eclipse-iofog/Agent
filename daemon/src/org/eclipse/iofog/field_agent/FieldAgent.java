@@ -153,13 +153,13 @@ public class FieldAgent implements IOFogModule {
 	private final Runnable postStatus = () -> {
 		while (true) {
 			logInfo("start posting IOFog status");
-			Map<String, Object> status = getFogStatus();
-			if (Configuration.debugging) {
-				logInfo(status.toString());
-			}
 			try {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
+				Map<String, Object> status = getFogStatus();
+				if (Configuration.debugging) {
+					logInfo(status.toString());
+				}
 				logInfo("post IOFog status");
 				connected = isControllerConnected(false);
 				if (!connected)

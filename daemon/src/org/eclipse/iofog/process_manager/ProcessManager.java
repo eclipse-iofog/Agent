@@ -153,13 +153,14 @@ public class ProcessManager implements IOFogModule {
 						if (status.getStatus().equals(ElementState.RUNNING)) {
 							logInfo(format("\"%s\": running ", elementOptional.get().getElementId()) + container.getImage());
 						} else {
-							logInfo(format("\"%s\": container stopped", containerName));
+							logInfo(format("\"%s\": container isn't running, status: \"%s\"", containerName, status.getStatus().toString()));
 							try {
-								logInfo(format("\"%s\": starting", containerName));
-								docker.startContainer(container.getId());
+								logInfo(format("\"%s\": trying to start", containerName));
+								docker.startContainer(elementOptional.get());
+								ElementStatus elementStatus = docker.getElementStatus(container.getId());
 								StatusReporter.setProcessManagerStatus()
-										.setElementsStatus(containerName, docker.getElementStatus(container.getId()));
-								logInfo(format("\"%s\": started", containerName));
+										.setElementsStatus(containerName, elementStatus);
+								logInfo(format("\"%s\": \"%s\"", containerName, elementStatus.getStatus().toString()));
 							} catch (Exception ex) {
 								// unable to start the container, update it!
 								logWarning(ex.getMessage());
