@@ -424,7 +424,7 @@ public class DockerUtil {
 	 * @param element - {@link Element}
 	 * @param host    - host ip address
 	 * @return id of created {@link Container}
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public String createContainer(Element element, String host) throws Exception {
 		RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
@@ -453,7 +453,7 @@ public class DockerUtil {
 				volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
 			});
 		}
-		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
+		String[] extraHosts = {"iofabric:" + host, "iofog:" + host, "comsat5.iotracks.com:" + "192.168.1.207"};
 
 		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
