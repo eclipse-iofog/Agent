@@ -40,7 +40,7 @@ public class Daemon {
 			conn.getResponseCode();
 			conn.disconnect();
 			return true;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			return false;
 		}
 	}
@@ -79,20 +79,21 @@ public class Daemon {
 			if (conn.getResponseCode() != 200) {
 				return false;
 			}
-
-			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
 			String result = "";
-			String output;
-			while ((output = br.readLine()) != null) {
-				result += output;
+
+			try (BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())))){
+				String output;
+				while ((output = br.readLine()) != null) {
+					result += output;
+				}
 			}
+
 
 			conn.disconnect();
 			
 			System.out.println(result.replace("\\n", "\n"));
 			return true;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			return false;
 		}
 	}
@@ -102,21 +103,7 @@ public class Daemon {
 	 */
 	private static void setupEnvironment() {
 		final File daemonFilePath = new File(Constants.VAR_RUN);
-		if (!daemonFilePath.exists()) {
-			try {
-				daemonFilePath.mkdirs();
-
-//				UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-//				final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-//				Files.getFileAttributeView(daemonFilePath.toPath(), PosixFileAttributeView.class,
-//						LinkOption.NOFOLLOW_LINKS).setGroup(group);
-//				Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-//				Files.setPosixFilePermissions(daemonFilePath.toPath(), perms);
-			} catch (Exception e) {
-				System.out.println("unable to set up environment: " + e.getMessage());
-				System.exit(1);
-			}
-		}
+		daemonFilePath.mkdirs();
 	}
 
 	/**

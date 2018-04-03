@@ -114,9 +114,9 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return String
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
-		if (!jsonObject.containsKey("id"))
-			throw new Exception(" Id not found ");
-		if (jsonObject.getString("id").equals(null) || jsonObject.getString("id").trim().equals(""))
+		if (!jsonObject.containsKey("id") ||
+				jsonObject.getString("id").equals("null") ||
+				jsonObject.getString("id").trim().equals(""))
 			throw new Exception(" Id value not found ");
 	}
 

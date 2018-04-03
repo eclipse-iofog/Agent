@@ -117,7 +117,6 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 				if (size > 0) {
 					long timeStamp = BytesUtil.bytesToLong(Arrays.copyOfRange(byteArray, pos, pos + size));
 					System.out.println("Timestamp: " + timeStamp + "\n");
-					pos += size;
 				}
 
 			}
@@ -181,21 +180,19 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		m.setContextData(contextData.getBytes());
 		m.setContentData(contentData.getBytes());
 
-		//Send Total Length of IOMessage - 4 bytes 
-		int totalMsgLength = 0;
-
-		byte[] bmsg = null;
+		//Send Total Length of IOMessage - 4 bytes
 		try {
-			bmsg = m.getBytes();
-		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());}
-		totalMsgLength = bmsg.length;
-		System.out.println("Total message length: "+ totalMsgLength);
-		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-		buffer1.writeBytes(bmsg);
+			byte[] bmsg = m.getBytes();
+			int totalMsgLength = bmsg.length;
+			System.out.println("Total message length: "+ totalMsgLength);
+			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+			buffer1.writeBytes(bmsg);
 
-		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		System.out.println("Send RealTime Message : done");
+			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
+			System.out.println("Send RealTime Message : done");
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 

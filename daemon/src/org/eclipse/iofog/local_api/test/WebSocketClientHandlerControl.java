@@ -96,13 +96,6 @@ public class WebSocketClientHandlerControl extends SimpleChannelInboundHandler<O
 		}
 		
 	}
-	
-	private void ping(ChannelHandlerContext ctx){
-		ByteBuf buffer1 = Unpooled.buffer(126);
-		//buffer1.writeByte(OPCODE_PING);
-		System.out.println("Ping send... ");
-		ctx.channel().writeAndFlush(new PingWebSocketFrame(buffer1));
-	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

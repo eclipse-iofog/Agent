@@ -132,8 +132,8 @@ public class Element {
 
 	@Override
 	public boolean equals(Object e) {
-		if (e == null)
-			return false;
+        if (!(e instanceof Element))
+            return false;
 		Element element = (Element) e;
 		return this.elementId.equals(element.getElementId());
 	}

@@ -85,6 +85,8 @@ public class Registry {
 	
 	@Override
 	public boolean equals(Object o) {
+		if (!(o instanceof Registry))
+			return false;
 		Registry other = ((Registry) o);
         return this.url.equalsIgnoreCase(other.url) && this.userEmail.equalsIgnoreCase(other.userEmail);
     }

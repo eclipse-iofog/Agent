@@ -41,7 +41,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private HttpRequest request;
 	private ByteArrayOutputStream baos;

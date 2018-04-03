@@ -85,13 +85,6 @@ public final class LoggingService {
 
 		logDirectory.mkdirs();
 
-//		UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-//		final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-//		Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
-//				LinkOption.NOFOLLOW_LINKS).setGroup(group);
-//		Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-//		Files.setPosixFilePermissions(logDirectory.toPath(), perms);
-
 		final String logFilePattern = logDirectory.getPath() + "/iofog.%g.log";
 		
 		if (logger != null) {

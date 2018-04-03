@@ -31,7 +31,7 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
  * @since 2016
  */
 public class MessageWebsocketWorker implements Runnable{
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 	private static final Byte OPCODE_MSG = 0xD;
 //	private static int count = 0;
 	
@@ -81,19 +81,17 @@ public class MessageWebsocketWorker implements Runnable{
 
 		//Send Opcode
 		buffer1.writeByte(OPCODE_MSG);
-		int totalMsgLength = 0;
 
-		byte[] bytesMsg = null;
 		try {
-			bytesMsg = message.getBytes();
+			byte[] bytesMsg = message.getBytes();
+			int totalMsgLength = bytesMsg.length;
+			//Total Length
+			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+			//Message
+			buffer1.writeBytes(bytesMsg);
+			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 		} catch (Exception e) {
 			LoggingService.logInfo(MODULE_NAME, "Problem in retrieving the message");
 		}
-		totalMsgLength = bytesMsg.length;
-		//Total Length
-		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-		//Message
-		buffer1.writeBytes(bytesMsg);
-		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 	}
 }

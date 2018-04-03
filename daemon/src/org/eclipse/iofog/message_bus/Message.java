@@ -30,7 +30,7 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
  *
  */
 public class Message {
-	private final short VERSION = 4;
+	private static final short VERSION = 4;
 	private static final String MODULE_NAME = "Message";
 
 	private String id;
@@ -74,7 +74,7 @@ public class Message {
 		infoType = null;
 		infoFormat = null;
 		contentData = null;
-		contextData = null;		
+		contextData = null;
 	}
 
 	public Message(String publisher) {
@@ -713,7 +713,7 @@ public class Message {
 		try {
 			return Base64.getEncoder().encode(this.getBytes());
 		} catch (Exception e) {
-			return null;
+			return new byte[] {};
 		}
 	}
 }
