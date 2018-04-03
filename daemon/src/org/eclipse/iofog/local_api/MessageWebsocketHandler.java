@@ -13,6 +13,7 @@
 package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Map;
 
@@ -156,7 +157,7 @@ public class MessageWebsocketHandler {
 							buffer1.writeByte(Long.BYTES);
 
 							// Send opcode, id and timestamp
-							buffer1.writeBytes(messageId.getBytes());
+							buffer1.writeBytes(messageId.getBytes(UTF_8));
 							buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
 							ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 						} catch (Exception e) {

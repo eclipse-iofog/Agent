@@ -82,16 +82,12 @@ public class MessageWebsocketWorker implements Runnable{
 		//Send Opcode
 		buffer1.writeByte(OPCODE_MSG);
 
-		try {
-			byte[] bytesMsg = message.getBytes();
-			int totalMsgLength = bytesMsg.length;
-			//Total Length
-			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-			//Message
-			buffer1.writeBytes(bytesMsg);
-			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		} catch (Exception e) {
-			LoggingService.logInfo(MODULE_NAME, "Problem in retrieving the message");
-		}
+		byte[] bytesMsg = message.getBytes();
+		int totalMsgLength = bytesMsg.length;
+		//Total Length
+		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+		//Message
+		buffer1.writeBytes(bytesMsg);
+		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 	}
 }

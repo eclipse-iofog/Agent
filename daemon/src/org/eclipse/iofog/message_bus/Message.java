@@ -21,6 +21,7 @@ import javax.json.JsonObject;
 import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -120,11 +121,11 @@ public class Message {
 			setInfoFormat(json.getString("infoformat"));
 		if (json.containsKey("contextdata")){
 			String contextData = json.getString("contextdata");
-			setContextData(Base64.getDecoder().decode(contextData.getBytes()));
+			setContextData(Base64.getDecoder().decode(contextData.getBytes(UTF_8)));
 		}
 		if (json.containsKey("contentdata")){
 			String contentData = json.getString("contentdata");
-			setContentData(Base64.getDecoder().decode(contentData.getBytes()));
+			setContentData(Base64.getDecoder().decode(contentData.getBytes(UTF_8)));
 		}
 	}
 

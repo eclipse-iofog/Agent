@@ -21,7 +21,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.text.ParseException;
 
 public class Daemon {
@@ -58,12 +58,12 @@ public class Daemon {
 		}
 
 		try {
-			String params = "{\"command\":\"";
+			StringBuilder params = new StringBuilder("{\"command\":\"");
 			for (String arg: args) {
-				params += arg + " ";
+				params.append(arg).append(" ");
 			}
-			params = params.trim() + "\"}";
-			byte[] postData = params.trim().getBytes(StandardCharsets.UTF_8);
+			params = new StringBuilder(params.toString().trim() + "\"}");
+			byte[] postData = params.toString().trim().getBytes(UTF_8);
 			
 			URL url = new URL("http://localhost:54321/v2/commandline");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -79,19 +79,20 @@ public class Daemon {
 			if (conn.getResponseCode() != 200) {
 				return false;
 			}
-			String result = "";
+			StringBuilder result = new StringBuilder();
 
-			try (BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())))){
+			try (BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()),
+					UTF_8))){
 				String output;
 				while ((output = br.readLine()) != null) {
-					result += output;
+					result.append(output);
 				}
 			}
 
 
 			conn.disconnect();
 			
-			System.out.println(result.replace("\\n", "\n"));
+			System.out.println(result.toString().replace("\\n", "\n"));
 			return true;
 		} catch (IOException e) {
 			return false;
@@ -141,24 +142,28 @@ public class Daemon {
 	 */
 	private static void outToNull() {
 		Constants.systemOut = System.out;
-		if (!Configuration.debugging) {
-			System.setOut(new PrintStream(new OutputStream() {
-				@Override
-				public void write(int b) {
-					// DO NOTHING
-				}
-			}));
+		try {
+			if (!Configuration.debugging) {
+				System.setOut(new PrintStream(new OutputStream() {
+					@Override
+					public void write(int b) {
+						// DO NOTHING
+					}
+				}, false, UTF_8.name()));
 
-			System.setErr(new PrintStream(new OutputStream() {
-				@Override
-				public void write(int b) {
-					// DO NOTHING
-				}
-			}));
+				System.setErr(new PrintStream(new OutputStream() {
+					@Override
+					public void write(int b) {
+						// DO NOTHING
+					}
+				}, false, UTF_8.name()));
+			}
+		} catch (UnsupportedEncodingException ex) {
+			LoggingService.logInfo(MODULE_NAME, ex.getMessage());
 		}
 	}
 
-	public static void main(String[] args) throws ParseException {			
+	public static void main(String[] args) throws ParseException {
 		loadConfiguration();
 
 		setupEnvironment();

@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHandler<Object>{
@@ -177,8 +178,8 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		m.setDifficultyTarget(diffTarget);
 		m.setInfoType(infotype);
 		m.setInfoFormat(infoformat);
-		m.setContextData(contextData.getBytes());
-		m.setContentData(contentData.getBytes());
+		m.setContextData(contextData.getBytes(UTF_8));
+		m.setContentData(contentData.getBytes(UTF_8));
 
 		//Send Total Length of IOMessage - 4 bytes
 		try {

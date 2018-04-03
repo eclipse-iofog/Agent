@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Provide handler for the rest api and real-time websocket depending on the request.
@@ -97,7 +98,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 						String errorMsg = "Out of memory";
 						LoggingService.logWarning(MODULE_NAME, errorMsg);
 						ByteBuf	errorMsgBytes = ctx.alloc().buffer();
-						errorMsgBytes.writeBytes(errorMsg.getBytes());
+						errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
 						sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
 						return;
 					}
@@ -182,7 +183,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		LoggingService.logWarning(MODULE_NAME, "Error: Request not found");
 		ByteBuf	errorMsgBytes = ctx.alloc().buffer();
 		String errorMsg = " Request not found ";
-		errorMsgBytes.writeBytes(errorMsg.getBytes());
+		errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
 		sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
 
 	}

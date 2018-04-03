@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
+import java.util.Objects;
+
 /**
  * represents registries
  * 
@@ -82,19 +84,18 @@ public class Registry {
 	public void setUserEmail(String userEmail) {
 		this.userEmail = userEmail;
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof Registry))
-			return false;
-		Registry other = ((Registry) o);
-        return this.url.equalsIgnoreCase(other.url) && this.userEmail.equalsIgnoreCase(other.userEmail);
-    }
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Registry registry = (Registry) o;
+		return Objects.equals(url, registry.url) &&
+				Objects.equals(userEmail, registry.userEmail);
+	}
 
 	@Override
 	public int hashCode() {
-		int result = url.hashCode();
-		result = 31 * result + userEmail.hashCode();
-		return result;
+		return Objects.hash(url, userEmail);
 	}
 }

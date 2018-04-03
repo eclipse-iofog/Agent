@@ -20,13 +20,13 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Handler to deliver the messages to the receiver, if found any. Messages are
@@ -65,11 +65,11 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).equals("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
-		String requestBody = new String(content, StandardCharsets.UTF_8);
+		String requestBody = new String(content, UTF_8);
 		JsonReader reader = Json.createReader(new StringReader(requestBody));
 		JsonObject jsonObject = reader.readObject();
 
@@ -78,7 +78,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = "Incorrect input content/data " + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
@@ -119,7 +119,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-		outputBuffer.writeBytes(result.getBytes());
+		outputBuffer.writeBytes(result.getBytes(UTF_8));
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;

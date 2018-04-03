@@ -49,4 +49,10 @@ public class PortMapping {
 		return this.outside.equals(o.outside) && this.inside.equals(o.inside);
 	}
 
+	@Override
+	public int hashCode() {
+		int result = outside.hashCode();
+		result = 31 * result + inside.hashCode();
+		return result;
+	}
 }
