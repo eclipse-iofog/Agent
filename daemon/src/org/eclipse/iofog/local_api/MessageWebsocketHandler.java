@@ -192,7 +192,7 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
-		ChannelHandlerContext ctx = null;
+		ChannelHandlerContext ctx;
 		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
 		if (messageSocketMap != null && messageSocketMap.containsKey(receiverId)) {

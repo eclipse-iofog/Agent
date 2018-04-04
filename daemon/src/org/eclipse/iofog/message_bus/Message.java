@@ -658,7 +658,7 @@ public class Message {
 	}
 
 	public void decodeBase64(byte[] bytes) {
-		Message result = null;
+		Message result;
 		try {
 			result = new Message(Base64.getDecoder().decode(bytes));
 			id = result.id;

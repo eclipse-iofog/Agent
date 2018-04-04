@@ -16,7 +16,6 @@ import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.Registry;
-import org.eclipse.iofog.utils.Constants.DockerStatus;
 import org.eclipse.iofog.utils.Constants.LinkStatus;
 
 import javax.json.Json;

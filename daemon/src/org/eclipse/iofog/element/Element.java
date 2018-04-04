@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import org.eclipse.iofog.utils.Constants;
-
 import java.util.List;
 
 /**

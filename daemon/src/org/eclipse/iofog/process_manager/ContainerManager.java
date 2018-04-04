@@ -50,7 +50,7 @@ public class ContainerManager {
 
 		Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
 
-		String containerId = containerOptional.isPresent() ? containerOptional.get().getId() : null;
+		String containerId = containerOptional.map(Container::getId).orElse(null);
 		if (containerOptional.isPresent() && element.isRebuild()) {
 			containerId = rebuildContainer(element);
 		} else if (!containerOptional.isPresent()) {
@@ -125,15 +125,15 @@ public class ContainerManager {
 	 */
 	private void stopContainer(String elementId) {
 		Optional<Container> containerOptional = docker.getContainerByElementId(elementId);
-		if (containerOptional.isPresent()) {
-			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", containerOptional.get().getId()));
+		containerOptional.ifPresent(container -> {
+			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", container.getId()));
 			try {
-				docker.stopContainer(containerOptional.get().getId());
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", containerOptional.get().getId()));
+				docker.stopContainer(container.getId());
+				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", container.getId()));
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", containerOptional.get().getId()));
+				LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", container.getId()));
 			}
-		}
+		});
 
 	}
 
