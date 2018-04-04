@@ -199,23 +199,19 @@ public class MessageWebsocketHandler {
 			ctx = messageSocketMap.get(receiverId);
 			WebSocketMap.unackMessageSendingMap.put(ctx, new MessageSentInfo(message, 1, System.currentTimeMillis()));
 
-			try {
-				int totalMsgLength;
-				byte[] bytesMsg =  message.getBytes();
+			int totalMsgLength;
+			byte[] bytesMsg = message.getBytes();
 
-				totalMsgLength = bytesMsg.length;
+			totalMsgLength = bytesMsg.length;
 
-				ByteBuf buffer1 = ctx.alloc().buffer(totalMsgLength + 5);
-				// Send Opcode
-				buffer1.writeByte(OPCODE_MSG);
-				// Total Length
-				buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-				// Message
-				buffer1.writeBytes(bytesMsg);
-				ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "Problem in retrieving the message");
-			}
+			ByteBuf buffer1 = ctx.alloc().buffer(totalMsgLength + 5);
+			// Send Opcode
+			buffer1.writeByte(OPCODE_MSG);
+			// Total Length
+			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+			// Message
+			buffer1.writeBytes(bytesMsg);
+			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 		} else {
 			LoggingService.logWarning(MODULE_NAME, "No active real-time websocket found for " + receiverId);
 		}

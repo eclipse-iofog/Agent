@@ -87,14 +87,14 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 			builder.add("status", "okay");
 			builder.add("config", containerConfig);
 			String result = builder.build().toString();
-			outputBuffer.writeBytes(result.getBytes());
+			outputBuffer.writeBytes(result.getBytes(UTF_8));
 			FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 			HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 			return res;
 		} else {
 			String errorMsg = "No configuration found for the id " + receiverId;
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 	}

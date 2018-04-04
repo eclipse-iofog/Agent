@@ -34,7 +34,7 @@ public class ContainerManager {
 	private DockerUtil docker;
 	private final ElementManager elementManager;
 
-	private final String MODULE_NAME = "Container Manager";
+	private static final String MODULE_NAME = "Container Manager";
 
 	public ContainerManager() {
 		elementManager = ElementManager.getInstance();

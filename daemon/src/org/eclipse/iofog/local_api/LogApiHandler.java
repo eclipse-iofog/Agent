@@ -75,7 +75,7 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 
 		if (!result) {
 			String errorMsg = "Log message parsing error, " + "Logger initialized null";
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 

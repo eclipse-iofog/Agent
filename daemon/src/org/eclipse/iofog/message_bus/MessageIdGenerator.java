@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MessageIdGenerator {
-	private final char[] ALPHABETS_ARRAY = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789".toCharArray();
+	private static final char[] ALPHABETS_ARRAY = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789".toCharArray();
 
 	/**
 	 * converts base 10 to base 58

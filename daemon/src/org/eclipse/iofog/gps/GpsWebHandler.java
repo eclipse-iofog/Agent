@@ -9,6 +9,8 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 //TODO 3.27.18: move to gps microservice
 public class GpsWebHandler {
 
@@ -22,7 +24,7 @@ public class GpsWebHandler {
 		try {
 			URL ipUrl = new URL("http://ip-api.com/json");
 			try (BufferedReader ipReader = new BufferedReader(new InputStreamReader(
-					ipUrl.openStream()))) {
+					ipUrl.openStream(), UTF_8))) {
 				JsonReader jsonReader = Json.createReader(ipReader);
 				JsonObject response = jsonReader.readObject();
 

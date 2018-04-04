@@ -100,7 +100,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-		outputBuffer.writeBytes(result.getBytes());
+		outputBuffer.writeBytes(result.getBytes(UTF_8));
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 		LoggingService.logInfo(MODULE_NAME, "Request completed successfully");
 		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
