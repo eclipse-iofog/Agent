@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.iofog.resource_consumption_manager;
 
-import javafx.util.Pair;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.functional.Pair;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -149,7 +149,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		waitForSecond();
 		Pair<Long, Long> after = parseStat(processId);
 
-		return 100f * (after.getKey() - before.getKey()) / (after.getValue() - after.getValue());
+		return 100f * (after._1() - before._1()) / (after._2() - before._2());
 	}
 
 	private void waitForSecond() {
@@ -189,7 +189,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 			logWarning("Error getting CPU usage : " + exp.getMessage());
 		}
 
-		return new Pair<>(time, total);
+		return Pair.of(time, total);
 	}
 
 	/**
