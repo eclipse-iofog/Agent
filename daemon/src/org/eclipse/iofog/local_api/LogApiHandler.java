@@ -64,15 +64,18 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 		JsonReader reader = Json.createReader(new StringReader(msgString));
 		JsonObject jsonObject = reader.readObject();
 
-		String logMessage = jsonObject.getString("message");
-		String logType = jsonObject.getString("type");
-		String elementId = jsonObject.getString("id");
-		boolean result;
-		if (logType.equals("info"))
-			result = LoggingService.elementLogInfo(elementId, logMessage);
-		else
-			result = LoggingService.elementLogWarning(elementId, logMessage);
-
+		boolean result = false;
+		if (jsonObject.containsKey("message") &&
+				jsonObject.containsKey("type") &&
+				jsonObject.containsKey("id")){
+			String logMessage = jsonObject.getString("message");
+			String logType = jsonObject.getString("type");
+			String elementId = jsonObject.getString("id");
+			if (logType.equals("info"))
+				result = LoggingService.elementLogInfo(elementId, logMessage);
+			else
+				result = LoggingService.elementLogWarning(elementId, logMessage);
+		}
 		if (!result) {
 			String errorMsg = "Log message parsing error, " + "Logger initialized null";
 			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));

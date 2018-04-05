@@ -682,7 +682,8 @@ public class Message {
 			contextData = result.contextData;
 			contentData = result.contentData;
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());}
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 	public JsonObject toJson() {
@@ -713,7 +714,8 @@ public class Message {
 	public byte[] encodeBase64() {
 		try {
 			return Base64.getEncoder().encode(this.getBytes());
-		} catch (Exception e) {
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
 			return new byte[] {};
 		}
 	}

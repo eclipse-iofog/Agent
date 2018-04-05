@@ -156,7 +156,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException exp) {
-			logWarning("Error getting CPU usage : " + exp.getMessage());
+			logWarning("Thread was interrupted : " + exp.getMessage());
 		}
 
 	}

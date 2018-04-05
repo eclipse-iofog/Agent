@@ -107,7 +107,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
 		if (!jsonObject.containsKey("id") ||
-				jsonObject.getString("id").equals("null") ||
+				jsonObject.isNull("id") ||
 				jsonObject.getString("id").trim().equals(""))
 			throw new Exception(" Id value not found ");
 	}

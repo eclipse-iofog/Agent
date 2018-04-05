@@ -75,7 +75,7 @@ public class MessagePublisher implements AutoCloseable{
 		this.route = route;
 	}
 
-	public void close() {
+	public synchronized void close() {
 		try {
 			archive.close();
 		} catch (Exception exp) {

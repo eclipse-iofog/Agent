@@ -495,7 +495,7 @@ public class FieldAgent implements IOFogModule {
 			element.setRebuild(jsonObj.getBoolean("rebuild"));
 			element.setRootHostAccess(jsonObj.getBoolean("roothostaccess"));
 			element.setRegistry(jsonObj.getString("registryurl"));
-			if (jsonObj.get("lastmodified").getValueType() != JsonValue.ValueType.NULL) {
+			if (!jsonObj.isNull("lastmodified")) {
 				element.setLastModified(jsonObj.getJsonNumber("lastmodified").longValue());
 			}
 			element.setLogSize(jsonObj.getJsonNumber("logsize").longValue());
