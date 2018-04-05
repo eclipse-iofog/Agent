@@ -34,8 +34,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
-
 public class MessageWebsocketSenderClient implements Runnable{
 	
 	private String id = "";

@@ -33,7 +33,7 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
  * @since 2016
  */
 public final class LocalApiServer {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 	private final EventLoopGroup workerGroup = new NioEventLoopGroup(10);

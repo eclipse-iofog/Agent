@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHandler<Object>{
@@ -117,7 +118,6 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 				if (size > 0) {
 					long timeStamp = BytesUtil.bytesToLong(Arrays.copyOfRange(byteArray, pos, pos + size));
 					System.out.println("Timestamp: " + timeStamp + "\n");
-					pos += size;
 				}
 
 			}
@@ -178,24 +178,22 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		m.setDifficultyTarget(diffTarget);
 		m.setInfoType(infotype);
 		m.setInfoFormat(infoformat);
-		m.setContextData(contextData.getBytes());
-		m.setContentData(contentData.getBytes());
+		m.setContextData(contextData.getBytes(UTF_8));
+		m.setContentData(contentData.getBytes(UTF_8));
 
-		//Send Total Length of IOMessage - 4 bytes 
-		int totalMsgLength = 0;
-
-		byte[] bmsg = null;
+		//Send Total Length of IOMessage - 4 bytes
 		try {
-			bmsg = m.getBytes();
-		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());}
-		totalMsgLength = bmsg.length;
-		System.out.println("Total message length: "+ totalMsgLength);
-		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-		buffer1.writeBytes(bmsg);
+			byte[] bmsg = m.getBytes();
+			int totalMsgLength = bmsg.length;
+			System.out.println("Total message length: "+ totalMsgLength);
+			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+			buffer1.writeBytes(bmsg);
 
-		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		System.out.println("Send RealTime Message : done");
+			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
+			System.out.println("Send RealTime Message : done");
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 

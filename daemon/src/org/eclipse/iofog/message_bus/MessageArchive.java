@@ -147,7 +147,7 @@ public class MessageArchive implements AutoCloseable{
 	 * @return int
 	 */
 	private int getDataSize(byte[] header) {
-		int size = 0;
+		int size;
 		size = header[2];
 		size += BytesUtil.bytesToShort(BytesUtil.copyOfRange(header, 3, 5));
 		size += header[5];

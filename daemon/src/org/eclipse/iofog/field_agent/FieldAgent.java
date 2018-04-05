@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.charset.StandardCharsets.*;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
@@ -495,7 +495,7 @@ public class FieldAgent implements IOFogModule {
 			element.setRebuild(jsonObj.getBoolean("rebuild"));
 			element.setRootHostAccess(jsonObj.getBoolean("roothostaccess"));
 			element.setRegistry(jsonObj.getString("registryurl"));
-			if (jsonObj.get("lastmodified").getValueType() != JsonValue.ValueType.NULL) {
+			if (!jsonObj.isNull("lastmodified")) {
 				element.setLastModified(jsonObj.getJsonNumber("lastmodified").longValue());
 			}
 			element.setLogSize(jsonObj.getJsonNumber("logsize").longValue());
@@ -623,7 +623,7 @@ public class FieldAgent implements IOFogModule {
 
 	private JsonObject readObject(String filename) {
 		JsonObject object = null;
-		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))) {
+		try (JsonReader reader = Json.createReader(new InputStreamReader(new FileInputStream(filename), UTF_8))) {
 			object = reader.readObject();
 		} catch (FileNotFoundException ex) {
 			LoggingService.logWarning(MODULE_NAME, "Invalid file: " + filename);
@@ -644,9 +644,9 @@ public class FieldAgent implements IOFogModule {
 				.add("timestamp", lastGetChangesList)
 				.add("data", data)
 				.build();
-		try (JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)))) {
+		try (JsonWriter writer = Json.createWriter(new OutputStreamWriter(new FileOutputStream(filename), UTF_8))) {
 			writer.writeObject(object);
-		} catch (Exception e) {
+		} catch (IOException e) {
 			logInfo("Error saving data to file '" + filename + "': " + e.getMessage());
 		}
 	}
@@ -1028,7 +1028,7 @@ public class FieldAgent implements IOFogModule {
 		if (connection.isPresent()) {
 			content = new StringBuilder();
 			try (BufferedReader in = new BufferedReader(
-					new InputStreamReader(connection.get().getInputStream()))) {
+					new InputStreamReader(connection.get().getInputStream(), UTF_8))) {
 				String inputLine;
 				content = new StringBuilder();
 				while ((inputLine = in.readLine()) != null) {

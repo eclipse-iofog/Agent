@@ -55,8 +55,8 @@ public class Constants {
 	public static final String commandlineAddress = "iofog.commandline";
 	
 	public static final int KiB = 1024;
-	public static final int MiB = 1024 * 1024;
-	public static final int GiB = 1024 * 1024 * 1024;
+	public static final int MiB = KiB * KiB;
+	public static final int GiB = KiB * KiB * KiB;
 
 	public static final String osArch = System.getProperty("os.arch");
 
@@ -79,7 +79,7 @@ public class Constants {
 	
 	public static final int FOG_TYPE = osArch.equals("arm") ? 2 : 1;
 	
-	public static String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
+	public static final String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
 	public static final String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
 	public static final String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
 	public static final String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";

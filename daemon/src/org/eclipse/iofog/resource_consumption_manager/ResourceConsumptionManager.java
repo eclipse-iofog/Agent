@@ -15,11 +15,11 @@ package org.eclipse.iofog.resource_consumption_manager;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.functional.Pair;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
-import java.util.Comparator;
 
 import static org.eclipse.iofog.utils.Constants.GET_USAGE_DATA_FREQ_SECONDS;
 import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
@@ -104,21 +104,23 @@ public class ResourceConsumptionManager implements IOFogModule {
 		final File workingDirectory = new File(archivesDirectory);
 		File[] filesList = workingDirectory.listFiles((dir, fileName) ->
 				fileName.substring(fileName.indexOf(".")).equals(".idx"));
-		
-		Arrays.sort(filesList, (o1, o2) -> {
-			String t1 = o1.getName().substring(o1.getName().indexOf('_') + 1, o1.getName().indexOf("."));
-			String t2 = o2.getName().substring(o2.getName().indexOf('_') + 1, o2.getName().indexOf("."));
-			return t1.compareTo(t2);
-		});
-		
-		for (File indexFile : filesList) {
-			File dataFile = new File(archivesDirectory + indexFile.getName().substring(0, indexFile.getName().indexOf('.')) + ".iomsg");
-			amount -= indexFile.length();
-			indexFile.delete();
-			amount -= dataFile.length();
-			dataFile.delete();
-			if (amount < 0)
-				break;
+
+		if (filesList != null) {
+			Arrays.sort(filesList, (o1, o2) -> {
+				String t1 = o1.getName().substring(o1.getName().indexOf('_') + 1, o1.getName().indexOf("."));
+				String t2 = o2.getName().substring(o2.getName().indexOf('_') + 1, o2.getName().indexOf("."));
+				return t1.compareTo(t2);
+			});
+
+			for (File indexFile : filesList) {
+				File dataFile = new File(archivesDirectory + indexFile.getName().substring(0, indexFile.getName().indexOf('.')) + ".iomsg");
+				amount -= indexFile.length();
+				indexFile.delete();
+				amount -= dataFile.length();
+				dataFile.delete();
+				if (amount < 0)
+					break;
+			}
 		}
 	}
 	
@@ -143,37 +145,33 @@ public class ResourceConsumptionManager implements IOFogModule {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		String processId = processName.split("@")[0];
 
-		long utimeBefore, utimeAfter, totalBefore, totalAfter;
-		float usage = 0;
+		Pair<Long, Long> before = parseStat(processId);
+		waitForSecond();
+		Pair<Long, Long> after = parseStat(processId);
+
+		return 100f * (after._1() - before._1()) / (after._2() - before._2());
+	}
+
+	private void waitForSecond() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException exp) {
+			logWarning("Thread was interrupted : " + exp.getMessage());
+		}
+
+	}
+
+	private Pair<Long, Long> parseStat(String processId){
+		long time = 0, total = 0;
+
 		try {
 			String line;
 			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
 				line = br.readLine();
-				utimeBefore = Long.parseLong(line.split(" ")[13]);
+				time = Long.parseLong(line.split(" ")[13]);
 			}
 
-			totalBefore = 0;
-            try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
-                line = br.readLine();
-                while (line != null) {
-                    String[] items = line.split(" ");
-                    if (items[0].equals("cpu")) {
-                        for (int i = 1; i < items.length; i++)
-                            if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-                                totalBefore += Long.parseLong(items[i]);
-                        break;
-                    }
-                }
-            }
-
-			Thread.sleep(1000);
-
-			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
-				line = br.readLine();
-				utimeAfter = Long.parseLong(line.split(" ")[13]);
-			}
-
-			totalAfter = 0;
+			total = 0;
 
 			try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
 				line = br.readLine();
@@ -182,17 +180,16 @@ public class ResourceConsumptionManager implements IOFogModule {
 					if (items[0].equals("cpu")) {
 						for (int i = 1; i < items.length; i++)
 							if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-								totalAfter += Long.parseLong(items[i]);
+								total += Long.parseLong(items[i]);
 						break;
 					}
 				}
 			}
-
-			usage = 100f * (utimeAfter - utimeBefore) / (totalAfter - totalBefore);
-		} catch (Exception e) {
-			logWarning("Error getting CPU usage : " + e.getMessage());
+		} catch (IOException exp) {
+			logWarning("Error getting CPU usage : " + exp.getMessage());
 		}
-		return usage;
+
+		return Pair.of(time, total);
 	}
 
 	/**

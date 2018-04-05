@@ -7,6 +7,8 @@ import com.jcraft.jsch.Session;
 import java.io.ByteArrayInputStream;
 import java.util.function.Supplier;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class SshConnection {
 
 	private static final String LOCAL_HOST = "localhost";
@@ -68,7 +70,7 @@ public class SshConnection {
 	 * adds server rsa key to known hosts
 	 */
 	public void setKnownHost() throws JSchException {
-		jschSSHChannel.setKnownHosts(new ByteArrayInputStream(this.rsaKey.getBytes()));
+		jschSSHChannel.setKnownHosts(new ByteArrayInputStream(this.rsaKey.getBytes(UTF_8)));
 	}
 
 	/**

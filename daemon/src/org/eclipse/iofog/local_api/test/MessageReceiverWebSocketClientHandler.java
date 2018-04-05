@@ -94,7 +94,7 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 			if(opcode.intValue() == OPCODE_MSG){
 
 				int totalMsgLength = BytesUtil.bytesToInteger(Arrays.copyOfRange(byteArray, 1, 5)); 
-				Message message = null;
+				Message message;
 				try { 
 					message = new Message(Arrays.copyOfRange(byteArray, 5, totalMsgLength));
 					System.out.println(message.toString());
