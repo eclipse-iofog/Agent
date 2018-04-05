@@ -42,8 +42,8 @@ public class PortMapping {
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof PortMapping))
-			return false;
+		if (this == other) return true;
+		if (other == null || getClass() != other.getClass()) return false;
 		
 		PortMapping o = (PortMapping) other;
 		return this.outside.equals(o.outside) && this.inside.equals(o.inside);

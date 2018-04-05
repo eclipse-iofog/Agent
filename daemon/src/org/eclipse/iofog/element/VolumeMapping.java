@@ -58,8 +58,8 @@ public class VolumeMapping {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof VolumeMapping))
-            return false;
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
 
         VolumeMapping o = (VolumeMapping) other;
         return this.hostDestination.equals(o.hostDestination) &&
