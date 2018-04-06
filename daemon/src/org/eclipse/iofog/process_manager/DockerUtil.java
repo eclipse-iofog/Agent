@@ -331,13 +331,10 @@ public class DockerUtil {
 	 * @return boolean
 	 */
 	public boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
-		boolean isRootHostAccess = element.isRootHostAccess(), equals = false;
+		boolean isRootHostAccess = element.isRootHostAccess();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
-		if ((isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
-				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0)) {
-			equals = true;
-		}
-		return equals;
+		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
+				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
 	}
 
 	/**
