@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -45,7 +46,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
@@ -479,9 +480,14 @@ public class FieldAgent implements IOFogModule {
 					.map(containers::getJsonObject)
 					.map(containerJsonObjectToElementFunction())
 					.collect(toList());
-
 			elementManager.setLatestElements(latestElements);
 
+			JsonObject resultToClean = orchestrator.doCommand("list/element/instance/cleanup", null, null);
+			checkResponseStatus(resultToClean);
+			JsonArray containersToClean = resultToClean.getJsonArray("elementIds");
+			ObjectMapper mapper = new ObjectMapper();
+			Set<String> toRemoveList = mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+			elementManager.setToRemoveElementIds(toRemoveList);
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
@@ -1012,7 +1018,7 @@ public class FieldAgent implements IOFogModule {
 				LoggingService.logWarning(MODULE_NAME, e.getMessage());
 			}
 
-			if (jsonSendHWInfoResult == null ) {
+			if (jsonSendHWInfoResult == null) {
 				LoggingService.logInfo(MODULE_NAME, "Can't get HW Info from HAL.");
 			}
 		}

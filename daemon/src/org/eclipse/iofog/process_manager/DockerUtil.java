@@ -181,7 +181,7 @@ public class DockerUtil {
 				.forEach(oldContainer -> {
 					try {
 						stopContainer(oldContainer.getId());
-						removeContainer(oldContainer.getId());
+						removeContainer(oldContainer.getId(), false);
 					} catch (Exception e) {
 						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
 					}
@@ -202,10 +202,11 @@ public class DockerUtil {
 	 * removes a {@link Container}
 	 *
 	 * @param id - id of {@link Container}
+	 * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
 	 * @throws Exception
 	 */
-	public void removeContainer(String id) throws Exception {
-		dockerClient.removeContainerCmd(id).withForce(true).exec();
+	public void removeContainer(String id, Boolean withRemoveVolumes) throws Exception {
+		dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
 	}
 
 	/**
@@ -235,7 +236,7 @@ public class DockerUtil {
 	 * @param elementId - name of {@link Container} (id of {@link Element})
 	 * @return Optional<Container>
 	 */
-	public Optional<Container> getContainerByElementId(String elementId) {
+	public Optional<Container> getContainer(String elementId) {
 		List<Container> containers = getContainers();
 		return containers.stream()
 				.filter(c -> getContainerName(c).equals(elementId))
@@ -271,8 +272,7 @@ public class DockerUtil {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 		ContainerState status = inspectInfo.getState();
 		ElementStatus result = new ElementStatus();
-		if (status.getRunning() != null && status.getRunning()) {
-			result.setUsage(containerId);
+		if (status != null) {
 			if (status.getStartedAt() != null) {
 				result.setStartTime(getStartedTime(status.getStartedAt()));
 			}
@@ -280,8 +280,7 @@ public class DockerUtil {
 				result.setStatus(ElementState.fromText(status.getStatus()));
 			}
 			result.setContainerId(containerId);
-		} else {
-			result.setStatus(ElementState.STOPPED);
+			result.setUsage(containerId);
 		}
 		return result;
 	}
@@ -362,19 +361,6 @@ public class DockerUtil {
 		List<Container> containers = getContainers();
 		return containers.stream()
 				.anyMatch(c -> getContainerName(c).equals(elementId));
-	}
-
-	/**
-	 * returns whether the {@link Container} exists or not
-	 * preferable to perform a check by elementId
-	 *
-	 * @param containerId - id of {@link Element}
-	 * @return boolean true if exists and false in other case
-	 */
-	public boolean hasContainerWithContainerId(String containerId) {
-		List<Container> containers = getContainers();
-		return containers.stream()
-				.anyMatch(container -> container.getId().equals(containerId));
 	}
 
 	public boolean isContainerRunning(String containerId) {

@@ -48,11 +48,11 @@ public class ContainerManager {
 	private String addContainer(Element element) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "rebuilding/creating \"" + element.getImageName() + "\" if it's needed");
 
-		Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
+		Optional<Container> containerOptional = docker.getContainer(element.getElementId());
 
 		String containerId = containerOptional.map(Container::getId).orElse(null);
 		if (containerOptional.isPresent() && element.isRebuild()) {
-			containerId = rebuildContainer(element);
+			containerId = updateContainer(element, true);
 		} else if (!containerOptional.isPresent()) {
 			containerId = createContainer(element);
 
@@ -69,14 +69,15 @@ public class ContainerManager {
 		return registry;
 	}
 
-	private String rebuildContainer(Element element) throws Exception {
+	/**
+	 * removes an existing {@link Container} and creates a new one
+	 *
+	 * @param withCleanUp if true then removes old image and volumes
+	 * @throws Exception exception
+	 */
+	private String updateContainer(Element element, boolean withCleanUp) throws Exception {
 		stopContainer(element.getElementId());
-		removeContainerByElementId(element.getElementId());
-		try {
-			docker.removeImage(element.getImageName());
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, String.format("error removing docker image \"%s\"", element.getImageName()));
-		}
+		removeContainerByElementId(element.getElementId(), withCleanUp);
 		return createContainer(element);
 	}
 
@@ -124,7 +125,7 @@ public class ContainerManager {
 	 * @param elementId id of the {@link Element}
 	 */
 	private void stopContainer(String elementId) {
-		Optional<Container> containerOptional = docker.getContainerByElementId(elementId);
+		Optional<Container> containerOptional = docker.getContainer(elementId);
 		containerOptional.ifPresent(container -> {
 			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", container.getId()));
 			try {
@@ -142,31 +143,24 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	private void removeContainerByElementId(String elementId) throws Exception {
+	private void removeContainerByElementId(String elementId, boolean withCleanUp) throws Exception {
 
-		Optional<Container> containerOptional = docker.getContainerByElementId(elementId);
+		Optional<Container> containerOptional = docker.getContainer(elementId);
 
 		if (containerOptional.isPresent()) {
 			String containerId = containerOptional.get().getId();
-			removeContainer(containerId);
+			removeContainer(containerId, containerOptional.get().getImage(), withCleanUp);
 		}
 	}
 
-	/**
-	 * removes a {@link Container} by Container id
-	 *
-	 * @throws Exception exception
-	 */
-	private void removeContainerByContainerId(String containerId) throws Exception {
-		if (docker.hasContainerWithContainerId(containerId)) {
-			removeContainer(containerId);
-		}
-	}
-
-	private void removeContainer(String containerId) throws Exception {
+	private void removeContainer(String containerId, String imageName, boolean withCleanUp) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
-			docker.removeContainer(containerId);
+			docker.removeContainer(containerId, withCleanUp);
+			if (withCleanUp) {
+				docker.removeImage(imageName);
+			}
+
 			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
@@ -175,62 +169,31 @@ public class ContainerManager {
 	}
 
 	/**
-	 * removes an existing {@link Container} and creates a new one
-	 *
-	 * @throws Exception exception
-	 */
-	private String updateContainer(Element element) throws Exception {
-		stopContainer(element.getElementId());
-		removeContainerByElementId(element.getElementId());
-		return createContainer(element);
-	}
-
-	/**
 	 * executes assigned task
 	 *
 	 * @param task - taks to be executed
-	 * @return result
 	 */
-	public ContainerTaskResult execute(ContainerTask task) {
+	public void execute(ContainerTask task) throws Exception {
 		docker = DockerUtil.getInstance();
 		Optional<Element> elementOptional = elementManager.getLatestElementById(task.getElementId());
-		ContainerTaskResult result = null;
 		switch (task.getAction()) {
 			case ADD:
 				if (elementOptional.isPresent()) {
-					try {
-						String containerId = addContainer(elementOptional.get());
-						result = new ContainerTaskResult(containerId, true);
-						break;
-					} catch (Exception e) {
-						result = new ContainerTaskResult(elementOptional.get().getContainerId(), false);
-						LoggingService.logWarning(MODULE_NAME, e.getMessage());
-						break;
-					}
+					addContainer(elementOptional.get());
+					break;
 				}
 			case UPDATE:
 				if (elementOptional.isPresent()) {
-					try {
-						String containerId = updateContainer(elementOptional.get());
-						result = new ContainerTaskResult(containerId, true);
-						break;
-					} catch (Exception e) {
-						result = new ContainerTaskResult(elementOptional.get().getContainerId(), false);
-						LoggingService.logWarning(MODULE_NAME, e.getMessage());
-						break;
-					}
+					updateContainer(elementOptional.get(), false);
+					break;
 				}
 			case REMOVE:
-				try {
-					removeContainerByContainerId(task.getContainerId());
-					result = new ContainerTaskResult(task.getContainerId(), true);
-					break;
-				} catch (Exception e) {
-					result = new ContainerTaskResult(task.getContainerId(), false);
-					LoggingService.logWarning(MODULE_NAME, e.getMessage());
-					break;
-				}
+				removeContainerByElementId(task.getElementId(), false);
+				break;
+
+			case REMOVE_WITH_CLEAN_UP:
+				removeContainerByElementId(task.getElementId(), true);
+				break;
 		}
-		return result;
 	}
 }
