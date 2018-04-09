@@ -462,6 +462,7 @@ public class FieldAgent implements IOFogModule {
 		String filename = "elements.json";
 		try {
 			JsonArray containers;
+			Set<String> toRemoveList = new HashSet<>();
 			if (fromFile) {
 				containers = readFile(filesPath + filename);
 				if (containers == null) {
@@ -473,21 +474,22 @@ public class FieldAgent implements IOFogModule {
 				checkResponseStatus(result);
 				containers = result.getJsonArray("containerlist");
 				saveFile(containers, filesPath + filename);
+
+				JsonObject resultToClean = orchestrator.doCommand("list/element/instance/cleanup", null, null);
+				checkResponseStatus(resultToClean);
+				JsonArray containersToClean = resultToClean.getJsonArray("elementIds");
+				ObjectMapper mapper = new ObjectMapper();
+				toRemoveList.addAll(mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class)));
+				elementManager.setToRemoveElementIds(toRemoveList);
 			}
 
 			List<Element> latestElements = IntStream.range(0, containers.size())
 					.boxed()
 					.map(containers::getJsonObject)
 					.map(containerJsonObjectToElementFunction())
+					.filter(element -> !toRemoveList.contains(element.getElementId()))
 					.collect(toList());
 			elementManager.setLatestElements(latestElements);
-
-			JsonObject resultToClean = orchestrator.doCommand("list/element/instance/cleanup", null, null);
-			checkResponseStatus(resultToClean);
-			JsonArray containersToClean = resultToClean.getJsonArray("elementIds");
-			ObjectMapper mapper = new ObjectMapper();
-			Set<String> toRemoveList = mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
-			elementManager.setToRemoveElementIds(toRemoveList);
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
