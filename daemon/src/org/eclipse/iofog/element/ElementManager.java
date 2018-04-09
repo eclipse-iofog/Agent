@@ -13,7 +13,6 @@
 package org.eclipse.iofog.element;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * IOElements common repository
@@ -25,8 +24,8 @@ public class ElementManager {
 	private List<Element> latestElements = new ArrayList<>();
 	private List<Element> currentElements = new ArrayList<>();
 	private Set<String> toRemoveElementIds = new HashSet<>();
-	private Map<String, Route> routes = new ConcurrentHashMap<>();
-	private Map<String, String> configs = new ConcurrentHashMap<>();
+	private Map<String, Route> routes = new HashMap<>();
+	private Map<String, String> configs = new HashMap<>();
 	private List<Registry> registries = new ArrayList<>();
 
 	private ElementManager() {
@@ -41,33 +40,43 @@ public class ElementManager {
 	}
 
 	public List<Element> getLatestElements() {
-		synchronized (latestElements) {
+		synchronized (ElementManager.class) {
 			return latestElements;
 		}
 	}
 
 	public List<Element> getCurrentElements() {
-		synchronized (currentElements) {
+		synchronized (ElementManager.class) {
 			return currentElements;
 		}
 	}
 
+	public Set<String> getToRemoveElementIds() {
+		synchronized (ElementManager.class) {
+			return toRemoveElementIds;
+		}
+	}
+
 	public Map<String, Route> getRoutes() {
-		return routes;
+		synchronized (ElementManager.class) {
+			return routes;
+		}
 	}
 
 	public Map<String, String> getConfigs() {
-		return configs;
+		synchronized (ElementManager.class) {
+			return configs;
+		}
 	}
 
 	public List<Registry> getRegistries() {
-		synchronized (registries) {
+		synchronized (ElementManager.class) {
 			return registries;
 		}
 	}
 
 	public Registry getRegistry(String name) {
-		synchronized (registries) {
+		synchronized (ElementManager.class) {
 			for (Registry registry : registries) {
 				if (registry.getUrl().equalsIgnoreCase(name))
 					return registry;
@@ -76,65 +85,65 @@ public class ElementManager {
 		}
 	}
 
-	public void setRegistries(List<Registry> registries) {
-		synchronized (registries) {
-			this.registries = registries;
-		}
-	}
-
-	public void setConfigs(Map<String, String> configs) {
-		this.configs = configs;
-	}
-
 	public void setLatestElements(List<Element> latestElements) {
-		synchronized (latestElements) {
+		synchronized (ElementManager.class) {
 			this.latestElements = latestElements;
 		}
 	}
 
 	public void setCurrentElements(List<Element> currentElements) {
-		synchronized (currentElements) {
+		synchronized (ElementManager.class) {
 			this.currentElements = currentElements;
 		}
 	}
 
+	public void setToRemoveElementIds(Set<String> toRemoveElementIds) {
+		synchronized (ElementManager.class) {
+			this.toRemoveElementIds = toRemoveElementIds;
+		}
+	}
+
+	public void setConfigs(Map<String, String> configs) {
+		synchronized (ElementManager.class) {
+			this.configs = configs;
+		}
+	}
+
 	public void setRoutes(Map<String, Route> routes) {
-		this.routes = routes;
+		synchronized (ElementManager.class) {
+			this.routes = routes;
+		}
+	}
+
+	public void setRegistries(List<Registry> registries) {
+		synchronized (ElementManager.class) {
+			this.registries = registries;
+		}
 	}
 
 	public boolean elementExists(List<Element> elements, String elementId) {
 		return getLatestElementById(elements, elementId).isPresent();
 	}
 
-	public synchronized void clear() {
-		latestElements.clear();
-		currentElements.clear();
-		routes.clear();
-		configs.clear();
-		registries.clear();
-	}
-
 	public Optional<Element> getLatestElementById(String elementId) {
-		return getLatestElementById(latestElements, elementId);
-	}
-
-	private Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
-		//synchronized () {
-		return elements.stream()
-				.filter(element -> element.getElementId().equals(elementId))
-				.findAny();
-		//}
-	}
-
-	public Set<String> getToRemoveElementIds() {
-		synchronized (toRemoveElementIds) {
-			return toRemoveElementIds;
+		synchronized (ElementManager.class) {
+			return getLatestElementById(latestElements, elementId);
 		}
 	}
 
-	public void setToRemoveElementIds(Set<String> toRemoveElementIds) {
-		synchronized (toRemoveElementIds) {
-			this.toRemoveElementIds = toRemoveElementIds;
+	private Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
+		return elements.stream()
+				.filter(element -> element.getElementId().equals(elementId))
+				.findAny();
+	}
+
+	public void clear() {
+		synchronized (ElementManager.class) {
+			latestElements.clear();
+			currentElements.clear();
+			routes.clear();
+			configs.clear();
+			registries.clear();
 		}
 	}
 }
