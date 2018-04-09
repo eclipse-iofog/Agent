@@ -16,6 +16,7 @@ import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class GpsApiHandler implements Callable<FullHttpResponse> {
 	private static final String MODULE_NAME = "Local API";
@@ -37,7 +38,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
@@ -68,7 +69,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = " Error with setting GPS, " + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
@@ -77,7 +78,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		builder.add("status", "okay");
 
 		String sendMessageResult = builder.build().toString();
-		outputBuffer.writeBytes(sendMessageResult.getBytes());
+		outputBuffer.writeBytes(sendMessageResult.getBytes(UTF_8));
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;
@@ -99,7 +100,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		builder.add("lon", lon);
 
 		String sendMessageResult = builder.build().toString();
-		outputBuffer.writeBytes(sendMessageResult.getBytes());
+		outputBuffer.writeBytes(sendMessageResult.getBytes(UTF_8));
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;

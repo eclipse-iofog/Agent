@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import org.eclipse.iofog.utils.Constants;
-
 import java.util.List;
 
 /**
@@ -132,8 +130,8 @@ public class Element {
 
 	@Override
 	public boolean equals(Object e) {
-		if (e == null)
-			return false;
+        if (this == e) return true;
+        if (e == null || getClass() != e.getClass()) return false;
 		Element element = (Element) e;
 		return this.elementId.equals(element.getElementId());
 	}

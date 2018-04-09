@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Created by ekrylovich
  * on 2/7/18.
@@ -97,7 +99,7 @@ public class CommandShellExecutor {
 		List<String> result = new ArrayList<>();
 		String line;
 		try (BufferedReader stdInput = new BufferedReader(new
-				InputStreamReader(streamExtractor.apply(process)))) {
+				InputStreamReader(streamExtractor.apply(process), UTF_8))) {
 			while ((line = stdInput.readLine()) != null) {
 				result.add(line);
 			}

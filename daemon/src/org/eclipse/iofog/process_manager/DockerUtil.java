@@ -159,10 +159,10 @@ public class DockerUtil {
 	/**
 	 * starts a {@link Container}
 	 *
-	 * @param id - id of {@link Container}
+	 * @param element
 	 * @throws Exception
 	 */
-	public void startContainer(String id) throws Exception {
+	public void startContainer(Element element) throws Exception {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -170,7 +170,22 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		dockerClient.startContainerCmd(id).exec();
+		removeContainersWithSameImage(element);
+		dockerClient.startContainerCmd(element.getContainerId()).exec();
+	}
+
+	private void removeContainersWithSameImage(Element element) {
+		getContainers().stream()
+				.filter(container ->
+						container.getImage().equals(element.getImageName()) && !element.getElementId().equals(getContainerName(container)))
+				.forEach(oldContainer -> {
+					try {
+						stopContainer(oldContainer.getId());
+						removeContainer(oldContainer.getId());
+					} catch (Exception e) {
+						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
+					}
+				});
 	}
 
 	/**
@@ -296,15 +311,41 @@ public class DockerUtil {
 	}
 
 	/**
-	 * compares if element port mapping is equal to container port mapping
+	 * compares if element's and container's settings are equal
 	 *
 	 * @param containerId container id
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isPortMappingEqual(String containerId, Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+	public boolean isElementAndContainerEquals(String containerId, Element element) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
+	}
+
+	/**
+	 * compares if element has root host access, then container will have the NetworkMode 'host',
+	 * otherwise container has to have ExtraHosts
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
+		boolean isRootHostAccess = element.isRootHostAccess();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
+				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
+	}
+
+	/**
+	 * compares if element port mapping is equal to container port mapping
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
+		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		Ports ports = hostConfig.getPortBindings();
 		return comparePortMapping(elementPorts, ports.getBindings());

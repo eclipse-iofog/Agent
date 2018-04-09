@@ -38,11 +38,11 @@ public class Route {
 
 	@Override
 	public String toString() {
-		String in = "\"receivers\" : [";
+		StringBuilder in = new StringBuilder("\"receivers\" : [");
 		if (receivers != null)
 			for (String e : receivers)
-				in += "\"" + e + "\",";
-		in += "]";
+				in.append("\"").append(e).append("\",");
+		in.append("]");
 		return "{" + in + "}";
 	}
 

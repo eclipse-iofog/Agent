@@ -13,6 +13,7 @@
 package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Map;
 
@@ -42,7 +43,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
  * @since 2016
  */
 public class MessageWebsocketHandler {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private static final Byte OPCODE_PING = 0x9;
 	private static final Byte OPCODE_PONG = 0xA;
@@ -125,7 +126,7 @@ public class MessageWebsocketHandler {
 			byte[] byteArray = new byte[input.readableBytes()];
 			int readerIndex = input.readerIndex();
 			input.getBytes(readerIndex, byteArray);
-			Byte opcode = 0;
+			Byte opcode;
 
 			if(byteArray.length >= 1){
 				opcode = byteArray[0];
@@ -135,38 +136,34 @@ public class MessageWebsocketHandler {
 
 			if (opcode == OPCODE_MSG.intValue()) {
 				if (byteArray.length >= 2) {
-					opcode = byteArray[0];
-					Message message = null;
-
 					if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap)) {
 
 						int totalMsgLength = BytesUtil.bytesToInteger(BytesUtil.copyOfRange(byteArray, 1, 5));
 						try {
-							message = new Message(BytesUtil.copyOfRange(byteArray, 5, totalMsgLength + 5));
-//							LoggingService.logInfo(MODULE_NAME, message.toString());
+							Message message = new Message(BytesUtil.copyOfRange(byteArray, 5, totalMsgLength + 5));
+
+							MessageBusUtil messageBus = new MessageBusUtil();
+							messageBus.publishMessage(message);
+
+							String messageId = message.getId();
+							Long msgTimestamp = message.getTimestamp();
+							ByteBuf buffer1 = ctx.alloc().buffer();
+
+							buffer1.writeByte(OPCODE_RECEIPT.intValue());
+
+							// send Length
+							int msgIdLength = messageId.length();
+							buffer1.writeByte(msgIdLength);
+							buffer1.writeByte(Long.BYTES);
+
+							// Send opcode, id and timestamp
+							buffer1.writeBytes(messageId.getBytes(UTF_8));
+							buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
+							ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 						} catch (Exception e) {
 							LoggingService.logInfo(MODULE_NAME, "wrong message format  " + e.getMessage());
 							LoggingService.logInfo(MODULE_NAME, "Validation fail");
 						}
-
-						MessageBusUtil messageBus = new MessageBusUtil();
-						messageBus.publishMessage(message);
-
-						String messageId = message.getId();
-						Long msgTimestamp = message.getTimestamp();
-						ByteBuf buffer1 = ctx.alloc().buffer();
-
-						buffer1.writeByte(OPCODE_RECEIPT.intValue());
-
-						// send Length
-						int msgIdLength = messageId.length();
-						buffer1.writeByte(msgIdLength);
-						buffer1.writeByte(Long.BYTES);
-
-						// Send opcode, id and timestamp
-						buffer1.writeBytes(messageId.getBytes());
-						buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
-						ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 					}
 					return;
 				}
@@ -195,21 +192,15 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
-		ChannelHandlerContext ctx = null;
+		ChannelHandlerContext ctx;
 		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
 		if (messageSocketMap != null && messageSocketMap.containsKey(receiverId)) {
 			ctx = messageSocketMap.get(receiverId);
 			WebSocketMap.unackMessageSendingMap.put(ctx, new MessageSentInfo(message, 1, System.currentTimeMillis()));
 
-			int totalMsgLength = 0;
-
-			byte[] bytesMsg = null;
-			try {
-				bytesMsg = message.getBytes();
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "Problem in retrieving the message");
-			}
+			int totalMsgLength;
+			byte[] bytesMsg = message.getBytes();
 
 			totalMsgLength = bytesMsg.length;
 

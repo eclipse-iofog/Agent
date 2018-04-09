@@ -32,7 +32,7 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
  * @since 2016
  */
 public class ControlWebsocketHandler {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private static final Byte OPCODE_PING = 0x9;
 	private static final Byte OPCODE_PONG = 0xA;

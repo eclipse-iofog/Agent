@@ -21,12 +21,12 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 	private static final String MODULE_NAME = "Local API";
@@ -53,26 +53,26 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
 		try {
-			String msgString = new String(content, StandardCharsets.UTF_8);
+			String msgString = new String(content, UTF_8);
 			JsonReader reader = Json.createReader(new StringReader(msgString));
 			JsonObject jsonObject = reader.readObject();
 
 			String command = jsonObject.getString("command");
 			String result = CommandLineParser.parse(command);
 
-			outputBuffer.writeBytes(result.getBytes(StandardCharsets.UTF_8));
+			outputBuffer.writeBytes(result.getBytes(UTF_8));
 			FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 			HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 			return res;
 		} catch (Exception e) {
 			String errorMsg = " Log message parsing error, " + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 	}

@@ -14,6 +14,8 @@ package org.eclipse.iofog.utils;
 
 import java.util.Arrays;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * provides methods for "number <=> byte array" conversions
  * 
@@ -80,7 +82,7 @@ public class BytesUtil {
 		if (s == null)
 			return new byte[] {};
 		else
-			return s.getBytes();
+			return s.getBytes(UTF_8);
 	}
 
 	public static String bytesToString(byte[] bytes) {

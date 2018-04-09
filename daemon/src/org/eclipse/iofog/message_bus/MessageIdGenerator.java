@@ -26,11 +26,11 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MessageIdGenerator {
-	private final char[] ALPHABETS_ARRAY = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789".toCharArray();
+	private static final char[] ALPHABETS_ARRAY = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789".toCharArray();
 
 	/**
 	 * converts base 10 to base 58
-	 * 
+	 *
 	 * @param number - number to be converted
 	 * @return base 58 presentation of number
 	 */
@@ -44,13 +44,13 @@ public class MessageIdGenerator {
 		return result.reverse().toString();
 	}
 
-	
+
 	private final int MAX_SEQUENCE = 100000000;
 	private volatile long lastTime = 0;
 	private volatile int sequence = MAX_SEQUENCE;
 	/**
-	 * generates unique id based on time and sequence  
-	 * 
+	 * generates unique id based on time and sequence
+	 *
 	 * @param time - timestamp in milliseconds
 	 */
 	public synchronized String generate(long time) {
@@ -63,9 +63,9 @@ public class MessageIdGenerator {
 		return toBase58(time) + toBase58(sequence);
 	}
 
-	
+
 	// uuid
-	private final int PRE_GENERATED_IDS_COUNT = 100_000;
+	private static final int PRE_GENERATED_IDS_COUNT = 100_000;
 	private boolean isRefilling = false;
 	private final Queue<String> generatedIds = new LinkedList<>();
 	/**

@@ -24,11 +24,11 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 2016
  */
 public final class WebSocketMap {
-	static Map<String, ChannelHandlerContext> controlWebsocketMap = new ConcurrentHashMap<>();
-	static Map<String, ChannelHandlerContext> messageWebsocketMap = new ConcurrentHashMap<>();
+	static final Map<String, ChannelHandlerContext> controlWebsocketMap = new ConcurrentHashMap<>();
+	static final Map<String, ChannelHandlerContext> messageWebsocketMap = new ConcurrentHashMap<>();
 	
-	static Map<ChannelHandlerContext, MessageSentInfo> unackMessageSendingMap = new ConcurrentHashMap<>();
-	static Map<ChannelHandlerContext, ControlSignalSentInfo> unackControlSignalsMap = new ConcurrentHashMap<>();
+	static final Map<ChannelHandlerContext, MessageSentInfo> unackMessageSendingMap = new ConcurrentHashMap<>();
+	static final Map<ChannelHandlerContext, ControlSignalSentInfo> unackControlSignalsMap = new ConcurrentHashMap<>();
 
 
 

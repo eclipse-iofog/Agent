@@ -85,16 +85,10 @@ public final class LoggingService {
 
 		logDirectory.mkdirs();
 
-//		UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-//		final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-//		Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
-//				LinkOption.NOFOLLOW_LINKS).setGroup(group);
-//		Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-//		Files.setPosixFilePermissions(logDirectory.toPath(), perms);
-
 		final String logFilePattern = logDirectory.getPath() + "/iofog.%g.log";
 		
 		if (logger != null) {
+			logNullLogger();
 			for (Handler f : logger.getHandlers())
 				f.close();
 		}
@@ -134,6 +128,7 @@ public final class LoggingService {
 		Logger logger = elementLogger.get(elementId);
 		
 		if (logger != null) {
+			logNullLogger();
 			for (Handler f : logger.getHandlers())
 				f.close();
 		} 
@@ -152,8 +147,10 @@ public final class LoggingService {
 	
 	public static boolean elementLogInfo(String elementId, String msg) {
 		Logger logger = elementLogger.get(elementId);
-		if (logger == null)
+		if (logger == null) {
+			logNullLogger();
 			return false;
+		}
 		
 		logger.info(msg);
 		return true;
@@ -161,11 +158,19 @@ public final class LoggingService {
 	
 	public static boolean elementLogWarning(String elementId, String msg) {
 		Logger logger = elementLogger.get(elementId);
-		if (logger == null)
+		if (logger == null) {
+			logNullLogger();
 			return false;
+		}
 		
 		logger.warning(msg);
 		return true;
+	}
+
+	private static void logNullLogger(){
+		String errorMsg = " Log message parsing error, " + "Logger initialized null";
+		LoggingService.logWarning(MODULE_NAME, errorMsg);
+
 	}
 	
 	/**

@@ -231,7 +231,7 @@ public enum CommandLineAction {
     public static final String MODULE_NAME = "Command Line Parser";
 
     private static String showHelp() {
-        String help = ("Usage 1: iofog [OPTION]\\n" +
+        return ("Usage 1: iofog [OPTION]\\n" +
                 "Usage 2: iofog [COMMAND] <Argument>\\n" +
                 "Usage 3: iofog [COMMAND] [Parameter] <Value>\\n" +
                 "\\n" +
@@ -296,8 +296,6 @@ public enum CommandLineAction {
                 "Report bugs to: bugs@iotracks.com\\n" +
                 "ioFog home page: http://iofog.com\\n" +
                 "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
-
-        return help;
     }
 
 }
