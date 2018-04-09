@@ -249,7 +249,6 @@ public class FieldAgent implements IOFogModule {
 				}
 				if (changes.getBoolean("containerlist") || initialization) {
 					loadElementsList(false);
-					ProcessManager.getInstance().update();
 				}
 				if (changes.getBoolean("routing") || initialization) {
 					loadRoutes(false);
