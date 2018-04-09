@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -31,6 +32,11 @@ public class CommandShellExecutor {
 		return execute(fullCommand);
 	}
 
+	public static void executeDynamicCommand(String command, CommandShellResultSet<List<String>, List<String>> resultSet, AtomicBoolean isRun) {
+		String[] fullCommand = computeCommand(command);
+		executeDynamic(fullCommand, resultSet, isRun);
+	}
+
 	private static CommandShellResultSet<List<String>, List<String>> execute( String[] fullCommand) {
 		CommandShellResultSet<List<String>, List<String>> resultSet = null;
 		try {
@@ -42,6 +48,25 @@ public class CommandShellExecutor {
 			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		}
 		return resultSet;
+	}
+
+	private static void executeDynamic( String[] fullCommand, CommandShellResultSet<List<String>, List<String>> resultSet, AtomicBoolean isRun) {
+		try {
+			Process process = Runtime.getRuntime().exec(fullCommand);
+
+			Runnable readVal = () -> {
+				readOutputDynamic(process, Process::getInputStream, resultSet.getValue(), isRun);
+			};
+			new Thread(readVal).start();
+
+			Runnable readErr = () -> {
+				readOutputDynamic(process, Process::getErrorStream, resultSet.getError(), isRun);
+			};
+			new Thread(readErr).start();
+
+		} catch (IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
 	}
 
 
@@ -78,5 +103,32 @@ public class CommandShellExecutor {
 			}
 		}
 		return result;
+	}
+
+	private static void readOutputDynamic(Process process, Function<Process,
+	                                      InputStream> streamExtractor, List<String> result,
+	                                      AtomicBoolean isRun) {
+		String line;
+		if (result == null) {
+			return;
+		}
+		try (BufferedReader stdInput = new BufferedReader(new
+				InputStreamReader(streamExtractor.apply(process)))) {
+
+			while (isRun != null && isRun.get()) {
+				line = stdInput.readLine();
+				if (line != null) {
+					result.add(line);
+				} else {
+					Thread.sleep(3000);
+				}
+			}
+		} catch (InterruptedException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		} catch (IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		} finally {
+			process.destroy();
+		}
 	}
 }
