@@ -327,27 +327,34 @@ public class DockerUtil {
 	 *
 	 * @param inspectInfo result of docker inspect command
 	 * @param element     element
-	 * @return boolean
+	 * @return boolean true if port mappings are the same
 	 */
 	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
-		HostConfig hostConfig = inspectInfo.getHostConfig();
-		Ports ports = hostConfig.getPortBindings();
-		return comparePortMapping(elementPorts, ports.getBindings());
+		List<PortMapping> elementPorts = getElementPorts(element);
+		List<PortMapping> containerPorts = getContainerPorts(inspectInfo);
+		return isPortMappingListsEqual(elementPorts, containerPorts);
+
 	}
 
-	private boolean comparePortMapping(List<PortMapping> elementPorts, Map<ExposedPort, Ports.Binding[]> portBindings) {
+	private boolean isPortMappingListsEqual(List<PortMapping> elementPorts, List<PortMapping> containerPorts) {
+		return elementPorts.size() == containerPorts.size()
+				&& (elementPorts.isEmpty() || elementPorts.stream().allMatch(containerPorts::contains));
+	}
 
-		List<PortMapping> containerPorts = portBindings.entrySet().stream()
+	private List<PortMapping> getElementPorts(Element element) {
+		return element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+	}
+
+	private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		Ports ports = hostConfig.getPortBindings();
+		return ports.getBindings().entrySet().stream()
 				.map(entity -> {
 					String exposedPort = String.valueOf(entity.getKey().getPort());
 					String hostPort = entity.getValue()[0].getHostPortSpec();
 					return new PortMapping(hostPort, exposedPort);
 				})
 				.collect(Collectors.toList());
-
-		return elementPorts.stream()
-				.allMatch(containerPorts::contains);
 	}
 
 	public Optional<String> getContainerStatus(String containerId) {

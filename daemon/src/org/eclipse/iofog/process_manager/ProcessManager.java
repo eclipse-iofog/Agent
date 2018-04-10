@@ -122,7 +122,8 @@ public class ProcessManager implements IOFogModule {
 						boolean running = ElementState.RUNNING.equals(status.getStatus());
 						long elementLastModified = element.getLastModified();
 						long containerStartedAt = docker.getContainerStartedAt(containerId);
-						if (!running || elementLastModified > containerStartedAt || !docker.isElementAndContainerEquals(containerId, element)) {
+						if (!running || elementLastModified > containerStartedAt ||
+								!docker.isElementAndContainerEquals(containerId, element)) {
 							addTask(new ContainerTask(UPDATE, element.getElementId(), containerId));
 						}
 					} else {
