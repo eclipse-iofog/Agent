@@ -70,39 +70,20 @@ public class ProcessManager implements IOFogModule {
 		return instance;
 	}
 
+	/**
+	 * updates registries list according to the last changes
+	 */
 	private void updateRegistriesStatus() {
 		StatusReporter.getProcessManagerStatus().getRegistriesStatus().entrySet()
 				.removeIf(entry -> (elementManager.getRegistry(entry.getKey()) == null));
 	}
 
 	/**
-	 * updates {@link Container} base on changes applied to list of {@link Element}
+	 * updates {@link ProcessManager} to the last changes
 	 * Field Agent call this method when any changes applied
 	 */
 	public void update() {
-
 		updateRegistriesStatus();
-
-		List<Element> latestElements = elementManager.getLatestElements();
-		for (Element element : latestElements) {
-			Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
-			if (containerOptional.isPresent() && !element.isRebuild()) {
-				String containerId = containerOptional.get().getId();
-				element.setContainerId(containerId);
-				try {
-					element.setContainerIpAddress(docker.getContainerIpAddress(containerId));
-				} catch (Exception e) {
-					element.setContainerIpAddress("0.0.0.0");
-				}
-				long elementLastModified = element.getLastModified();
-				long containerStartedAt = docker.getContainerStartedAt(containerId);
-				if (elementLastModified > containerStartedAt || !docker.isPortMappingEqual(containerId, element)) {
-					addTask(new ContainerTask(UPDATE, element.getElementId(), containerId));
-				}
-			} else {
-				addTask(new ContainerTask(ADD, element.getElementId(), null));
-			}
-		}
 	}
 
 	/**
@@ -124,53 +105,48 @@ public class ProcessManager implements IOFogModule {
 			List<Element> latestElements = elementManager.getLatestElements();
 			List<Element> currentElements = elementManager.getCurrentElements();
 
-
-			for (Element element : latestElements) {
-				if (!docker.hasContainerWithElementId(element.getElementId()) || element.isRebuild()) {
-					addTask(new ContainerTask(ADD, element.getElementId(), null));
-				}
-			}
-			StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
-
-			List<Container> containers = docker.getContainers();
-			for (Container container : containers) {
-				String elementId = docker.getContainerName(container);
-				Optional<Element> elementOptional = elementManager.getLatestElementById(elementId);
-
-				boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
-				// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
-				if (!elementOptional.isPresent()) {
-					if (isIsolatedDockerContainers || elementManager.elementExists(currentElements, elementId)) {
-						addTask(new ContainerTask(REMOVE, null, container.getId()));
-					}
-				} else {
-					try {
-						elementOptional.get().setContainerId(container.getId());
-						elementOptional.get().setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
-						String containerName = docker.getContainerName(container);
-						ElementStatus status = docker.getElementStatus(container.getId());
-						StatusReporter.setProcessManagerStatus().setElementsStatus(containerName, status);
-						if (status.getStatus().equals(ElementState.RUNNING)) {
-							logInfo(format("\"%s\": running ", elementOptional.get().getElementId()) + container.getImage());
-						} else {
-							logInfo(format("\"%s\": container isn't running, status: \"%s\"", containerName, status.getStatus().toString()));
-							try {
-								logInfo(format("\"%s\": trying to start", containerName));
-								docker.startContainer(elementOptional.get());
-								ElementStatus elementStatus = docker.getElementStatus(container.getId());
-								StatusReporter.setProcessManagerStatus()
-										.setElementsStatus(containerName, elementStatus);
-								logInfo(format("\"%s\": \"%s\"", containerName, elementStatus.getStatus().toString()));
-							} catch (Exception ex) {
-								// unable to start the container, update it!
-								logWarning(ex.getMessage());
-								addTask(new ContainerTask(UPDATE, elementOptional.get().getElementId(), null));
-							}
+			try {
+				for (Element element : latestElements) {
+					Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
+					if (containerOptional.isPresent() && !element.isRebuild()) {
+						Container container = containerOptional.get();
+						String containerId = container.getId();
+						element.setContainerId(containerId);
+						try {
+							element.setContainerIpAddress(docker.getContainerIpAddress(containerId));
+						} catch (Exception e) {
+							element.setContainerIpAddress("0.0.0.0");
 						}
-					} catch (Exception e) {
-						logInfo("Unable to get docker container info : " + e.getMessage());
+						ElementStatus status = docker.getElementStatus(container.getId());
+						StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
+						boolean running = ElementState.RUNNING.equals(status.getStatus());
+						long elementLastModified = element.getLastModified();
+						long containerStartedAt = docker.getContainerStartedAt(containerId);
+						if (!running || elementLastModified > containerStartedAt || !docker.isElementAndContainerEquals(containerId, element)) {
+							addTask(new ContainerTask(UPDATE, element.getElementId(), containerId));
+						}
+					} else {
+						addTask(new ContainerTask(ADD, element.getElementId(), null));
 					}
 				}
+
+				StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
+
+				List<Container> containers = docker.getContainers();
+				for (Container container : containers) {
+					String elementId = docker.getContainerName(container);
+					Optional<Element> elementOptional = elementManager.getLatestElementById(elementId);
+
+					boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
+					// remove any unknown container for ioFog of isd mode is ON, and remove only old once when it's off
+					if (!elementOptional.isPresent()) {
+						if (isIsolatedDockerContainers || elementManager.elementExists(currentElements, elementId)) {
+							addTask(new ContainerTask(REMOVE, null, container.getId()));
+						}
+					}
+				}
+			} catch (Exception ex) {
+				logWarning(ex.getMessage());
 			}
 			elementManager.setCurrentElements(latestElements);
 		}

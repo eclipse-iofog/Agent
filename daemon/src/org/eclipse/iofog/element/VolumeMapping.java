@@ -36,17 +36,6 @@ public class VolumeMapping {
                 ", accessMode='" + accessMode + "'}";
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof VolumeMapping))
-            return false;
-
-        VolumeMapping o = (VolumeMapping) other;
-        return this.hostDestination.equals(o.hostDestination) &&
-                this.containerDestination.equals(o.containerDestination) &&
-                this.accessMode.equals(o.accessMode) ;
-    }
-
     public String getHostDestination() {
         return hostDestination;
     }
@@ -65,6 +54,17 @@ public class VolumeMapping {
         result = 31 * result + containerDestination.hashCode();
         result = 31 * result + accessMode.hashCode();
         return result;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        VolumeMapping o = (VolumeMapping) other;
+        return this.hostDestination.equals(o.hostDestination) &&
+                this.containerDestination.equals(o.containerDestination) &&
+                this.accessMode.equals(o.accessMode) ;
     }
 
 }

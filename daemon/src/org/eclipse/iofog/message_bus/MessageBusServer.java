@@ -50,7 +50,7 @@ import org.hornetq.core.settings.impl.AddressSettings;
  */
 public class MessageBusServer {
 	
-	private final String MODULE_NAME = "Message Bus Server";
+	private static final String MODULE_NAME = "Message Bus Server";
 	private ClientSessionFactory sf;
 	private HornetQServer server;
 	private static ClientSession messageBusSession;

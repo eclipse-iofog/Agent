@@ -16,7 +16,6 @@ import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.Registry;
-import org.eclipse.iofog.utils.Constants.DockerStatus;
 import org.eclipse.iofog.utils.Constants.LinkStatus;
 
 import javax.json.Json;
@@ -33,7 +32,6 @@ import java.util.Map;
  */
 public class ProcessManagerStatus {
 	private int runningElementsCount;
-	private DockerStatus dockerStatus;
 	private final Map<String, ElementStatus> elementsStatus;
 	private final Map<String, LinkStatus> registriesStatus;
 
@@ -41,7 +39,6 @@ public class ProcessManagerStatus {
 		elementsStatus = new HashMap<>();
 		registriesStatus = new HashMap<>();
 		runningElementsCount = 0;
-		dockerStatus = DockerStatus.RUNNING;
 	}
 	
 	/**
@@ -93,15 +90,6 @@ public class ProcessManagerStatus {
 		return this;
 	}
 
-	public DockerStatus getDockerStatus() {
-		return dockerStatus;
-	}
-
-	public ProcessManagerStatus setDockerStatus(DockerStatus dockerStatus) {
-		this.dockerStatus = dockerStatus;
-		return this;
-	}
-
 	public ProcessManagerStatus setElementsStatus(String elementId, ElementStatus status) {
 		synchronized (elementsStatus) {
 			this.elementsStatus.put(elementId, status);
@@ -116,31 +104,13 @@ public class ProcessManagerStatus {
 		}
 		return elementsStatus.get(elementId);
 	}
-	
-	public void removeElementStatus(String elementId) {
-		synchronized (elementsStatus) {
-			elementsStatus.keySet().forEach(element -> {
-				if (element.equals(elementId))
-					elementsStatus.remove(elementId);
-			});
-		}
-	}
 
 	public int getRegistriesCount() {
 		return ElementManager.getInstance().getRegistries().size();
-	}
-
-	public LinkStatus getRegistriesStatus(Registry registry) {
-		return registriesStatus.get(registry);
 	}
 
 	public Map<String, LinkStatus> getRegistriesStatus() {
 		return registriesStatus;
 	}
 
-	public ProcessManagerStatus setRegistriesStatus(String registry, LinkStatus status) {
-		this.registriesStatus.put(registry, status);
-		return this;
-	}
-	
 }

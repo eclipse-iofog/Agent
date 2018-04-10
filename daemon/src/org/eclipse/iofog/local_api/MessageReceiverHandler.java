@@ -20,13 +20,13 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Handler to deliver the messages to the receiver, if found any.
@@ -65,11 +65,11 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
-		String requestBody = new String(content, StandardCharsets.UTF_8);
+		String requestBody = new String(content, UTF_8);
 		JsonReader reader = Json.createReader(new StringReader(requestBody));
 		JsonObject jsonObject = reader.readObject();
 
@@ -78,7 +78,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = "Incorrect content/data" + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
@@ -100,7 +100,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-		outputBuffer.writeBytes(result.getBytes());
+		outputBuffer.writeBytes(result.getBytes(UTF_8));
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 		LoggingService.logInfo(MODULE_NAME, "Request completed successfully");
 		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
@@ -109,14 +109,14 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 
 	/**
 	 * Validate the request
-	 * 
+	 * MessageWebsocketHandler
 	 * @param jsonObject
 	 * @return String
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
-		if (!jsonObject.containsKey("id"))
-			throw new Exception(" Id not found ");
-		if (jsonObject.getString("id").equals(null) || jsonObject.getString("id").trim().equals(""))
+		if (!jsonObject.containsKey("id") ||
+				jsonObject.isNull("id") ||
+				jsonObject.getString("id").trim().equals(""))
 			throw new Exception(" Id value not found ");
 	}
 

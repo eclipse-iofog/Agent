@@ -28,7 +28,7 @@ public class MessageCallback {
 	
 	/**
 	 * Method called from message bus to send real-time messages to the containers
-	 * @param Message
+	 * @param message
 	 * @return void
 	 */
 	public void sendRealtimeMessage(Message message) {
