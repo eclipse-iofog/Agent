@@ -9,13 +9,13 @@ public class ElementStraceData {
 
 	private final String elementId;
 	private int pid;
-	private final AtomicBoolean strace = new AtomicBoolean();
+	private final AtomicBoolean straceRun = new AtomicBoolean();
 	private List<String> resultBuffer = new CopyOnWriteArrayList<>();
 
-	public ElementStraceData(String elementId, int pid, boolean strace) {
+	public ElementStraceData(String elementId, int pid, boolean straceRun) {
 		this.elementId = elementId;
 		this.pid = pid;
-		this.strace.set(strace);
+		this.straceRun.set(straceRun);
 	}
 
 	public String getElementId() {
@@ -38,8 +38,8 @@ public class ElementStraceData {
 		this.pid = pid;
 	}
 
-	public AtomicBoolean getStrace() {
-		return strace;
+	public AtomicBoolean getStraceRun() {
+		return straceRun;
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class ElementStraceData {
 		return "ElementStraceData{" +
 				"elementId='" + elementId + '\'' +
 				", pid=" + pid +
-				", strace=" + strace +
+				", straceRun=" + straceRun +
 				", resultBuffer=" + resultBuffer +
 				'}';
 	}
@@ -59,14 +59,14 @@ public class ElementStraceData {
 		ElementStraceData that = (ElementStraceData) o;
 		return pid == that.pid &&
 				Objects.equals(elementId, that.elementId) &&
-				Objects.equals(strace, that.strace) &&
+				Objects.equals(straceRun, that.straceRun) &&
 				Objects.equals(resultBuffer, that.resultBuffer);
 	}
 
 	@Override
 	public int hashCode() {
 
-		return Objects.hash(elementId, pid, strace, resultBuffer);
+		return Objects.hash(elementId, pid, straceRun, resultBuffer);
 	}
 
 	public String getResultBufferAsString() {

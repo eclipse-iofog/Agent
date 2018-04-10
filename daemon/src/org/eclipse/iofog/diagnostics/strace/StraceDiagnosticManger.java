@@ -5,10 +5,11 @@ import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
-import java.io.StringReader;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class StraceDiagnosticManger {
 
@@ -38,48 +39,44 @@ public class StraceDiagnosticManger {
 	public void updateMonitoringElements(JsonObject diagnosticData) {
 		LoggingService.logInfo(MODULE_NAME, "trying to update strace monitoring elements");
 
+		if (diagnosticData.containsKey("straceValues")) {
+			JsonArray straceElementChanges = diagnosticData.getJsonArray("straceValues");
+			for (JsonValue elementValue : straceElementChanges) {
+				JsonObject element = (JsonObject) elementValue;
+				String elementId = element.getString("elementId");
+				boolean strace = false;
+				if (element.containsKey("straceRun")) {
+					strace = element.getInt("straceRun") != 0;
+				}
 
-		JsonArray straceElementChanges = diagnosticData.getJsonArray("straceValues");
-		for (JsonValue elementValue : straceElementChanges) {
-			JsonObject element = (JsonObject) elementValue;
-			String elementId = element.getString("elementId");
-			boolean strace = element.getInt("strace") != 0;
-
-			manageElement(elementId, strace);
+				manageElement(elementId, strace);
+			}
 		}
 	}
 
 	private void manageElement(String elementId, boolean strace) {
 		Optional<ElementStraceData> elementOptional = getDataByElementId(elementId);
-		if (elementOptional.isPresent() && isStraceSwitchedOff(elementOptional.get(), strace)) {
+		if (elementOptional.isPresent() && !strace) {
 			offDiagnosticElement(elementOptional.get());
 		} else if (!elementOptional.isPresent() && strace) {
 			createAndRunDiagnosticElement(elementId);
 		}
 	}
 
-	private boolean isStraceSwitchedOn(ElementStraceData element, boolean newStrace) {
-		return !element.getStrace().get() && newStrace;
-	}
-
-	private boolean isStraceSwitchedOff(ElementStraceData element, boolean newStrace) {
-		return element.getStrace().get() && !newStrace;
-	}
-
 	private void createAndRunDiagnosticElement(String elementId) {
-		int pid = getPidByElementId(elementId);
-		ElementStraceData elementStraceData = new ElementStraceData(elementId, pid, true);
-		this.monitoringElements.add(elementStraceData);
+		try {
+			int pid = getPidByElementId(elementId);
+			ElementStraceData elementStraceData = new ElementStraceData(elementId, pid, true);
+			this.monitoringElements.add(elementStraceData);
 
-		runDiagnosticElement(elementStraceData);
-	}
-
-	private void runDiagnosticElement(ElementStraceData elementStraceData) {
-		runStrace(elementStraceData);
+			runStrace(elementStraceData);
+		} catch (IllegalArgumentException e) {
+			logWarning(MODULE_NAME, "Can't get pid of process");
+		}
 	}
 
 	private void offDiagnosticElement(ElementStraceData elementStraceData) {
-		elementStraceData.getStrace().set(false);
+		elementStraceData.getStraceRun().set(false);
 		this.monitoringElements.remove(elementStraceData);
 	}
 
@@ -89,16 +86,21 @@ public class StraceDiagnosticManger {
 				.findFirst();
 	}
 
-	private int getPidByElementId(String elementId) {
+	private int getPidByElementId(String elementId) throws IllegalArgumentException {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + elementId);
 
-		String pid = resultSet.getValue().get(1).split("\\s+")[1];
-		return Integer.parseInt(pid);
+		if (resultSet.getValue() != null && resultSet.getValue().get(1) != null) {
+			String pid = resultSet.getValue().get(1).split("\\s+")[1];
+			return Integer.parseInt(pid);
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	private void runStrace(ElementStraceData elementStraceData) {
 		String straceCommand = "strace -p " + elementStraceData.getPid();
 		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, elementStraceData.getResultBuffer());
-		CommandShellExecutor.executeDynamicCommand(straceCommand, resultSet, elementStraceData.getStrace());
+		CommandShellExecutor.executeDynamicCommand(straceCommand, resultSet, elementStraceData.getStraceRun());
 	}
+
 }

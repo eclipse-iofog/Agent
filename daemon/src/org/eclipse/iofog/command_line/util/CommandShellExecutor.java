@@ -125,9 +125,7 @@ public class CommandShellExecutor {
 					Thread.sleep(3000);
 				}
 			}
-		} catch (InterruptedException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		} catch (IOException e) {
+		} catch (InterruptedException | IOException e) {
 			LoggingService.logWarning(MODULE_NAME, e.getMessage());
 		} finally {
 			process.destroy();
