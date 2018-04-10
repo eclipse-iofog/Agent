@@ -12,16 +12,12 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * IOElements common repository
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class ElementManager {
 
@@ -31,7 +27,7 @@ public class ElementManager {
 	private Map<String, String> configs;
 	private List<Registry> registries;
 	private static ElementManager instance = null;
-	
+
 	private ElementManager() {
 		latestElements = new ArrayList<>();
 		currentElements = new ArrayList<>();
@@ -39,7 +35,7 @@ public class ElementManager {
 		configs = new HashMap<>();
 		registries = new ArrayList<>();
 	}
-	
+
 	public static ElementManager getInstance() {
 		if (instance == null) {
 			synchronized (ElementManager.class) {
@@ -49,7 +45,7 @@ public class ElementManager {
 		}
 		return instance;
 	}
-	
+
 	public List<Element> getLatestElements() {
 		synchronized (ElementManager.class) {
 			return latestElements;
@@ -79,7 +75,7 @@ public class ElementManager {
 			return registries;
 		}
 	}
-	
+
 	public Registry getRegistry(String name) {
 		for (Registry registry : registries) {
 			if (registry.getUrl().equalsIgnoreCase(name))
@@ -87,7 +83,7 @@ public class ElementManager {
 		}
 		return null;
 	}
-	
+
 	public void setRegistries(List<Registry> registries) {
 		synchronized (ElementManager.class) {
 			this.registries = registries;
@@ -119,7 +115,7 @@ public class ElementManager {
 	}
 
 	public boolean elementExists(List<Element> elements, String elementId) {
-		return getLatestElementById(elements, elementId) != null;
+		return getLatestElementById(elements, elementId).isPresent();
 	}
 
 	public void clear() {
@@ -132,16 +128,13 @@ public class ElementManager {
 		}
 	}
 
-	public Element getLatestElementById(String elementId) {
+	public Optional<Element> getLatestElementById(String elementId) {
 		return getLatestElementById(latestElements, elementId);
 	}
 
-	public Element getLatestElementById(List<Element> elements, String elementId) {
-		for (Element element : elements)
-			if (element.getElementId().equals(elementId)) {
-				return element;
-			}
-		return null;
+	public Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
+		return elements.stream()
+				.filter(element -> element.getElementId().equals(elementId))
+				.findAny();
 	}
-
 }

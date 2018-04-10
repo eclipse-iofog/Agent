@@ -1,8 +1,8 @@
 package org.eclipse.iofog.command_line;
 
+import org.eclipse.iofog.gps.GpsMode;
 import java.util.List;
 import java.util.Optional;
-
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
@@ -28,7 +28,9 @@ public enum CommandLineConfigParam {
     STATUS_UPDATE_FREQ ("10", "sf", "status_update_freq", "poststatusfreq"),
     GET_CHANGES_FREQ ("20", "cf", "get_changes_freq", "getchangesfreq"),
     SCAN_DEVICES_FREQ("60", "sd", "scan_devices_freq", "scandevicesfreq"),
-    ISOLATED_DOCKER_CONTAINER ("on", "idc", "isolated_docker_container", "isolateddockercontainer");
+    ISOLATED_DOCKER_CONTAINER ("on", "idc", "isolated_docker_container", "isolateddockercontainer"),
+    GPS_MODE(GpsMode.AUTO.getValue(), "", "gps_mode", "gpsmode"),
+    GPS_COORDINATES("", "gps", "gps_coordinates", "gpscoordinates");
 
     private final String commandName;
     private final String xmlTag;

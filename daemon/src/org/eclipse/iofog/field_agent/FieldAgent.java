@@ -41,17 +41,20 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.charset.StandardCharsets.*;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.util.stream.Collectors.toList;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
+import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
-import static org.eclipse.iofog.utils.Constants.*;
 
 /**
  * Field Agent module
@@ -150,13 +153,13 @@ public class FieldAgent implements IOFogModule {
 	private final Runnable postStatus = () -> {
 		while (true) {
 			logInfo("start posting IOFog status");
-			Map<String, Object> status = getFogStatus();
-			if (Configuration.debugging) {
-				logInfo(status.toString());
-			}
 			try {
 				Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
 
+				Map<String, Object> status = getFogStatus();
+				if (Configuration.debugging) {
+					logInfo(status.toString());
+				}
 				logInfo("post IOFog status");
 				connected = isControllerConnected(false);
 				if (!connected)
@@ -246,7 +249,6 @@ public class FieldAgent implements IOFogModule {
 				}
 				if (changes.getBoolean("containerlist") || initialization) {
 					loadElementsList(false);
-					ProcessManager.getInstance().update();
 				}
 				if (changes.getBoolean("routing") || initialization) {
 					loadRoutes(false);
@@ -450,7 +452,7 @@ public class FieldAgent implements IOFogModule {
 	 * @param fromFile - load from file
 	 */
 	private void loadElementsList(boolean fromFile) {
-		logInfo("get elements");
+		logInfo("loading elements...");
 		if (notProvisioned() || !isControllerConnected(fromFile)) {
 			return;
 		}
@@ -471,55 +473,66 @@ public class FieldAgent implements IOFogModule {
 				saveFile(containers, filesPath + filename);
 			}
 
-			List<Element> latestElements = new ArrayList<>();
-			for (int i = 0; i < containers.size(); i++) {
-				JsonObject container = containers.getJsonObject(i);
+			List<Element> latestElements = IntStream.range(0, containers.size())
+					.boxed()
+					.map(containers::getJsonObject)
+					.map(containerJsonObjectToElementFunction())
+					.collect(toList());
 
-				Element element = new Element(container.getString("id"), container.getString("imageid"));
-				element.setRebuild(container.getBoolean("rebuild"));
-				element.setRootHostAccess(container.getBoolean("roothostaccess"));
-				element.setRegistry(container.getString("registryurl"));
-				element.setLastModified(container.getJsonNumber("lastmodified").longValue());
-				element.setLogSize(container.getJsonNumber("logsize").longValue());
-
-				JsonArray portMappingObjs = container.getJsonArray("portmappings");
-				List<PortMapping> pms = null;
-				if (portMappingObjs.size() > 0) {
-					pms = new ArrayList<>();
-					for (int j = 0; j < portMappingObjs.size(); j++) {
-						JsonObject portMapping = portMappingObjs.getJsonObject(j);
-						PortMapping pm = new PortMapping(portMapping.getString("outsidecontainer"),
-								portMapping.getString("insidecontainer"));
-						pms.add(pm);
-					}
-				}
-				element.setPortMappings(pms);
-
-				JsonReader jsonReader = Json.createReader(new StringReader(container.getString("volumemappings")));
-				JsonObject object = jsonReader.readObject();
-
-				JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
-				List<VolumeMapping> vms = null;
-				if (volumeMappingObj.size() > 0) {
-					vms = new ArrayList<>(volumeMappingObj.size());
-					for (int j = 0; j < volumeMappingObj.size(); j++) {
-						JsonObject volumeMapping = volumeMappingObj.getJsonObject(j);
-						vms.add(new VolumeMapping(volumeMapping.getString("hostdestination"),
-								volumeMapping.getString("containerdestination"),
-								volumeMapping.getString("accessmode")));
-					}
-				}
-				element.setVolumeMappings(vms);
-
-				latestElements.add(element);
-				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
-			}
 			elementManager.setLatestElements(latestElements);
+
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
-			logWarning("unable to get containers list" + e.getMessage());
+			logWarning("unable to get containers list " + e.getMessage());
 		}
+	}
+
+	private Function<JsonObject, Element> containerJsonObjectToElementFunction() {
+		return jsonObj -> {
+			Element element = new Element(jsonObj.getString("id"), jsonObj.getString("imageid"));
+			element.setRebuild(jsonObj.getBoolean("rebuild"));
+			element.setRootHostAccess(jsonObj.getBoolean("roothostaccess"));
+			element.setRegistry(jsonObj.getString("registryurl"));
+			if (!jsonObj.isNull("lastmodified")) {
+				element.setLastModified(jsonObj.getJsonNumber("lastmodified").longValue());
+			}
+			element.setLogSize(jsonObj.getJsonNumber("logsize").longValue());
+
+			JsonArray portMappingObjs = jsonObj.getJsonArray("portmappings");
+			List<PortMapping> pms = portMappingObjs.size() > 0
+					? IntStream.range(0, portMappingObjs.size())
+						.boxed()
+						.map(portMappingObjs::getJsonObject)
+						.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
+								portMapping.getString("insidecontainer")))
+						.collect(toList())
+					: null;
+
+			element.setPortMappings(pms);
+
+			JsonReader jsonReader = Json.createReader(new StringReader(jsonObj.getString("volumemappings")));
+			JsonObject object = jsonReader.readObject();
+
+			JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
+			List<VolumeMapping> vms = volumeMappingObj.size() > 0
+					? IntStream.range(0, volumeMappingObj.size())
+						.boxed()
+						.map(volumeMappingObj::getJsonObject)
+						.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
+								volumeMapping.getString("containerdestination"),
+								volumeMapping.getString("accessmode")))
+						.collect(toList())
+					: null;
+
+			element.setVolumeMappings(vms);
+			try {
+				LoggingService.setupElementLogger(element.getElementId(), element.getLogSize());
+			} catch (IOException e) {
+				logWarning("error at setting up element logger");
+			}
+			return element;
+		};
 	}
 
 	/**
@@ -609,7 +622,7 @@ public class FieldAgent implements IOFogModule {
 
 	private JsonObject readObject(String filename) {
 		JsonObject object = null;
-		try (JsonReader reader = Json.createReader(new FileReader(new File(filename)))) {
+		try (JsonReader reader = Json.createReader(new InputStreamReader(new FileInputStream(filename), UTF_8))) {
 			object = reader.readObject();
 		} catch (FileNotFoundException ex) {
 			LoggingService.logWarning(MODULE_NAME, "Invalid file: " + filename);
@@ -630,9 +643,9 @@ public class FieldAgent implements IOFogModule {
 				.add("timestamp", lastGetChangesList)
 				.add("data", data)
 				.build();
-		try (JsonWriter writer = Json.createWriter(new FileWriter(new File(filename)))) {
+		try (JsonWriter writer = Json.createWriter(new OutputStreamWriter(new FileOutputStream(filename), UTF_8))) {
 			writer.writeObject(object);
-		} catch (Exception e) {
+		} catch (IOException e) {
 			logInfo("Error saving data to file '" + filename + "': " + e.getMessage());
 		}
 	}
@@ -670,6 +683,7 @@ public class FieldAgent implements IOFogModule {
 			int scanDevicesFreq = Integer.parseInt(configs.getString(SCAN_DEVICES_FREQ.getJsonProperty()));
 			String isolatedDockerContainerValue = configs.getString(ISOLATED_DOCKER_CONTAINER.getJsonProperty());
 			boolean isIsolatedDockerContainer = !isolatedDockerContainerValue.equals("off");
+			String gpsCoordinates = configs.getString(GPS_COORDINATES.getJsonProperty());
 
 			Map<String, Object> instanceConfig = new HashMap<>();
 
@@ -713,6 +727,10 @@ public class FieldAgent implements IOFogModule {
 			if (Configuration.isIsolatedDockerContainers() != isIsolatedDockerContainer)
 				instanceConfig.put(ISOLATED_DOCKER_CONTAINER.getCommandName(), isolatedDockerContainerValue);
 
+			if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
+				instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
+			}
+
 			if (!instanceConfig.isEmpty())
 				Configuration.setConfig(instanceConfig, false);
 
@@ -747,6 +765,8 @@ public class FieldAgent implements IOFogModule {
 		postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
 		postParams.put(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq());
 		postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
+		postParams.put(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().getValue());
+		postParams.put(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates());
 
 		try {
 			JsonObject result = orchestrator.doCommand("config/changes", null, postParams);
@@ -761,7 +781,7 @@ public class FieldAgent implements IOFogModule {
 	/**
 	 * sends proxy status information to Fog Controller
 	 */
-	public void postProxyConfig() {
+	private void postProxyConfig() {
 		logInfo("post proxy config");
 		if (notProvisioned() || !isControllerConnected(false)) {
 			return;
@@ -950,7 +970,7 @@ public class FieldAgent implements IOFogModule {
 
 	private void checkResponseStatus(JsonObject result) {
 		if (!result.getString("status").equals("ok")) {
-			throw new RuntimeException("error from fog controller");
+			throw new RuntimeException("error from fog controller, make sure ioFog is provisioned");
 		}
 	}
 
@@ -991,8 +1011,9 @@ public class FieldAgent implements IOFogModule {
 				LoggingService.logWarning(MODULE_NAME, e.getMessage());
 			}
 
-			LoggingService.logInfo(MODULE_NAME, jsonSendHWInfoResult == null ?
-					"Can't get HW Info from HAL." : jsonSendHWInfoResult.toString());
+			if (jsonSendHWInfoResult == null ) {
+				LoggingService.logInfo(MODULE_NAME, "Can't get HW Info from HAL.");
+			}
 		}
 	}
 
@@ -1006,7 +1027,7 @@ public class FieldAgent implements IOFogModule {
 		if (connection.isPresent()) {
 			content = new StringBuilder();
 			try (BufferedReader in = new BufferedReader(
-					new InputStreamReader(connection.get().getInputStream()))) {
+					new InputStreamReader(connection.get().getInputStream(), UTF_8))) {
 				String inputLine;
 				content = new StringBuilder();
 				while ((inputLine = in.readLine()) != null) {

@@ -13,11 +13,8 @@
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
-import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -41,7 +38,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -124,82 +126,12 @@ public class DockerUtil {
 	}
 
 	/**
-	 * gets memory usage of given {@link Container}
-	 *
-	 * @param containerId - id of {@link Container}
-	 * @return memory usage in bytes
-	 */
-	public long getMemoryUsage(String containerId) {
-		if (!hasContainer(containerId))
-			return 0;
-
-		StatsCallback statsCallback = new StatsCallback();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
-		}
-		Map<String, Object> memoryUsage = statsCallback.getStats().getMemoryStats();
-		return Long.parseLong(memoryUsage.get("usage").toString());
-	}
-
-	/**
-	 * computes cpu usage of given {@link Container}
-	 *
-	 * @param containerId - id of {@link Container}
-	 * @return a float number between 0-100
-	 */
-	@SuppressWarnings("unchecked")
-	public float getCpuUsage(String containerId) {
-		if (!hasContainer(containerId))
-			return 0;
-
-		StatsCallback statsCallback = new StatsCallback();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
-		}
-		Map<String, Object> usageBefore = statsCallback.getStats().getCpuStats();
-		float totalBefore = Long.parseLong(((Map<String, Object>) usageBefore.get("cpu_usage")).get("total_usage").toString());
-		float systemBefore = Long.parseLong((usageBefore.get("system_cpu_usage")).toString());
-
-		try {
-			Thread.sleep(200);
-		} catch (InterruptedException exp) {
-			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-		}
-
-		statsCallback.reset();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
-		}
-		Map<String, Object> usageAfter = statsCallback.getStats().getCpuStats();
-		float totalAfter = Long.parseLong(((Map<String, Object>) usageAfter.get("cpu_usage")).get("total_usage").toString());
-		float systemAfter = Long.parseLong((usageAfter.get("system_cpu_usage")).toString());
-
-
-		return Math.abs(1000f * ((totalAfter - totalBefore) / (systemAfter - systemBefore)));
-	}
-
-	/**
 	 * returns a Docker {@link Image} if exists
 	 *
 	 * @param imageName - name of {@link Image}
 	 * @return {@link Image}
 	 */
-	public Image getImage(String imageName) {
+	private Image getImage(String imageName) {
 		List<Image> images = dockerClient.listImagesCmd().exec();
 		Optional<Image> result = images.stream()
 				.filter(image -> image.getRepoTags()[0].equals(imageName)).findFirst();
@@ -227,10 +159,10 @@ public class DockerUtil {
 	/**
 	 * starts a {@link Container}
 	 *
-	 * @param id - id of {@link Container}
+	 * @param element
 	 * @throws Exception
 	 */
-	public void startContainer(String id) throws Exception {
+	public void startContainer(Element element) throws Exception {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -238,7 +170,22 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		dockerClient.startContainerCmd(id).exec();
+		removeContainersWithSameImage(element);
+		dockerClient.startContainerCmd(element.getContainerId()).exec();
+	}
+
+	private void removeContainersWithSameImage(Element element) {
+		getContainers().stream()
+				.filter(container ->
+						container.getImage().equals(element.getImageName()) && !element.getElementId().equals(getContainerName(container)))
+				.forEach(oldContainer -> {
+					try {
+						stopContainer(oldContainer.getId());
+						removeContainer(oldContainer.getId());
+					} catch (Exception e) {
+						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
+					}
+				});
 	}
 
 	/**
@@ -278,17 +225,21 @@ public class DockerUtil {
 		}
 	}
 
+	public String getContainerName(Container container) {
+		return container.getNames()[0].substring(1);
+	}
+
 	/**
 	 * returns a {@link Container} if exists
 	 *
 	 * @param elementId - name of {@link Container} (id of {@link Element})
-	 * @return
+	 * @return Optional<Container>
 	 */
-	public Container getContainer(String elementId) {
+	public Optional<Container> getContainerByElementId(String elementId) {
 		List<Container> containers = getContainers();
-		Optional<Container> result = containers.stream()
-				.filter(c -> c.getNames()[0].trim().substring(1).equals(elementId)).findFirst();
-		return result.orElse(null);
+		return containers.stream()
+				.filter(c -> getContainerName(c).equals(elementId))
+				.findAny();
 	}
 
 	/**
@@ -313,28 +264,148 @@ public class DockerUtil {
 	/**
 	 * gets {@link Container} status
 	 *
-	 * @param id - id of {@link Container}
+	 * @param containerId - id of {@link Container}
 	 * @return {@link ElementStatus}
-	 * @throws Exception
 	 */
-	public ElementStatus getContainerStatus(String id) throws Exception {
-		try {
-			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
-			ContainerState status = inspectInfo.getState();
-			ElementStatus result = new ElementStatus();
-			if (status.getRunning()) {
+	public ElementStatus getElementStatus(String containerId) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		ContainerState status = inspectInfo.getState();
+		ElementStatus result = new ElementStatus();
+		if (status.getRunning() != null && status.getRunning()) {
+			result.setUsage(containerId);
+			if (status.getStartedAt() != null) {
 				result.setStartTime(getStartedTime(status.getStartedAt()));
-				result.setCpuUsage(0);
-				result.setMemoryUsage(0);
-				result.setStatus(ElementState.fromText(status.getStatus()));
-			} else {
-				result.setStatus(ElementState.STOPPED);
 			}
-			return result;
+			if (status.getStatus() != null) {
+				result.setStatus(ElementState.fromText(status.getStatus()));
+			}
+			result.setContainerId(containerId);
+		} else {
+			result.setStatus(ElementState.STOPPED);
+		}
+		return result;
+	}
+
+	public Optional<Statistics> getContainerStats(String containerId) {
+		StatsCmd statsCmd = dockerClient.statsCmd(containerId);
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		StatsCallback stats = new StatsCallback(countDownLatch);
+		try (StatsCallback statscallback = statsCmd.exec(stats)) {
+			countDownLatch.await(5, TimeUnit.SECONDS);
+		} catch (InterruptedException | IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
+		return Optional.ofNullable(stats.getStats());
+	}
+
+	/**
+	 * return container last start epoch time
+	 *
+	 * @param id container id
+	 * @return long epoch time
+	 */
+	public long getContainerStartedAt(String id) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
+		String startedAt = inspectInfo.getState().getStartedAt();
+		return startedAt != null ? DateTimeFormatter.ISO_INSTANT.parse(startedAt, Instant::from).toEpochMilli() : Instant.now().toEpochMilli();
+	}
+
+	/**
+	 * compares if element's and container's settings are equal
+	 *
+	 * @param containerId container id
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isElementAndContainerEquals(String containerId, Element element) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
+	}
+
+	/**
+	 * compares if element has root host access, then container will have the NetworkMode 'host',
+	 * otherwise container has to have ExtraHosts
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
+		boolean isRootHostAccess = element.isRootHostAccess();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
+				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
+	}
+
+	/**
+	 * compares if element port mapping is equal to container port mapping
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
+		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		Ports ports = hostConfig.getPortBindings();
+		return comparePortMapping(elementPorts, ports.getBindings());
+	}
+
+	private boolean comparePortMapping(List<PortMapping> elementPorts, Map<ExposedPort, Ports.Binding[]> portBindings) {
+
+		List<PortMapping> containerPorts = portBindings.entrySet().stream()
+				.map(entity -> {
+					String exposedPort = String.valueOf(entity.getKey().getPort());
+					String hostPort = entity.getValue()[0].getHostPortSpec();
+					return new PortMapping(hostPort, exposedPort);
+				})
+				.collect(Collectors.toList());
+
+		return elementPorts.stream()
+				.allMatch(containerPorts::contains);
+	}
+
+	public Optional<String> getContainerStatus(String containerId) {
+		Optional<String> result = Optional.empty();
+		try {
+			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+			ContainerState status = inspectInfo.getState();
+			result = Optional.ofNullable(status.getStatus());
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
-			throw exp;
 		}
+		return result;
+	}
+
+	/**
+	 * returns whether the {@link Container} exists or not
+	 * preferable to perform a check by elementId
+	 *
+	 * @param elementId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerWithElementId(String elementId) {
+		List<Container> containers = getContainers();
+		return containers.stream()
+				.anyMatch(c -> getContainerName(c).equals(elementId));
+	}
+
+	/**
+	 * returns whether the {@link Container} exists or not
+	 * preferable to perform a check by elementId
+	 *
+	 * @param containerId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerWithContainerId(String containerId) {
+		List<Container> containers = getContainers();
+		return containers.stream()
+				.anyMatch(container -> container.getId().equals(containerId));
+	}
+
+	public boolean isContainerRunning(String containerId) {
+		Optional<String> status = getContainerStatus(containerId);
+		return status.isPresent() && status.get().equalsIgnoreCase(ElementState.RUNNING.toString());
 	}
 
 	/**
@@ -357,21 +428,6 @@ public class DockerUtil {
 		if (image == null)
 			return;
 		dockerClient.removeImageCmd(image.getId()).withForce(true).exec();
-	}
-
-	/**
-	 * returns whether the {@link Container} exists or not
-	 *
-	 * @param containerId - id of {@link Container}
-	 * @return
-	 */
-	public boolean hasContainer(String containerId) {
-		try {
-			getContainerStatus(containerId);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
 	}
 
 	/**
@@ -469,43 +525,4 @@ public class DockerUtil {
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
-
-	/**
-	 * compares whether an {@link Element} {@link PortMapping} is
-	 * same as its corresponding {@link Container} or not
-	 *
-	 * @param element - {@link Element}
-	 * @return boolean
-	 */
-	public boolean comparePorts(Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings();
-		Container container = getContainer(element.getElementId());
-		if (container == null)
-			return false;
-		ContainerPort[] containerPorts = container.getPorts();
-
-		if (elementPorts == null && containerPorts == null)
-			return true;
-		else if (containerPorts == null)
-			return elementPorts.size() == 0;
-		else if (elementPorts == null)
-			return containerPorts.length == 0;
-		else if (elementPorts.size() != containerPorts.length)
-			return false;
-
-		for (PortMapping elementPort : elementPorts) {
-			boolean found = false;
-			for (ContainerPort containerPort : containerPorts)
-				if (containerPort.getPrivatePort().toString().equals(elementPort.getInside()))
-					if (containerPort.getPublicPort().toString().equals(elementPort.getOutside())) {
-						found = true;
-						break;
-					}
-			if (!found)
-				return false;
-		}
-
-		return true;
-	}
-
 }

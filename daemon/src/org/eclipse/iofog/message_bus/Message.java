@@ -21,6 +21,7 @@ import javax.json.JsonObject;
 import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -30,7 +31,7 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
  *
  */
 public class Message {
-	private final short VERSION = 4;
+	private static final short VERSION = 4;
 	private static final String MODULE_NAME = "Message";
 
 	private String id;
@@ -74,7 +75,7 @@ public class Message {
 		infoType = null;
 		infoFormat = null;
 		contentData = null;
-		contextData = null;		
+		contextData = null;
 	}
 
 	public Message(String publisher) {
@@ -120,11 +121,11 @@ public class Message {
 			setInfoFormat(json.getString("infoformat"));
 		if (json.containsKey("contextdata")){
 			String contextData = json.getString("contextdata");
-			setContextData(Base64.getDecoder().decode(contextData.getBytes()));
+			setContextData(Base64.getDecoder().decode(contextData.getBytes(UTF_8)));
 		}
 		if (json.containsKey("contentdata")){
 			String contentData = json.getString("contentdata");
-			setContentData(Base64.getDecoder().decode(contentData.getBytes()));
+			setContentData(Base64.getDecoder().decode(contentData.getBytes(UTF_8)));
 		}
 	}
 
@@ -657,7 +658,7 @@ public class Message {
 	}
 
 	public void decodeBase64(byte[] bytes) {
-		Message result = null;
+		Message result;
 		try {
 			result = new Message(Base64.getDecoder().decode(bytes));
 			id = result.id;
@@ -681,7 +682,8 @@ public class Message {
 			contextData = result.contextData;
 			contentData = result.contentData;
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());}
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 	public JsonObject toJson() {
@@ -712,8 +714,9 @@ public class Message {
 	public byte[] encodeBase64() {
 		try {
 			return Base64.getEncoder().encode(this.getBytes());
-		} catch (Exception e) {
-			return null;
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			return new byte[] {};
 		}
 	}
 }

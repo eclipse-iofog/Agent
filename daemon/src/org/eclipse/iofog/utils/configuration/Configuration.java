@@ -14,6 +14,8 @@ package org.eclipse.iofog.utils.configuration;
 
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.gps.GpsMode;
+import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -37,6 +39,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static java.io.File.separatorChar;
 import static java.lang.String.format;
@@ -80,6 +83,8 @@ public final class Configuration {
 	private static int getChangesFreq;
 	private static int scanDevicesFreq;
 	private static boolean isolatedDockerContainers;
+	private static String gpsCoordinates;
+	private static GpsMode gpsMode;
 	private static final Map<String, Object> defaultConfig;
 
 	public static boolean debugging = false;
@@ -120,6 +125,22 @@ public final class Configuration {
 
 	public static void setScanDevicesFreq(int scanDevicesFreq) {
 		Configuration.scanDevicesFreq = scanDevicesFreq;
+	}
+
+	public static String getGpsCoordinates() {
+		return gpsCoordinates;
+	}
+
+	public static void setGpsCoordinates(String gpsCoordinates) {
+		Configuration.gpsCoordinates = gpsCoordinates;
+	}
+
+	public static GpsMode getGpsMode() {
+		return gpsMode;
+	}
+
+	public static void setGpsMode(GpsMode gpsMode) {
+		Configuration.gpsMode = gpsMode;
 	}
 
 	public static void resetToDefault() throws Exception {
@@ -191,6 +212,15 @@ public final class Configuration {
 		LoggingService.instanceConfigUpdated();
 		MessageBus.getInstance().instanceConfigUpdated();
 
+		updateConfigFile();
+	}
+
+	/**
+	 * saves configuration data to config.xml
+	 *
+	 * @throws Exception
+	 */
+	private static void updateConfigFile() throws Exception {
 		Transformer transformer = TransformerFactory.newInstance().newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		StreamResult result = new StreamResult(new File(CONFIG_DIR));
@@ -373,6 +403,9 @@ public final class Configuration {
 					setNode(ISOLATED_DOCKER_CONTAINER.getXmlTag(), value);
 					setIsolatedDockerContainers(!value.equals("off"));
 					break;
+				case GPS_COORDINATES:
+					configureGps(value);
+					break;
 				default:
 					throw new ConfigurationItemException("Invalid parameter -" + option);
 			}
@@ -380,6 +413,81 @@ public final class Configuration {
 		saveConfigUpdates();
 
 		return messageMap;
+	}
+
+	/**
+	 * Configures GPS coordinates and mode in config file
+	 *
+	 * @param gpsCoordinatesCommand coordinates special command or lat,lon string (prefer using DD GPS format)
+	 * @throws ConfigurationItemException
+	 */
+	private static void configureGps(String gpsCoordinatesCommand) throws ConfigurationItemException {
+		String gpsCoordinates;
+		GpsMode currentMode;
+
+		if (GpsMode.AUTO.getValue().equals(gpsCoordinatesCommand)) {
+			gpsCoordinates = GpsWebHandler.getGpsCoordinatesByExternalIp();
+			currentMode = GpsMode.AUTO;
+		} else if (GpsMode.OFF.getValue().equals(gpsCoordinatesCommand)) {
+			gpsCoordinates = "";
+			currentMode = GpsMode.OFF;
+		} else {
+			gpsCoordinates = gpsCoordinatesCommand;
+			currentMode = GpsMode.MANUAL;
+		}
+
+		if (gpsCoordinates == null) {
+			throw new ConfigurationItemException("Can't perform " + gpsCoordinatesCommand + " action for gps config");
+		}
+
+		writeGpsToConfig(currentMode, gpsCoordinates);
+	}
+
+	/**
+	 * Writes GPS coordinates and GPS mode to config file
+	 *
+	 * @param currentMode
+	 * @param gpsCoordinates
+	 * @throws ConfigurationItemException
+	 */
+	public static void writeGpsToConfig(GpsMode currentMode, String gpsCoordinates) throws ConfigurationItemException {
+		if (!isValidCoordinates(gpsCoordinates)) {
+			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
+					+ "Correct format is <DDD.DDDDD,DDD.DDDDD> (GPS DD format)");
+		}
+		setNode(GPS_COORDINATES.getXmlTag(), gpsCoordinates);
+		setGpsCoordinates(gpsCoordinates.trim());
+		setNode(GPS_MODE.getXmlTag(), currentMode.getValue());
+		setGpsMode(currentMode);
+	}
+
+	/**
+	 * Checks is string a valid DD GPS coordinates
+	 *
+	 * @param gpsCoordinates
+	 * @return
+	 */
+	private static boolean isValidCoordinates(String gpsCoordinates) {
+
+		boolean isValid = true;
+
+		String fpRegex = "[+-]?[0-9]+(.?[0-9]+)?,?" +
+				"[+-]?[0-9]+(.?[0-9]+)?";
+
+		if (Pattern.matches(fpRegex, gpsCoordinates)) {
+
+			String[] latLon = gpsCoordinates.split(",");
+			double lat = Double.parseDouble(latLon[0]);
+			double lon = Double.parseDouble(latLon[1]);
+
+			if (lat > 90 || lat < -90 || lon > 180 || lon < -180) {
+				isValid = false;
+			}
+		} else {
+			isValid = gpsCoordinates.isEmpty();
+		}
+
+		return isValid;
 	}
 
 	/**
@@ -446,6 +554,13 @@ public final class Configuration {
 		setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY.getXmlTag()));
 		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag())));
 		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT.getXmlTag())));
+		setGpsMode(GpsMode.getModeByValue(getNode(GPS_MODE.getXmlTag())));
+		if (getGpsMode() == GpsMode.AUTO) {
+			configureGps(GpsMode.AUTO.getValue());
+			updateConfigFile();
+		} else {
+			setGpsCoordinates(getNode(GPS_COORDINATES.getXmlTag()));
+		}
 		try {
 			setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ.getXmlTag())));
 		} catch (ConfigurationItemException e) {
@@ -647,6 +762,11 @@ public final class Configuration {
 		result.append(buildReportLine(getConfigParamMessage(SCAN_DEVICES_FREQ), format("%d", scanDevicesFreq)));
 		// log file directory
 		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
+		// gps mode
+		result.append(buildReportLine(getConfigParamMessage(GPS_MODE), gpsMode.getValue()));
+		// gps coordinates
+		result.append(buildReportLine(getConfigParamMessage(GPS_COORDINATES), gpsCoordinates));
+
 		return result.toString();
 	}
 

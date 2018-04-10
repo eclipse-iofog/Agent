@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
-import org.eclipse.iofog.utils.Constants;
-
 import java.util.List;
 
 /**
@@ -23,7 +21,7 @@ import java.util.List;
  */
 public class Element {
 
-    private final String elementId;
+    private final String elementId; //container name
     private final String imageName;
     private List<PortMapping> portMappings;
     private long lastModified;
@@ -38,10 +36,7 @@ public class Element {
 
     public Element(String elementId, String imageName) {
         this.elementId = elementId;
-        if (Constants.osArch.equalsIgnoreCase("arm"))
-            this.imageName = imageName + "-arm";
-        else
-            this.imageName = imageName;
+        this.imageName = imageName;
         containerId = "";
     }
 
@@ -135,8 +130,8 @@ public class Element {
 
 	@Override
 	public boolean equals(Object e) {
-		if (e == null)
-			return false;
+        if (this == e) return true;
+        if (e == null || getClass() != e.getClass()) return false;
 		Element element = (Element) e;
 		return this.elementId.equals(element.getElementId());
 	}

@@ -20,12 +20,12 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Handler to publish the messages from the container to message bus
@@ -62,11 +62,11 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
-		String msgString = new String(content, StandardCharsets.UTF_8);
+		String msgString = new String(content, UTF_8);
 		JsonReader reader = Json.createReader(new StringReader(msgString));
 		JsonObject jsonObject = reader.readObject();
 
@@ -75,7 +75,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = "Validation Error, " + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
@@ -86,7 +86,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = " Message Pasring Error, " + e.getMessage();
 			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes());
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 		bus.publishMessage(message);
@@ -98,7 +98,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		builder.add("id", message.getId());
 
 		String sendMessageResult = builder.build().toString();
-		outputBuffer.writeBytes(sendMessageResult.getBytes());
+		outputBuffer.writeBytes(sendMessageResult.getBytes(UTF_8));
 		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
 		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
 		return res;
