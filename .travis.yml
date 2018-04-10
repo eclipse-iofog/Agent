@@ -20,7 +20,7 @@ jobs:
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
-    - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
+    - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
     - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf
