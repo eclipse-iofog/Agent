@@ -15,6 +15,8 @@ package org.eclipse.iofog.process_manager;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -194,7 +196,7 @@ public class DockerUtil {
 	 * @param id - id of {@link Container}
 	 * @throws Exception
 	 */
-	public void stopContainer(String id) throws Exception {
+	public void stopContainer(String id) throws NotFoundException, NotModifiedException {
 		dockerClient.stopContainerCmd(id).exec();
 	}
 
@@ -270,14 +272,14 @@ public class DockerUtil {
 	 */
 	public ElementStatus getElementStatus(String containerId) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
-		ContainerState status = inspectInfo.getState();
+		ContainerState containerState = inspectInfo.getState();
 		ElementStatus result = new ElementStatus();
-		if (status != null) {
-			if (status.getStartedAt() != null) {
-				result.setStartTime(getStartedTime(status.getStartedAt()));
+		if (containerState != null) {
+			if (containerState.getStartedAt() != null) {
+				result.setStartTime(getStartedTime(containerState.getStartedAt()));
 			}
-			if (status.getStatus() != null) {
-				result.setStatus(ElementState.fromText(status.getStatus()));
+			if (containerState.getStatus() != null) {
+				result.setStatus(ElementState.fromText(containerState.getStatus()));
 			}
 			result.setContainerId(containerId);
 			result.setUsage(containerId);
@@ -329,7 +331,7 @@ public class DockerUtil {
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
+	private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
 		boolean isRootHostAccess = element.isRootHostAccess();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
@@ -343,7 +345,7 @@ public class DockerUtil {
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
+	private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
 		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		Ports ports = hostConfig.getPortBindings();
