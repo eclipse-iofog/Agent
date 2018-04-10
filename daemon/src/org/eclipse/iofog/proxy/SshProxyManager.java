@@ -7,6 +7,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import javax.json.JsonObject;
 import java.util.concurrent.CompletableFuture;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 
 /**
@@ -16,7 +17,6 @@ import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
  */
 public class SshProxyManager {
     private static final String MODULE_NAME = "SSH Proxy Manager";
-    private static final String EMPTY = "";
     private static final int DEFAULT_LOCAL_PORT = 22;
     private static final int DEFAULT_REMOTE_PORT = 9999;
     private final SshConnection connection;
