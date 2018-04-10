@@ -59,7 +59,7 @@ jobs:
     - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofog.jar
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf iofog${DEV}_${VERSION}_all.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a 
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; git pull; rm -rf iofog${DEV}_${VERSION}_all.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a 
       all --deb-no-default-config-files --after-install debian.sh etc usr var; package_cloud push iotracks/iofog/ubuntu/precise 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
       package_cloud push iotracks/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
