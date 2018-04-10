@@ -310,15 +310,41 @@ public class DockerUtil {
 	}
 
 	/**
-	 * compares if element port mapping is equal to container port mapping
+	 * compares if element's and container's settings are equal
 	 *
 	 * @param containerId container id
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isPortMappingEqual(String containerId, Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+	public boolean isElementAndContainerEquals(String containerId, Element element) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
+	}
+
+	/**
+	 * compares if element has root host access, then container will have the NetworkMode 'host',
+	 * otherwise container has to have ExtraHosts
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
+		boolean isRootHostAccess = element.isRootHostAccess();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
+				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
+	}
+
+	/**
+	 * compares if element port mapping is equal to container port mapping
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
+		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		Ports ports = hostConfig.getPortBindings();
 		return comparePortMapping(elementPorts, ports.getBindings());
