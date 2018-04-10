@@ -70,17 +70,12 @@ public class MessagePublisher implements AutoCloseable{
 			producer.send(msg);
 		}
 	}
-	
-	protected void update(ClientProducer producer, ClientSession session) {
-		this.session = session;
-		this.producer = producer;
-	}
-	
-	void updateRoute(Route route) {
+
+	synchronized void updateRoute(Route route) {
 		this.route = route;
 	}
 
-	public void close() {
+	public synchronized void close() {
 		try {
 			archive.close();
 		} catch (Exception exp) {

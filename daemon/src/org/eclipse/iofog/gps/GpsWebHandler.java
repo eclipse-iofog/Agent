@@ -9,6 +9,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 //TODO 3.27.18: move to gps microservice
 public class GpsWebHandler {
 
@@ -34,7 +36,6 @@ public class GpsWebHandler {
 		} catch (IOException e) {
 			logWarning( MODULE_NAME,"Problem with getting GPS by external IP");
 		}
-
 
 		return gpsCoord;
 	}

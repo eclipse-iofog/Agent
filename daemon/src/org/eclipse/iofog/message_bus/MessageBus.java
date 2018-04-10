@@ -197,7 +197,7 @@ public class MessageBus implements IOFogModule {
 						logWarning("producer module for " + publisher + " stopped. restarting...");
 						value.close();
 						Route route = routes.get(publisher);
-						if (route.equals(null) || route.getReceivers() == null || route.getReceivers().size() == 0) {
+						if (route == null || route.getReceivers() == null || route.getReceivers().size() == 0) {
 							publishers.remove(publisher);
 						} else {
 							try {

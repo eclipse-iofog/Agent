@@ -34,7 +34,7 @@ public class ContainerManager {
 	private DockerUtil docker;
 	private final ElementManager elementManager;
 
-	private final String MODULE_NAME = "Container Manager";
+	private static final String MODULE_NAME = "Container Manager";
 
 	public ContainerManager() {
 		elementManager = ElementManager.getInstance();
@@ -46,11 +46,11 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private String addContainer(Element element) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "building \"" + element.getImageName() + "\"");
+		LoggingService.logInfo(MODULE_NAME, "rebuilding/creating \"" + element.getImageName() + "\" if it's needed");
 
 		Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
 
-		String containerId = containerOptional.isPresent() ? containerOptional.get().getId() : null;
+		String containerId = containerOptional.map(Container::getId).orElse(null);
 		if (containerOptional.isPresent() && element.isRebuild()) {
 			containerId = rebuildContainer(element);
 		} else if (!containerOptional.isPresent()) {
@@ -94,7 +94,7 @@ public class ContainerManager {
 		element.setContainerId(id);
 		element.setContainerIpAddress(docker.getContainerIpAddress(id));
 		element.setRebuild(false);
-		LoggingService.logInfo(MODULE_NAME, "created");
+		LoggingService.logInfo(MODULE_NAME, "container is created");
 		startContainer(element);
 		return id;
 	}
@@ -106,7 +106,7 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
 		try {
 			if (!docker.isContainerRunning(element.getContainerId())) {
-				docker.startContainer(element.getContainerId());
+				docker.startContainer(element);
 			}
 			Optional<String> statusOptional = docker.getContainerStatus(element.getContainerId());
 			String status = statusOptional.orElse("unknown");
@@ -125,15 +125,15 @@ public class ContainerManager {
 	 */
 	private void stopContainer(String elementId) {
 		Optional<Container> containerOptional = docker.getContainerByElementId(elementId);
-		if (containerOptional.isPresent()) {
-			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", containerOptional.get().getId()));
+		containerOptional.ifPresent(container -> {
+			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", container.getId()));
 			try {
-				docker.stopContainer(containerOptional.get().getId());
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", containerOptional.get().getId()));
+				docker.stopContainer(container.getId());
+				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", container.getId()));
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", containerOptional.get().getId()));
+				LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", container.getId()));
 			}
-		}
+		});
 
 	}
 

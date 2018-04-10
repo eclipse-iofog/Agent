@@ -221,7 +221,7 @@ public class Orchestrator {
 
 
 			result = jsonReader.readObject();
-		} catch (Exception exp) {
+		} catch (UnsupportedEncodingException exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
 		}
