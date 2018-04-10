@@ -44,7 +44,7 @@ jobs:
     #- bundle
     script:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
-    - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
+    - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
     - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
