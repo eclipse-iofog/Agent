@@ -170,22 +170,7 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		removeContainersWithSameImage(element);
 		dockerClient.startContainerCmd(element.getContainerId()).exec();
-	}
-
-	private void removeContainersWithSameImage(Element element) {
-		getContainers().stream()
-				.filter(container ->
-						container.getImage().equals(element.getImageName()) && !element.getElementId().equals(getContainerName(container)))
-				.forEach(oldContainer -> {
-					try {
-						stopContainer(oldContainer.getId());
-						removeContainer(oldContainer.getId());
-					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
-					}
-				});
 	}
 
 	/**
@@ -468,7 +453,7 @@ public class DockerUtil {
 				volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
 			});
 		}
-		String[] extraHosts = {"iofabric:" + host, "iofog:" + host, "comsat5.iotracks.com:" + "192.168.1.207"};
+		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
 
 		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
@@ -492,10 +477,9 @@ public class DockerUtil {
 					.withVolumes(volumes.toArray(new Volume[volumes.size()]))
 					.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
 		}
-		if (StringUtil.isNullOrEmpty(host))
-			cmd = cmd.withNetworkMode("host").withPrivileged(true);
-		else
-			cmd = cmd.withExtraHosts(extraHosts).withPrivileged(true);
+		cmd = StringUtil.isNullOrEmpty(host)
+				? cmd.withNetworkMode("host").withPrivileged(true)
+				: cmd.withExtraHosts(extraHosts).withPrivileged(true);
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
