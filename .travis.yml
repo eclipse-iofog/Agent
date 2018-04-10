@@ -39,9 +39,9 @@ jobs:
     - rvm install 1.9.3
     - sudo apt-get install sshpass xml-twig-tools ruby ruby-dev rubygems-integration build-essential rpm
     install:
-    - sudo gem install bundler 
-    - sudo gem install --no-ri --no-rdoc fpm
-    - bundle
+    #- sudo gem install bundler 
+    #- sudo gem install --no-ri --no-rdoc fpm
+    #- bundle
     script:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
     - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
