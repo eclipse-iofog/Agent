@@ -20,7 +20,7 @@ jobs:
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
-    - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
+    - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
     - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf
@@ -36,19 +36,14 @@ jobs:
       start"
   - stage: package_build
     before_install:
-    - rvm install 1.9.3
-    - sudo apt-get install sshpass xml-twig-tools ruby ruby-dev rubygems-integration build-essential rpm
-    install:
-    - sudo gem install bundler 
-    - sudo gem install --no-ri --no-rdoc fpm
-    - bundle
+    - sudo apt-get install sshpass xml-twig-tools
     script:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
-    - export VERSION=`xml_grep 'modelVersion' pom.xml --text_only`
+    - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
-    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm/*
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
-    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging/*
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/
     - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofogd.jar
@@ -59,8 +54,8 @@ jobs:
     - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofog.jar
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf iofog${DEV}_${VERSION}_all.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a 
-      all --deb-no-default-config-files --after-install debian.sh etc usr var; package_cloud push iotracks/iofog/ubuntu/precise 
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf *.deb; fpm -s dir -t deb -n \"iofog${DEV}\" -v $VERSION -a 
+      all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh etc usr var; package_cloud push iotracks/iofog/ubuntu/precise 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
       package_cloud push iotracks/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iotracks/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/ubuntu/wily 
@@ -71,7 +66,7 @@ jobs:
       package_cloud push iotracks/iofog/raspbian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iotracks/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/stretch 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
-      cd /iofog-packaging-rpm; rm -rf iofog${DEV}-${VERSION}-1.noarch.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' --after-install 
-      rpm.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
+      cd /iofog-packaging-rpm; rm -rf *.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' --after-install 
+      rpm.sh --after-remove remove.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
       push iotracks/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/fedora/24 
       iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
