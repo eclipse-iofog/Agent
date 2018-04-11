@@ -43,11 +43,12 @@ public class StraceDiagnosticManger {
 			JsonArray straceElementChanges = diagnosticData.getJsonArray("straceValues");
 			for (JsonValue elementValue : straceElementChanges) {
 				JsonObject element = (JsonObject) elementValue;
-				String elementId = element.getString("elementId");
-				boolean strace = false;
-				if (element.containsKey("straceRun")) {
-					strace = element.getInt("straceRun") != 0;
+				if (!element.containsKey("elementId")) {
+					continue;
 				}
+				String elementId = element.getString("elementId");
+
+				boolean strace = element.getInt("straceRun", 0) != 0;
 
 				manageElement(elementId, strace);
 			}
@@ -89,7 +90,7 @@ public class StraceDiagnosticManger {
 	private int getPidByElementId(String elementId) throws IllegalArgumentException {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + elementId);
 
-		if (resultSet.getValue() != null && resultSet.getValue().get(1) != null) {
+		if (resultSet.getValue() != null && resultSet.getValue().size() > 1 && resultSet.getValue().get(1) != null) {
 			String pid = resultSet.getValue().get(1).split("\\s+")[1];
 			return Integer.parseInt(pid);
 		} else {
