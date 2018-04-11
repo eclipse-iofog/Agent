@@ -161,10 +161,9 @@ public class DockerUtil {
 	/**
 	 * starts a {@link Container}
 	 *
-	 * @param element
-	 * @throws Exception
+	 * @param element {@link Element}
 	 */
-	public void startContainer(Element element) throws Exception {
+	public void startContainer(Element element) throws NotFoundException, NotModifiedException {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -194,7 +193,6 @@ public class DockerUtil {
 	 * stops a {@link Container}
 	 *
 	 * @param id - id of {@link Container}
-	 * @throws Exception
 	 */
 	public void stopContainer(String id) throws NotFoundException, NotModifiedException {
 		dockerClient.stopContainerCmd(id).exec();
@@ -205,9 +203,8 @@ public class DockerUtil {
 	 *
 	 * @param id - id of {@link Container}
 	 * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
-	 * @throws Exception
 	 */
-	public void removeContainer(String id, Boolean withRemoveVolumes) throws Exception {
+	public void removeContainer(String id, Boolean withRemoveVolumes) throws NotFoundException, NotModifiedException {
 		dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
 	}
 
@@ -216,9 +213,8 @@ public class DockerUtil {
 	 *
 	 * @param id - id of {@link Container}
 	 * @return ip address
-	 * @throws Exception
 	 */
-	public String getContainerIpAddress(String id) throws Exception {
+	public String getContainerIpAddress(String id) throws NotFoundException, NotModifiedException {
 		try {
 			InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
 			return inspect.getNetworkSettings().getIpAddress();
@@ -409,9 +405,8 @@ public class DockerUtil {
 	 * removes a Docker {@link Image}
 	 *
 	 * @param imageName - imageName of {@link Element}
-	 * @throws Exception
 	 */
-	public void removeImage(String imageName) throws Exception {
+	public void removeImage(String imageName) throws NotFoundException, NotModifiedException {
 		Image image = getImage(imageName);
 		if (image == null)
 			return;
@@ -423,9 +418,8 @@ public class DockerUtil {
 	 *
 	 * @param imageName - imageName of {@link Element}
 	 * @param registry  - {@link Registry} where image is placed
-	 * @throws Exception
 	 */
-	public void pullImage(String imageName, Registry registry) throws Exception {
+	public void pullImage(String imageName, Registry registry) throws NotFoundException, NotModifiedException {
 		String tag = null, image;
 		if (imageName.contains(":")) {
 			String[] sp = imageName.split(":");
@@ -453,9 +447,8 @@ public class DockerUtil {
 	 * @param element - {@link Element}
 	 * @param host    - host ip address
 	 * @return id of created {@link Container}
-	 * @throws Exception
 	 */
-	public String createContainer(Element element, String host) throws Exception {
+	public String createContainer(Element element, String host) throws NotFoundException, NotModifiedException {
 		RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
 
 		Ports portBindings = new Ports();
