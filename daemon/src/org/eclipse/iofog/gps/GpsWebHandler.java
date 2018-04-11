@@ -6,13 +6,15 @@ import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 //TODO 3.27.18: move to gps microservice
 public class GpsWebHandler {
+
+	private static final String MODULE_NAME = "GPS Web Handler";
 
 	/**
 	 * gets GPS coordinates by external ip from  http://ip-api.com/
@@ -21,24 +23,18 @@ public class GpsWebHandler {
 	 */
 	public static String getGpsCoordinatesByExternalIp() {
 		String gpsCoord = null;
-		try {
-			URL ipUrl = new URL("http://ip-api.com/json");
-			try (BufferedReader ipReader = new BufferedReader(new InputStreamReader(
-					ipUrl.openStream(), UTF_8))) {
-				JsonReader jsonReader = Json.createReader(ipReader);
-				JsonObject response = jsonReader.readObject();
+		try (BufferedReader ipReader = new BufferedReader(new InputStreamReader(
+				new URL("http://ip-api.com/json").openStream()))) {
+			JsonReader jsonReader = Json.createReader(ipReader);
+			JsonObject response = jsonReader.readObject();
 
-				double lat = response.getJsonNumber("lat").doubleValue();
-				double lon = response.getJsonNumber("lon").doubleValue();
+			double lat = response.getJsonNumber("lat").doubleValue();
+			double lon = response.getJsonNumber("lon").doubleValue();
 
-				gpsCoord = lat + "," + lon;
+			gpsCoord = lat + "," + lon;
 
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+		} catch (IOException e) {
+			logWarning( MODULE_NAME,"Problem with getting GPS by external IP");
 		}
 
 		return gpsCoord;
