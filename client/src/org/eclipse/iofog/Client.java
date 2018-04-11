@@ -147,6 +147,7 @@ public class Client {
 				+ "                                         split the log storage limit\n"
 				+ "                 -sf <#seconds>          Set the status update frequency\n"
 				+ "                 -cf <#seconds>          Set the get changes frequency\n"
+				+ "                 -df <#seconds>          Set the post diagnostics frequency\n"
 				+ "                 -idc <on/off>           Set the mode on which any not\\n"
 				+ "                                         registered docker container will be\n"
 				+ "                                         shutted down\n" + "\n" + "\n"

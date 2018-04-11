@@ -82,6 +82,7 @@ public final class Configuration {
 	private static int statusUpdateFreq;
 	private static int getChangesFreq;
 	private static int scanDevicesFreq;
+	private static int postDiagnosticsFreq;
 	private static boolean isolatedDockerContainers;
 	private static String gpsCoordinates;
 	private static GpsMode gpsMode;
@@ -145,6 +146,14 @@ public final class Configuration {
 
 	public static void resetToDefault() throws Exception {
 		setConfig(defaultConfig, true);
+	}
+
+	public static int getPostDiagnosticsFreq() {
+		return postDiagnosticsFreq;
+	}
+
+	public static void setPostDiagnosticsFreq(int postDiagnosticsFreq) {
+		Configuration.postDiagnosticsFreq = postDiagnosticsFreq;
 	}
 
 	/**
@@ -399,6 +408,20 @@ public final class Configuration {
 					setNode(SCAN_DEVICES_FREQ.getXmlTag(), value);
 					setScanDevicesFreq(Integer.parseInt(value));
 					break;
+				case POST_DIAGNOSTICS_FREQ:
+					try {
+						intValue = Integer.parseInt(value);
+					} catch (NumberFormatException e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
+					}
+					if (intValue < 1) {
+						messageMap.put(option, "Post diagnostics frequency must be greater than 1");
+						break;
+					}
+					setNode(POST_DIAGNOSTICS_FREQ.getXmlTag(), value);
+					setPostDiagnosticsFreq(Integer.parseInt(value));
+					break;
 				case ISOLATED_DOCKER_CONTAINER:
 					setNode(ISOLATED_DOCKER_CONTAINER.getXmlTag(), value);
 					setIsolatedDockerContainers(!value.equals("off"));
@@ -578,6 +601,12 @@ public final class Configuration {
 		} catch (ConfigurationItemException e) {
 			setStatusUpdateFreq(10);
 			createConfigProperty(STATUS_UPDATE_FREQ);
+		}
+		try {
+			setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ.getXmlTag())));
+		} catch (ConfigurationItemException e) {
+			setPostDiagnosticsFreq(Integer.parseInt(POST_DIAGNOSTICS_FREQ.getDefaultValue()));
+			createConfigProperty(POST_DIAGNOSTICS_FREQ);
 		}
 		try {
 			setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER.getXmlTag()).equals("off"));
@@ -760,6 +789,8 @@ public final class Configuration {
 		result.append(buildReportLine(getConfigParamMessage(GET_CHANGES_FREQ), format("%d", getChangesFreq)));
 		// scan devices frequency
 		result.append(buildReportLine(getConfigParamMessage(SCAN_DEVICES_FREQ), format("%d", scanDevicesFreq)));
+		// post diagnostics frequency
+		result.append(buildReportLine(getConfigParamMessage(POST_DIAGNOSTICS_FREQ), format("%d", postDiagnosticsFreq)));
 		// log file directory
 		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
 		// gps mode
