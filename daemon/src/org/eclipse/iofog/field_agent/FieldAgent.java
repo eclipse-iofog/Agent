@@ -474,7 +474,7 @@ public class FieldAgent implements IOFogModule {
 				containers = result.getJsonArray("containerlist");
 				saveFile(containers, filesPath + filename);
 
-				toRemoveElementIds.addAll(getToRemoveSet());
+				toRemoveElementIds.addAll(getToRemoveSet(result));
 				elementManager.setToRemoveElementIds(toRemoveElementIds);
 			}
 
@@ -482,7 +482,6 @@ public class FieldAgent implements IOFogModule {
 					.boxed()
 					.map(containers::getJsonObject)
 					.map(containerJsonObjectToElementFunction())
-					.filter(element -> !toRemoveElementIds.contains(element.getElementId()))
 					.collect(toList());
 			elementManager.setLatestElements(latestElements);
 		} catch (CertificateException | SSLHandshakeException e) {
@@ -492,10 +491,8 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
-	private Set<String> getToRemoveSet() throws Exception {
-		JsonObject resultToClean = orchestrator.doCommand("list/element/instance/cleanup", null, null);
-		checkResponseStatus(resultToClean);
-		JsonArray containersToClean = resultToClean.getJsonArray("elementIds");
+	private Set<String> getToRemoveSet(JsonObject result) throws Exception {
+		JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
 	}
