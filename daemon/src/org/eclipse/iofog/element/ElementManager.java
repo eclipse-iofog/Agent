@@ -16,6 +16,7 @@ import java.util.*;
 
 /**
  * IOElements common repository
+ * thread-safe, with unmodifiable collections
  *
  * @author saeid
  */
@@ -41,37 +42,37 @@ public class ElementManager {
 
 	public List<Element> getLatestElements() {
 		synchronized (ElementManager.class) {
-			return latestElements;
+			return Collections.unmodifiableList(latestElements);
 		}
 	}
 
 	public List<Element> getCurrentElements() {
 		synchronized (ElementManager.class) {
-			return currentElements;
+			return Collections.unmodifiableList(currentElements);
 		}
 	}
 
 	public Set<String> getToRemoveElementIds() {
 		synchronized (ElementManager.class) {
-			return toRemoveElementIds;
+			return Collections.unmodifiableSet(toRemoveElementIds);
 		}
 	}
 
 	public Map<String, Route> getRoutes() {
 		synchronized (ElementManager.class) {
-			return routes;
+			return Collections.unmodifiableMap(routes);
 		}
 	}
 
 	public Map<String, String> getConfigs() {
 		synchronized (ElementManager.class) {
-			return configs;
+			return Collections.unmodifiableMap(configs);
 		}
 	}
 
 	public List<Registry> getRegistries() {
 		synchronized (ElementManager.class) {
-			return registries;
+			return Collections.unmodifiableList(registries);
 		}
 	}
 
