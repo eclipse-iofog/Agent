@@ -341,15 +341,8 @@ public class DockerUtil {
 	 * @return boolean true if port mappings are the same
 	 */
 	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
-		List<PortMapping> elementPorts = getElementPorts(element);
-		List<PortMapping> containerPorts = getContainerPorts(inspectInfo);
-		return isPortMappingListsEqual(elementPorts, containerPorts);
+		return getElementPorts(element).equals(getContainerPorts(inspectInfo));
 
-	}
-
-	private boolean isPortMappingListsEqual(List<PortMapping> elementPorts, List<PortMapping> containerPorts) {
-		return elementPorts.size() == containerPorts.size()
-				&& (elementPorts.isEmpty() || elementPorts.stream().allMatch(containerPorts::contains));
 	}
 
 	private List<PortMapping> getElementPorts(Element element) {
