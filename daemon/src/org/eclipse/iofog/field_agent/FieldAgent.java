@@ -777,7 +777,7 @@ public class FieldAgent implements IOFogModule {
 		postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
 		postParams.put(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq());
 		postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
-		postParams.put(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().getValue());
+		postParams.put(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase());
 		postParams.put(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates());
 
 		try {
