@@ -14,6 +14,9 @@ import static java.util.stream.Collectors.toList;
  */
 public enum CommandLineConfigParam {
 
+    ACCESS_TOKEN("", "", "access_token", ""),
+    INSTANCE_ID("", "", "instance_id", ""),
+
     DISK_CONSUMPTION_LIMIT ("50", "d","disk_consumption_limit", "disklimit"),
     DISK_DIRECTORY ("/var/lib/iofog/", "dl","disk_directory", "diskdirectory"),
     MEMORY_CONSUMPTION_LIMIT ("4096", "m", "memory_consumption_limit", "memorylimit"),
@@ -29,8 +32,8 @@ public enum CommandLineConfigParam {
     GET_CHANGES_FREQ ("20", "cf", "get_changes_freq", "getchangesfreq"),
     SCAN_DEVICES_FREQ("60", "sd", "scan_devices_freq", "scandevicesfreq"),
     ISOLATED_DOCKER_CONTAINER ("on", "idc", "isolated_docker_container", "isolateddockercontainer"),
-    GPS_MODE(GpsMode.AUTO.name().toLowerCase(), "", "gps_mode", "gpsmode"),
-    GPS_COORDINATES("", "gps", "gps_coordinates", "gpscoordinates");
+    GPS_MODE("", "", null, "gpsmode"),
+    GPS_COORDINATES(GpsMode.AUTO.name().toLowerCase(), "gps", "gps", "gpscoordinates");
 
     private final String commandName;
     private final String xmlTag;

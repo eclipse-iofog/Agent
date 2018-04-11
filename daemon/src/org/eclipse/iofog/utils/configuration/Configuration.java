@@ -35,10 +35,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.net.NetworkInterface;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static java.io.File.separatorChar;
@@ -50,6 +48,7 @@ import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.CONFIG_DIR;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
+import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 
 /**
  * holds IOFog instance configuration
@@ -59,9 +58,6 @@ import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 public final class Configuration {
 
 	private static final String MODULE_NAME = "Configuration";
-
-	private static final String CONFIG_INSTANCE_ID = "instance_id";
-	private static final String CONFIG_ACCESS_TOKEN = "access_token";
 
 	private static Element configElement;
 	private static Document configFile;
@@ -150,23 +146,43 @@ public final class Configuration {
 	/**
 	 * return XML node value
 	 *
-	 * @param name - node name
+	 * @param param - node name
 	 * @return node value
 	 * @throws ConfigurationItemException
 	 */
-	private static String getNode(String name) throws ConfigurationItemException {
-		return getFirstNodeByTagName(name).getTextContent();
+	private static String getNode(CommandLineConfigParam param) throws ConfigurationItemException {
+
+		Supplier<String> nodeReader = () -> {
+			String res = null;
+			try {
+				res = getFirstNodeByTagName(param.getXmlTag()).getTextContent();
+			} catch (Exception e) {
+				System.out.println("[" + MODULE_NAME + "] <" + param.getXmlTag() + "> "
+						+ " item not found or defined more than once. Default value - " + param.getDefaultValue() + " will be used");
+			}
+			return  res;
+		};
+		return Optional.ofNullable(nodeReader.get()).
+				orElseGet(param::getDefaultValue);
 	}
 
 	/**
 	 * sets XML node value
 	 *
-	 * @param name    - node name
+	 * @param param    - node param
 	 * @param content - node value
 	 * @throws ConfigurationItemException
 	 */
-	private static void setNode(String name, String content) throws ConfigurationItemException {
-		getFirstNodeByTagName(name).setTextContent(content);
+	private static void setNode(CommandLineConfigParam param, String content) throws ConfigurationItemException {
+		createNodeIfNotExists(param.getXmlTag());
+		getFirstNodeByTagName(param.getXmlTag()).setTextContent(content);
+	}
+
+	private static void createNodeIfNotExists(String name) {
+		NodeList nodes = configElement.getElementsByTagName(name);
+		if (nodes.getLength() == 0) {
+			configElement.appendChild(configFile.createElement(name));
+		}
 	}
 
 	/**
@@ -193,7 +209,7 @@ public final class Configuration {
 		for (String option : parameters) {
 			CommandLineConfigParam cmdOption = getCommandByName(option)
 					.orElseThrow(() -> new ConfigurationItemException("Invalid parameter -" + option));
-			result.put(cmdOption.getCommandName(), getNode(cmdOption.getXmlTag()));
+			result.put(cmdOption.getCommandName(), getNode(cmdOption));
 		}
 
 		return result;
@@ -267,13 +283,13 @@ public final class Configuration {
 						break;
 					}
 					setDiskLimit(Float.parseFloat(value));
-					setNode(DISK_CONSUMPTION_LIMIT.getXmlTag(), value);
+					setNode(DISK_CONSUMPTION_LIMIT, value);
 					break;
 
 				case DISK_DIRECTORY:
 					value = addSeparator(value);
 					setDiskDirectory(value);
-					setNode(DISK_DIRECTORY.getXmlTag(), value);
+					setNode(DISK_DIRECTORY, value);
 					break;
 				case MEMORY_CONSUMPTION_LIMIT:
 					try {
@@ -287,7 +303,7 @@ public final class Configuration {
 						break;
 					}
 					setMemoryLimit(Float.parseFloat(value));
-					setNode(MEMORY_CONSUMPTION_LIMIT.getXmlTag(), value);
+					setNode(MEMORY_CONSUMPTION_LIMIT, value);
 					break;
 				case PROCESSOR_CONSUMPTION_LIMIT:
 					try {
@@ -301,23 +317,23 @@ public final class Configuration {
 						break;
 					}
 					setCpuLimit(Float.parseFloat(value));
-					setNode(PROCESSOR_CONSUMPTION_LIMIT.getXmlTag(), value);
+					setNode(PROCESSOR_CONSUMPTION_LIMIT, value);
 					break;
 				case CONTROLLER_URL:
-					setNode(CONTROLLER_URL.getXmlTag(), value);
+					setNode(CONTROLLER_URL, value);
 					setControllerUrl(value);
 					break;
 				case CONTROLLER_CERT:
-					setNode(CONTROLLER_CERT.getXmlTag(), value);
+					setNode(CONTROLLER_CERT, value);
 					setControllerCert(value);
 					break;
 				case DOCKER_URL:
-					setNode(DOCKER_URL.getXmlTag(), value);
+					setNode(DOCKER_URL, value);
 					setDockerUrl(value);
 					break;
 				case NETWORK_INTERFACE:
 					if (defaults || isValidNetworkInterface(value.trim())) {
-						setNode(NETWORK_INTERFACE.getXmlTag(), value);
+						setNode(NETWORK_INTERFACE, value);
 						setNetworkInterface(value);
 					} else {
 						messageMap.put(option, "Invalid network interface");
@@ -335,12 +351,12 @@ public final class Configuration {
 						messageMap.put(option, "Log disk limit range must be 0.5 to 1024 GB");
 						break;
 					}
-					setNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag(), value);
+					setNode(LOG_DISK_CONSUMPTION_LIMIT, value);
 					setLogDiskLimit(Float.parseFloat(value));
 					break;
 				case LOG_DISK_DIRECTORY:
 					value = addSeparator(value);
-					setNode(LOG_DISK_DIRECTORY.getXmlTag(), value);
+					setNode(LOG_DISK_DIRECTORY, value);
 					setLogDiskDirectory(value);
 					break;
 				case LOG_FILE_COUNT:
@@ -354,7 +370,7 @@ public final class Configuration {
 						messageMap.put(option, "Log file count range must be 1 to 100");
 						break;
 					}
-					setNode(LOG_FILE_COUNT.getXmlTag(), value);
+					setNode(LOG_FILE_COUNT, value);
 					setLogFileCount(Integer.parseInt(value));
 					break;
 				case STATUS_UPDATE_FREQ:
@@ -368,7 +384,7 @@ public final class Configuration {
 						messageMap.put(option, "Status update frequency must be greater than 1");
 						break;
 					}
-					setNode(STATUS_UPDATE_FREQ.getXmlTag(), value);
+					setNode(STATUS_UPDATE_FREQ, value);
 					setStatusUpdateFreq(Integer.parseInt(value));
 					break;
 				case GET_CHANGES_FREQ:
@@ -382,7 +398,7 @@ public final class Configuration {
 						messageMap.put(option, "Get changes frequency must be greater than 1");
 						break;
 					}
-					setNode(GET_CHANGES_FREQ.getXmlTag(), value);
+					setNode(GET_CHANGES_FREQ, value);
 					setGetChangesFreq(Integer.parseInt(value));
 					break;
 				case SCAN_DEVICES_FREQ:
@@ -396,15 +412,16 @@ public final class Configuration {
 						messageMap.put(option, "Get scan devices frequency must be greater than 1");
 						break;
 					}
-					setNode(SCAN_DEVICES_FREQ.getXmlTag(), value);
+					setNode(SCAN_DEVICES_FREQ, value);
 					setScanDevicesFreq(Integer.parseInt(value));
 					break;
 				case ISOLATED_DOCKER_CONTAINER:
-					setNode(ISOLATED_DOCKER_CONTAINER.getXmlTag(), value);
+					setNode(ISOLATED_DOCKER_CONTAINER, value);
 					setIsolatedDockerContainers(!value.equals("off"));
 					break;
 				case GPS_COORDINATES:
 					configureGps(value);
+					writeGpsToConfigFile();
 					break;
 				default:
 					throw new ConfigurationItemException("Invalid parameter -" + option);
@@ -440,25 +457,30 @@ public final class Configuration {
 			throw new ConfigurationItemException("Can't perform " + gpsCoordinatesCommand + " action for gps config");
 		}
 
-		writeGpsToConfig(currentMode, gpsCoordinates);
+		setGpsDataIfValid(currentMode, gpsCoordinates);
+	}
+
+	public static void setGpsDataIfValid(GpsMode mode, String gpsCoordinates) throws ConfigurationItemException {
+		if (!isValidCoordinates(gpsCoordinates)) {
+			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
+					+ "Correct format is <DDD.DDDDD,DDD.DDDDD> (GPS DD format)");
+		}
+
+		setGpsCoordinates(gpsCoordinates.trim());
+		setGpsMode(mode);
 	}
 
 	/**
 	 * Writes GPS coordinates and GPS mode to config file
 	 *
-	 * @param currentMode
-	 * @param gpsCoordinates
 	 * @throws ConfigurationItemException
 	 */
-	public static void writeGpsToConfig(GpsMode currentMode, String gpsCoordinates) throws ConfigurationItemException {
-		if (!isValidCoordinates(gpsCoordinates)) {
-			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
-					+ "Correct format is <DDD.DDDDD,DDD.DDDDD> (GPS DD format)");
+	public static void writeGpsToConfigFile() throws ConfigurationItemException {
+		if (gpsMode == GpsMode.MANUAL) {
+			setNode(GPS_COORDINATES, gpsCoordinates);
+		} else {
+			setNode(GPS_COORDINATES, gpsMode.name().toLowerCase());
 		}
-		setNode(GPS_COORDINATES.getXmlTag(), gpsCoordinates);
-		setGpsCoordinates(gpsCoordinates.trim());
-		setNode(GPS_MODE.getXmlTag(), currentMode.name().toLowerCase());
-		setGpsMode(currentMode);
 	}
 
 	/**
@@ -507,7 +529,7 @@ public final class Configuration {
 					return true;
 			}
 		} catch (Exception e) {
-			LoggingService.logInfo(MODULE_NAME, "Error validating network interface : " + e.getMessage());
+			logInfo(MODULE_NAME, "Error validating network interface : " + e.getMessage());
 		}
 		return false;
 	}
@@ -541,46 +563,40 @@ public final class Configuration {
 
 		configElement = (Element) getFirstNodeByTagName("config");
 
-		setInstanceId(getNode(CONFIG_INSTANCE_ID));
-		setAccessToken(getNode(CONFIG_ACCESS_TOKEN));
-		setControllerUrl(getNode(CONTROLLER_URL.getXmlTag()));
-		setControllerCert(getNode(CONTROLLER_CERT.getXmlTag()));
-		setNetworkInterface(getNode(NETWORK_INTERFACE.getXmlTag()));
-		setDockerUrl(getNode(DOCKER_URL.getXmlTag()));
-		setDiskLimit(Float.parseFloat(getNode(DISK_CONSUMPTION_LIMIT.getXmlTag())));
-		setDiskDirectory(getNode(DISK_DIRECTORY.getXmlTag()));
-		setMemoryLimit(Float.parseFloat(getNode(MEMORY_CONSUMPTION_LIMIT.getXmlTag())));
-		setCpuLimit(Float.parseFloat(getNode(PROCESSOR_CONSUMPTION_LIMIT.getXmlTag())));
-		setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY.getXmlTag()));
-		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT.getXmlTag())));
-		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT.getXmlTag())));
-		setGpsMode(GpsMode.getModeByValue(getNode(GPS_MODE.getXmlTag())));
-		if (getGpsMode() == GpsMode.AUTO) {
-			configureGps(GpsMode.AUTO.name().toLowerCase());
-			updateConfigFile();
-		} else {
-			setGpsCoordinates(getNode(GPS_COORDINATES.getXmlTag()));
-		}
+		setInstanceId(getNode(INSTANCE_ID));
+		setAccessToken(getNode(ACCESS_TOKEN));
+		setControllerUrl(getNode(CONTROLLER_URL));
+		setControllerCert(getNode(CONTROLLER_CERT));
+		setNetworkInterface(getNode(NETWORK_INTERFACE));
+		setDockerUrl(getNode(DOCKER_URL));
+		setDiskLimit(Float.parseFloat(getNode(DISK_CONSUMPTION_LIMIT)));
+		setDiskDirectory(getNode(DISK_DIRECTORY));
+		setMemoryLimit(Float.parseFloat(getNode(MEMORY_CONSUMPTION_LIMIT)));
+		setCpuLimit(Float.parseFloat(getNode(PROCESSOR_CONSUMPTION_LIMIT)));
+		setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY));
+		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT)));
+		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT)));
+		configureGps(getNode(GPS_COORDINATES));
 		try {
-			setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ.getXmlTag())));
+			setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ)));
 		} catch (ConfigurationItemException e) {
 			setGetChangesFreq(20);
 			createConfigProperty(GET_CHANGES_FREQ);
 		}
 		try {
-			setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ.getXmlTag())));
+			setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
 		} catch (ConfigurationItemException e) {
 			setScanDevicesFreq(60);
 			createConfigProperty(SCAN_DEVICES_FREQ);
 		}
 		try {
-			setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ.getXmlTag())));
+			setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
 		} catch (ConfigurationItemException e) {
 			setStatusUpdateFreq(10);
 			createConfigProperty(STATUS_UPDATE_FREQ);
 		}
 		try {
-			setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER.getXmlTag()).equals("off"));
+			setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
 		} catch (ConfigurationItemException e) {
 			setIsolatedDockerContainers(true);
 			createConfigProperty(ISOLATED_DOCKER_CONTAINER);
@@ -662,12 +678,12 @@ public final class Configuration {
 	}
 
 	public static void setAccessToken(String accessToken) throws ConfigurationItemException {
-		setNode(CONFIG_ACCESS_TOKEN, accessToken);
+		setNode(ACCESS_TOKEN, accessToken);
 		Configuration.accessToken = accessToken;
 	}
 
 	public static void setInstanceId(String instanceId) throws ConfigurationItemException {
-		setNode(CONFIG_INSTANCE_ID, instanceId);
+		setNode(INSTANCE_ID, instanceId);
 		Configuration.instanceId = instanceId;
 	}
 
