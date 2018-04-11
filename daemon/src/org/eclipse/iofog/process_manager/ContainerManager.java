@@ -141,9 +141,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void removeContainerByElementId(String elementId) throws Exception {
-
 		Optional<Container> containerOptional = docker.getContainerByElementId(elementId);
-
 		if (containerOptional.isPresent()) {
 			String containerId = containerOptional.get().getId();
 			removeContainer(containerId);

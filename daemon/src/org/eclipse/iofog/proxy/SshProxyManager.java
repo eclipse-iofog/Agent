@@ -2,6 +2,7 @@ package org.eclipse.iofog.proxy;
 
 import com.jcraft.jsch.JSchException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.functional.Unit;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.JsonObject;
@@ -9,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
+import static org.eclipse.iofog.utils.functional.Unit.UNIT;
 
 /**
  * SSH Proxy Manager Module
@@ -30,8 +32,8 @@ public class SshProxyManager {
      * @param configs json object with proxy configs
      * @return completable future of type void
      */
-    public CompletableFuture<Void> update(JsonObject configs) {
-        CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
+    public CompletableFuture<Unit> update(JsonObject configs) {
+        CompletableFuture<Unit> completableFuture = CompletableFuture.completedFuture(UNIT);
         setSshConnection(configs);
         if (connection.isConnected() && connection.isCloseFlag()) {
             close();
@@ -60,7 +62,7 @@ public class SshProxyManager {
      * opens ssh tunnel
      * @return completable future of type void
      */
-    private CompletableFuture<Void> open() {
+    private CompletableFuture<Unit> open() {
         setKnownHost();
         return openSshTunnel();
     }
@@ -81,7 +83,7 @@ public class SshProxyManager {
      * opens ssh tunnel asynchronously
      * @return completable future of type void
      */
-    private CompletableFuture<Void> openSshTunnel() {
+    private CompletableFuture<Unit> openSshTunnel() {
         return CompletableFuture.supplyAsync(connection.openSshTunnel())
                 .handle((val, ex) -> {
                     if (ex != null) {

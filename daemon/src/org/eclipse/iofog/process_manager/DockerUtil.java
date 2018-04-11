@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.eclipse.iofog.process_manager.ElementState.*;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -118,7 +119,7 @@ public class DockerUtil {
 					case CONTAINER:
 					case IMAGE:
 						StatusReporter.setProcessManagerStatus().getElementStatus(item.getId()).setStatus(
-								ElementState.fromText(item.getStatus()));
+								fromText(item.getStatus()));
 				}
 			}
 		});
@@ -253,22 +254,32 @@ public class DockerUtil {
 	 * @return {@link ElementStatus}
 	 */
 	public ElementStatus getElementStatus(String containerId) {
+		return hasContainerWithContainerId(containerId)
+				? getElementStatusOfExistingContainer(containerId)
+				: getElementStatusOfRemovedContainer(containerId);
+	}
+
+	private ElementStatus getElementStatusOfExistingContainer(String containerId) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 		ContainerState status = inspectInfo.getState();
-		ElementStatus result = new ElementStatus();
+		ElementStatus elementStatus = new ElementStatus();
 		if (status.getRunning() != null && status.getRunning()) {
-			result.setUsage(containerId);
+			elementStatus.setUsage(containerId);
 			if (status.getStartedAt() != null) {
-				result.setStartTime(getStartedTime(status.getStartedAt()));
+				elementStatus.setStartTime(getStartedTime(status.getStartedAt()));
 			}
 			if (status.getStatus() != null) {
-				result.setStatus(ElementState.fromText(status.getStatus()));
+				elementStatus.setStatus(fromText(status.getStatus()));
 			}
-			result.setContainerId(containerId);
+			elementStatus.setContainerId(containerId);
 		} else {
-			result.setStatus(ElementState.STOPPED);
+			elementStatus.setStatus(STOPPED);
 		}
-		return result;
+		return elementStatus;
+	}
+
+	private ElementStatus getElementStatusOfRemovedContainer(String containerId) {
+		return new ElementStatus(REMOVED, 0, 0, 0, containerId);
 	}
 
 	public Optional<Statistics> getContainerStats(String containerId) {
@@ -302,7 +313,7 @@ public class DockerUtil {
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isElementAndContainerEquals(String containerId, Element element) {
+	public boolean areElementAndContainerEqual(String containerId, Element element) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
 	}
@@ -349,10 +360,11 @@ public class DockerUtil {
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		Ports ports = hostConfig.getPortBindings();
 		return ports.getBindings().entrySet().stream()
-				.map(entity -> {
+				.flatMap(entity -> {
 					String exposedPort = String.valueOf(entity.getKey().getPort());
-					String hostPort = entity.getValue()[0].getHostPortSpec();
-					return new PortMapping(hostPort, exposedPort);
+					return Arrays.stream(entity.getValue())
+							.map(Binding::getHostPortSpec)
+							.map(hostPort -> new PortMapping(hostPort, exposedPort));
 				})
 				.collect(Collectors.toList());
 	}
@@ -397,7 +409,7 @@ public class DockerUtil {
 
 	public boolean isContainerRunning(String containerId) {
 		Optional<String> status = getContainerStatus(containerId);
-		return status.isPresent() && status.get().equalsIgnoreCase(ElementState.RUNNING.toString());
+		return status.isPresent() && status.get().equalsIgnoreCase(RUNNING.toString());
 	}
 
 	/**
@@ -486,7 +498,7 @@ public class DockerUtil {
 				volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
 			});
 		}
-		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
+		String[] extraHosts = {"iofabric:" + host, "iofog:" + host, "edgeworks.local.com:192.168.1.207"};
 
 		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
