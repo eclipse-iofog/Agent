@@ -102,8 +102,10 @@ public class ProcessManager implements IOFogModule {
 			List<Element> latestElements = elementManager.getLatestElements();
 			List<Element> currentElements = elementManager.getCurrentElements();
 
+
+			List<Element> elementsWithExistingContainers = new ArrayList<>();
 			try {
-				for (Element element : new ArrayList<>(latestElements)) {
+				for (Element element : latestElements) {
 					Optional<Container> containerOptional = docker.getContainerByElementId(element.getElementId());
 					if (containerOptional.isPresent() && !element.isRebuild()) {
 						Container container = containerOptional.get();
@@ -115,21 +117,22 @@ public class ProcessManager implements IOFogModule {
 							element.setContainerIpAddress("0.0.0.0");
 						}
 						ElementStatus status = docker.getElementStatus(container.getId());
-						if (status.getStatus() == ElementState.REMOVED) {
-							latestElements.remove(element);
-							continue;
-						}
-						StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
+						if (status.getStatus() != ElementState.REMOVED) {
+							StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
 
-						if (shouldContainerBeUpdated(status, containerId, element)) {
-							addTask(new ContainerTask(UPDATE, element.getElementId(), containerId));
+							elementsWithExistingContainers.add(element);
+							if (shouldContainerBeUpdated(status, containerId, element)) {
+								addTask(new ContainerTask(UPDATE, element.getElementId(), containerId));
+							}
 						}
+
 					} else {
+						elementsWithExistingContainers.add(element);
 						addTask(new ContainerTask(ADD, element.getElementId(), null));
 					}
 				}
 
-				StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
+				StatusReporter.setProcessManagerStatus().setRunningElementsCount(elementsWithExistingContainers.size());
 
 				List<Container> containers = docker.getContainers();
 				for (Container container : containers) {
@@ -140,7 +143,7 @@ public class ProcessManager implements IOFogModule {
 			} catch (Exception ex) {
 				logWarning(ex.getMessage());
 			}
-			elementManager.setCurrentElements(latestElements);
+			elementManager.setCurrentElements(elementsWithExistingContainers);
 		}
 	};
 
