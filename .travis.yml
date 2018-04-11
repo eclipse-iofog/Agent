@@ -41,9 +41,9 @@ jobs:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
     - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
-    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm/*
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
-    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging/*
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/
     - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofogd.jar
