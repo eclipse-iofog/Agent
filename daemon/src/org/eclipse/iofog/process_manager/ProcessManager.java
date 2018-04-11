@@ -147,7 +147,7 @@ public class ProcessManager implements IOFogModule {
 	private void removeInappropriateContainers() {
 		docker.getContainers().forEach(container -> {
 			String elementId = docker.getContainerName(container);
-			Optional<Element> elementOptional = elementManager.getLatestElementById(elementId);
+			Optional<Element> elementOptional = elementManager.findLatestElementById(elementId);
 
 			// remove old containers and unknown for ioFog containers when IsolatedDockerContainers mode is ON
 			// remove only old containers when the mode is OFF

@@ -122,17 +122,17 @@ public class ElementManager {
 		}
 	}
 
-	public boolean elementExists(List<Element> elements, String elementId) {
-		return getLatestElementById(elements, elementId).isPresent();
-	}
-
-	public Optional<Element> getLatestElementById(String elementId) {
+	public Optional<Element> findLatestElementById(String elementId) {
 		synchronized (ElementManager.class) {
-			return getLatestElementById(latestElements, elementId);
+			return findElementById(latestElements, elementId);
 		}
 	}
 
-	private Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
+	public boolean elementExists(List<Element> elements, String elementId) {
+		return findElementById(elements, elementId).isPresent();
+	}
+
+	private Optional<Element> findElementById(List<Element> elements, String elementId) {
 		return elements.stream()
 				.filter(element -> element.getElementId().equals(elementId))
 				.findAny();

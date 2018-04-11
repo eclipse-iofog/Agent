@@ -175,7 +175,7 @@ public class ContainerManager {
 	 */
 	public void execute(ContainerTask task) throws Exception {
 		docker = DockerUtil.getInstance();
-		Optional<Element> elementOptional = elementManager.getLatestElementById(task.getElementId());
+		Optional<Element> elementOptional = elementManager.findLatestElementById(task.getElementId());
 		switch (task.getAction()) {
 			case ADD:
 				if (elementOptional.isPresent()) {
