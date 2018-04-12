@@ -448,10 +448,10 @@ public final class Configuration {
 		String gpsCoordinates;
 		GpsMode currentMode;
 
-		if (GpsMode.AUTO.getValue().equals(gpsCoordinatesCommand)) {
+		if (GpsMode.AUTO.name().toLowerCase().equals(gpsCoordinatesCommand)) {
 			gpsCoordinates = GpsWebHandler.getGpsCoordinatesByExternalIp();
 			currentMode = GpsMode.AUTO;
-		} else if (GpsMode.OFF.getValue().equals(gpsCoordinatesCommand)) {
+		} else if (GpsMode.OFF.name().toLowerCase().equals(gpsCoordinatesCommand)) {
 			gpsCoordinates = "";
 			currentMode = GpsMode.OFF;
 		} else {
@@ -480,7 +480,7 @@ public final class Configuration {
 		}
 		setNode(GPS_COORDINATES.getXmlTag(), gpsCoordinates);
 		setGpsCoordinates(gpsCoordinates.trim());
-		setNode(GPS_MODE.getXmlTag(), currentMode.getValue());
+		setNode(GPS_MODE.getXmlTag(), currentMode.name().toLowerCase());
 		setGpsMode(currentMode);
 	}
 
@@ -579,7 +579,7 @@ public final class Configuration {
 		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT.getXmlTag())));
 		setGpsMode(GpsMode.getModeByValue(getNode(GPS_MODE.getXmlTag())));
 		if (getGpsMode() == GpsMode.AUTO) {
-			configureGps(GpsMode.AUTO.getValue());
+			configureGps(GpsMode.AUTO.name().toLowerCase());
 			updateConfigFile();
 		} else {
 			setGpsCoordinates(getNode(GPS_COORDINATES.getXmlTag()));
@@ -794,7 +794,7 @@ public final class Configuration {
 		// log file directory
 		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
 		// gps mode
-		result.append(buildReportLine(getConfigParamMessage(GPS_MODE), gpsMode.getValue()));
+		result.append(buildReportLine(getConfigParamMessage(GPS_MODE), gpsMode.name().toLowerCase()));
 		// gps coordinates
 		result.append(buildReportLine(getConfigParamMessage(GPS_COORDINATES), gpsCoordinates));
 

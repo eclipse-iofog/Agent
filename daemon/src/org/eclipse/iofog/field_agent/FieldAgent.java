@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -47,7 +48,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
@@ -384,14 +385,15 @@ public class FieldAgent implements IOFogModule {
 			List<Registry> registries = new ArrayList<>();
 			for (int i = 0; i < registriesList.size(); i++) {
 				JsonObject registry = registriesList.getJsonObject(i);
-				Registry result = new Registry();
-				result.setUrl(registry.getString("url"));
-				result.setSecure(registry.getBoolean("secure"));
-				result.setCertificate(registry.getString("certificate"));
-				result.setRequiresCertificate(registry.getBoolean("requirescert"));
-				result.setUserName(registry.getString("username"));
-				result.setPassword(registry.getString("password"));
-				result.setUserEmail(registry.getString("useremail"));
+				Registry result = new Registry.RegistryBuilder()
+						.setUrl(registry.getString("url"))
+						.setSecure(registry.getBoolean("secure"))
+						.setCertificate(registry.getString("certificate"))
+						.setRequiresCertificate(registry.getBoolean("requirescert"))
+						.setUserName(registry.getString("username"))
+						.setPassword(registry.getString("password"))
+						.setUserEmail(registry.getString("useremail"))
+						.build();
 				registries.add(result);
 			}
 			elementManager.setRegistries(registries);
@@ -512,6 +514,7 @@ public class FieldAgent implements IOFogModule {
 		String filename = "elements.json";
 		try {
 			JsonArray containers;
+			Set<String> toRemoveWithCleanUpElementIds = new HashSet<>();
 			if (fromFile) {
 				containers = readFile(filesPath + filename);
 				if (containers == null) {
@@ -523,6 +526,9 @@ public class FieldAgent implements IOFogModule {
 				checkResponseStatus(result);
 				containers = result.getJsonArray("containerlist");
 				saveFile(containers, filesPath + filename);
+
+				toRemoveWithCleanUpElementIds.addAll(getToRemoveWithCleanUpIds(result));
+				elementManager.setToRemoveWithCleanUpElementIds(toRemoveWithCleanUpElementIds);
 			}
 
 			List<Element> latestElements = IntStream.range(0, containers.size())
@@ -530,13 +536,21 @@ public class FieldAgent implements IOFogModule {
 					.map(containers::getJsonObject)
 					.map(containerJsonObjectToElementFunction())
 					.collect(toList());
-
 			elementManager.setLatestElements(latestElements);
-
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get containers list " + e.getMessage());
+		}
+	}
+
+	private Set<String> getToRemoveWithCleanUpIds(JsonObject result) throws Exception {
+		try {
+			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+		} catch (NullPointerException e) { //temp catch for old for controller versions
+			return Collections.emptySet();
 		}
 	}
 
@@ -817,7 +831,7 @@ public class FieldAgent implements IOFogModule {
 		postParams.put(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq());
 		postParams.put(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq());
 		postParams.put(ISOLATED_DOCKER_CONTAINER.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off");
-		postParams.put(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().getValue());
+		postParams.put(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase());
 		postParams.put(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates());
 
 		try {
@@ -1064,7 +1078,7 @@ public class FieldAgent implements IOFogModule {
 				LoggingService.logWarning(MODULE_NAME, e.getMessage());
 			}
 
-			if (jsonSendHWInfoResult == null ) {
+			if (jsonSendHWInfoResult == null) {
 				LoggingService.logInfo(MODULE_NAME, "Can't get HW Info from HAL.");
 			}
 		}

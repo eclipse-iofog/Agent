@@ -89,7 +89,7 @@ public class ElementStatus {
 	 */
 	public void setUsage(String containerId) {
 		DockerUtil docker = DockerUtil.getInstance();
-		if (docker.hasContainerWithContainerId(containerId)) {
+		if (docker.isContainerRunning(containerId)) {
 			Optional<Statistics> statisticsBefore = docker.getContainerStats(containerId);
 
 			try {
