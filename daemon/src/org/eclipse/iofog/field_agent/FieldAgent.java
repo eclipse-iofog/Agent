@@ -341,7 +341,7 @@ public class FieldAgent implements IOFogModule {
 						.setUserName(registry.getString("username"))
 						.setPassword(registry.getString("password"))
 						.setUserEmail(registry.getString("useremail"))
-						.createRegistry();
+						.build();
 				registries.add(result);
 			}
 			elementManager.setRegistries(registries);
@@ -493,9 +493,13 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	private Set<String> getToRemoveWithCleanUpIds(JsonObject result) throws Exception {
-		JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+		try {
+			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+		} catch (NullPointerException e) { //temp catch for old for controller versions
+			return Collections.emptySet();
+		}
 	}
 
 	private Function<JsonObject, Element> containerJsonObjectToElementFunction() {

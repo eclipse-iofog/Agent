@@ -126,7 +126,7 @@ public class Registry {
 			return this;
 		}
 
-		public Registry createRegistry() {
+		public Registry build() {
 			return new Registry(url, secure, certificate, requiresCertificate, userName, password, userEmail);
 		}
 	}
