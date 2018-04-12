@@ -16,83 +16,73 @@ import java.util.*;
 
 /**
  * IOElements common repository
+ * thread-safe except Element, collections are unmodifiable
  *
  * @author saeid
  */
 public class ElementManager {
 
-	private List<Element> latestElements;
-	private List<Element> currentElements;
-	private Map<String, Route> routes;
-	private Map<String, String> configs;
-	private List<Registry> registries;
-	private static ElementManager instance = null;
+	private List<Element> latestElements = new ArrayList<>();
+	private List<Element> currentElements = new ArrayList<>();
+	private Set<String> toRemoveWithCleanUpElementIds = new HashSet<>();
+	private Map<String, Route> routes = new HashMap<>();
+	private Map<String, String> configs = new HashMap<>();
+	private List<Registry> registries = new ArrayList<>();
 
 	private ElementManager() {
-		latestElements = new ArrayList<>();
-		currentElements = new ArrayList<>();
-		routes = new HashMap<>();
-		configs = new HashMap<>();
-		registries = new ArrayList<>();
+	}
+
+	public static class SingletonHolder {
+		public static final ElementManager em = new ElementManager();
 	}
 
 	public static ElementManager getInstance() {
-		if (instance == null) {
-			synchronized (ElementManager.class) {
-				if (instance == null)
-					instance = new ElementManager();
-			}
-		}
-		return instance;
+		return SingletonHolder.em;
 	}
 
 	public List<Element> getLatestElements() {
 		synchronized (ElementManager.class) {
-			return latestElements;
+			return Collections.unmodifiableList(latestElements);
 		}
 	}
 
 	public List<Element> getCurrentElements() {
 		synchronized (ElementManager.class) {
-			return currentElements;
+			return Collections.unmodifiableList(currentElements);
+		}
+	}
+
+	public Set<String> getToRemoveWithCleanUpElementIds() {
+		synchronized (ElementManager.class) {
+			return Collections.unmodifiableSet(toRemoveWithCleanUpElementIds);
 		}
 	}
 
 	public Map<String, Route> getRoutes() {
 		synchronized (ElementManager.class) {
-			return routes;
+			return Collections.unmodifiableMap(routes);
 		}
 	}
 
 	public Map<String, String> getConfigs() {
 		synchronized (ElementManager.class) {
-			return configs;
+			return Collections.unmodifiableMap(configs);
 		}
 	}
 
 	public List<Registry> getRegistries() {
 		synchronized (ElementManager.class) {
-			return registries;
+			return Collections.unmodifiableList(registries);
 		}
 	}
 
 	public Registry getRegistry(String name) {
-		for (Registry registry : registries) {
-			if (registry.getUrl().equalsIgnoreCase(name))
-				return registry;
-		}
-		return null;
-	}
-
-	public void setRegistries(List<Registry> registries) {
 		synchronized (ElementManager.class) {
-			this.registries = registries;
-		}
-	}
-
-	public void setConfigs(Map<String, String> configs) {
-		synchronized (ElementManager.class) {
-			this.configs = configs;
+			for (Registry registry : registries) {
+				if (registry.getUrl().equalsIgnoreCase(name))
+					return registry;
+			}
+			return null;
 		}
 	}
 
@@ -108,14 +98,50 @@ public class ElementManager {
 		}
 	}
 
+	public void setToRemoveWithCleanUpElementIds(Set<String> toRemoveWithCleanUpElementIds) {
+		synchronized (ElementManager.class) {
+			this.toRemoveWithCleanUpElementIds = toRemoveWithCleanUpElementIds;
+		}
+	}
+
+	public void setConfigs(Map<String, String> configs) {
+		synchronized (ElementManager.class) {
+			this.configs = configs;
+		}
+	}
+
 	public void setRoutes(Map<String, Route> routes) {
 		synchronized (ElementManager.class) {
 			this.routes = routes;
 		}
 	}
 
+	public void setRegistries(List<Registry> registries) {
+		synchronized (ElementManager.class) {
+			this.registries = registries;
+		}
+	}
+
+	/***
+	 * not thread safe for Element obj properties
+	 */
+	public Optional<Element> findLatestElementById(String elementId) {
+		synchronized (ElementManager.class) {
+			return findElementById(latestElements, elementId);
+		}
+	}
+
 	public boolean elementExists(List<Element> elements, String elementId) {
-		return getLatestElementById(elements, elementId).isPresent();
+		return findElementById(elements, elementId).isPresent();
+	}
+
+	/***
+	 * not thread safe for Element obj properties
+	 */
+	private Optional<Element> findElementById(List<Element> elements, String elementId) {
+		return elements.stream()
+				.filter(element -> element.getElementId().equals(elementId))
+				.findAny();
 	}
 
 	public void clear() {
@@ -126,15 +152,5 @@ public class ElementManager {
 			configs.clear();
 			registries.clear();
 		}
-	}
-
-	public Optional<Element> getLatestElementById(String elementId) {
-		return getLatestElementById(latestElements, elementId);
-	}
-
-	public Optional<Element> getLatestElementById(List<Element> elements, String elementId) {
-		return elements.stream()
-				.filter(element -> element.getElementId().equals(elementId))
-				.findAny();
 	}
 }

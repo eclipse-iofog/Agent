@@ -22,21 +22,21 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
  * @author saeid
  */
 public class ContainerTask {
+
     public enum Tasks {
         ADD,
         UPDATE,
-        REMOVE
+        REMOVE,
+        REMOVE_WITH_CLEAN_UP
     }
 
     private Tasks action;
     private String elementId;
-    private String containerId;
     private int retries;
 
-    public ContainerTask(Tasks action, String elementId, String containerId) {
+    public ContainerTask(Tasks action, String elementId) {
         this.action = action;
         this.elementId = elementId != null ? elementId : EMPTY;
-        this.containerId = containerId != null ? containerId : EMPTY;
         this.retries = 0;
     }
 
@@ -52,10 +52,6 @@ public class ContainerTask {
         return elementId;
     }
 
-    public String getContainerId() {
-        return containerId;
-    }
-
     public void incrementRetries() {
         this.retries++;
     }
@@ -69,15 +65,13 @@ public class ContainerTask {
 
         if (retries != that.retries) return false;
         if (action != that.action) return false;
-        if (!elementId.equals(that.elementId)) return false;
-        return containerId.equals(that.containerId);
+        return elementId.equals(that.elementId);
     }
 
     @Override
     public int hashCode() {
         int result = action.hashCode();
         result = 31 * result + elementId.hashCode();
-        result = 31 * result + containerId.hashCode();
         result = 31 * result + retries;
         return result;
     }
