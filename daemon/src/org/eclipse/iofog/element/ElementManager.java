@@ -16,7 +16,7 @@ import java.util.*;
 
 /**
  * IOElements common repository
- * thread-safe, with unmodifiable collections
+ * thread-safe except Element, collections are unmodifiable
  *
  * @author saeid
  */
@@ -122,6 +122,9 @@ public class ElementManager {
 		}
 	}
 
+	/***
+	 * not thread safe for Element obj properties
+	 */
 	public Optional<Element> findLatestElementById(String elementId) {
 		synchronized (ElementManager.class) {
 			return findElementById(latestElements, elementId);
@@ -132,6 +135,9 @@ public class ElementManager {
 		return findElementById(elements, elementId).isPresent();
 	}
 
+	/***
+	 * not thread safe for Element obj properties
+	 */
 	private Optional<Element> findElementById(List<Element> elements, String elementId) {
 		return elements.stream()
 				.filter(element -> element.getElementId().equals(elementId))
