@@ -384,6 +384,19 @@ public class DockerUtil {
 				.anyMatch(c -> getContainerName(c).equals(elementId));
 	}
 
+	/**
+	 * returns whether the {@link Container} exists or not
+	 * preferable to perform a check by elementId
+	 *
+	 * @param containerId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerWithContainerId(String containerId) {
+		List<Container> containers = getContainers();
+		return containers.stream()
+				.anyMatch(container -> container.getId().equals(containerId));
+	}
+
 	public boolean isContainerRunning(String containerId) {
 		Optional<String> status = getContainerStatus(containerId);
 		return status.isPresent() && status.get().equalsIgnoreCase(RUNNING.toString());
