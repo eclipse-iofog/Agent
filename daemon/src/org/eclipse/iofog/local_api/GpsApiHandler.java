@@ -64,7 +64,8 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		String gpsCoordinates = lat + "," + lon;
 
 		try {
-			Configuration.writeGpsToConfig(GpsMode.DYNAMIC, gpsCoordinates);
+			Configuration.setGpsDataIfValid(GpsMode.DYNAMIC, gpsCoordinates);
+			Configuration.writeGpsToConfigFile();
 			Configuration.saveConfigUpdates();
 		} catch (Exception e) {
 			String errorMsg = " Error with setting GPS, " + e.getMessage();
