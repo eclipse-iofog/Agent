@@ -32,7 +32,7 @@ public enum CommandLineConfigParam {
     GET_CHANGES_FREQ ("20", "cf", "get_changes_freq", "getchangesfreq"),
     SCAN_DEVICES_FREQ("60", "sd", "scan_devices_freq", "scandevicesfreq"),
     ISOLATED_DOCKER_CONTAINER ("on", "idc", "isolated_docker_container", "isolateddockercontainer"),
-    GPS_MODE("", "", null, "gpsmode"),
+    GPS_MODE("", "", "", "gpsmode"),
     GPS_COORDINATES(GpsMode.AUTO.name().toLowerCase(), "gps", "gps", "gpscoordinates");
 
     private final String commandName;
