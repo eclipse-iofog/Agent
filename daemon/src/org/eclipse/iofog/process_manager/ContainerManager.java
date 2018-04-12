@@ -93,9 +93,10 @@ public class ContainerManager {
 		String id = docker.createContainer(element, hostName);
 		element.setContainerId(id);
 		element.setContainerIpAddress(docker.getContainerIpAddress(id));
-		element.setRebuild(false);
 		LoggingService.logInfo(MODULE_NAME, "container is created");
 		startContainer(element);
+		element.setRebuild(false);
+		element.setUpdating(false);
 		return id;
 	}
 
@@ -140,9 +141,8 @@ public class ContainerManager {
 	/**
 	 * removes a {@link Container} by Element id
 	 *
-	 * @throws Exception exception
 	 */
-	private void removeContainerByElementId(String elementId) throws Exception {
+	private void removeContainerByElementId(String elementId) {
 
 		Optional<Container> containerOptional = docker.getContainerByElementId(elementId);
 
@@ -155,17 +155,17 @@ public class ContainerManager {
 	/**
 	 * removes a {@link Container} by Container id
 	 *
-	 * @throws Exception exception
 	 */
-	private void removeContainerByContainerId(String containerId) throws Exception {
+	private void removeContainerByContainerId(String containerId) {
 		if (docker.hasContainerWithContainerId(containerId)) {
 			removeContainer(containerId);
 		}
 	}
 
-	private void removeContainer(String containerId) throws Exception {
+	private void removeContainer(String containerId) {
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
+			docker.stopContainer(containerId);
 			docker.removeContainer(containerId);
 			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
 		} catch (Exception e) {
@@ -180,6 +180,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private String updateContainer(Element element) throws Exception {
+		element.setUpdating(true);
 		stopContainer(element.getElementId());
 		removeContainerByElementId(element.getElementId());
 		return createContainer(element);

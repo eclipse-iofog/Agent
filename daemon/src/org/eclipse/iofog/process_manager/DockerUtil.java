@@ -160,9 +160,8 @@ public class DockerUtil {
 	 * starts a {@link Container}
 	 *
 	 * @param element
-	 * @throws Exception
 	 */
-	public void startContainer(Element element) throws Exception {
+	public void startContainer(Element element) {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -192,20 +191,20 @@ public class DockerUtil {
 	 * stops a {@link Container}
 	 *
 	 * @param id - id of {@link Container}
-	 * @throws Exception
 	 */
-	public void stopContainer(String id) throws Exception {
-		dockerClient.stopContainerCmd(id).exec();
+	public void stopContainer(String id) {
+		if (isContainerRunning(id)) {
+			dockerClient.stopContainerCmd(id).exec();
+		}
 	}
 
 	/**
 	 * removes a {@link Container}
 	 *
 	 * @param id - id of {@link Container}
-	 * @throws Exception
 	 */
-	public void removeContainer(String id) throws Exception {
-		dockerClient.removeContainerCmd(id).withForce(true).exec();
+	public void removeContainer(String id) {
+		dockerClient.removeContainerCmd(id).exec();
 	}
 
 	/**
@@ -213,9 +212,8 @@ public class DockerUtil {
 	 *
 	 * @param id - id of {@link Container}
 	 * @return ip address
-	 * @throws Exception
 	 */
-	public String getContainerIpAddress(String id) throws Exception {
+	public String getContainerIpAddress(String id) {
 		try {
 			InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
 			return inspect.getNetworkSettings().getIpAddress();
@@ -421,9 +419,8 @@ public class DockerUtil {
 	 * removes a Docker {@link Image}
 	 *
 	 * @param imageName - imageName of {@link Element}
-	 * @throws Exception
 	 */
-	public void removeImage(String imageName) throws Exception {
+	public void removeImage(String imageName) {
 		Image image = getImage(imageName);
 		if (image == null)
 			return;
@@ -435,9 +432,8 @@ public class DockerUtil {
 	 *
 	 * @param imageName - imageName of {@link Element}
 	 * @param registry  - {@link Registry} where image is placed
-	 * @throws Exception
 	 */
-	public void pullImage(String imageName, Registry registry) throws Exception {
+	public void pullImage(String imageName, Registry registry) {
 		String tag = null, image;
 		if (imageName.contains(":")) {
 			String[] sp = imageName.split(":");
@@ -465,9 +461,8 @@ public class DockerUtil {
 	 * @param element - {@link Element}
 	 * @param host    - host ip address
 	 * @return id of created {@link Container}
-	 * @throws Exception
 	 */
-	public String createContainer(Element element, String host) throws Exception {
+	public String createContainer(Element element, String host) {
 		RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
 
 		Ports portBindings = new Ports();
