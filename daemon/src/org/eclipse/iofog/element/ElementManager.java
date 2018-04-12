@@ -24,7 +24,7 @@ public class ElementManager {
 
 	private List<Element> latestElements = new ArrayList<>();
 	private List<Element> currentElements = new ArrayList<>();
-	private Set<String> toRemoveElementIds = new HashSet<>();
+	private Set<String> toRemoveWithCleanUpElementIds = new HashSet<>();
 	private Map<String, Route> routes = new HashMap<>();
 	private Map<String, String> configs = new HashMap<>();
 	private List<Registry> registries = new ArrayList<>();
@@ -52,9 +52,9 @@ public class ElementManager {
 		}
 	}
 
-	public Set<String> getToRemoveElementIds() {
+	public Set<String> getToRemoveWithCleanUpElementIds() {
 		synchronized (ElementManager.class) {
-			return Collections.unmodifiableSet(toRemoveElementIds);
+			return Collections.unmodifiableSet(toRemoveWithCleanUpElementIds);
 		}
 	}
 
@@ -98,9 +98,9 @@ public class ElementManager {
 		}
 	}
 
-	public void setToRemoveElementIds(Set<String> toRemoveElementIds) {
+	public void setToRemoveWithCleanUpElementIds(Set<String> toRemoveWithCleanUpElementIds) {
 		synchronized (ElementManager.class) {
-			this.toRemoveElementIds = toRemoveElementIds;
+			this.toRemoveWithCleanUpElementIds = toRemoveWithCleanUpElementIds;
 		}
 	}
 

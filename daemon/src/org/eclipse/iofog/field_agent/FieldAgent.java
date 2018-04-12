@@ -333,14 +333,15 @@ public class FieldAgent implements IOFogModule {
 			List<Registry> registries = new ArrayList<>();
 			for (int i = 0; i < registriesList.size(); i++) {
 				JsonObject registry = registriesList.getJsonObject(i);
-				Registry result = new Registry();
-				result.setUrl(registry.getString("url"));
-				result.setSecure(registry.getBoolean("secure"));
-				result.setCertificate(registry.getString("certificate"));
-				result.setRequiresCertificate(registry.getBoolean("requirescert"));
-				result.setUserName(registry.getString("username"));
-				result.setPassword(registry.getString("password"));
-				result.setUserEmail(registry.getString("useremail"));
+				Registry result = new Registry.RegistryBuilder()
+						.setUrl(registry.getString("url"))
+						.setSecure(registry.getBoolean("secure"))
+						.setCertificate(registry.getString("certificate"))
+						.setRequiresCertificate(registry.getBoolean("requirescert"))
+						.setUserName(registry.getString("username"))
+						.setPassword(registry.getString("password"))
+						.setUserEmail(registry.getString("useremail"))
+						.createRegistry();
 				registries.add(result);
 			}
 			elementManager.setRegistries(registries);
@@ -461,7 +462,7 @@ public class FieldAgent implements IOFogModule {
 		String filename = "elements.json";
 		try {
 			JsonArray containers;
-			Set<String> toRemoveElementIds = new HashSet<>();
+			Set<String> toRemoveWithCleanUpElementIds = new HashSet<>();
 			if (fromFile) {
 				containers = readFile(filesPath + filename);
 				if (containers == null) {
@@ -474,8 +475,8 @@ public class FieldAgent implements IOFogModule {
 				containers = result.getJsonArray("containerlist");
 				saveFile(containers, filesPath + filename);
 
-				toRemoveElementIds.addAll(getToRemoveSet(result));
-				elementManager.setToRemoveElementIds(toRemoveElementIds);
+				toRemoveWithCleanUpElementIds.addAll(getToRemoveWithCleanUpIds(result));
+				elementManager.setToRemoveWithCleanUpElementIds(toRemoveWithCleanUpElementIds);
 			}
 
 			List<Element> latestElements = IntStream.range(0, containers.size())
@@ -491,7 +492,7 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
-	private Set<String> getToRemoveSet(JsonObject result) throws Exception {
+	private Set<String> getToRemoveWithCleanUpIds(JsonObject result) throws Exception {
 		JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));

@@ -171,22 +171,7 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		removeContainersWithSameImage(element);
 		dockerClient.startContainerCmd(element.getContainerId()).exec();
-	}
-
-	private void removeContainersWithSameImage(Element element) {
-		getContainers().stream()
-				.filter(container ->
-						container.getImage().equals(element.getImageName()) && !element.getElementId().equals(getContainerName(container)))
-				.forEach(oldContainer -> {
-					try {
-						stopContainer(oldContainer.getId());
-						removeContainer(oldContainer.getId(), false);
-					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
-					}
-				});
 	}
 
 	/**
