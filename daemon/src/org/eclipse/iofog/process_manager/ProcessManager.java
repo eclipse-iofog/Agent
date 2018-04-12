@@ -196,7 +196,7 @@ public class ProcessManager implements IOFogModule {
 			}
 			try {
 				containerManager.execute(newTask);
-				logInfo(newTask.getAction() + " container with name " + newTask.getElementId());
+				logInfo(newTask.getAction() + " finished for container with name " + newTask.getElementId());
 			} catch (Exception e) {
 				logWarning(newTask.getAction() + " unsuccessfully container with name " + newTask.getElementId() + " , error: " + e.getMessage());
 
