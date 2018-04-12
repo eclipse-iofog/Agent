@@ -150,7 +150,7 @@ public final class Configuration {
 	 * @return node value
 	 * @throws ConfigurationItemException
 	 */
-	private static String getNode(CommandLineConfigParam param) throws ConfigurationItemException {
+	private static String getNode(CommandLineConfigParam param) {
 
 		Supplier<String> nodeReader = () -> {
 			String res = null;
@@ -577,30 +577,11 @@ public final class Configuration {
 		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT)));
 		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT)));
 		configureGps(getNode(GPS_COORDINATES));
-		try {
-			setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ)));
-		} catch (ConfigurationItemException e) {
-			setGetChangesFreq(20);
-			createConfigProperty(GET_CHANGES_FREQ);
-		}
-		try {
-			setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
-		} catch (ConfigurationItemException e) {
-			setScanDevicesFreq(60);
-			createConfigProperty(SCAN_DEVICES_FREQ);
-		}
-		try {
-			setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
-		} catch (ConfigurationItemException e) {
-			setStatusUpdateFreq(10);
-			createConfigProperty(STATUS_UPDATE_FREQ);
-		}
-		try {
-			setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
-		} catch (ConfigurationItemException e) {
-			setIsolatedDockerContainers(true);
-			createConfigProperty(ISOLATED_DOCKER_CONTAINER);
-		}
+		setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ)));
+		setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
+		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
+		setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
+
 	}
 
 	// this code will be triggered in case of iofog updated (not newly installed) and add new option for config
