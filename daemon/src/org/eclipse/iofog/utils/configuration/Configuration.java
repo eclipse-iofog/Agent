@@ -435,7 +435,7 @@ public final class Configuration {
 						messageMap.put(option, "Post diagnostics frequency must be greater than 1");
 						break;
 					}
-					setNode(POST_DIAGNOSTICS_FREQ.getXmlTag(), value);
+					setNode(POST_DIAGNOSTICS_FREQ, value);
 					setPostDiagnosticsFreq(Integer.parseInt(value));
 					break;
 				case ISOLATED_DOCKER_CONTAINER:
