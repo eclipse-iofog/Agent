@@ -15,6 +15,8 @@ package org.eclipse.iofog.process_manager;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -159,9 +161,9 @@ public class DockerUtil {
 	/**
 	 * starts a {@link Container}
 	 *
-	 * @param element
+	 * @param element {@link Element}
 	 */
-	public void startContainer(Element element) {
+	public void startContainer(Element element) throws NotFoundException, NotModifiedException {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -169,22 +171,7 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		removeContainersWithSameImage(element);
 		dockerClient.startContainerCmd(element.getContainerId()).exec();
-	}
-
-	private void removeContainersWithSameImage(Element element) {
-		getContainers().stream()
-				.filter(container ->
-						container.getImage().equals(element.getImageName()) && !element.getElementId().equals(getContainerName(container)))
-				.forEach(oldContainer -> {
-					try {
-						stopContainer(oldContainer.getId());
-						removeContainer(oldContainer.getId());
-					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME, String.format("error stopping and removing  container \"%s\"", oldContainer.getId()));
-					}
-				});
 	}
 
 	/**
@@ -192,19 +179,18 @@ public class DockerUtil {
 	 *
 	 * @param id - id of {@link Container}
 	 */
-	public void stopContainer(String id) {
-		if (isContainerRunning(id)) {
-			dockerClient.stopContainerCmd(id).exec();
-		}
+	public void stopContainer(String id) throws NotFoundException, NotModifiedException {
+		dockerClient.stopContainerCmd(id).exec();
 	}
 
 	/**
 	 * removes a {@link Container}
 	 *
 	 * @param id - id of {@link Container}
+	 * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
 	 */
-	public void removeContainer(String id) {
-		dockerClient.removeContainerCmd(id).exec();
+	public void removeContainer(String id, Boolean withRemoveVolumes) throws NotFoundException, NotModifiedException {
+		dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
 	}
 
 	/**
@@ -213,7 +199,7 @@ public class DockerUtil {
 	 * @param id - id of {@link Container}
 	 * @return ip address
 	 */
-	public String getContainerIpAddress(String id) {
+	public String getContainerIpAddress(String id) throws NotFoundException, NotModifiedException {
 		try {
 			InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
 			return inspect.getNetworkSettings().getIpAddress();
@@ -233,7 +219,7 @@ public class DockerUtil {
 	 * @param elementId - name of {@link Container} (id of {@link Element})
 	 * @return Optional<Container>
 	 */
-	public Optional<Container> getContainerByElementId(String elementId) {
+	public Optional<Container> getContainer(String elementId) {
 		List<Container> containers = getContainers();
 		return containers.stream()
 				.filter(c -> getContainerName(c).equals(elementId))
@@ -267,19 +253,17 @@ public class DockerUtil {
 	 */
 	public ElementStatus getElementStatus(String containerId) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
-		ContainerState status = inspectInfo.getState();
+		ContainerState containerState = inspectInfo.getState();
 		ElementStatus result = new ElementStatus();
-		if (status.getRunning() != null && status.getRunning()) {
-			result.setUsage(containerId);
-			if (status.getStartedAt() != null) {
-				result.setStartTime(getStartedTime(status.getStartedAt()));
+		if (containerState != null) {
+			if (containerState.getStartedAt() != null) {
+				result.setStartTime(getStartedTime(containerState.getStartedAt()));
 			}
-			if (status.getStatus() != null) {
-				result.setStatus(ElementState.fromText(status.getStatus()));
+			if (containerState.getStatus() != null) {
+				result.setStatus(ElementState.fromText(containerState.getStatus()));
 			}
 			result.setContainerId(containerId);
-		} else {
-			result.setStatus(ElementState.STOPPED);
+			result.setUsage(containerId);
 		}
 		return result;
 	}
@@ -328,7 +312,7 @@ public class DockerUtil {
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
+	private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
 		boolean isRootHostAccess = element.isRootHostAccess();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
@@ -342,7 +326,7 @@ public class DockerUtil {
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
+	private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
 		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		Ports ports = hostConfig.getPortBindings();
@@ -388,19 +372,6 @@ public class DockerUtil {
 				.anyMatch(c -> getContainerName(c).equals(elementId));
 	}
 
-	/**
-	 * returns whether the {@link Container} exists or not
-	 * preferable to perform a check by elementId
-	 *
-	 * @param containerId - id of {@link Element}
-	 * @return boolean true if exists and false in other case
-	 */
-	public boolean hasContainerWithContainerId(String containerId) {
-		List<Container> containers = getContainers();
-		return containers.stream()
-				.anyMatch(container -> container.getId().equals(containerId));
-	}
-
 	public boolean isContainerRunning(String containerId) {
 		Optional<String> status = getContainerStatus(containerId);
 		return status.isPresent() && status.get().equalsIgnoreCase(ElementState.RUNNING.toString());
@@ -420,7 +391,7 @@ public class DockerUtil {
 	 *
 	 * @param imageName - imageName of {@link Element}
 	 */
-	public void removeImage(String imageName) {
+	public void removeImage(String imageName) throws NotFoundException, NotModifiedException {
 		Image image = getImage(imageName);
 		if (image == null)
 			return;
@@ -433,7 +404,7 @@ public class DockerUtil {
 	 * @param imageName - imageName of {@link Element}
 	 * @param registry  - {@link Registry} where image is placed
 	 */
-	public void pullImage(String imageName, Registry registry) {
+	public void pullImage(String imageName, Registry registry) throws NotFoundException, NotModifiedException {
 		String tag = null, image;
 		if (imageName.contains(":")) {
 			String[] sp = imageName.split(":");
@@ -462,7 +433,7 @@ public class DockerUtil {
 	 * @param host    - host ip address
 	 * @return id of created {@link Container}
 	 */
-	public String createContainer(Element element, String host) {
+	public String createContainer(Element element, String host) throws NotFoundException, NotModifiedException {
 		RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
 
 		Ports portBindings = new Ports();
