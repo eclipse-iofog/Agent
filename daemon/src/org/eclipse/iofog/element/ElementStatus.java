@@ -38,6 +38,17 @@ public class ElementStatus {
 
 	private static final String MODULE_NAME = ElementStatus.class.getSimpleName();
 
+	public ElementStatus(ElementState status, long startTime, float cpuUsage, long memoryUsage, String containerId) {
+		this.status = status;
+		this.startTime = startTime;
+		this.cpuUsage = cpuUsage;
+		this.memoryUsage = memoryUsage;
+		this.containerId = containerId;
+	}
+
+	public ElementStatus() {
+	}
+
 	public float getCpuUsage() {
 		return cpuUsage;
 	}

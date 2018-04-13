@@ -100,6 +100,9 @@ public class ProcessManager implements IOFogModule {
 
 			List<Element> latestElements = elementManager.getLatestElements();
 			Set<String> toRemoveWithCleanUpElementIds = elementManager.getToRemoveWithCleanUpElementIds();
+
+
+			List<Element> elementsWithExistingContainers = new ArrayList<>();
 			try {
 				latestElements.forEach(element -> {
 					Optional<Container> containerOptional = docker.getContainer(element.getElementId());
@@ -115,26 +118,48 @@ public class ProcessManager implements IOFogModule {
 							logWarning("Can't get ip address for element with i=" + element.getElementId() + " " + e.getMessage());
 						}
 						ElementStatus status = docker.getElementStatus(container.getId());
-						StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
-						boolean running = ElementState.RUNNING.equals(status.getStatus());
-						long elementLastModified = element.getLastModified();
-						long containerStartedAt = docker.getContainerStartedAt(container.getId());
-						if (!running || elementLastModified > containerStartedAt || !docker.isElementAndContainerEquals(container.getId(), element)) {
-							addTask(new ContainerTask(UPDATE, element.getElementId()));
+						if (status.getStatus() != ElementState.REMOVED) {
+							StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
+							elementsWithExistingContainers.add(element);
+							if (shouldContainerBeUpdated(status, container.getId(), element)) {
+								addTask(new ContainerTask(UPDATE, element.getElementId()));
+							}
 						}
 					}
 				});
 
 				removeContainersWithCleanUp(toRemoveWithCleanUpElementIds);
-				removeInappropriateContainers(toRemoveWithCleanUpElementIds);
-				StatusReporter.setProcessManagerStatus().setRunningElementsCount(latestElements.size());
+				removeInappropriateContainers(toRemoveWithCleanUpElementIds, elementsWithExistingContainers);
+				StatusReporter.setProcessManagerStatus().setRunningElementsCount(elementsWithExistingContainers.size());
 
 			} catch (Exception ex) {
 				logWarning(ex.getMessage());
 			}
-			elementManager.setCurrentElements(latestElements);
+			elementManager.setCurrentElements(elementsWithExistingContainers);
 		}
 	};
+
+	private boolean shouldContainerBeUpdated(ElementStatus status, String containerId, Element element) {
+		boolean isNotRunning = !(ElementState.RUNNING == status.getStatus());
+		long elementLastModified = element.getLastModified();
+		long containerStartedAt = docker.getContainerStartedAt(containerId);
+		return isNotRunning
+				|| elementLastModified > containerStartedAt
+				|| !docker.areElementAndContainerEqual(containerId, element);
+	}
+
+	private boolean shouldContainerBeRemoved(Set<String> toRemoveWithCleanUpElementIds,
+											 List<Element> elementsWithExistingContainers,
+											 Container container) {
+		String elementId = docker.getContainerName(container);
+		Optional<Element> elementOptional = elementManager.findLatestElementById(elementId);
+		boolean isIsolatedDockerContainers = Configuration.isIsolatedDockerContainers();
+		// remove old containers and unknown for ioFog containers when IsolatedDockerContainers mode is ON
+		// remove only old containers when the mode is OFF
+		return !elementOptional.isPresent()
+				&& !toRemoveWithCleanUpElementIds.contains(elementId)
+				&& (isIsolatedDockerContainers || elementManager.elementExists(elementsWithExistingContainers, elementId));
+	}
 
 	private void removeContainersWithCleanUp(Set<String> toRemoveWithCleanUpElementIds) {
 		toRemoveWithCleanUpElementIds.forEach(elementIdToRemove -> {
@@ -144,17 +169,10 @@ public class ProcessManager implements IOFogModule {
 		});
 	}
 
-	private void removeInappropriateContainers(Set<String> toRemoveWithCleanUpElementIds) {
+	private void removeInappropriateContainers(Set<String> toRemoveWithCleanUpElementIds, List<Element> elementsWithExistingContainers) {
 		docker.getContainers().forEach(container -> {
-			String elementId = docker.getContainerName(container);
-			Optional<Element> elementOptional = elementManager.findLatestElementById(elementId);
-
-			// remove old containers and unknown for ioFog containers when IsolatedDockerContainers mode is ON
-			// remove only old containers when the mode is OFF
-			if (!elementOptional.isPresent() && !toRemoveWithCleanUpElementIds.contains(elementId)) {
-				if (Configuration.isIsolatedDockerContainers() || elementManager.elementExists(elementManager.getCurrentElements(), elementId)) {
-					addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
-				}
+			if (shouldContainerBeRemoved(toRemoveWithCleanUpElementIds, elementsWithExistingContainers, container)) {
+				addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
 			}
 		});
 	}

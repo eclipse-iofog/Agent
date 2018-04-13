@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.eclipse.iofog.process_manager.ElementState.*;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -120,7 +121,7 @@ public class DockerUtil {
 					case CONTAINER:
 					case IMAGE:
 						StatusReporter.setProcessManagerStatus().getElementStatus(item.getId()).setStatus(
-								ElementState.fromText(item.getStatus()));
+								fromText(item.getStatus()));
 				}
 			}
 		});
@@ -252,20 +253,30 @@ public class DockerUtil {
 	 * @return {@link ElementStatus}
 	 */
 	public ElementStatus getElementStatus(String containerId) {
+		return hasContainerWithContainerId(containerId)
+				? getElementStatusOfExistingContainer(containerId)
+				: getElementStatusOfRemovedContainer(containerId);
+	}
+
+	private ElementStatus getElementStatusOfExistingContainer(String containerId) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
-		ContainerState containerState = inspectInfo.getState();
-		ElementStatus result = new ElementStatus();
-		if (containerState != null) {
-			if (containerState.getStartedAt() != null) {
-				result.setStartTime(getStartedTime(containerState.getStartedAt()));
+		ContainerState status = inspectInfo.getState();
+		ElementStatus elementStatus = new ElementStatus();
+		if (status != null) {
+			if (status.getStartedAt() != null) {
+				elementStatus.setStartTime(getStartedTime(status.getStartedAt()));
 			}
-			if (containerState.getStatus() != null) {
-				result.setStatus(ElementState.fromText(containerState.getStatus()));
+			if (status.getStatus() != null) {
+				elementStatus.setStatus(fromText(status.getStatus()));
 			}
-			result.setContainerId(containerId);
-			result.setUsage(containerId);
+			elementStatus.setContainerId(containerId);
+			elementStatus.setUsage(containerId);
 		}
-		return result;
+		return elementStatus;
+	}
+
+	private ElementStatus getElementStatusOfRemovedContainer(String containerId) {
+		return new ElementStatus(REMOVED, 0, 0, 0, containerId);
 	}
 
 	public Optional<Statistics> getContainerStats(String containerId) {
@@ -299,7 +310,7 @@ public class DockerUtil {
 	 * @param element     element
 	 * @return boolean
 	 */
-	public boolean isElementAndContainerEquals(String containerId, Element element) {
+	public boolean areElementAndContainerEqual(String containerId, Element element) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
 	}
@@ -324,27 +335,28 @@ public class DockerUtil {
 	 *
 	 * @param inspectInfo result of docker inspect command
 	 * @param element     element
-	 * @return boolean
+	 * @return boolean true if port mappings are the same
 	 */
 	private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
-		HostConfig hostConfig = inspectInfo.getHostConfig();
-		Ports ports = hostConfig.getPortBindings();
-		return comparePortMapping(elementPorts, ports.getBindings());
+		return getElementPorts(element).equals(getContainerPorts(inspectInfo));
+
 	}
 
-	private boolean comparePortMapping(List<PortMapping> elementPorts, Map<ExposedPort, Ports.Binding[]> portBindings) {
+	private List<PortMapping> getElementPorts(Element element) {
+		return element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+	}
 
-		List<PortMapping> containerPorts = portBindings.entrySet().stream()
-				.map(entity -> {
+	private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		Ports ports = hostConfig.getPortBindings();
+		return ports.getBindings().entrySet().stream()
+				.flatMap(entity -> {
 					String exposedPort = String.valueOf(entity.getKey().getPort());
-					String hostPort = entity.getValue()[0].getHostPortSpec();
-					return new PortMapping(hostPort, exposedPort);
+					return Arrays.stream(entity.getValue())
+							.map(Binding::getHostPortSpec)
+							.map(hostPort -> new PortMapping(hostPort, exposedPort));
 				})
 				.collect(Collectors.toList());
-
-		return elementPorts.stream()
-				.allMatch(containerPorts::contains);
 	}
 
 	public Optional<String> getContainerStatus(String containerId) {
@@ -372,9 +384,22 @@ public class DockerUtil {
 				.anyMatch(c -> getContainerName(c).equals(elementId));
 	}
 
+	/**
+	 * returns whether the {@link Container} exists or not
+	 * preferable to perform a check by elementId
+	 *
+	 * @param containerId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerWithContainerId(String containerId) {
+		List<Container> containers = getContainers();
+		return containers.stream()
+				.anyMatch(container -> container.getId().equals(containerId));
+	}
+
 	public boolean isContainerRunning(String containerId) {
 		Optional<String> status = getContainerStatus(containerId);
-		return status.isPresent() && status.get().equalsIgnoreCase(ElementState.RUNNING.toString());
+		return status.isPresent() && status.get().equalsIgnoreCase(RUNNING.toString());
 	}
 
 	/**
@@ -484,10 +509,9 @@ public class DockerUtil {
 					.withVolumes(volumes.toArray(new Volume[volumes.size()]))
 					.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
 		}
-		if (StringUtil.isNullOrEmpty(host))
-			cmd = cmd.withNetworkMode("host").withPrivileged(true);
-		else
-			cmd = cmd.withExtraHosts(extraHosts).withPrivileged(true);
+		cmd = StringUtil.isNullOrEmpty(host)
+				? cmd.withNetworkMode("host").withPrivileged(true)
+				: cmd.withExtraHosts(extraHosts).withPrivileged(true);
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
