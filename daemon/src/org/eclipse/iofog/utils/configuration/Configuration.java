@@ -78,6 +78,7 @@ public final class Configuration {
 	private static int statusUpdateFreq;
 	private static int getChangesFreq;
 	private static int scanDevicesFreq;
+	private static int postDiagnosticsFreq;
 	private static boolean isolatedDockerContainers;
 	private static String gpsCoordinates;
 	private static GpsMode gpsMode;
@@ -141,6 +142,14 @@ public final class Configuration {
 
 	public static void resetToDefault() throws Exception {
 		setConfig(defaultConfig, true);
+	}
+
+	public static int getPostDiagnosticsFreq() {
+		return postDiagnosticsFreq;
+	}
+
+	public static void setPostDiagnosticsFreq(int postDiagnosticsFreq) {
+		Configuration.postDiagnosticsFreq = postDiagnosticsFreq;
 	}
 
 	/**
@@ -415,6 +424,20 @@ public final class Configuration {
 					setNode(SCAN_DEVICES_FREQ, value);
 					setScanDevicesFreq(Integer.parseInt(value));
 					break;
+				case POST_DIAGNOSTICS_FREQ:
+					try {
+						intValue = Integer.parseInt(value);
+					} catch (NumberFormatException e) {
+						messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+						break;
+					}
+					if (intValue < 1) {
+						messageMap.put(option, "Post diagnostics frequency must be greater than 1");
+						break;
+					}
+					setNode(POST_DIAGNOSTICS_FREQ, value);
+					setPostDiagnosticsFreq(Integer.parseInt(value));
+					break;
 				case ISOLATED_DOCKER_CONTAINER:
 					setNode(ISOLATED_DOCKER_CONTAINER, value);
 					setIsolatedDockerContainers(!value.equals("off"));
@@ -580,6 +603,7 @@ public final class Configuration {
 		setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ)));
 		setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
 		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
+		setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ)));
 		setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
 
 	}
@@ -757,6 +781,8 @@ public final class Configuration {
 		result.append(buildReportLine(getConfigParamMessage(GET_CHANGES_FREQ), format("%d", getChangesFreq)));
 		// scan devices frequency
 		result.append(buildReportLine(getConfigParamMessage(SCAN_DEVICES_FREQ), format("%d", scanDevicesFreq)));
+		// post diagnostics frequency
+		result.append(buildReportLine(getConfigParamMessage(POST_DIAGNOSTICS_FREQ), format("%d", postDiagnosticsFreq)));
 		// log file directory
 		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
 		// gps mode
