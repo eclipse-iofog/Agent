@@ -54,7 +54,7 @@ public class CmdProperties {
     }
 
     public static String getConfigParamMessage(CommandLineConfigParam configParam) {
-        return cmdProperties.getProperty(configParam.getXmlTag());
+        return cmdProperties.getProperty(configParam.name().toLowerCase());
     }
 
     public static String getInstanceIdMessage() {

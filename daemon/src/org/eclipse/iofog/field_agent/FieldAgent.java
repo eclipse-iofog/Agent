@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.diagnostics.strace.ElementStraceData;
+import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
 import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -186,6 +188,33 @@ public class FieldAgent implements IOFogModule {
 		}
 	};
 
+	private final Runnable postDiagnostics = () -> {
+		while (true) {
+			if (StraceDiagnosticManger.getInstance().getMonitoringElements().size() > 0) {
+				Map<String, Object> postParams = new HashMap<>();
+
+				for (ElementStraceData element : StraceDiagnosticManger.getInstance().getMonitoringElements()) {
+					postParams.put(element.getElementId(), element.getResultBufferAsString());
+					element.getResultBuffer().clear();
+				}
+
+				postParams.put("timestamp", new Date().getTime());
+
+				try {
+					orchestrator.doCommand("strace/push", null, postParams);
+				} catch (Exception e) {
+					logWarning("unable send strace logs : " + e.getMessage());
+				}
+			} else {
+				try {
+					Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	};
+
 	/**
 	 * logs and sets appropriate status when controller
 	 * certificate is not verified
@@ -260,6 +289,9 @@ public class FieldAgent implements IOFogModule {
 							sshProxyManager.update(configs).thenRun(this::postProxyConfig)
 					);
 				}
+				if (changes.getBoolean("diagnostics") && !initialization) {
+					updateDiagnostics();
+				}
 
 				initialization = false;
 			} catch (Exception e) {
@@ -299,6 +331,26 @@ public class FieldAgent implements IOFogModule {
 			verificationFailed();
 		} catch (Exception e) {
 			LoggingService.logWarning(MODULE_NAME, "unable to get version command : " + e.getMessage());
+		}
+	}
+
+	private void updateDiagnostics() {
+		LoggingService.logInfo(MODULE_NAME, "get changes is diagnostic list");
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		try {
+			JsonObject result = orchestrator.doCommand("diagnostics", null, null);
+
+			checkResponseStatus(result);
+
+			StraceDiagnosticManger.getInstance().updateMonitoringElements(result);
+
+		} catch (CertificateException | SSLHandshakeException e) {
+			verificationFailed();
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "unable to get diagnostics updates : " + e.getMessage());
 		}
 	}
 
@@ -963,6 +1015,7 @@ public class FieldAgent implements IOFogModule {
 		new Thread(pingController, "FieldAgent : Ping").start();
 		new Thread(getChangesList, "FieldAgent : GetChangesList").start();
 		new Thread(postStatus, "FieldAgent : PostStatus").start();
+		new Thread(postDiagnostics, "FieldAgent : PostDiagnostics").start();
 	}
 
 	/**
