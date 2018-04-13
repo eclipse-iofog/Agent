@@ -180,7 +180,9 @@ public class DockerUtil {
 	 * @param id - id of {@link Container}
 	 */
 	public void stopContainer(String id) throws NotFoundException, NotModifiedException {
-		dockerClient.stopContainerCmd(id).exec();
+		if (isContainerRunning(id)) {
+			dockerClient.stopContainerCmd(id).exec();
+		}
 	}
 
 	/**
