@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * @author elukashick
  * <p>
- * should be used in containers monitoring thread only
+ * should be used only in the containers monitoring thread
  */
 public class RestartCheckCache {
 
