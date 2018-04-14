@@ -196,9 +196,7 @@ public class Orchestrator {
 		List<NameValuePair> postData = new ArrayList<>();
 		if (postParams != null)
 			postParams.forEach((key, value1) -> {
-				String value = value1.toString();
-				if (value == null)
-					value = "";
+				String value = value1 == null ? "" : value1.toString();
 				postData.add(new BasicNameValuePair(key, value));
 			});
 

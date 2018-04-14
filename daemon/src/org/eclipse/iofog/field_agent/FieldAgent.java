@@ -12,9 +12,12 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.diagnostics.strace.ElementStraceData;
+import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
 import org.eclipse.iofog.element.*;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -45,7 +48,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
@@ -185,6 +188,33 @@ public class FieldAgent implements IOFogModule {
 		}
 	};
 
+	private final Runnable postDiagnostics = () -> {
+		while (true) {
+			if (StraceDiagnosticManger.getInstance().getMonitoringElements().size() > 0) {
+				Map<String, Object> postParams = new HashMap<>();
+
+				for (ElementStraceData element : StraceDiagnosticManger.getInstance().getMonitoringElements()) {
+					postParams.put(element.getElementId(), element.getResultBufferAsString());
+					element.getResultBuffer().clear();
+				}
+
+				postParams.put("timestamp", new Date().getTime());
+
+				try {
+					orchestrator.doCommand("strace/push", null, postParams);
+				} catch (Exception e) {
+					logWarning("unable send strace logs : " + e.getMessage());
+				}
+			} else {
+				try {
+					Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	};
+
 	/**
 	 * logs and sets appropriate status when controller
 	 * certificate is not verified
@@ -259,6 +289,9 @@ public class FieldAgent implements IOFogModule {
 							sshProxyManager.update(configs).thenRun(this::postProxyConfig)
 					);
 				}
+				if (changes.getBoolean("diagnostics") && !initialization) {
+					updateDiagnostics();
+				}
 
 				initialization = false;
 			} catch (Exception e) {
@@ -301,6 +334,26 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
+	private void updateDiagnostics() {
+		LoggingService.logInfo(MODULE_NAME, "get changes is diagnostic list");
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		try {
+			JsonObject result = orchestrator.doCommand("diagnostics", null, null);
+
+			checkResponseStatus(result);
+
+			StraceDiagnosticManger.getInstance().updateMonitoringElements(result);
+
+		} catch (CertificateException | SSLHandshakeException e) {
+			verificationFailed();
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "unable to get diagnostics updates : " + e.getMessage());
+		}
+	}
+
 	/**
 	 * gets list of registries from file or IOFog controller
 	 *
@@ -332,14 +385,15 @@ public class FieldAgent implements IOFogModule {
 			List<Registry> registries = new ArrayList<>();
 			for (int i = 0; i < registriesList.size(); i++) {
 				JsonObject registry = registriesList.getJsonObject(i);
-				Registry result = new Registry();
-				result.setUrl(registry.getString("url"));
-				result.setSecure(registry.getBoolean("secure"));
-				result.setCertificate(registry.getString("certificate"));
-				result.setRequiresCertificate(registry.getBoolean("requirescert"));
-				result.setUserName(registry.getString("username"));
-				result.setPassword(registry.getString("password"));
-				result.setUserEmail(registry.getString("useremail"));
+				Registry result = new Registry.RegistryBuilder()
+						.setUrl(registry.getString("url"))
+						.setSecure(registry.getBoolean("secure"))
+						.setCertificate(registry.getString("certificate"))
+						.setRequiresCertificate(registry.getBoolean("requirescert"))
+						.setUserName(registry.getString("username"))
+						.setPassword(registry.getString("password"))
+						.setUserEmail(registry.getString("useremail"))
+						.build();
 				registries.add(result);
 			}
 			elementManager.setRegistries(registries);
@@ -460,6 +514,7 @@ public class FieldAgent implements IOFogModule {
 		String filename = "elements.json";
 		try {
 			JsonArray containers;
+			Set<String> toRemoveWithCleanUpElementIds = new HashSet<>();
 			if (fromFile) {
 				containers = readFile(filesPath + filename);
 				if (containers == null) {
@@ -471,6 +526,9 @@ public class FieldAgent implements IOFogModule {
 				checkResponseStatus(result);
 				containers = result.getJsonArray("containerlist");
 				saveFile(containers, filesPath + filename);
+
+				toRemoveWithCleanUpElementIds.addAll(getToRemoveWithCleanUpIds(result));
+				elementManager.setToRemoveWithCleanUpElementIds(toRemoveWithCleanUpElementIds);
 			}
 
 			List<Element> latestElements = IntStream.range(0, containers.size())
@@ -478,13 +536,21 @@ public class FieldAgent implements IOFogModule {
 					.map(containers::getJsonObject)
 					.map(containerJsonObjectToElementFunction())
 					.collect(toList());
-
 			elementManager.setLatestElements(latestElements);
-
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();
 		} catch (Exception e) {
 			logWarning("unable to get containers list " + e.getMessage());
+		}
+	}
+
+	private Set<String> getToRemoveWithCleanUpIds(JsonObject result) throws Exception {
+		try {
+			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+		} catch (NullPointerException e) { //temp catch for old for controller versions
+			return Collections.emptySet();
 		}
 	}
 
@@ -949,6 +1015,7 @@ public class FieldAgent implements IOFogModule {
 		new Thread(pingController, "FieldAgent : Ping").start();
 		new Thread(getChangesList, "FieldAgent : GetChangesList").start();
 		new Thread(postStatus, "FieldAgent : PostStatus").start();
+		new Thread(postDiagnostics, "FieldAgent : PostDiagnostics").start();
 	}
 
 	/**
@@ -1011,7 +1078,7 @@ public class FieldAgent implements IOFogModule {
 				LoggingService.logWarning(MODULE_NAME, e.getMessage());
 			}
 
-			if (jsonSendHWInfoResult == null ) {
+			if (jsonSendHWInfoResult == null) {
 				LoggingService.logInfo(MODULE_NAME, "Can't get HW Info from HAL.");
 			}
 		}
