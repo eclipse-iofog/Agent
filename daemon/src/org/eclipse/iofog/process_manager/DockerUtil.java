@@ -413,12 +413,16 @@ public class DockerUtil {
 		} else {
 			image = imageName;
 		}
-		PullImageCmd req = dockerClient.pullImageCmd(image).withAuthConfig(new AuthConfig()
-				.withRegistryAddress(registry.getUrl())
-				.withEmail(registry.getUserEmail())
-				.withUsername(registry.getUserName())
-				.withPassword(registry.getPassword())
-		);
+		PullImageCmd req =
+				registry.getIsPublic() ?
+						dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
+						dockerClient.pullImageCmd(image).withAuthConfig(
+								new AuthConfig()
+										.withRegistryAddress(registry.getUrl())
+										.withEmail(registry.getUserEmail())
+										.withUsername(registry.getUserName())
+										.withPassword(registry.getPassword())
+						);
 		if (tag != null)
 			req.withTag(tag);
 		PullImageResultCallback res = new PullImageResultCallback();

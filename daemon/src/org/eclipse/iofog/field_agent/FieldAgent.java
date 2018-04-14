@@ -385,16 +385,19 @@ public class FieldAgent implements IOFogModule {
 			List<Registry> registries = new ArrayList<>();
 			for (int i = 0; i < registriesList.size(); i++) {
 				JsonObject registry = registriesList.getJsonObject(i);
-				Registry result = new Registry.RegistryBuilder()
+				Registry.RegistryBuilder registryBuilder = new Registry.RegistryBuilder()
 						.setUrl(registry.getString("url"))
-						.setSecure(registry.getBoolean("secure"))
-						.setCertificate(registry.getString("certificate"))
-						.setRequiresCertificate(registry.getBoolean("requirescert"))
-						.setUserName(registry.getString("username"))
-						.setPassword(registry.getString("password"))
-						.setUserEmail(registry.getString("useremail"))
-						.build();
-				registries.add(result);
+						.setIsPublic(registry.getBoolean("ispublic"));
+				if (!registry.getBoolean("ispublic")) {
+					registryBuilder.setUserName(registry.getString("username"))
+							.setPassword(registry.getString("password"))
+							.setUserEmail(registry.getString("useremail"));
+					//unused fields
+					//.setSecure(registry.getBoolean("secure"))
+					//.setCertificate(registry.getString("certificate"))
+					//.setRequiresCertificate(registry.getBoolean("requirescert"));
+				}
+				registries.add(registryBuilder.build());
 			}
 			elementManager.setRegistries(registries);
 		} catch (CertificateException | SSLHandshakeException e) {
