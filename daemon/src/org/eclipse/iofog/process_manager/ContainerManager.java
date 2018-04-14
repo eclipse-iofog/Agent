@@ -76,6 +76,7 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private String updateContainer(Element element, boolean withCleanUp) throws Exception {
+		element.setUpdating(true);
 		stopContainer(element.getElementId());
 		removeContainerByElementId(element.getElementId(), withCleanUp);
 		return createContainer(element);
