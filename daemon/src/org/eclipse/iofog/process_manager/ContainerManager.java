@@ -77,9 +77,10 @@ public class ContainerManager {
 	 */
 	private String updateContainer(Element element, boolean withCleanUp) throws Exception {
 		element.setUpdating(true);
-		stopContainer(element.getElementId());
 		removeContainerByElementId(element.getElementId(), withCleanUp);
-		return createContainer(element);
+		String id = createContainer(element);
+		element.setUpdating(false);
+		return id;
 	}
 
 	private String createContainer(Element element) throws Exception {
@@ -98,7 +99,6 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "container is created");
 		startContainer(element);
 		element.setRebuild(false);
-		element.setUpdating(false);
 		return id;
 	}
 
