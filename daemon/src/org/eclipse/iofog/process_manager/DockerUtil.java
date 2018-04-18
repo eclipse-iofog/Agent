@@ -260,7 +260,10 @@ public class DockerUtil {
 				result.setStartTime(getStartedTime(containerState.getStartedAt()));
 			}
 			if (containerState.getStatus() != null) {
-				result.setStatus(ElementState.fromText(containerState.getStatus()));
+				ElementState elementState = ElementState.fromText(containerState.getStatus());
+				result.setStatus(ElementState.RESTARTING.equals(elementState) && RestartStuckChecker.isStuck(containerId) ?
+						ElementState.STUCK_IN_RESTART :
+						elementState);
 			}
 			result.setContainerId(containerId);
 			result.setUsage(containerId);

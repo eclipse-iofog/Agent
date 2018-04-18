@@ -115,10 +115,6 @@ public class ProcessManager implements IOFogModule {
 							logWarning("Can't get ip address for element with i=" + element.getElementId() + " " + e.getMessage());
 						}
 						ElementStatus status = docker.getElementStatus(container.getId());
-						if (status.getStatus() != null && status.getStatus().equals(ElementState.RESTARTING) &&
-								RestartStuckChecker.getInstance().isStuck(element.getElementId())) {
-							status.setStatus(ElementState.STUCK_IN_RESTART);
-						}
 						StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
 						boolean running = ElementState.RUNNING.equals(status.getStatus());
 						long elementLastModified = element.getLastModified();
