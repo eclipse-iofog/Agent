@@ -21,7 +21,6 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -116,7 +115,8 @@ public class ProcessManager implements IOFogModule {
 							logWarning("Can't get ip address for element with i=" + element.getElementId() + " " + e.getMessage());
 						}
 						ElementStatus status = docker.getElementStatus(container.getId());
-						if (isStuckRestart(status, element.getElementId())) {
+						if (status.getStatus() != null && status.getStatus().equals(ElementState.RESTARTING) &&
+								RestartStuckChecker.getInstance().isStuck(element.getElementId())) {
 							status.setStatus(ElementState.STUCK_IN_RESTART);
 						}
 						StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
@@ -139,36 +139,6 @@ public class ProcessManager implements IOFogModule {
 			elementManager.setCurrentElements(latestElements);
 		}
 	};
-
-	private boolean isStuckRestart(ElementStatus status, String elementId) {
-		if (status.getStatus() != null && status.getStatus().equals(ElementState.RESTARTING)) {
-			long intervalInMinutes = 5;
-			int abnormalNumberOfRestarts = 5;
-			LocalDateTime now = LocalDateTime.now();
-			RestartCheckCache restartCheckCache = RestartCheckCache.getInstance();
-			List<LocalDateTime> datesOfRestart;
-			if (restartCheckCache.getElementIdTimeOfRestartListMap().containsKey(elementId)) {
-				datesOfRestart = restartCheckCache.getElementIdTimeOfRestartListMap().get(elementId);
-				Iterator<LocalDateTime> datesOfRestartIterator = datesOfRestart.iterator();
-				int restartCounter = 0;
-				while (datesOfRestartIterator.hasNext()) {
-					LocalDateTime dateTime = datesOfRestartIterator.next();
-					if (now.minusMinutes(intervalInMinutes).isBefore(dateTime)) {
-						++restartCounter;
-					} else {
-						datesOfRestartIterator.remove();
-					}
-				}
-				datesOfRestart.add(now);
-				return restartCounter > abnormalNumberOfRestarts;
-			} else {
-				datesOfRestart = new ArrayList<>();
-				datesOfRestart.add(now);
-				restartCheckCache.getElementIdTimeOfRestartListMap().put(elementId, datesOfRestart);
-			}
-		}
-		return false;
-	}
 
 	private void removeContainersWithCleanUp(Set<String> toRemoveWithCleanUpElementIds) {
 		toRemoveWithCleanUpElementIds.forEach(elementIdToRemove -> {
