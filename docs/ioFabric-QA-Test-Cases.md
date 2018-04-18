@@ -14,17 +14,17 @@ To perform quality assurance testing on the ioFabric product, the same test step
 
 * Create a new Linux installation or use an existing one
 
-* Use the installation instructions on the correct iotracks.com Web page
+* Use the installation instructions on the correct iofog.org Web page
 
-	* Ubuntu - <a href="https://iotracks.com/products/iofabric/installation/linux/ubuntu">https://iotracks.com/products/iofabric/installation/linux/ubuntu</a>
+	* Ubuntu - <a href="https://iofog.org/products/iofabric/installation/linux/ubuntu">https://iofog.org/products/iofabric/installation/linux/ubuntu</a>
 
-	* Debian - <a href="https://iotracks.com/products/iofabric/installation/linux/debian">https://iotracks.com/products/iofabric/installation/linux/debian</a>
+	* Debian - <a href="https://iofog.org/products/iofabric/installation/linux/debian">https://iofog.org/products/iofabric/installation/linux/debian</a>
 
-	* Fedora - <a href="https://iotracks.com/products/iofabric/installation/linux/fedora">https://iotracks.com/products/iofabric/installation/linux/fedora</a>
+	* Fedora - <a href="https://iofog.org/products/iofabric/installation/linux/fedora">https://iofog.org/products/iofabric/installation/linux/fedora</a>
 
-	* Red Hat - <a href="https://iotracks.com/products/iofabric/installation/linux/rhel">https://iotracks.com/products/iofabric/installation/linux/rhel</a>
+	* Red Hat - <a href="https://iofog.org/products/iofabric/installation/linux/rhel">https://iofog.org/products/iofabric/installation/linux/rhel</a>
 
-	* CentOS - <a href="https://iotracks.com/products/iofabric/installation/linux/centos">https://iotracks.com/products/iofabric/installation/linux/centos</a>
+	* CentOS - <a href="https://iofog.org/products/iofabric/installation/linux/centos">https://iofog.org/products/iofabric/installation/linux/centos</a>
 
 * Make sure that your Linux installation meets the minimum system requirements
 
@@ -114,11 +114,11 @@ To perform quality assurance testing on the ioFabric product, the same test step
 
 * Access the new ioAuthoring 0.2 software in a Web browser
 
-	* If you don't have an account yet, sign up here <a href="https://iotracks.com/signup">https://iotracks.com/signup</a>
+	* If you don't have an account yet, sign up here <a href="https://iofog.org/signup">https://iofog.org/signup</a>
 
-	* Login here <a href="https://iotracks.com/login">https://iotracks.com/login</a>
+	* Login here <a href="https://iofog.org/login">https://iofog.org/login</a>
 
-	* Manually enter the URL https://iotracks.com/authoring2 in your Web browser address bar
+	* Manually enter the URL https://iofog.org/authoring2 in your Web browser address bar
 
 * Create a new ioFabric instance and generate a provisioning key
 

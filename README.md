@@ -1,10 +1,10 @@
-# The iotracks ioFog product
+# The ioFog product
 
-Imagine a world where you can choose self-contained pieces of code (called microservices) and make them run anywhere you want at the push of a button. Where you can remotely control the code that is running on twenty iPhones in workers' pockets, thirty servers running in a factory building, and ten computers running in the trucks that ship your products... and you can do it all with the same single technology. Imagine a world where you move the processing close to where the data is happening, and where you can finally separate streams of information from the end applications that use them. This world will be brought to life by iotracks, and a big part of the vision is the ioFog product that runs on the various computers.
+Imagine a world where you can choose self-contained pieces of code (called microservices) and make them run anywhere you want at the push of a button. Where you can remotely control the code that is running on twenty iPhones in workers' pockets, thirty servers running in a factory building, and ten computers running in the trucks that ship your products... and you can do it all with the same single technology. Imagine a world where you move the processing close to where the data is happening, and where you can finally separate streams of information from the end applications that use them. This world will be brought to life by iofog, and a big part of the vision is the ioFog product that runs on the various computers.
 
 This repository is the production code base for the x86 Linux version of the ioFog product.
 
-ioFog is a service that runs constantly in the background on a Linux machine. It is the agent that turns a Linux computer into a piece of the iotracks I/O compute fog.
+ioFog is a service that runs constantly in the background on a Linux machine. It is the agent that turns a Linux computer into a piece of the iofog I/O compute fog.
 
 There should be an ioFog code base for every processing platform that becomes part of the I/O compute fog. Network connectivity, process invocation, thread management, and other details of an ioFog will vary from platform to platform. The same ioFog principles apply to every version, but the implementation of the principles should match the native languages and structures best suited for the platform.
 

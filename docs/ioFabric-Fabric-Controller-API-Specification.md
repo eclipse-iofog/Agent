@@ -505,7 +505,7 @@ This endpoint provides the list of Docker container registries that the ioFabric
                 	"requirescert":false,
                 	"username":"iofabric",
                 	"password":"abc123",
-                	"useremail":"iofabric_user@iotracks.com"
+                	"useremail":"iofabric_user@iofog.org"
             	}
             ]
     }

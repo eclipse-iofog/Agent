@@ -2,7 +2,7 @@
 <config>
 	<access_token/>
 	
-	<controller_url>https://iotracks.com/api/v2/</controller_url>
+	<controller_url>https://iofog.org/api/v2/</controller_url>
 	
 	<instance_id/>
 	

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Iofog, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -155,7 +155,7 @@ public class Client {
 				+ "                     /#GPS DD.DDD,DD.DDD Use auto to get coordinates by IP,\n"
 				+ "                                         use off to forbid gps,\n"
 				+ "                                         use GPS coordinates in DD format to set them manually\n" + "\n" + "\n"
-				+ "Report bugs to: bugs@iotracks.com\n" + "ioFog home page: http://iofog.com\n"
+				+ "Report bugs to: bugs@iofog.org\n" + "ioFog home page: http://iofog.org\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 
 		return help.toString();
@@ -164,7 +164,7 @@ public class Client {
 	private static String version() {
 		StringBuilder result = new StringBuilder();
 		result.append("ioFog 0.53");
-		result.append("\nCopyright (C) 2016 iotracks, inc.");
+		result.append("\nCopyright (C) 2018 iofog, inc.");
 		result.append("\nEclipse ioFog is provided under the Eclipse Public License (EPL)");
 		result.append("\nhttps://www.eclipse.org/legal/epl-v10.html");
 

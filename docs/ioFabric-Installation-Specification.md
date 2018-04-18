@@ -57,8 +57,8 @@ The packaging mechanisms and install scripts can grow and change, but the requir
 	* For CentOS - provide iofabric as an RPM package (rpm) so it can be installed using "yum"
 	* For RHEL - provide iofabric as an RPM package (rpm) so it can be installed using "yum"
 	* For Fedora - provide iofabric as an RPM package (rpm) so it can be installed using "dnf"
-	* For all Linux versions - host a repository on the iotracks.com Web server
-	* For all Linux versions - host instructions for installation on the iotracks.com Web server
+	* For all Linux versions - host a repository on the iofog.org Web server
+	* For all Linux versions - host instructions for installation on the iofog.org Web server
 	* In the instructions, show how to add our repository to the list, add our verification keys, etc.
 	* In the instructions, link to Docker's installation guides for the different Linux versions:
 		* [Docker CentOS installation](https://docs.docker.com/engine/installation/linux/centos/)

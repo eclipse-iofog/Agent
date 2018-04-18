@@ -2,7 +2,7 @@
 
 Every ioFabric instance comes with some default containers. These "system containers" provide functionality that enhances the ioFabric software. The reason this functionality comes in the form of a container is so it can be updated easily for all ioFabric instances. One of the best things about ioFabric is that once the base software that handles containers is running, everything else can be implemented as a container and this minimizes the versioning problems that happen with distributed software.
 
-The first system container is called Core Networking. It is responsible for connecting to instances of the ComSat product, also made by iotracks. ComSat creates secure network pipes that move pure bytes from one place to another through all firewalls and other internetworking challenges. So the Core Networking container has functionality that manages connections to the ComSat, understands how to verify the identity of a ComSat, and relays the incoming traffic to the proper place in the ioFabric instance. It also moves the outbound traffic to the ComSat so it can reach its desintation on the other side (which is always unknown from the ioFabric instance's perspective). The Core Networking system container can be operated in two different modes.
+The first system container is called Core Networking. It is responsible for connecting to instances of the ComSat product, also made by iofog. ComSat creates secure network pipes that move pure bytes from one place to another through all firewalls and other internetworking challenges. So the Core Networking container has functionality that manages connections to the ComSat, understands how to verify the identity of a ComSat, and relays the incoming traffic to the proper place in the ioFabric instance. It also moves the outbound traffic to the ComSat so it can reach its desintation on the other side (which is always unknown from the ioFabric instance's perspective). The Core Networking system container can be operated in two different modes.
 
 In public mode, the container takes in bytes via ComSat socket connections and sends those bytes directly to a designated host on the local network at the proper local port. Then it takes the response bytes and moves them directly back to the ComSat socket that sent the original bytes. This creates a secure pipe from the outside world into a specific port on a specific container... all without revealing any information about the container to the outside world or exposing anything other than the chosen port.
 
@@ -86,11 +86,11 @@ The Stream Viewer stores output files with timestamps as the names. They are sto
 * Parse and consume container configuration according to this example:
 
 <pre>
-	{"mode":"public","host":"comsat1.iotracks.com","port":35046,"connectioncount":60,"passcode":"vy7cvpztnhgc3jdptgxp9ttmzxfyfbqh","localhost":"iofabric","localport":60401,"heartbeatfrequency":20000,"heartbeatabsencethreshold":60000}
+	{"mode":"public","host":"comsat1.iofog.org","port":35046,"connectioncount":60,"passcode":"vy7cvpztnhgc3jdptgxp9ttmzxfyfbqh","localhost":"iofabric","localport":60401,"heartbeatfrequency":20000,"heartbeatabsencethreshold":60000}
 
 	Or
 
-	{"mode":"private","host":"comsat2.iotracks.com","port":35081,"connectioncount":1,"passcode":"vy7cvpztnhgc3jdptgxp9ttmzxfyfbqh","localhost":"","localport":0,"heartbeatfrequency":20000,"heartbeatabsencethreshold":60000}
+	{"mode":"private","host":"comsat2.iofog.org","port":35081,"connectioncount":1,"passcode":"vy7cvpztnhgc3jdptgxp9ttmzxfyfbqh","localhost":"","localport":0,"heartbeatfrequency":20000,"heartbeatabsencethreshold":60000}
 </pre>
 
 

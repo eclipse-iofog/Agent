@@ -58,7 +58,7 @@ Change directories into the Debian packaging folder. Make a new package build, a
 
 	Publish the package file to the Package Cloud with the new file name:
 
-	package_cloud push iotracks/iofabric XXXXXXXX.deb
+	package_cloud push iofog/iofabric XXXXXXXX.deb
 
 	Repeat the publishing step until you have published for all of the following Linux versions:
 
@@ -104,7 +104,7 @@ Change directories into the RPM packaging folder. Make a new package build, and 
 
 	Publish the package file to the Package Cloud with the new file name:
 
-	package_cloud push iotracks/iofabric XXXXXXXX.rpm
+	package_cloud push iofog/iofabric XXXXXXXX.rpm
 
 	Repeat the publishing step until you have published for all of the following Linux versions:
 

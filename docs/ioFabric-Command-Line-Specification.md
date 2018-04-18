@@ -60,8 +60,8 @@ config                   [OPTION] [VALUE]             Change the software config
                          -lc &lt;#log files&gt;             Set the number of log files to evenly split the log storage limit
 
 
-Report bugs to: kilton@iotracks.com
-ioFabric home page: http://iotracks.com
+Report bugs to: bugs@iofog.org
+ioFabric home page: http://iofog.org
 </pre>
 
 
@@ -80,8 +80,8 @@ iofabric -v
 
 <pre>
 ioFabric 1.0
-Copyright (C) 2016 iotracks, inc.
-License ######### http://iotracks.com/license
+Copyright (C) 2018 iofog, inc.
+License ######### http://iofog.org/license
 This is open-source software with a commercial license: your usage is free until you use it in production commercially.
 There is NO WARRANTY, to the extent permitted by law.
 </pre>
@@ -229,7 +229,7 @@ iofabric info
 Instance ID               : sdfh43t9EFHSD98hwefiuwefkshd890she
 IP Address                : 201.43.0.88
 Network Adapter           : eth0
-ioFabric Controller       : http://iotracks.com/controllers/2398yef
+ioFabric Controller       : http://iofog.org/controllers/2398yef
 ioFabric Certificate      : ~/temp/certs/abc.crt
 Docker URI                : unix:///var/run/docker.sock
 Disk Limit                : 14.5 GiB
