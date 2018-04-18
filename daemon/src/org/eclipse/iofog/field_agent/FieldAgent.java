@@ -392,10 +392,6 @@ public class FieldAgent implements IOFogModule {
 					registryBuilder.setUserName(registry.getString("username"))
 							.setPassword(registry.getString("password"))
 							.setUserEmail(registry.getString("useremail"));
-					//unused fields
-					//.setSecure(registry.getBoolean("secure"))
-					//.setCertificate(registry.getString("certificate"))
-					//.setRequiresCertificate(registry.getBoolean("requirescert"));
 				}
 				registries.add(registryBuilder.build());
 			}

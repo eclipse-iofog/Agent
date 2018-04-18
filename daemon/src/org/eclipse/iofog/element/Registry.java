@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
+import java.util.Objects;
+
 /**
  * represents registries
  * 
@@ -85,9 +87,7 @@ public class Registry {
 
 	@Override
 	public int hashCode() {
-		int result = url.hashCode();
-		result = 31 * result + (isPublic ? 1 : 0);
-		return result;
+		return Objects.hash(url, isPublic);
 	}
 
 	public static class RegistryBuilder {
