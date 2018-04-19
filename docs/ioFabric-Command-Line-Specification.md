@@ -80,7 +80,7 @@ iofabric -v
 
 <pre>
 ioFabric 1.0
-Copyright (C) 2018 iofog, inc.
+Copyright (C) 2018 Edgeworx, Inc.
 License ######### http://iofog.org/license
 This is open-source software with a commercial license: your usage is free until you use it in production commercially.
 There is NO WARRANTY, to the extent permitted by law.

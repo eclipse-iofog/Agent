@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Iofog, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -164,7 +164,7 @@ public class Client {
 	private static String version() {
 		StringBuilder result = new StringBuilder();
 		result.append("ioFog 0.53");
-		result.append("\nCopyright (C) 2018 iofog, inc.");
+		result.append("\nCopyright (C) 2018 Edgeworx, Inc.");
 		result.append("\nEclipse ioFog is provided under the Eclipse Public License (EPL)");
 		result.append("\nhttps://www.eclipse.org/legal/epl-v10.html");
 

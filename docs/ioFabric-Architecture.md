@@ -18,7 +18,7 @@ A list of the modules in the ioFabric application can be found immediately below
 
 ### Application Purpose
 
-ioFabric exists to turn static Linux compute instances into independently controllable nodes of a dynamic processing fabric. iofog, inc. provides several software products that work in tandem to create this fabric and the tools needed to orchestrate it. The Linux ioFabric product is a major piece. It's the part that runs the local processing on the Linux instance and stands up and takes down the containers that do the actual processing of information.
+ioFabric exists to turn static Linux compute instances into independently controllable nodes of a dynamic processing fabric. Edgeworx, Inc. provides several software products that work in tandem to create this fabric and the tools needed to orchestrate it. The Linux ioFabric product is a major piece. It's the part that runs the local processing on the Linux instance and stands up and takes down the containers that do the actual processing of information.
 
 At iofog, we believe that one of the next great challenges in computing technology is handling the rapidly increasing number of data sources, their widening variety, and the need to add and remove them dynamically without rebuilding solution code. Along with these voluminous data sources comes massive amounts of actual data. We believe that processing should be moved to where the data is, instead of moving large amounts of data all the way to a central backend for processing.
 
