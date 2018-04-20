@@ -22,6 +22,7 @@ import java.util.Objects;
  */
 public class Registry {
 	private final String url;
+	private final boolean isPublic;
 	private final boolean secure;
 	private final String certificate;
 	private final boolean requiresCertificate;
@@ -29,9 +30,10 @@ public class Registry {
 	private final String password;
 	private final String userEmail;
 
-	private Registry(final String url, final boolean secure, final String certificate, final boolean requiresCertificate,
+	private Registry(final String url, final boolean isPublic, final boolean secure, final String certificate, final boolean requiresCertificate,
 	                 final String userName, final String password, final String userEmail) {
 		this.url = url;
+		this.isPublic = isPublic;
 		this.secure = secure;
 		this.certificate = certificate;
 		this.requiresCertificate = requiresCertificate;
@@ -42,6 +44,10 @@ public class Registry {
 
 	public String getUrl() {
 		return url;
+	}
+
+	public boolean getIsPublic() {
+		return isPublic;
 	}
 
 	public boolean isSecure() {
@@ -72,18 +78,21 @@ public class Registry {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
+
 		Registry registry = (Registry) o;
-		return Objects.equals(url, registry.url) &&
-				Objects.equals(userEmail, registry.userEmail);
+
+		if (isPublic != registry.isPublic) return false;
+		return url.equals(registry.url);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(url, userEmail);
+		return Objects.hash(url, isPublic);
 	}
 
 	public static class RegistryBuilder {
 		private String url;
+		private boolean isPublic;
 		private boolean secure;
 		private String certificate;
 		private boolean requiresCertificate;
@@ -93,6 +102,11 @@ public class Registry {
 
 		public RegistryBuilder setUrl(String url) {
 			this.url = url;
+			return this;
+		}
+
+		public RegistryBuilder setIsPublic(boolean isPublic) {
+			this.isPublic = isPublic;
 			return this;
 		}
 
@@ -127,7 +141,7 @@ public class Registry {
 		}
 
 		public Registry build() {
-			return new Registry(url, secure, certificate, requiresCertificate, userName, password, userEmail);
+			return new Registry(url, isPublic, secure, certificate, requiresCertificate, userName, password, userEmail);
 		}
 	}
 }

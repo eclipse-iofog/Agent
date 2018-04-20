@@ -180,7 +180,9 @@ public class DockerUtil {
 	 * @param id - id of {@link Container}
 	 */
 	public void stopContainer(String id) throws NotFoundException, NotModifiedException {
-		dockerClient.stopContainerCmd(id).exec();
+		if (isContainerRunning(id)) {
+			dockerClient.stopContainerCmd(id).exec();
+		}
 	}
 
 	/**
@@ -260,7 +262,10 @@ public class DockerUtil {
 				result.setStartTime(getStartedTime(containerState.getStartedAt()));
 			}
 			if (containerState.getStatus() != null) {
-				result.setStatus(ElementState.fromText(containerState.getStatus()));
+				ElementState elementState = ElementState.fromText(containerState.getStatus());
+				result.setStatus(ElementState.RESTARTING.equals(elementState) && RestartStuckChecker.isStuck(containerId) ?
+						ElementState.STUCK_IN_RESTART :
+						elementState);
 			}
 			result.setContainerId(containerId);
 			result.setUsage(containerId);
@@ -413,12 +418,16 @@ public class DockerUtil {
 		} else {
 			image = imageName;
 		}
-		PullImageCmd req = dockerClient.pullImageCmd(image).withAuthConfig(new AuthConfig()
-				.withRegistryAddress(registry.getUrl())
-				.withEmail(registry.getUserEmail())
-				.withUsername(registry.getUserName())
-				.withPassword(registry.getPassword())
-		);
+		PullImageCmd req =
+				registry.getIsPublic() ?
+						dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
+						dockerClient.pullImageCmd(image).withAuthConfig(
+								new AuthConfig()
+										.withRegistryAddress(registry.getUrl())
+										.withEmail(registry.getUserEmail())
+										.withUsername(registry.getUserName())
+										.withPassword(registry.getPassword())
+						);
 		if (tag != null)
 			req.withTag(tag);
 		PullImageResultCallback res = new PullImageResultCallback();
