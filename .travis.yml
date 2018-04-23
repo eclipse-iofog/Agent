@@ -9,6 +9,8 @@ notifications:
     on_success: change
     on_failure: always
 stages:
+- name: build
+  if: branch IN (develop, master, dev_package)
 - name: dev_build
   if: branch = develop
 - name: package_build
@@ -16,6 +18,8 @@ stages:
 
 jobs:
   include:
+  - stage: build
+    if: type IN (pull_request)
   - stage: dev_build
     if: type IN (push)
     before_install:
