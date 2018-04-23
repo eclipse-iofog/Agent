@@ -13,13 +13,13 @@ cd /var/backups/iofog
 iofog deprovision
 service iofog stop
 
-yum remove iofog -y
+yum remove iofog-dev -y
 rm -rf $iofoglibdir
 rm -rf $iofoglogdir
 rm -rf /etc/iofog/
 
 iofogversion=$(grep ver prev_version_data | awk '{print $2}')
-yum install iofog-$iofogversion -y
+yum install iofog-dev-$iofogversion -y
 
 rm -rf /etc/iofog/
 tar -xvzf config_backup.tar.gz -P -C /
