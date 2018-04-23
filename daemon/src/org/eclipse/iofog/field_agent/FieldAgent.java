@@ -145,8 +145,9 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private boolean notProvisioned() {
 		boolean notProvisioned = StatusReporter.getFieldAgentStatus().getContollerStatus().equals(NOT_PROVISIONED);
-		if (notProvisioned)
+		if (notProvisioned) {
 			logWarning("not provisioned");
+		}
 		return notProvisioned;
 	}
 
@@ -1024,14 +1025,21 @@ public class FieldAgent implements IOFogModule {
 	 * @return boolean
 	 */
 	private boolean isControllerConnected(boolean fromFile) {
+		boolean isConnected = false;
 		if ((!StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping()) && !fromFile) {
-			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
-				logWarning("connection to controller has broken");
-			else
-				verificationFailed();
-			return false;
+			handleBadControllerStatus();
+		} else {
+			isConnected = true;
 		}
-		return true;
+		return isConnected;
+	}
+	
+	private void handleBadControllerStatus() {
+		if (StatusReporter.getFieldAgentStatus().isControllerVerified()) {
+			logWarning("connection to controller has broken");
+		} else {
+			verificationFailed();
+		}
 	}
 
 	private void checkResponseStatus(JsonObject result) {

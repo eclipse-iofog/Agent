@@ -1,5 +1,4 @@
 #!/bin/sh
 
 JAR_FILE_NAME=/usr/bin/iofog.jar
-cd /usr/bin
-java -jar iofog.jar $@
+java -jar $JAR_FILE_NAME $@
