@@ -12,24 +12,18 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.*;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
+import javax.json.*;
+import java.io.StringReader;
+import java.util.concurrent.Callable;
+
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.io.StringReader;
-import java.util.concurrent.Callable;
-
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-
-import io.netty.handler.codec.http.*;
-import org.eclipse.iofog.utils.logging.LoggingService;
-
-import io.netty.buffer.ByteBuf;
 
 public class LogApiHandler implements Callable<FullHttpResponse> {
 	private static final String MODULE_NAME = "Local API";
@@ -71,10 +65,11 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 			String logMessage = jsonObject.getString("message");
 			String logType = jsonObject.getString("type");
 			String elementId = jsonObject.getString("id");
-			if (logType.equals("info"))
+			if (logType.equals("info")) {
 				result = LoggingService.elementLogInfo(elementId, logMessage);
-			else
+			} else {
 				result = LoggingService.elementLogWarning(elementId, logMessage);
+			}
 		}
 		if (!result) {
 			String errorMsg = "Log message parsing error, " + "Logger initialized null";

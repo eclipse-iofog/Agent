@@ -24,11 +24,11 @@ case $1 in
 
 	echo "Starting iofog service..."
         cd $PATH_TO_JAR
-        sudo java -jar $JAR_FILE_NAME start &
+        java -jar $JAR_FILE_NAME start &
     ;;
     stop)
         cd $PATH_TO_JAR
-        sudo java -jar $JAR_FILE_NAME stop
+        java -jar $JAR_FILE_NAME stop
     ;;
  #   restart)
  #echo "Restarting iofog service..."
