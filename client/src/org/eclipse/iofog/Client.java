@@ -163,7 +163,7 @@ public class Client {
 
 	private static String version() {
 		StringBuilder result = new StringBuilder();
-		result.append("ioFog 0.57");
+		result.append("ioFog 0.60");
 		result.append("\nCopyright (C) 2016 iotracks, inc.");
 		result.append("\nEclipse ioFog is provided under the Eclipse Public License (EPL)");
 		result.append("\nhttps://www.eclipse.org/legal/epl-v10.html");
