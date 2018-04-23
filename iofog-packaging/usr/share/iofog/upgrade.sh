@@ -6,7 +6,7 @@ timeout=${2:-60}
 cd /var/backups/iofog
 tar -cvzf config_backup.tar.gz -P /etc/iofog
 
-iofogversion=$(apt-cache policy iofog | grep Installed | awk '{print $2}')
+iofogversion=$(apt-cache policy iofog-dev | grep Installed | awk '{print $2}')
 
 printf 'ver: '$iofogversion > prev_version_data
 
@@ -14,7 +14,7 @@ iofog deprovision
 service iofog stop
 
 apt-get update
-apt-get install --only-upgrade iofog -y
+apt-get install --only-upgrade iofog-dev -y
 
 starttimestamp=$(date +%s)
 service iofog start
