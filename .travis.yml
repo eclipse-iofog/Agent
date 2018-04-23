@@ -69,6 +69,6 @@ jobs:
       iotracks/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/stretch 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iotracks/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
       cd /iofog-packaging-rpm; rm -rf *.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' --after-install 
-      rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
+      rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr var; package_cloud push iotracks/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
       push iotracks/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/fedora/24 
       iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iotracks/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
