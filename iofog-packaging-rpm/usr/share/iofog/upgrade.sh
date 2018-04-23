@@ -6,7 +6,7 @@ timeout=${2:-60}
 cd /var/backups/iofog
 tar -cvzf config_backup.tar.gz -P /etc/iofog
 
-iofogversion=$(yum list iofog | grep iofog | awk '{print $2}' | sed -n 1p)
+iofogversion=$(yum list iofog-dev | grep iofog | awk '{print $2}' | sed -n 1p)
 
 printf 'ver: '$iofogversion > prev_version_data
 
@@ -14,7 +14,7 @@ iofog deprovision
 service iofog stop
 
 yum check-update
-yum update iofog -y
+yum update iofog-dev -y
 
 starttimestamp=$(date +%s)
 service iofog start
