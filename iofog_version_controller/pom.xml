@@ -3,7 +3,7 @@
     <parent>
         <artifactId>iofog</artifactId>
         <groupId>org.eclipse</groupId>
-        <version>0.60</version>
+        <version>0.61</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
