@@ -17,6 +17,7 @@ stages:
 jobs:
   include:
   - stage: dev_build
+    if: type IN (push)
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
