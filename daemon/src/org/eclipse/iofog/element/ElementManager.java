@@ -146,11 +146,11 @@ public class ElementManager {
 
 	public void clear() {
 		synchronized (ElementManager.class) {
-			latestElements.clear();
-			currentElements.clear();
-			routes.clear();
-			configs.clear();
-			registries.clear();
+			latestElements = new ArrayList<>();
+			currentElements = new ArrayList<>();
+			routes = new HashMap<>();
+			configs = new HashMap<>();
+			registries = new ArrayList<>();
 		}
 	}
 }
