@@ -27,18 +27,16 @@ jobs:
     script:
     - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
-    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no -p $DEV_MACHINE_PORT
-      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "sudo service iofog stop; sudo rm -rf
-      /usr/bin/iofogd_bckp.jar /usr/bin/iofog_bckp.jar; sudo mv /usr/bin/iofogd.jar
-      /usr/bin/iofogd_bckp.jar; sudo mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar"
-    - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT daemon/target/iofog-daemon-jar-with-dependencies.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP 
+      "service iofog stop; rm -rf /usr/bin/iofogd_bckp.jar /usr/bin/iofog_bckp.jar; mv /usr/bin/iofogd.jar
+      /usr/bin/iofogd_bckp.jar; mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar"
+    - sshpass -p $DEV_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofogd.jar
-    - sshpass -p $DEV_MACHINE_PASSWORD scp -P $DEV_MACHINE_PORT client/target/iofog-client-jar-with-dependencies.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/home/owner/iofog.jar
-    - sshpass -p $DEV_MACHINE_PASSWORD ssh -p $DEV_MACHINE_PORT $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
-      "sudo cp /home/owner/iofogd.jar /usr/bin/; sudo cp /home/owner/iofog.jar /usr/bin/;
-      sudo rm -rf /home/owner/iofogd.jar /home/owner/iofog.jar; sudo service iofog
-      start"
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
+      "cp /home/owner/iofogd.jar /usr/bin/; cp /home/owner/iofog.jar /usr/bin/;
+      rm -rf /home/owner/iofogd.jar /home/owner/iofog.jar; service iofog start"
   - stage: package_build
     if: type IN (push)
     before_install:
