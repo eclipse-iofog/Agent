@@ -13,6 +13,14 @@ else
 fi
 echo "Check for config.xml"
 
+if [ -f /etc/iofog/cert.crt ];
+then
+   rm /etc/iofog/cert_new.crt
+else
+  mv /etc/iofog/cert_new.crt /etc/iofog/cert.crt
+fi
+echo "Check for cert.crt"
+
 mkdir -p /var/backups/iofog
 
 chown -R :iofog /etc/iofog   
