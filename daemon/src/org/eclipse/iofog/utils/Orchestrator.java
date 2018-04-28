@@ -12,12 +12,16 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
@@ -223,13 +227,79 @@ public class Orchestrator {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
 		}
-		
+
+		return result;
+	}
+
+	/**
+	 * calls IOFog Controller endpoind to send file and returns Json result
+	 *
+	 * @param command - endpoint to be called
+	 * @param file - file to send
+	 * @param elementId -
+	 * @param imageName
+	 * @return result in Json format
+	 * @throws Exception
+	 */
+	public JsonObject sendFileToController(String command, File file, String elementId, String imageName) throws Exception {
+		if (!controllerUrl.toLowerCase().startsWith("https"))
+			throw new Exception("unable to connect over non-secure connection");
+		JsonObject result;
+
+		StringBuilder uri = new StringBuilder(controllerUrl);
+
+		uri.append("instance/")
+				.append(command)
+				.append("/id/").append(instanceId)
+				.append("/token/").append(accessToken);
+
+
+		initialize();
+		RequestConfig config = getRequestConfig();
+		HttpPost post = new HttpPost(uri.toString());
+		post.setConfig(config);
+
+		/**/
+
+		InputStream inputStream = new FileInputStream(file.getName());
+//		File file = new File(imageFileName);
+//		String message = "This is a multipart post";
+		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+//		builder.addBinaryBody
+//				("upfile", file, ContentType.DEFAULT_BINARY, file.getName());
+		builder.addBinaryBody
+				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
+//		builder.addTextBody(elementId, imageName, ContentType.TEXT_PLAIN);
+//
+		HttpEntity entity = builder.build();
+		post.setEntity(entity);
+//		HttpResponse response = client.execute(post);
+
+		/***/
+		try (CloseableHttpResponse response = client.execute(post);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+			 JsonReader jsonReader = Json.createReader(in)) {
+
+			if (response.getStatusLine().getStatusCode() == 403) {
+				throw new ForbiddenException();
+			} else if (response.getStatusLine().getStatusCode() == 204) {
+				throw new NoContentException("");
+			}
+
+
+			result = jsonReader.readObject();
+		} catch (UnsupportedEncodingException exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
+		}
+
 		return result;
 	}
 
 	/**
 	 * updates local variables when changes applied
-	 * 
+	 *
 	 */
 	public void update() {
 		instanceId = Configuration.getInstanceId();

@@ -12,10 +12,11 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.diagnostics.ImageDownloadManager;
 import org.eclipse.iofog.diagnostics.strace.ElementStraceData;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
 import org.eclipse.iofog.element.*;
@@ -35,10 +36,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -76,6 +74,7 @@ public class FieldAgent implements IOFogModule {
 	private static FieldAgent instance;
 	private boolean initialization;
 	private boolean connected = false;
+	private Object imageSnapshot;
 
 	private FieldAgent() {
 		lastGetChangesList = 0;
@@ -145,9 +144,8 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private boolean notProvisioned() {
 		boolean notProvisioned = StatusReporter.getFieldAgentStatus().getContollerStatus().equals(NOT_PROVISIONED);
-		if (notProvisioned) {
+		if (notProvisioned)
 			logWarning("not provisioned");
-		}
 		return notProvisioned;
 	}
 
@@ -264,9 +262,12 @@ public class FieldAgent implements IOFogModule {
 				if (changes.getBoolean("reboot") && !initialization) {
 					reboot();
 				}
-
-				if (changes.getBoolean("config") && !initialization)
+				if (changes.getBoolean("isimagesnapshot") && !initialization) {
+					createImageSnapshot();
+				}
+				if (changes.getBoolean("config") && !initialization) {
 					getFogConfig();
+				}
 				if (changes.getBoolean("version") && !initialization) {
 					changeVersion();
 				}
@@ -545,13 +546,14 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	private Set<String> getToRemoveWithCleanUpIds(JsonObject result) throws Exception {
-		try {
-			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
-			ObjectMapper mapper = new ObjectMapper();
-			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
-		} catch (NullPointerException e) { //temp catch for old for controller versions
-			return Collections.emptySet();
-		}
+//		try {
+//			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
+//			ObjectMapper mapper = new ObjectMapper();
+//			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+//		} catch (NullPointerException e) { //temp catch for old for controller versions
+//			return Collections.emptySet();
+//		}
+		return new HashSet<>();
 	}
 
 	private Function<JsonObject, Element> containerJsonObjectToElementFunction() {
@@ -568,11 +570,11 @@ public class FieldAgent implements IOFogModule {
 			JsonArray portMappingObjs = jsonObj.getJsonArray("portmappings");
 			List<PortMapping> pms = portMappingObjs.size() > 0
 					? IntStream.range(0, portMappingObjs.size())
-						.boxed()
-						.map(portMappingObjs::getJsonObject)
-						.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
-								portMapping.getString("insidecontainer")))
-						.collect(toList())
+					.boxed()
+					.map(portMappingObjs::getJsonObject)
+					.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
+							portMapping.getString("insidecontainer")))
+					.collect(toList())
 					: null;
 
 			element.setPortMappings(pms);
@@ -583,12 +585,12 @@ public class FieldAgent implements IOFogModule {
 			JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
 			List<VolumeMapping> vms = volumeMappingObj.size() > 0
 					? IntStream.range(0, volumeMappingObj.size())
-						.boxed()
-						.map(volumeMappingObj::getJsonObject)
-						.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
-								volumeMapping.getString("containerdestination"),
-								volumeMapping.getString("accessmode")))
-						.collect(toList())
+					.boxed()
+					.map(volumeMappingObj::getJsonObject)
+					.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
+							volumeMapping.getString("containerdestination"),
+							volumeMapping.getString("accessmode")))
+					.collect(toList())
 					: null;
 
 			element.setVolumeMappings(vms);
@@ -1025,21 +1027,14 @@ public class FieldAgent implements IOFogModule {
 	 * @return boolean
 	 */
 	private boolean isControllerConnected(boolean fromFile) {
-		boolean isConnected = false;
 		if ((!StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping()) && !fromFile) {
-			handleBadControllerStatus();
-		} else {
-			isConnected = true;
+			if (StatusReporter.getFieldAgentStatus().isControllerVerified())
+				logWarning("connection to controller has broken");
+			else
+				verificationFailed();
+			return false;
 		}
-		return isConnected;
-	}
-	
-	private void handleBadControllerStatus() {
-		if (StatusReporter.getFieldAgentStatus().isControllerVerified()) {
-			logWarning("connection to controller has broken");
-		} else {
-			verificationFailed();
-		}
+		return true;
 	}
 
 	private void checkResponseStatus(JsonObject result) {
@@ -1128,4 +1123,28 @@ public class FieldAgent implements IOFogModule {
 		}
 		return Optional.ofNullable(connection);
 	}
+
+	private void createImageSnapshot() {
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		LoggingService.logInfo(MODULE_NAME, "create image snapshot");
+
+		String imageName = null;
+
+		try {
+			JsonObject jsonObject = orchestrator.doCommand("imageSnapshotGet", null, null);
+			checkResponseStatus(jsonObject);
+			imageName = jsonObject.getString("uuid");
+
+		} catch (Exception e) {
+			logWarning("unable get name of image snapshot : " + e.getMessage());
+		}
+
+		if (imageName != null) {
+			ImageDownloadManager.getInstance().createImageSnapshot(orchestrator, imageName);
+		}
+	}
+
 }
