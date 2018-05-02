@@ -88,37 +88,37 @@ public class ElementManager {
 
 	public void setLatestElements(List<Element> latestElements) {
 		synchronized (ElementManager.class) {
-			this.latestElements = latestElements;
+			this.latestElements = new ArrayList<>(latestElements);
 		}
 	}
 
 	public void setCurrentElements(List<Element> currentElements) {
 		synchronized (ElementManager.class) {
-			this.currentElements = currentElements;
+			this.currentElements = new ArrayList<>(currentElements);
 		}
 	}
 
 	public void setToRemoveWithCleanUpElementIds(Set<String> toRemoveWithCleanUpElementIds) {
 		synchronized (ElementManager.class) {
-			this.toRemoveWithCleanUpElementIds = toRemoveWithCleanUpElementIds;
+			this.toRemoveWithCleanUpElementIds = new HashSet<>(toRemoveWithCleanUpElementIds);
 		}
 	}
 
 	public void setConfigs(Map<String, String> configs) {
 		synchronized (ElementManager.class) {
-			this.configs = configs;
+			this.configs = new HashMap<>(configs);
 		}
 	}
 
 	public void setRoutes(Map<String, Route> routes) {
 		synchronized (ElementManager.class) {
-			this.routes = routes;
+			this.routes = new HashMap<>(routes);
 		}
 	}
 
 	public void setRegistries(List<Registry> registries) {
 		synchronized (ElementManager.class) {
-			this.registries = registries;
+			this.registries = new ArrayList<>(registries);
 		}
 	}
 

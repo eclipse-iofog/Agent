@@ -116,10 +116,7 @@ public class ProcessManager implements IOFogModule {
 						}
 						ElementStatus status = docker.getElementStatus(container.getId());
 						StatusReporter.setProcessManagerStatus().setElementsStatus(docker.getContainerName(container), status);
-						boolean running = ElementState.RUNNING.equals(status.getStatus());
-						long elementLastModified = element.getLastModified();
-						long containerStartedAt = docker.getContainerStartedAt(container.getId());
-						if (!running || elementLastModified > containerStartedAt || !docker.isElementAndContainerEquals(container.getId(), element)) {
+						if (shouldContainerBeUpdated(element, container, status)) {
 							addTask(new ContainerTask(UPDATE, element.getElementId()));
 						}
 					}
@@ -136,6 +133,13 @@ public class ProcessManager implements IOFogModule {
 		}
 	};
 
+	private boolean shouldContainerBeUpdated(Element element, Container container, ElementStatus status) {
+		boolean isNotRunning = !ElementState.RUNNING.equals(status.getStatus());
+		boolean isNotUpdating = !element.isUpdating();
+		boolean areNotEqual = !docker.areElementAndContainerEqual(container.getId(), element);
+		return isNotUpdating && (isNotRunning || areNotEqual);
+	}
+
 	private void removeContainersWithCleanUp(Set<String> toRemoveWithCleanUpElementIds) {
 		toRemoveWithCleanUpElementIds.forEach(elementIdToRemove -> {
 			if (docker.getContainer(elementIdToRemove).isPresent()) {
@@ -146,17 +150,22 @@ public class ProcessManager implements IOFogModule {
 
 	private void removeInappropriateContainers(Set<String> toRemoveWithCleanUpElementIds) {
 		docker.getContainers().forEach(container -> {
-			String elementId = docker.getContainerName(container);
-			Optional<Element> elementOptional = elementManager.findLatestElementById(elementId);
-
 			// remove old containers and unknown for ioFog containers when IsolatedDockerContainers mode is ON
 			// remove only old containers when the mode is OFF
-			if (!elementOptional.isPresent() && !toRemoveWithCleanUpElementIds.contains(elementId)) {
-				if (Configuration.isIsolatedDockerContainers() || elementManager.elementExists(elementManager.getCurrentElements(), elementId)) {
-					addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
-				}
+			if (shouldContainerBeRemoved(container, toRemoveWithCleanUpElementIds)) {
+				addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
 			}
 		});
+	}
+
+	private boolean shouldContainerBeRemoved(Container container, Set<String> toRemoveWithCleanUpElementIds) {
+		String elementId = docker.getContainerName(container);
+		Optional<Element> elementOptional = elementManager.findLatestElementById(elementId);
+		boolean isNotPresent = !elementOptional.isPresent();
+		boolean areNotInCleanUpElements = !toRemoveWithCleanUpElementIds.contains(elementId);
+		boolean exists = elementManager.elementExists(elementManager.getCurrentElements(), elementId);
+
+		return (isNotPresent && areNotInCleanUpElements) && (Configuration.isIsolatedDockerContainers() || exists);
 	}
 
 	/**

@@ -30,7 +30,7 @@
 
 	<get_changes_freq>60</get_changes_freq>
 
-	<gps_mode>auto</gps_mode>
+	<post_diagnostics_freq>10</post_diagnostics_freq>
 
-	<gps_coordinates></gps_coordinates>
+	<gps>auto</gps>
 </config>

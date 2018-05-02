@@ -76,9 +76,11 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private String updateContainer(Element element, boolean withCleanUp) throws Exception {
-		stopContainer(element.getElementId());
+		element.setUpdating(true);
 		removeContainerByElementId(element.getElementId(), withCleanUp);
-		return createContainer(element);
+		String id = createContainer(element);
+		element.setUpdating(false);
+		return id;
 	}
 
 	private String createContainer(Element element) throws Exception {
@@ -88,15 +90,13 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
 
 		LoggingService.logInfo(MODULE_NAME, "creating container");
-		String hostName = EMPTY;
-		if (!element.isRootHostAccess())
-			hostName = IOFogNetworkInterface.getCurrentIpAddress();
+		String hostName = !element.isRootHostAccess() ? IOFogNetworkInterface.getCurrentIpAddress() : EMPTY;
 		String id = docker.createContainer(element, hostName);
 		element.setContainerId(id);
 		element.setContainerIpAddress(docker.getContainerIpAddress(id));
-		element.setRebuild(false);
 		LoggingService.logInfo(MODULE_NAME, "container is created");
 		startContainer(element);
+		element.setRebuild(false);
 		return id;
 	}
 
@@ -143,19 +143,20 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	private void removeContainerByElementId(String elementId, boolean withCleanUp) throws Exception {
+	private void removeContainerByElementId(String elementId, boolean withCleanUp) {
 
 		Optional<Container> containerOptional = docker.getContainer(elementId);
 
 		if (containerOptional.isPresent()) {
-			String containerId = containerOptional.get().getId();
-			removeContainer(containerId, containerOptional.get().getImage(), withCleanUp);
+			Container container = containerOptional.get();
+			removeContainer(container.getId(), container.getImage(), withCleanUp);
 		}
 	}
 
-	private void removeContainer(String containerId, String imageName, boolean withCleanUp) throws Exception {
+	private void removeContainer(String containerId, String imageName, boolean withCleanUp) {
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
+			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
 				docker.removeImage(imageName);
@@ -171,7 +172,7 @@ public class ContainerManager {
 	/**
 	 * executes assigned task
 	 *
-	 * @param task - taks to be executed
+	 * @param task - tasks to be executed
 	 */
 	public void execute(ContainerTask task) throws Exception {
 		docker = DockerUtil.getInstance();

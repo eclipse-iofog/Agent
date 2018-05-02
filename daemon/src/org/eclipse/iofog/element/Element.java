@@ -33,6 +33,7 @@ public class Element {
     private boolean rootHostAccess;
     private long logSize;
     private List<VolumeMapping> volumeMappings;
+    private boolean isUpdating;
 
     public Element(String elementId, String imageName) {
         this.elementId = elementId;
@@ -127,6 +128,14 @@ public class Element {
     public void setVolumeMappings(List<VolumeMapping> volumeMappings) {
         this.volumeMappings = volumeMappings;
     }
+
+	public boolean isUpdating() {
+		return isUpdating;
+	}
+
+	public void setUpdating(boolean updating) {
+		isUpdating = updating;
+	}
 
 	@Override
 	public boolean equals(Object e) {

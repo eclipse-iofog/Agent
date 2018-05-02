@@ -67,10 +67,11 @@ public final class LoggingService {
 	 * @param msg - message
 	 */
 	public static void logWarning(String moduleName, String msg) {
-		if (Configuration.debugging)
+		if (Configuration.debugging) {
 			System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
-		else
+		} else {
 			logger.log(Level.WARNING, String.format("[%s] : %s", moduleName, msg));
+		}
 	}
 
 	/**
@@ -88,7 +89,6 @@ public final class LoggingService {
 		final String logFilePattern = logDirectory.getPath() + "/iofog.%g.log";
 		
 		if (logger != null) {
-			logNullLogger();
 			for (Handler f : logger.getHandlers())
 				f.close();
 		}
@@ -128,7 +128,6 @@ public final class LoggingService {
 		Logger logger = elementLogger.get(elementId);
 		
 		if (logger != null) {
-			logNullLogger();
 			for (Handler f : logger.getHandlers())
 				f.close();
 		} 
@@ -168,7 +167,7 @@ public final class LoggingService {
 	}
 
 	private static void logNullLogger(){
-		String errorMsg = " Log message parsing error, " + "Logger initialized null";
+		String errorMsg = " Log message parsing error, Logger initialized null";
 		LoggingService.logWarning(MODULE_NAME, errorMsg);
 
 	}
