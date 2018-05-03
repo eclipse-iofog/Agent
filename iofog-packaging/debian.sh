@@ -13,6 +13,18 @@ else
 fi
 echo "Check for config.xml"
 
+if [ -f /etc/iofog/cert.crt ];
+then
+    echo "cert.crt already exists:"
+    echo `cat /etc/iofog/cert.crt`
+   rm /etc/iofog/cert_new.crt
+else
+    echo "default cert.crt will be used:"
+    echo `cat /etc/iofog/cert.crt`
+  mv /etc/iofog/cert_new.crt /etc/iofog/cert.crt
+fi
+echo "Check for cert.crt"
+
 mkdir -p /var/backups/iofog
 
 chown -R :iofog /etc/iofog   
