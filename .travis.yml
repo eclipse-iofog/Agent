@@ -44,6 +44,8 @@ jobs:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
     - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
+    - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "rm -rf /iofog-packaging-rpm/*; rm -rf /iofog-packaging/*;"
     - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm/*
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
     - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging/*
@@ -57,9 +59,9 @@ jobs:
     - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofog.jar
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; rm -rf *.deb; fpm -s dir -t deb -n \"iofog${DEV}\" 
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; fpm -s dir -t deb -n \"iofog${DEV}\" 
       -v $VERSION -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade 
-      upgrade.sh --after-upgrade debian.sh etc usr var; package_cloud push bc215b2700c844dacc1778d96ad594670e2f685bfd3683fc/iofog/ubuntu/precise 
+      upgrade.sh --after-upgrade debian.sh etc usr; package_cloud push iofog/iofog/ubuntu/precise 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
       package_cloud push iofog/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iofog/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/wily 
@@ -70,8 +72,8 @@ jobs:
       package_cloud push iofog/iofog/raspbian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iofog/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/raspbian/stretch 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
-      cd /iofog-packaging-rpm; rm -rf *.rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' 
-      --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr var; 
+      cd /iofog-packaging-rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' 
+      --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr; 
       package_cloud push iofog/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
       push iofog/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/fedora/24 
       iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
