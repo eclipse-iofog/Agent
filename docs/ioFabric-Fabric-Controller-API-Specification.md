@@ -47,7 +47,7 @@ The ioFog Instance ID provided by this endpoint is a 128-bit random ID formatted
 #####Endpoint
 
 <pre>
-	https://1.2.3.4/api/v2/instance/provision/key/A8842h/fabrictype/1
+	https://1.2.3.4/api/v2/instance/provision/key/A8842h/fogtype/1
 </pre>
 
 #####Response
@@ -65,7 +65,7 @@ The ioFog Instance ID provided by this endpoint is a 128-bit random ID formatted
 
 <pre>
 	key - the provisioning key provided via the command line (example shown here as a8842h)
-	fabrictype - an integer representing the system architecture of this ioFog instance
+	fogtype - an integer representing the system architecture of this ioFog instance
 </pre>
 
 #####POST Parameters
