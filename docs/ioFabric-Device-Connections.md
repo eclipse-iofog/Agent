@@ -1,16 +1,16 @@
-# Connecting Devices to ioFabric
+# Connecting Devices to ioFog
 
-One of the main challenges of the Internet of Things (IoT) is the large variety of connection methods for devices and systems. If a sensor cannot communicate with the greater system, then all is lost. ioFabric provides both edge processing and edge connectivity. The connectivity is very flexible, which also means there are some decisions to be made for each implementation.
+One of the main challenges of the Internet of Things (IoT) is the large variety of connection methods for devices and systems. If a sensor cannot communicate with the greater system, then all is lost. ioFog provides both edge processing and edge connectivity. The connectivity is very flexible, which also means there are some decisions to be made for each implementation.
 
-This document describes the different ways that you can connect sensors, devices, legacy systems, and the greater world into ioFabric. Once you do that, of course, the rest is pretty darn easy.
+This document describes the different ways that you can connect sensors, devices, legacy systems, and the greater world into ioFog. Once you do that, of course, the rest is pretty darn easy.
 
 Some connectivity methods are more efficient than others. Some should only be used if there is no better option available. The drawbacks and benefits of each connection method are listed here to help you determine what will fit best for your situations.
 
 #### Listen for Incoming Data
 
-When you add a container element to your ioFabric instance, you can choose to open ports. The ports are mapped so that you can have a different port on the inside of the container than the one which is exposed to the outside world. This is so the container code can be written to listen to standard ports (such as 80 or 443) and yet there can be many such containers running at the same time in an ioFabric instance.
+When you add a container element to your ioFog instance, you can choose to open ports. The ports are mapped so that you can have a different port on the inside of the container than the one which is exposed to the outside world. This is so the container code can be written to listen to standard ports (such as 80 or 443) and yet there can be many such containers running at the same time in an ioFog instance.
 
-By opening a listening port on a container element, the sensors and devices outside of ioFabric can direct their communications to the IP address of the ioFabric instance and the port of the appropriate container element. The container element will simply start receiving the incoming network traffic and can perform all of the parsing, decoding, decrypting, and other tasks needed to work with the device.
+By opening a listening port on a container element, the sensors and devices outside of ioFog can direct their communications to the IP address of the ioFog instance and the port of the appropriate container element. The container element will simply start receiving the incoming network traffic and can perform all of the parsing, decoding, decrypting, and other tasks needed to work with the device.
 
 Note that opening a port for listening does not, in any way, reduce the container element's ability to send network traffic out or talk directly to the devices.
 
@@ -30,7 +30,7 @@ Note that opening a port for listening does not, in any way, reduce the containe
 
 #### Use Local DNS Settings to Capture Traffic
 
-If the devices you want to connect are not able to be configured with the network information of the ioFabric installation, you may be able to capture the traffic coming from the devices by acting as the originally configured destination. By creating local DNS entries on the network, all of the traffic originally intended for a device cloud will end up in a container element. In some cases it will be easy to parse the traffic and make use of the data. In other cases you will be unable to decrypt secure traffic and may have no point of reference for parsing the information.
+If the devices you want to connect are not able to be configured with the network information of the ioFog installation, you may be able to capture the traffic coming from the devices by acting as the originally configured destination. By creating local DNS entries on the network, all of the traffic originally intended for a device cloud will end up in a container element. In some cases it will be easy to parse the traffic and make use of the data. In other cases you will be unable to decrypt secure traffic and may have no point of reference for parsing the information.
 
 This connection method requires you to open an external port on the container element, of course, in order to listen for incoming network traffic.
 
@@ -57,13 +57,13 @@ Regardless of how the network connection between the device and the container is
 
 A properly written container element will not have a hard-coded certificate for talking to devices. It will leave the installation of the certificate to happen during the run-time configuration of the container.
 
-Because all container elements in ioFabric have configurable properties, it is easy to add a property that holds the certificate. The certificate will automatically be delivered to the container element once it is running and retrieves its configuration information.
+Because all container elements in ioFog have configurable properties, it is easy to add a property that holds the certificate. The certificate will automatically be delivered to the container element once it is running and retrieves its configuration information.
 
 ##### Pros
 
 * Flexibility - container elements can be configured at run-time to work with encrypted traffic from devices
 * Universality - the approach of passing certificates to container elements works with all types of connectivity methods
-* Security - the traffic between devices and ioFabric is encrypted using certificates that are delivered dynamically and can be revoked, changed, etc.
+* Security - the traffic between devices and ioFog is encrypted using certificates that are delivered dynamically and can be revoked, changed, etc.
 
 ##### Cons
 
@@ -100,7 +100,7 @@ If your desire is to move information to a cloud instead of drawing information 
 
 #### Reach Out to Local Resources
 
-All container elements running in ioFabric have the ability to connect on the LAN. Some devices need to be queried for their information. The container element can simply connect to the device and retrieve the desired data. This approach also works very well for common network resources such as network storage, LDAP, and Active Directory resources.
+All container elements running in ioFog have the ability to connect on the LAN. Some devices need to be queried for their information. The container element can simply connect to the device and retrieve the desired data. This approach also works very well for common network resources such as network storage, LDAP, and Active Directory resources.
 
 The container element will need to know how to reach the devices. This information should be delivered through container element properties, of course. If any credentials or certificates are required to make the connections, these can be included in the container element properties configuration, as well.
 
@@ -126,7 +126,7 @@ Some devices communicate directly with gateway hardware. A good example is an AR
 
 The network hardware does not have to be a device gateway. It may also be a radio interface, as well. One example is a device that connects on the TCP/IP network but also has a Bluetooth radio to connect to devices that don't connect on TCP/IP. By using a container element to connect with the Bluetooth interface hardware, full Bluetooth (or Bluetooth Low Energy) connectivity can be brought into the IoT application.
 
-Another example is long-range, low-power wireless networks such as LoRA or Ultra-Narrow Band. These wireless networks provide high battery life for devices and long network range. But they are not TCP/IP networks. The base station for such wireless networks can be connected on the LAN and the ioFabric container element can connect to the base station. This setup allows the most advanced IoT wireless network technology to be integrated into the solution with the highest security and speed possible.
+Another example is long-range, low-power wireless networks such as LoRA or Ultra-Narrow Band. These wireless networks provide high battery life for devices and long network range. But they are not TCP/IP networks. The base station for such wireless networks can be connected on the LAN and the ioFog container element can connect to the base station. This setup allows the most advanced IoT wireless network technology to be integrated into the solution with the highest security and speed possible.
 
 ##### Pros
 
@@ -146,7 +146,7 @@ Another example is long-range, low-power wireless networks such as LoRA or Ultra
 
 If network interfaces such as Bluetooth are not available over the TCP/IP network, it is possible to connect to common interfaces such as a USB Bluetooth dongle. Any resource available on the root Linux installation can be opened to the container element for direct access. With access to the USB interface, a container element can be used to interact with the resources attached to it and circumvent the problem of the hardware missing a TCP/IP interface.
 
-This approach is only recommended as a last resort for several reasons. It requires the gateway hardware or network interface to be physically located near the ioFabric installation. It also requires the container element to access non-segregated system resources such as the USB interface or the RS-232 serial port interface.
+This approach is only recommended as a last resort for several reasons. It requires the gateway hardware or network interface to be physically located near the ioFog installation. It also requires the container element to access non-segregated system resources such as the USB interface or the RS-232 serial port interface.
 
 ##### Pros
 
@@ -157,7 +157,7 @@ This approach is only recommended as a last resort for several reasons. It requi
 
 ##### Cons
 
-* Scale - there are only so many local ports avialable per ioFabric install
+* Scale - there are only so many local ports avialable per ioFog install
 * Complexity - the container element must be built to match the connected hardware and may need to contain a USB driver or similar software
 * Security - system resource segregation is rather difficult in this situation and the container element has privileged access to low-level interfaces
 

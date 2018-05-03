@@ -4,7 +4,7 @@ Every project has different requirements and principles. This should result in a
 
 In addition to an engineering philosophy, every project should have a set of rules, protocols, and expected behaviors for the people involved. These things, coupled with the engineering philosophy, form a tiny little culture (a microculture) that drives the way people interact with each other and with the project iteself.
 
-In order to contribute to ioFabric, you must buy into the project's microculture entirely.
+In order to contribute to ioFog, you must buy into the project's microculture entirely.
 
 A good way to capture the essence of a microculture is to put it in the form of belief statements. The statements may be refined or changed over time by the microculture administrator (usually the owner of the project) in order to serve the project better. For the most part, however, the statements are stable and should be treated as the project's code of conduct.
 

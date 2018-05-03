@@ -1,22 +1,22 @@
-# ioFabric System Container Requirements
+# ioFog System Container Requirements
 
-Every ioFabric instance comes with some default containers. These "system containers" provide functionality that enhances the ioFabric software. The reason this functionality comes in the form of a container is so it can be updated easily for all ioFabric instances. One of the best things about ioFabric is that once the base software that handles containers is running, everything else can be implemented as a container and this minimizes the versioning problems that happen with distributed software.
+Every ioFog instance comes with some default containers. These "system containers" provide functionality that enhances the ioFog software. The reason this functionality comes in the form of a container is so it can be updated easily for all ioFog instances. One of the best things about ioFog is that once the base software that handles containers is running, everything else can be implemented as a container and this minimizes the versioning problems that happen with distributed software.
 
-The first system container is called Core Networking. It is responsible for connecting to instances of the ComSat product, also made by iofog. ComSat creates secure network pipes that move pure bytes from one place to another through all firewalls and other internetworking challenges. So the Core Networking container has functionality that manages connections to the ComSat, understands how to verify the identity of a ComSat, and relays the incoming traffic to the proper place in the ioFabric instance. It also moves the outbound traffic to the ComSat so it can reach its desintation on the other side (which is always unknown from the ioFabric instance's perspective). The Core Networking system container can be operated in two different modes.
+The first system container is called Core Networking. It is responsible for connecting to instances of the ComSat product, also made by iofog. ComSat creates secure network pipes that move pure bytes from one place to another through all firewalls and other internetworking challenges. So the Core Networking container has functionality that manages connections to the ComSat, understands how to verify the identity of a ComSat, and relays the incoming traffic to the proper place in the ioFog instance. It also moves the outbound traffic to the ComSat so it can reach its desintation on the other side (which is always unknown from the ioFog instance's perspective). The Core Networking system container can be operated in two different modes.
 
 In public mode, the container takes in bytes via ComSat socket connections and sends those bytes directly to a designated host on the local network at the proper local port. Then it takes the response bytes and moves them directly back to the ComSat socket that sent the original bytes. This creates a secure pipe from the outside world into a specific port on a specific container... all without revealing any information about the container to the outside world or exposing anything other than the chosen port.
 
-In private mode, the Core Networking system container receives data messages on the ioFabric real-time data message Websocket and sends them on the ComSat socket. It also receives messages on the ComSat socket and publishes them on the ioFabric real-time data message Websocket. Although the Core Networking container does not know where the other end of the ComSat socket is connected, this still results in a many-to-many interconnected web of ioFabrics. The container does not need to know the destination. It only needs to follow the rules of communication while operating in private mode. The ComSat is the only thing that knows which sockets connect together, but it has no knowledge of what is connected to those sockets. And because the ioFabric instances are the initiators of the ComSat socket connections on both sides... if the ComSat becomes compromised, any break in the existing connections to try to re-route them would result in ioFabric instances closing their connections... and when they would try to reestablish connections they would be using non-matching passcodes.
+In private mode, the Core Networking system container receives data messages on the ioFog real-time data message Websocket and sends them on the ComSat socket. It also receives messages on the ComSat socket and publishes them on the ioFog real-time data message Websocket. Although the Core Networking container does not know where the other end of the ComSat socket is connected, this still results in a many-to-many interconnected web of ioFogs. The container does not need to know the destination. It only needs to follow the rules of communication while operating in private mode. The ComSat is the only thing that knows which sockets connect together, but it has no knowledge of what is connected to those sockets. And because the ioFog instances are the initiators of the ComSat socket connections on both sides... if the ComSat becomes compromised, any break in the existing connections to try to re-route them would result in ioFog instances closing their connections... and when they would try to reestablish connections they would be using non-matching passcodes.
 
-The second system container is called Debug Console. Its primary purpose is to give developers the ability to look at ioMessages without needing to build an application to do so. So why can't developers just look at ioMessages directly? Because actual ioMessages move very quickly from one container to another and then they are gone. They either end up going out from an ioFabric instance to another ioFabric instance or going out to some final endpoint such as a data repository, an enterprise cloud system, or something similar. Developers need to look at ioMessages so they can debug their code in production situations and so they can see what the ioMessage data looks like at different points in the container-to-container processing chain.
+The second system container is called Debug Console. Its primary purpose is to give developers the ability to look at ioMessages without needing to build an application to do so. So why can't developers just look at ioMessages directly? Because actual ioMessages move very quickly from one container to another and then they are gone. They either end up going out from an ioFog instance to another ioFog instance or going out to some final endpoint such as a data repository, an enterprise cloud system, or something similar. Developers need to look at ioMessages so they can debug their code in production situations and so they can see what the ioMessage data looks like at different points in the container-to-container processing chain.
 
 The Debug Console captures the ioMessages that are routed to it and makes them available through a REST API. By taking data that is in motion and holding onto it, the Debug Console gives the developer a chance to see what's happening in a live system just like they were running a debugging console on a local build environment. It's a lot like setting a breakpoint in an IDE and looking at the value of some variables or objects.
 
-The Debug Console hosts a REST API on port 80 that provides access to the messages it is holding. In order to talk to the container on port 80, the public port feature of the ComSat technology is used. This allows a developer to see ioMessages moving through a live system from anywhere. This is important because most deployed instances of ioFabric will not be in the same physical location as the developer or the solution maintenance person. To prevent unwanted access to the ioMessages, the Debug Console only responds to REST API requests that provide a valid access token. The Debug Console container gets the current valid access token from its container configuration information.
+The Debug Console hosts a REST API on port 80 that provides access to the messages it is holding. In order to talk to the container on port 80, the public port feature of the ComSat technology is used. This allows a developer to see ioMessages moving through a live system from anywhere. This is important because most deployed instances of ioFog will not be in the same physical location as the developer or the solution maintenance person. To prevent unwanted access to the ioMessages, the Debug Console only responds to REST API requests that provide a valid access token. The Debug Console container gets the current valid access token from its container configuration information.
 
-The third system container is called Stream Viewer. Its primary purpose is to provide developers with a way to see the messages moving through the ioFabric in human way... looking at the content instead of the data. Just like photo editing software lets you look at the picture you are editing, the Stream Viewer lets you see the information moving through ioFabric in its native form. In order to show the messages in a human-viewable format, the Stream Viewer needs to interpret the incoming messages and save them as the appropriate output files. It knows how to format and save the different types of messages because it has a reference table that matches to the known ioMessage InfoTypes and InfoFormats. When an incoming message does not match any known types (there is no entry in the table) then the Stream Viewer just creates a default output file for that message.
+The third system container is called Stream Viewer. Its primary purpose is to provide developers with a way to see the messages moving through the ioFog in human way... looking at the content instead of the data. Just like photo editing software lets you look at the picture you are editing, the Stream Viewer lets you see the information moving through ioFog in its native form. In order to show the messages in a human-viewable format, the Stream Viewer needs to interpret the incoming messages and save them as the appropriate output files. It knows how to format and save the different types of messages because it has a reference table that matches to the known ioMessage InfoTypes and InfoFormats. When an incoming message does not match any known types (there is no entry in the table) then the Stream Viewer just creates a default output file for that message.
 
-The Stream Viewer stores output files with timestamps as the names. They are stored in folders with the names of the publishers. This allows Stream Viewer to identify the proper files when generating responses for its REST API. And speaking of REST APIs... the Stream Viewer provides a REST API on port 80 that allows developers to ask for the list of files for a particular publisher within a particular timeframe. The Stream Viewer also provides an HTTP Web server that serves out the files from the publisher folders when they are directly requested on port 80. By providing both of these services, Stream Viewer gives developers the ability to see what files are available to view and then retrieve them for direct viewing. As an example, let's assume we have a camera connected to ioFabric. The photos coming from the camera are routed into Stream Viewer. The Stream Viewer saves them as their native PNG file type and keeps them in a folder. The developer asks the Stream Viewer REST API for the list of files belonging to that camera and generated in the last 5 minutes. The Stream Viewer gives the file list as JSON output and then the developer loops through the file list and retrieves the PNG files directly from the Stream Viewer like a regular Web server. Now the developer can see what the camera saw in the last 5 minutes... and they can do it from anywhere on the planet!
+The Stream Viewer stores output files with timestamps as the names. They are stored in folders with the names of the publishers. This allows Stream Viewer to identify the proper files when generating responses for its REST API. And speaking of REST APIs... the Stream Viewer provides a REST API on port 80 that allows developers to ask for the list of files for a particular publisher within a particular timeframe. The Stream Viewer also provides an HTTP Web server that serves out the files from the publisher folders when they are directly requested on port 80. By providing both of these services, Stream Viewer gives developers the ability to see what files are available to view and then retrieve them for direct viewing. As an example, let's assume we have a camera connected to ioFog. The photos coming from the camera are routed into Stream Viewer. The Stream Viewer saves them as their native PNG file type and keeps them in a folder. The developer asks the Stream Viewer REST API for the list of files belonging to that camera and generated in the last 5 minutes. The Stream Viewer gives the file list as JSON output and then the developer loops through the file list and retrieves the PNG files directly from the Stream Viewer like a regular Web server. Now the developer can see what the camera saw in the last 5 minutes... and they can do it from anywhere on the planet!
 
 
 #### Core Networking Container Requirements
@@ -25,7 +25,7 @@ The Stream Viewer stores output files with timestamps as the names. They are sto
 
 * Create the number of pool connections specified in the configuration
 
-* If configured in "private" mode, receive and post messages from and to the ioFabric
+* If configured in "private" mode, receive and post messages from and to the ioFog
 
 * If configured in "public" mode, take incoming bytes on the ComSat socket and pipe them directly into a local network request
 
@@ -43,11 +43,11 @@ The Stream Viewer stores output files with timestamps as the names. They are sto
 
 * Send the ComSat socket passcode (provided in container configuration) immediately upon successfully opening each ComSat socket
 
-* When in "private" mode, use the real-time data message Websocket to send and receive messages to and from the ioFabric Local API
+* When in "private" mode, use the real-time data message Websocket to send and receive messages to and from the ioFog Local API
 
 * Use the real-time control message Websocket to make sure any changes to container configuration are received immediately
 
-* When a "new config" control message is received, immediately make a request on the ioFabric REST API to retrieve the updated container configuration
+* When a "new config" control message is received, immediately make a request on the ioFog REST API to retrieve the updated container configuration
 
 * Build this system container with the Java Container SDK
 
@@ -86,7 +86,7 @@ The Stream Viewer stores output files with timestamps as the names. They are sto
 * Parse and consume container configuration according to this example:
 
 <pre>
-	{"mode":"public","host":"comsat1.iofog.org","port":35046,"connectioncount":60,"passcode":"vy7cvpztnhgc3jdptgxp9ttmzxfyfbqh","localhost":"iofabric","localport":60401,"heartbeatfrequency":20000,"heartbeatabsencethreshold":60000}
+	{"mode":"public","host":"comsat1.iofog.org","port":35046,"connectioncount":60,"passcode":"vy7cvpztnhgc3jdptgxp9ttmzxfyfbqh","localhost":"iofog","localport":60401,"heartbeatfrequency":20000,"heartbeatabsencethreshold":60000}
 
 	Or
 
@@ -96,15 +96,15 @@ The Stream Viewer stores output files with timestamps as the names. They are sto
 
 #### Debug Console Container Requirements
 
-* Get the current container configuration from the ioFabric Local API immediately when the container starts
+* Get the current container configuration from the ioFog Local API immediately when the container starts
 
-* Open a control message Websocket connection to the ioFabric Local API and make sure that an open connection is always present
+* Open a control message Websocket connection to the ioFog Local API and make sure that an open connection is always present
 
-* When a new config message is received on the control message Websocket, send an "acknowledge" response and then make a request to the ioFabric Local API REST endpoing to get the current container configuration
+* When a new config message is received on the control message Websocket, send an "acknowledge" response and then make a request to the ioFog Local API REST endpoing to get the current container configuration
 
 * Whenever container configuration is received, use the configuration information to set up the container's operations according to the config information - the template for the configuration information can be found in the Debug Console Specification document
 
-* Open a data message Websocket connection to the ioFabric Local API and make sure that an open connection is always present
+* Open a data message Websocket connection to the ioFog Local API and make sure that an open connection is always present
 
 * Receive messages that arrive on the data message Websocket connection and send an "acknowledge" response and then store each message in the appropriate file
 
@@ -129,15 +129,15 @@ The Stream Viewer stores output files with timestamps as the names. They are sto
 
 #### Stream Viewer Container Requirements
 
-* Get the current container configuration from the ioFabric Local API immediately when the container starts
+* Get the current container configuration from the ioFog Local API immediately when the container starts
 
-* Open a control message Websocket connection to the ioFabric Local API and make sure that an open connection is always present
+* Open a control message Websocket connection to the ioFog Local API and make sure that an open connection is always present
 
-* When a new config message is received on the control message Websocket, send an "acknowledge" response and then make a request to the ioFabric Local API REST endpoing to get the current container configuration
+* When a new config message is received on the control message Websocket, send an "acknowledge" response and then make a request to the ioFog Local API REST endpoing to get the current container configuration
 
 * Whenever container configuration is received, use the configuration information to set up the container's operations according to the config information - the template for the configuration information can be found in the Stream Viewer Specification document
 
-* Open a data message Websocket connection to the ioFabric Local API and make sure that an open connection is always present
+* Open a data message Websocket connection to the ioFog Local API and make sure that an open connection is always present
 
 * Receive messages that arrive on the data message Websocket connection and send an "acknowledge" response and then process each message
 

@@ -1,9 +1,9 @@
 /*******************************************************************************
  * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *   Saeid Baghbidi
@@ -155,7 +155,7 @@ public class Client {
 				+ "                     /#GPS DD.DDD,DD.DDD Use auto to get coordinates by IP,\n"
 				+ "                                         use off to forbid gps,\n"
 				+ "                                         use GPS coordinates in DD format to set them manually\n" + "\n" + "\n"
-				+ "Report bugs to: bugs@iofog.org\n" + "ioFog home page: http://iofog.org\n"
+				+ "Report bugs to: edgemaster@iofog.org\n" + "ioFog home page: http://iofog.org\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 
 		return help.toString();

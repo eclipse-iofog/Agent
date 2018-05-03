@@ -293,7 +293,7 @@ public enum CommandLineAction {
                 "										  shut down\\n" +
                 "\\n" +
                 "\\n" +
-                "Report bugs to: bugs@iofog.org\\n" +
+                "Report bugs to: edgemaster@iofog.org\\n" +
                 "ioFog home page: http://iofog.com\\n" +
                 "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
     }

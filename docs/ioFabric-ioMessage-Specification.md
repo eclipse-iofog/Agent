@@ -80,7 +80,7 @@ A listing for JSON, XML, and raw bytes is included in this document after the ma
 |*Data Type*|Text|
 |*Key*|Publisher|
 |*Required*|Yes|
-|*Description*|This is the identifier of the element that is sending the message. It can be used to determine routing or guarantee privacy and security. Because each element is assigned a UUID during configuration, even across ioFabric instances no message should be received by an unintended entity.|
+|*Description*|This is the identifier of the element that is sending the message. It can be used to determine routing or guarantee privacy and security. Because each element is assigned a UUID during configuration, even across ioFog instances no message should be received by an unintended entity.|
 </pre>
 
 #### Authentication Identifier

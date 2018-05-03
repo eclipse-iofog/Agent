@@ -1,6 +1,6 @@
-# Creating and Publishing the ioFabric Linux Installation Packages
+# Creating and Publishing the ioFog Linux Installation Packages
 
-Every time the ioFabric software gets updated, the installation packages must also be updated. This document lists all of the steps required in order to build and publish the packages. It requires login credentials for the build server and for the code GitHub repository. The credentials are not included in this document for security reasons.
+Every time the ioFog software gets updated, the installation packages must also be updated. This document lists all of the steps required in order to build and publish the packages. It requires login credentials for the build server and for the code GitHub repository. The credentials are not included in this document for security reasons.
 
 #### Build and check in the latest .jar file
 
@@ -14,27 +14,6 @@ Using the credentials that were provided to you, SSH into the server at 166.78.1
 	ssh root@166.78.135.165
 </pre>
 
-
-#### Retrieve the latest .jar file and code base
-
-Change directories to the repository local folder and then pull the latest code using the GitHub account password provided to you, and make sure that the iofabric.jar file has changed:
-
-<pre>
-	cd /iofabric-repo-clone/iofabric
-	git pull
-</pre>
-
-
-#### Copy the new iofabric.jar file
-
-The new iofabric.jar file needs to be copied to 2 packaging directories. One is for Debian-based Linux packages and the other is for Red Hat-based Linux packages:
-
-<pre>
-	cp /iofabric-repo-clone/iofabric/iofabric.jar /iofabric-packaging/usr/bin/iofabric.jar
-	cp /iofabric-repo-clone/iofabric/iofabric.jar /iofabric-packaging-rpm/usr/bin/iofabric.jar
-</pre>
-
-
 #### Build the new Debian package and publish it
 
 Change directories into the Debian packaging folder. Make a new package build, and BE SURE to increment the version number by .01 every time you do this. Otherwise the publishing will not work properly.
@@ -42,7 +21,7 @@ Change directories into the Debian packaging folder. Make a new package build, a
 <pre>
 	Change directory:
 
-	cd /iofabric-packaging
+	cd /iofog-packaging
 	
 	See that the other Debian package(s) are present (they have a .deb file extension) and note the current highest version number:
 
@@ -50,7 +29,7 @@ Change directories into the Debian packaging folder. Make a new package build, a
 
 	Create the package file and increment the version by 0.01:
 
-	fpm -s dir -t deb -n "iofabric" -v 1.XX -a all --deb-no-default-config-files --after-install debian.sh etc usr var
+	fpm -s dir -t deb -n "iofog" -v 1.XX -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr var
 
 	Verify that the package was produced and note the file name:
 
@@ -58,7 +37,7 @@ Change directories into the Debian packaging folder. Make a new package build, a
 
 	Publish the package file to the Package Cloud with the new file name:
 
-	package_cloud push iofog/iofabric XXXXXXXX.deb
+	package_cloud push iofog/iofog XXXXXXXX.deb
 
 	Repeat the publishing step until you have published for all of the following Linux versions:
 
@@ -88,7 +67,7 @@ Change directories into the RPM packaging folder. Make a new package build, and 
 <pre>
 	Change directory:
 
-	cd /iofabric-packaging-rpm
+	cd /iofog-packaging-rpm
 	
 	See that the other RPM package(s) are present (they have a .rpm file extension) and note the current highest version number:
 
@@ -96,7 +75,7 @@ Change directories into the RPM packaging folder. Make a new package build, and 
 
 	Create the package file and increment the version by 0.01:
 
-	fpm -s dir -t rpm -n "iofabric" -v 1.XX -a all --rpm-os 'linux' --after-install rpm.sh etc usr var
+	fpm -s dir -t rpm -n "iofog" -v 1.XX -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr var
 
 	Verify that the package was produced and note the file name:
 
@@ -104,7 +83,7 @@ Change directories into the RPM packaging folder. Make a new package build, and 
 
 	Publish the package file to the Package Cloud with the new file name:
 
-	package_cloud push iofog/iofabric XXXXXXXX.rpm
+	package_cloud push iofog/iofog XXXXXXXX.rpm
 
 	Repeat the publishing step until you have published for all of the following Linux versions:
 
