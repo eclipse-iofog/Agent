@@ -294,7 +294,7 @@ public enum CommandLineAction {
                 "\\n" +
                 "\\n" +
                 "Report bugs to: edgemaster@iofog.org\\n" +
-                "ioFog home page: http://iofog.com\\n" +
+                "ioFog home page: http://iofog.org\\n" +
                 "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
     }
 
