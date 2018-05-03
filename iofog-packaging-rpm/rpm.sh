@@ -25,6 +25,9 @@ fi
 #echo "Check for config.xml"
 
 mkdir -p /var/backups/iofog
+mkdir -p /var/log/iofog
+mkdir -p /var/lib/iofog
+mkdir -p /var/run/iofog
 
 chown -R :iofog /etc/iofog
 chown -R :iofog /var/log/iofog
