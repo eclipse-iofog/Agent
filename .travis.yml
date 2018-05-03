@@ -61,7 +61,7 @@ jobs:
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; fpm -s dir -t deb -n \"iofog${DEV}\" 
       -v $VERSION -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade 
-      upgrade.sh --after-upgrade debian.sh etc usr var; package_cloud push iofog/iofog/ubuntu/precise 
+      upgrade.sh --after-upgrade debian.sh etc usr; package_cloud push iofog/iofog/ubuntu/precise 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
       package_cloud push iofog/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iofog/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/wily 
@@ -73,7 +73,7 @@ jobs:
       iofog/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/raspbian/stretch 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
       cd /iofog-packaging-rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' 
-      --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr var; 
+      --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr; 
       package_cloud push iofog/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
       push iofog/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/fedora/24 
       iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
