@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.field_agent;
 
-//import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -546,14 +546,13 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	private Set<String> getToRemoveWithCleanUpIds(JsonObject result) throws Exception {
-//		try {
-//			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
-//			ObjectMapper mapper = new ObjectMapper();
-//			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
-//		} catch (NullPointerException e) { //temp catch for old for controller versions
-//			return Collections.emptySet();
-//		}
-		return new HashSet<>();
+		try {
+			JsonArray containersToClean = result.getJsonArray("elementToCleanUpIds");
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(containersToClean.toString(), mapper.getTypeFactory().constructCollectionType(Set.class, String.class));
+		} catch (NullPointerException e) { //temp catch for old for controller versions
+			return Collections.emptySet();
+		}
 	}
 
 	private Function<JsonObject, Element> containerJsonObjectToElementFunction() {
