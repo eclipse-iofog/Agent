@@ -37,7 +37,7 @@ public class Constants {
 		NOT_PROVISIONED, BROKEN, OK
 	}
 	
-	public static final String VERSION = "0.71";
+	public static final String VERSION = "0.54";
 
 	public static final int NUMBER_OF_MODULES = 7;
 
