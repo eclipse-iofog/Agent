@@ -112,7 +112,7 @@ Some hardware systems, such as ID badge readers and door locks in a corporate of
 * Repackaging - if code already exists for connecting to devices or network resources, it may be possible to simply package it as a container element
 * Security - because the container element initiates the connection, there is less of an attack surface on the container element itself
 
-#####Cons
+##### ons
 
 * Efficiency - if the data coming from devices or network resources is retrieved frequently, many extra CPU cycles can be spent polling
 * Scale - if there are many device connections required, the container element itself will have to establish and manage them

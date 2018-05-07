@@ -1,22 +1,22 @@
 # Fog Controller API V2 Specification
 
-#####This is the 2nd version of the Fog Controller API. The first version remains active and unchanged.
+##### his is the 2nd version of the Fog Controller API. The first version remains active and unchanged.
 
 Each ioFog instance can do very little without connecting to a fog controller. In fact, connecting to a fog controller is what makes a particular ioFog instance become an actual part of the I/O Compute Fog. Every fog controller will offer this API exactly as it is shown here. This allows an ioFog instance to connect to fog controller and operate properly.
 
 The API endpoints are listed here with a short description and the actual inputs and outputs. The actual IP address or domain name of the fog controller will vary from deployment to deployment. It is mandatory that HTTPS be used, and both domain names and IP addresses are allowed for connecting to a fog controller. The placeholder address of 1.2.3.4 is used in this document for the location of the fog controller.
 
-####Get Server Status
+#### Get Server Status
 
 This endpoint just gives you a response from the fog controller with its status. It can be used for simple "ping" purposes to see if the fog controller is online and operational.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/status
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -25,32 +25,32 @@ This endpoint just gives you a response from the fog controller with its status.
 	}
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	None
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Get ioFog Instance ID and Access Token
+#### Get ioFog Instance ID and Access Token
 
 This endpoint registers the ioFog instance that is submitting the provisioning key and delivers the ioFog instance ID along with an access token that must be submitted for any further API interaction. The access token remains valid until it is revoked. If it becomes invalid, the ioFog instance must be re-provisioned to re-establish access to the fog controller API.
 
 The ioFog Instance ID provided by this endpoint is a 128-bit random ID formatted in base58. We use base58 for compactness, readability, portability, and transmission safety between systems.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/provision/key/A8842h/fogtype/1
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -61,31 +61,31 @@ The ioFog Instance ID provided by this endpoint is a 128-bit random ID formatted
 	}
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	key - the provisioning key provided via the command line (example shown here as a8842h)
 	fogtype - an integer representing the system architecture of this ioFog instance
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Post ioFog Instance Status Information
+#### Post ioFog Instance Status Information
 
 This endpoint allows the ioFog instance to send its status information to the fog controller. This should be done regularly, but not so often as to waste bandwidth and CPU resources.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/status/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -94,7 +94,7 @@ This endpoint allows the ioFog instance to send its status information to the fo
 	}
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -102,7 +102,7 @@ This endpoint allows the ioFog instance to send its status information to the fo
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
     daemonstatus - ioFog daemon status string (example: running)
@@ -153,17 +153,17 @@ This endpoint allows the ioFog instance to send its status information to the fo
 </pre>
 
 
-####Get ioFog Configuration
+#### Get ioFog Configuration
 
 This endpoint provides the configuration for the ioFog instance. Note that some configuration items, such as the fog controller URL and certificate path, are not featured here. That's for security reasons. If someone gains control of a fog controller, we don't want them to be able to tell the ioFog instances to listen to a different fog controller. This also prevents accidental disconnection of ioFog instances from the fog controller.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/config/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -184,7 +184,7 @@ This endpoint provides the configuration for the ioFog instance. Note that some 
     }
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -192,24 +192,24 @@ This endpoint provides the configuration for the ioFog instance. Note that some 
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Post ioFog Configuration
+#### Post ioFog Configuration
 
 This endpoint allows the ioFog instance to send its configuration to the fog controller. It should send the updated configuration to this endpoint whenever a change is made locally.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/config/changes/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -218,7 +218,7 @@ This endpoint allows the ioFog instance to send its configuration to the fog con
 	}
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -226,7 +226,7 @@ This endpoint allows the ioFog instance to send its configuration to the fog con
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
     networkinterface - example: p2p1
@@ -249,17 +249,17 @@ This endpoint allows the ioFog instance to send its configuration to the fog con
 </pre>
 
 
-####Get ioFog Changes List
+#### Get ioFog Changes List
 
 This endpoint lists the current changes for the ioFog instance. Much of the time there will not be any changes. The ioFog instance should use this endpoint to check frequently, such as every 20 seconds. The changes are calculated based upon the timestamp that is sent in the querystring parameters. The timestamp must be stored locally in the ioFog instance and passed to this endpoint on every request. It should be updated whenever a successful call to this endpoint is completed, and should use the timestamp provided in the response.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/changes/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg/timestamp/1234567890123
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -276,7 +276,7 @@ This endpoint lists the current changes for the ioFog instance. Much of the time
     }
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -286,14 +286,14 @@ This endpoint lists the current changes for the ioFog instance. Much of the time
     timestamp - the timestamp from the last received results of this specific API call (example shown here as 1234567890123)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Get ioFog Container List
+#### Get ioFog Container List
 
 This endpoint provides the current list of containers that should be running on the ioFog instance. Containers should be added, removed, and restarted based upon this list. A change in port mappings should result in a restart because containers can only have their port mappings updated when they are being started. When the "rebuild" flag is set to true, the Docker daemon should be asked to build the container again. If there is an updated image in the registry, Docker will see the change and flush its cache and build the container from the updated image. Triggering container updates is the purpose of this "rebuild" flag.
 
@@ -301,13 +301,13 @@ When the "roothostaccess" flag is set to true, the container should have its net
 
 The container IDs provided by this endpoint are 128-bit random IDs formatted in base58. We use base58 for compactness, readability, portability, and transmission safety between systems.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/containerlist/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -349,7 +349,7 @@ The container IDs provided by this endpoint are 128-bit random IDs formatted in 
     }
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -357,24 +357,24 @@ The container IDs provided by this endpoint are 128-bit random IDs formatted in 
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Get ioFog Container Configuration
+#### Get ioFog Container Configuration
 
 This endpoint provides the JSON configuration strings for all of the containers that should be running on the ioFog instance. Note that the container configuration JSON strings are escaped. This is because they are being delivered inside a JSON response and we don't want these configuration strings to become part fo the actual response object. We want the strings to be unescaped and passed to the containers without being parsed.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/containerconfig/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -401,7 +401,7 @@ This endpoint provides the JSON configuration strings for all of the containers 
     }
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -409,24 +409,24 @@ This endpoint provides the JSON configuration strings for all of the containers 
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Get ioFog Routing
+#### Get ioFog Routing
 
 This endpoint provides the routing plan for all containers. Note that no container ever specifies its inputs. It only specifies its outputs. This is because the vast majority of IoT data streams begins with a container that does not take in ioMessages. It just connects to some external device or external system. Then it publishes ioMessages and the routing chain begins as a sequence of outputs from container to container.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/routing/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -456,7 +456,7 @@ This endpoint provides the routing plan for all containers. Note that no contain
     }
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -464,24 +464,24 @@ This endpoint provides the routing plan for all containers. Note that no contain
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None
 </pre>
 
 
-####Get ioFog Registries
+#### Get ioFog Registries
 
 This endpoint provides the list of Docker container registries that the ioFog instance needs to load container images from. Login credentials are provided for each registry. Information about whether or not a registry is secure is also provided. If a registry is not secure, it should be added to the Docker daemon "insecure" list. If a registry is secure, it may or may not require a certificate in order to access it. If it does, the certificate will be provided directly in the API response. Note that this field may contain intermediate certificates bundled into the certificate chain, making this a rather large amount of text. The certificate example shown in this documentation is merely a placeholder.
 
-#####Endpoint
+##### ndpoint
 
 <pre>
 	https://1.2.3.4/api/v2/instance/registries/id/4sd9whcfh/token/3498wfesdhusdvkjh3refkjhsdpaohrg
 </pre>
 
-#####Response
+##### esponse
 
 <pre>
 	{
@@ -511,7 +511,7 @@ This endpoint provides the list of Docker container registries that the ioFog in
     }
 </pre>
 
-#####Querystring Parameters
+##### uerystring Parameters
 
 <pre>
 	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
@@ -519,7 +519,7 @@ This endpoint provides the list of Docker container registries that the ioFog in
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
 
-#####POST Parameters
+##### OST Parameters
 
 <pre>
 	None

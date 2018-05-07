@@ -8,7 +8,7 @@ ioFog is a service that runs constantly in the background on a Linux machine. It
 
 There should be an ioFog code base for every processing platform that becomes part of the I/O compute fog. Network connectivity, process invocation, thread management, and other details of an ioFog will vary from platform to platform. The same ioFog principles apply to every version, but the implementation of the principles should match the native languages and structures best suited for the platform.
 
-###Principles of an ioFog:
+### Principles of an ioFog:
 
 * Never go down
 * Respond immediately to the fog controller
