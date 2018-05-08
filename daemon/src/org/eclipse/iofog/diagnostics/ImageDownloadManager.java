@@ -7,6 +7,7 @@ import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import javax.json.JsonObject;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,10 +29,10 @@ public class ImageDownloadManager {
         } else {
             throw new IllegalArgumentException();
         }
+
         String imageZip = elementId + ".tar.gz";
 
-        CommandShellResultSet<List<String>, List<String>> resultSetForCreateZip =
-                CommandShellExecutor.executeCommand("docker save " + image + " | gzip -c > " + imageZip);
+        CommandShellExecutor.executeCommand("docker save " + image + " | gzip -c > " + imageZip);
 
         CommandShellResultSet<List<String>, List<String>> resultSetWithPath =
                 CommandShellExecutor.executeCommand("readlink -f " + imageZip);
@@ -40,7 +41,10 @@ public class ImageDownloadManager {
         } else {
             String path = resultSetWithPath.getValue().get(0);
             try {
-                orchestrator.sendFileToController("imageSnapshotPut", getFileByFilePath(path));
+                JsonObject result = orchestrator.sendFileToController("imageSnapshotPut", getFileByFilePath(path));
+                if ("ok".equals(result.getString("status"))) {
+                    getFileByFilePath(path).delete();
+                }
             } catch (Exception e) {
                 logWarning(MODULE_NAME, "unable send image snapshot path : " + e.getMessage());
             }
