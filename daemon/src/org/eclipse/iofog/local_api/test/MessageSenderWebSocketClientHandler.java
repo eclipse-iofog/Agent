@@ -28,7 +28,12 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHandler<Object>{
+
+	private static final String MODULE_NAME = "MessageSenderWebSocketClientHandler";
 
 	private static int testCounter = 0;
 
@@ -64,7 +69,7 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 	}
 
 	@Override
-	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+	public void channelRead0(ChannelHandlerContext ctx, Object msg) {
 		System.out.println("client channelRead0 "+ctx);
 		Channel ch = ctx.channel();
 		if (!handshaker.isHandshakeComplete()) {
@@ -76,15 +81,14 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		if(msg instanceof WebSocketFrame){
 			WebSocketFrame frame = (WebSocketFrame)msg;
 			if(frame instanceof BinaryWebSocketFrame){
-				handleWebSocketFrame(ctx,  frame);
+				handleWebSocketFrame(frame);
 			}
 			return;
 		}
 		sendRealTimeMessageTest(ctx);
-		return;
 	}
 
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	private void handleWebSocketFrame(WebSocketFrame frame) {
 		System.out.println("In client handleWebSocketFrame.....");
 
 		if (frame instanceof BinaryWebSocketFrame) {
@@ -114,16 +118,14 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 				if (size > 0) {
 					long timeStamp = BytesUtil.bytesToLong(Arrays.copyOfRange(byteArray, pos, pos + size));
 					System.out.println("Timestamp: " + timeStamp + "\n");
-					pos += size;
 				}
 
 			}
 		}
-		return;
 
 	}
 
-	public void sendRealTimeMessageTest(ChannelHandlerContext ctx){
+	private void sendRealTimeMessageTest(ChannelHandlerContext ctx){
 		System.out.println("In clienttest : sendRealTimeMessageTest");
 		System.out.println("Test Counter: " + testCounter);
 
@@ -176,24 +178,22 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 		m.setDifficultyTarget(diffTarget);
 		m.setInfoType(infotype);
 		m.setInfoFormat(infoformat);
-		m.setContextData(contextData.getBytes());
-		m.setContentData(contentData.getBytes());
+		m.setContextData(contextData.getBytes(UTF_8));
+		m.setContentData(contentData.getBytes(UTF_8));
 
-		//Send Total Length of IOMessage - 4 bytes 
-		int totalMsgLength = 0;
-
-		byte[] bmsg = null;
+		//Send Total Length of IOMessage - 4 bytes
 		try {
-			bmsg = m.getBytes();
-		} catch (Exception e) {}
-		totalMsgLength = bmsg.length;
-		System.out.println("Total message length: "+ totalMsgLength);
-		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-		buffer1.writeBytes(bmsg);
+			byte[] bmsg = m.getBytes();
+			int totalMsgLength = bmsg.length;
+			System.out.println("Total message length: "+ totalMsgLength);
+			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+			buffer1.writeBytes(bmsg);
 
-		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		System.out.println("Send RealTime Message : done");
-		return;
+			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
+			System.out.println("Send RealTime Message : done");
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 

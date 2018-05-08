@@ -50,7 +50,7 @@ import org.hornetq.core.settings.impl.AddressSettings;
  */
 public class MessageBusServer {
 	
-	private final String MODULE_NAME = "Message Bus Server";
+	private static final String MODULE_NAME = "Message Bus Server";
 	private ClientSessionFactory sf;
 	private HornetQServer server;
 	private static ClientSession messageBusSession;
@@ -60,16 +60,16 @@ public class MessageBusServer {
 	private Map<String, ClientProducer> producers;
 	private ServerLocator serverLocator;
 	
-	protected boolean isServerActive() {
+	boolean isServerActive() {
 		return server.isActive();
 	}
 	
-	protected boolean isProducerClosed(String name) {
+	boolean isProducerClosed(String name) {
 		ClientProducer producer = producers.get(name);
 		return producer == null || producer.isClosed();
 	}
 	
-	protected boolean isConsumerClosed(String name) {
+	boolean isConsumerClosed(String name) {
 		ClientConsumer consumer = consumers.get(name); 
 		return consumer == null || consumer.isClosed();
 	}
@@ -79,7 +79,7 @@ public class MessageBusServer {
 	 * 
 	 * @throws Exception
 	 */
-	protected void startServer() throws Exception {
+	void startServer() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "starting...");
 		AddressSettings addressSettings = new AddressSettings();
 		long memoryLimit = (long) (Configuration.getMemoryLimit() * 1_000_000);
@@ -125,7 +125,7 @@ public class MessageBusServer {
 	 * 
 	 * @throws Exception
 	 */
-	protected void initialize() throws Exception {
+	void initialize() throws Exception {
 		messageBusSession = sf.createSession(true, true, 0);
 		QueueQuery queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.address));
 		if (queueQuery.isExists())
@@ -149,7 +149,7 @@ public class MessageBusServer {
 	 * @param name - ID of {@link Element}
 	 * @throws Exception
 	 */
-	protected void createCosumer(String name) throws Exception {
+	void createCosumer(String name) throws Exception {
 		if (consumers == null)
 			consumers = new ConcurrentHashMap<>();
 
@@ -163,7 +163,7 @@ public class MessageBusServer {
 	 * @param receiver - ID of {@link Element}
 	 * @return {@link ClientConsumer}
 	 */
-	protected ClientConsumer getConsumer(String receiver) {
+	ClientConsumer getConsumer(String receiver) {
 		if (consumers == null || !consumers.containsKey(receiver))
 			try {
 				createCosumer(receiver);
@@ -178,7 +178,7 @@ public class MessageBusServer {
 	 * 
 	 * @param name - ID of {@link Element}
 	 */
-	protected void removeConsumer(String name) {
+	void removeConsumer(String name) {
 		if (consumers == null)
 			return;
 		consumers.remove(name);
@@ -190,7 +190,7 @@ public class MessageBusServer {
 	 * @param name - ID of {@link Element}
 	 * @throws Exception
 	 */
-	protected void createProducer(String name) throws Exception {
+	void createProducer(String name) throws Exception {
 		if (producers == null)
 			producers = new ConcurrentHashMap<>();
 		ClientProducer producer = messageBusSession.createProducer(Constants.address);
@@ -203,7 +203,7 @@ public class MessageBusServer {
 	 * @param publisher - ID of {@link Element}
 	 * @return {@link ClientProducer}
 	 */
-	protected ClientProducer getProducer(String publisher) {
+	ClientProducer getProducer(String publisher) {
 		if (producers == null || !producers.containsKey(publisher))
 			try {
 				createProducer(publisher);
@@ -218,17 +218,17 @@ public class MessageBusServer {
 	 * 
 	 * @param name - ID of {@link Element}
 	 */
-	protected void removeProducer(String name) {
+	void removeProducer(String name) {
 		if (producers == null)
 			return;
 		producers.remove(name);
 	}
 	
-	protected static ClientSession getSession() {
+	static ClientSession getSession() {
 		return messageBusSession;
 	}
 	
-	public static ClientProducer getCommandlineProducer() {
+	static ClientProducer getCommandlineProducer() {
 		return commandlineProducer;
 	}
 
@@ -237,7 +237,7 @@ public class MessageBusServer {
 	 * 
 	 * @throws Exception
 	 */
-	protected void stopServer() throws Exception {
+	void stopServer() throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "stopping...");
 		if (consumers != null)
 			consumers.forEach((key, value) -> {
@@ -270,7 +270,7 @@ public class MessageBusServer {
 	 * sets memory usage limit of HornetQ server
 	 * 
 	 */
-	public void setMemoryLimit() {
+	void setMemoryLimit() {
 		AddressSettings addressSettings = new AddressSettings();
 		long memoryLimit = (long) (Configuration.getMemoryLimit() * 1_000_000);
 		addressSettings.setMaxSizeBytes(memoryLimit);

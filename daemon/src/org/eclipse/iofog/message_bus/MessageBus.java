@@ -12,20 +12,23 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
+import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.element.Route;
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ModulesStatus;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
+import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
+import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
 
 /**
  * Message Bus module
@@ -33,9 +36,9 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class MessageBus {
+public class MessageBus implements IOFogModule {
 	
-	private final String MODULE_NAME = "Message Bus";
+	final static String MODULE_NAME = "Message Bus";
 
 	private MessageBusServer messageBusServer;
 	private Map<String, Route> routes;
@@ -44,11 +47,20 @@ public class MessageBus {
 	private MessageIdGenerator idGenerator;
 	private static MessageBus instance;
 	private ElementManager elementManager;
-	private Object updateLock = new Object();
+	private final Object updateLock = new Object();
 	
 	private long lastSpeedTime, lastSpeedMessageCount;
-	
-	private MessageBus() {
+
+	private MessageBus() {}
+
+	@Override
+	public int getModuleIndex() {
+		return MESSAGE_BUS;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
 	}
 	
 	public static MessageBus getInstance() {
@@ -56,7 +68,6 @@ public class MessageBus {
 			synchronized (MessageBus.class) {
 				if (instance == null) { 
 					instance = new MessageBus();
-					instance.start();
 				}
 			}
 		}
@@ -144,7 +155,7 @@ public class MessageBus {
 			try {
 				Thread.sleep(Constants.SPEED_CALCULATION_FREQ_MINUTES * 60 * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "calculating message processing speed");
+				logInfo("calculating message processing speed");
 
 				long now = System.currentTimeMillis();
 				long msgs = StatusReporter.getMessageBusStatus().getProcessedMessages();
@@ -153,7 +164,9 @@ public class MessageBus {
 				StatusReporter.setMessageBusStatus().setAverageSpeed(speed);
 				lastSpeedMessageCount = msgs;
 				lastSpeedTime = now;
-			} catch (Exception e) {}
+			} catch (Exception exp) {
+				logWarning(exp.getMessage());
+			}
 		}
 	};
 	
@@ -166,54 +179,53 @@ public class MessageBus {
 			try {
 				Thread.sleep(5000);
 
-				LoggingService.logInfo(MODULE_NAME, "check message bus server status");
+				logInfo("check message bus server status");
 				if (!messageBusServer.isServerActive()) {
-					LoggingService.logWarning(MODULE_NAME, "server is not active. restarting...");
+					logWarning("server is not active. restarting...");
 					stop();
 					try {
 						messageBusServer.startServer();
-						LoggingService.logInfo(MODULE_NAME, "server restarted");
+						logInfo("server restarted");
 						init();
 					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME, "server restart failed --> " + e.getMessage());
+						logWarning("server restart failed --> " + e.getMessage());
 					}
 				}
 
-				publishers.entrySet().forEach(entry -> {
-					String publisher = entry.getKey();
+				publishers.forEach((publisher, value) -> {
 					if (messageBusServer.isProducerClosed(publisher)) {
-						LoggingService.logWarning(MODULE_NAME, "producer module for " + publisher + " stopped. restarting...");
-						entry.getValue().close();
+						logWarning("producer module for " + publisher + " stopped. restarting...");
+						value.close();
 						Route route = routes.get(publisher);
-						if (route.equals(null) || route.getReceivers() == null || route.getReceivers().size() == 0) {
+						if (route == null || route.getReceivers() == null || route.getReceivers().size() == 0) {
 							publishers.remove(publisher);
 						} else {
 							try {
 								messageBusServer.createProducer(publisher);
 								publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
-								LoggingService.logInfo(MODULE_NAME, "producer module restarted");
+								logInfo("producer module restarted");
 							} catch (Exception e) {
-								LoggingService.logWarning(MODULE_NAME, "unable to restart producer module for " + publisher + " --> " + e.getMessage());
+								logWarning("unable to restart producer module for " + publisher + " --> " + e.getMessage());
 							}
 						}
 					}
 				});
 
-				receivers.entrySet().forEach(entry -> {
-					String receiver = entry.getKey();
+				receivers.forEach((receiver, value) -> {
 					if (messageBusServer.isConsumerClosed(receiver)) {
-						LoggingService.logWarning(MODULE_NAME, "consumer module for " + receiver + " stopped. restarting...");
-						entry.getValue().close();
+						logWarning("consumer module for " + receiver + " stopped. restarting...");
+						value.close();
 						try {
 							messageBusServer.createCosumer(receiver);
 							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
-							LoggingService.logInfo(MODULE_NAME, "consumer module restarted");
+							logInfo("consumer module restarted");
 						} catch (Exception e) {
-							LoggingService.logWarning(MODULE_NAME, "unable to restart consumer module for " + receiver + " --> " + e.getMessage());
+							logWarning("unable to restart consumer module for " + receiver + " --> " + e.getMessage());
 						}
 					}
 				});
-			} catch (Exception e) {
+			} catch (Exception exp) {
+				logWarning(exp.getMessage());
 			}
 		}
 	};
@@ -229,8 +241,7 @@ public class MessageBus {
 			List<String> newPublishers = new ArrayList<>();
 			List<String> newReceivers = new ArrayList<>();
 			
-			if (newRoutes != null) {
-				newRoutes.entrySet()
+			newRoutes.entrySet()
 					.stream()
 					.filter(route -> route.getValue() != null)
 					.filter(route -> route.getValue().getReceivers() != null)
@@ -240,14 +251,13 @@ public class MessageBus {
 								.stream().filter(item -> !newReceivers.contains(item))
 								.collect(Collectors.toList()));
 					});
-			}
-			
-			publishers.entrySet().forEach(entry -> {
-				if (!newPublishers.contains(entry.getKey())) {
-					entry.getValue().close();
-					messageBusServer.removeProducer(entry.getKey());
+
+			publishers.forEach((key, value) -> {
+				if (!newPublishers.contains(key)) {
+					value.close();
+					messageBusServer.removeProducer(key);
 				} else {
-					entry.getValue().updateRoute(newRoutes.get(entry.getKey()));
+					value.updateRoute(newRoutes.get(key));
 				}
 			});
 			publishers.entrySet().removeIf(entry -> !newPublishers.contains(entry.getKey()));
@@ -257,10 +267,10 @@ public class MessageBus {
 					.collect(Collectors.toMap(publisher -> publisher, 
 							publisher -> new MessagePublisher(publisher, newRoutes.get(publisher), messageBusServer.getProducer(publisher)))));
 
-			receivers.entrySet().forEach(entry -> {
-				if (!newReceivers.contains(entry.getKey())) {
-					entry.getValue().close();
-					messageBusServer.removeConsumer(entry.getKey());
+			receivers.forEach((key, value) -> {
+				if (!newReceivers.contains(key)) {
+					value.close();
+					messageBusServer.removeConsumer(key);
 				}
 			});
 			receivers.entrySet().removeIf(entry -> !newReceivers.contains(entry.getKey()));
@@ -272,13 +282,13 @@ public class MessageBus {
 
 			routes = newRoutes;
 
-			StatusReporter.getMessageBusStatus()
-				.getPublishedMessagesPerElement().entrySet().removeIf(entry -> {
-					return !elementManager.elementExists(entry.getKey());
-				});
-			elementManager.getElements().forEach(e -> {
-				if (!StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().entrySet().contains(e.getElementId()))
-						StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement().put(e.getElementId(), 0l);
+			List<Element> latestElements = elementManager.getLatestElements();
+			Map<String, Long> publishedMessagesPerElement = StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement();
+			publishedMessagesPerElement.keySet().removeIf(key -> !elementManager.elementExists(latestElements, key));
+			latestElements.forEach(e -> {
+				if (!publishedMessagesPerElement.keySet().contains(e.getElementId())) {
+					publishedMessagesPerElement.put(e.getElementId(), 0L);
+				}
 			});
 		}
 	}
@@ -301,18 +311,20 @@ public class MessageBus {
 		
 		messageBusServer = new MessageBusServer();
 		try {
-			LoggingService.logInfo(MODULE_NAME, "STARTING MESSAGE BUS SERVER");
+			logInfo("STARTING MESSAGE BUS SERVER");
 			messageBusServer.startServer();
 			messageBusServer.initialize();
 		} catch (Exception e) {
 			try {
 				messageBusServer.stopServer();
-			} catch (Exception e1) {}
-			LoggingService.logWarning(MODULE_NAME, "unable to start message bus server --> " + e.getMessage());
-			StatusReporter.setSupervisorStatus().setModuleStatus(Constants.MESSAGE_BUS, ModulesStatus.STOPPED);
+			} catch (Exception exp) {
+				logWarning(exp.getMessage());
+			}
+			logWarning("unable to start message bus server --> " + e.getMessage());
+			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
 		
-		LoggingService.logInfo(MODULE_NAME, "MESSAGE BUS SERVER STARTED");
+		logInfo("MESSAGE BUS SERVER STARTED");
 		init();
 
 		new Thread(calculateSpeed, "MessageBus : CalculateSpeed").start();
@@ -331,7 +343,9 @@ public class MessageBus {
 			publisher.close();
 		try {
 			messageBusServer.stopServer();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(exp.getMessage());
+		}
 	}
 
 	/**

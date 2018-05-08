@@ -12,10 +12,9 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
-import org.eclipse.iofog.utils.logging.LoggingService;
+import java.util.Arrays;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * provides methods for "number <=> byte array" conversions
@@ -28,17 +27,7 @@ public class BytesUtil {
 	private static final String MODULE_NAME = "BytesUtil";
 
 	public static byte[] copyOfRange(byte[] src, int from, int to) {
-		if (from < 0 || from >= src.length || to < from || to > src.length)
-			return new byte[] {};
-		byte[] tmp = new byte[from];
-		byte[] result = new byte[to - from];
-		try (ByteArrayInputStream input = new ByteArrayInputStream(src)){
-			input.read(tmp, 0, tmp.length);
-			input.read(result, 0, result.length);
-		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		}
-		return result;
+		return (from < 0 || from >= src.length || to < from || to > src.length) ? new byte[]{} : Arrays.copyOfRange(src, from, to);
 	}
 	
 	public static byte[] longToBytes(long x) {
@@ -51,8 +40,8 @@ public class BytesUtil {
 
 	public static long bytesToLong(byte[] bytes) {
 		long result = 0;
-		for (int i = 0; i < bytes.length; i++) {
-			result = (result << 8) + (bytes[i] & 0xff);
+		for (byte aByte : bytes) {
+			result = (result << 8) + (aByte & 0xff);
 		}
 		return result;
 	}
@@ -67,8 +56,8 @@ public class BytesUtil {
 
 	public static int bytesToInteger(byte[] bytes) {
 		int result = 0;
-		for (int i = 0; i < bytes.length; i++) {
-			result = (result << 8) + (bytes[i] & 0xff);
+		for (byte aByte : bytes) {
+			result = (result << 8) + (aByte & 0xff);
 		}
 		return result;
 	}
@@ -83,8 +72,8 @@ public class BytesUtil {
 
 	public static short bytesToShort(byte[] bytes) {
 		short result = 0;
-		for (int i = 0; i < bytes.length; i++) {
-			result = (short) ((result << 8) + (bytes[i] & 0xff));
+		for (byte aByte : bytes) {
+			result = (short) ((result << 8) + (aByte & 0xff));
 		}
 		return result;
 	}
@@ -93,7 +82,7 @@ public class BytesUtil {
 		if (s == null)
 			return new byte[] {};
 		else
-			return s.getBytes();
+			return s.getBytes(UTF_8);
 	}
 
 	public static String bytesToString(byte[] bytes) {

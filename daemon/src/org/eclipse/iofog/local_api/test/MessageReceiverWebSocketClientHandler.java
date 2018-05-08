@@ -59,7 +59,7 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 	}
 
 	@Override
-	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+	public void channelRead0(ChannelHandlerContext ctx, Object msg) {
 		System.out.println("client channelRead0 "+ctx);
 		Channel ch = ctx.channel();
 		if (!handshaker.isHandshakeComplete()) {
@@ -73,12 +73,10 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 			if(frame instanceof BinaryWebSocketFrame){
 				handleWebSocketFrame(ctx,  frame);
 			}
-			return;
 		}
-		return;
 	}
 
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 		System.out.println("In client handleWebSocketFrame.....");
 		if (frame instanceof BinaryWebSocketFrame) {
 			System.out.println("In websocket client.....  Text WebSocket Frame...Receiving message" );
@@ -96,7 +94,7 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 			if(opcode.intValue() == OPCODE_MSG){
 
 				int totalMsgLength = BytesUtil.bytesToInteger(Arrays.copyOfRange(byteArray, 1, 5)); 
-				Message message = null;
+				Message message;
 				try { 
 					message = new Message(Arrays.copyOfRange(byteArray, 5, totalMsgLength));
 					System.out.println(message.toString());
@@ -107,13 +105,10 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 				ByteBuf buffer1 = ctx.alloc().buffer();
 
 				buffer1.writeByte(OPCODE_ACK);
-				System.out.println("Message received.. Send acknoledgmwnt");
+				System.out.println("Message received.. Send acknowledgment");
 				ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-				return;
 			}
 		}
-		
-		return;
 
 	}
 

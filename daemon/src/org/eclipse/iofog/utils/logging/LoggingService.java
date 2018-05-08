@@ -12,16 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.logging;
 
+import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.attribute.GroupPrincipal;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.nio.file.attribute.UserPrincipalLookupService;
+import java.nio.file.attribute.*;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,9 +30,6 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
-
 /**
  * sets up and starts logging
  * 
@@ -42,8 +38,10 @@ import org.eclipse.iofog.utils.configuration.Configuration;
  */
 public final class LoggingService {
 
+	private static final String MODULE_NAME = "LoggingService";
+
 	private static Logger logger = null;
-	private static Map<String, Logger> elementLogger = new HashMap<String, Logger>();
+	private static final Map<String, Logger> elementLogger = new HashMap<>();
 
 	private LoggingService() {
 
@@ -69,10 +67,11 @@ public final class LoggingService {
 	 * @param msg - message
 	 */
 	public static void logWarning(String moduleName, String msg) {
-		if (Configuration.debugging)
+		if (Configuration.debugging) {
 			System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
-		else
+		} else {
 			logger.log(Level.WARNING, String.format("[%s] : %s", moduleName, msg));
+		}
 	}
 
 	/**
@@ -86,13 +85,6 @@ public final class LoggingService {
 		final File logDirectory = new File(Configuration.getLogDiskDirectory());
 
 		logDirectory.mkdirs();
-
-//		UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-//		final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-//		Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
-//				LinkOption.NOFOLLOW_LINKS).setGroup(group);
-//		Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-//		Files.setPosixFilePermissions(logDirectory.toPath(), perms);
 
 		final String logFilePattern = logDirectory.getPath() + "/iofog.%g.log";
 		
@@ -154,8 +146,10 @@ public final class LoggingService {
 	
 	public static boolean elementLogInfo(String elementId, String msg) {
 		Logger logger = elementLogger.get(elementId);
-		if (logger == null)
+		if (logger == null) {
+			logNullLogger();
 			return false;
+		}
 		
 		logger.info(msg);
 		return true;
@@ -163,11 +157,19 @@ public final class LoggingService {
 	
 	public static boolean elementLogWarning(String elementId, String msg) {
 		Logger logger = elementLogger.get(elementId);
-		if (logger == null)
+		if (logger == null) {
+			logNullLogger();
 			return false;
+		}
 		
 		logger.warning(msg);
 		return true;
+	}
+
+	private static void logNullLogger(){
+		String errorMsg = " Log message parsing error, Logger initialized null";
+		LoggingService.logWarning(MODULE_NAME, errorMsg);
+
 	}
 	
 	/**
@@ -178,7 +180,9 @@ public final class LoggingService {
 	public static void instanceConfigUpdated() {
 		try {
 			setupLogger();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 	
 }

@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.element;
 
+import java.util.Objects;
+
 /**
  * represents registries
  * 
@@ -19,73 +21,127 @@ package org.eclipse.iofog.element;
  *
  */
 public class Registry {
-	private String url;
-	private boolean secure;
-	private String certificate;
-	private boolean requiersCertificate;
-	private String userName;
-	private String password;
-	private String userEmail;
+	private final String url;
+	private final boolean isPublic;
+	private final boolean secure;
+	private final String certificate;
+	private final boolean requiresCertificate;
+	private final String userName;
+	private final String password;
+	private final String userEmail;
+
+	private Registry(final String url, final boolean isPublic, final boolean secure, final String certificate, final boolean requiresCertificate,
+	                 final String userName, final String password, final String userEmail) {
+		this.url = url;
+		this.isPublic = isPublic;
+		this.secure = secure;
+		this.certificate = certificate;
+		this.requiresCertificate = requiresCertificate;
+		this.userName = userName;
+		this.password = password;
+		this.userEmail = userEmail;
+	}
 
 	public String getUrl() {
 		return url;
 	}
 
-	public void setUrl(String url) {
-		this.url = url;
+	public boolean getIsPublic() {
+		return isPublic;
 	}
 
 	public boolean isSecure() {
 		return secure;
 	}
 
-	public void setSecure(boolean secure) {
-		this.secure = secure;
-	}
-
 	public String getCertificate() {
 		return certificate;
 	}
 
-	public void setCertificate(String certificate) {
-		this.certificate = certificate;
-	}
-
-	public boolean isRequiersCertificate() {
-		return requiersCertificate;
-	}
-
-	public void setRequiersCertificate(boolean requiersCertificate) {
-		this.requiersCertificate = requiersCertificate;
+	public boolean isRequiresCertificate() {
+		return requiresCertificate;
 	}
 
 	public String getUserName() {
 		return userName;
 	}
 
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
-
 	public String getPassword() {
 		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
 	}
 
 	public String getUserEmail() {
 		return userEmail;
 	}
 
-	public void setUserEmail(String userEmail) {
-		this.userEmail = userEmail;
-	}
-	
 	@Override
 	public boolean equals(Object o) {
-		Registry other = ((Registry) o);
-        return this.url.equalsIgnoreCase(other.url) && this.userEmail.equalsIgnoreCase(other.userEmail);
-    }
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Registry registry = (Registry) o;
+
+		if (isPublic != registry.isPublic) return false;
+		return url.equals(registry.url);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(url, isPublic);
+	}
+
+	public static class RegistryBuilder {
+		private String url;
+		private boolean isPublic;
+		private boolean secure;
+		private String certificate;
+		private boolean requiresCertificate;
+		private String userName;
+		private String password;
+		private String userEmail;
+
+		public RegistryBuilder setUrl(String url) {
+			this.url = url;
+			return this;
+		}
+
+		public RegistryBuilder setIsPublic(boolean isPublic) {
+			this.isPublic = isPublic;
+			return this;
+		}
+
+		public RegistryBuilder setSecure(boolean secure) {
+			this.secure = secure;
+			return this;
+		}
+
+		public RegistryBuilder setCertificate(String certificate) {
+			this.certificate = certificate;
+			return this;
+		}
+
+		public RegistryBuilder setRequiresCertificate(boolean requiresCertificate) {
+			this.requiresCertificate = requiresCertificate;
+			return this;
+		}
+
+		public RegistryBuilder setUserName(String userName) {
+			this.userName = userName;
+			return this;
+		}
+
+		public RegistryBuilder setPassword(String password) {
+			this.password = password;
+			return this;
+		}
+
+		public RegistryBuilder setUserEmail(String userEmail) {
+			this.userEmail = userEmail;
+			return this;
+		}
+
+		public Registry build() {
+			return new Registry(url, isPublic, secure, certificate, requiresCertificate, userName, password, userEmail);
+		}
+	}
 }

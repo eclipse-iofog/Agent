@@ -12,7 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -22,38 +23,17 @@ import io.netty.channel.ChannelHandlerContext;
  * @author ashita
  * @since 2016
  */
-public class WebSocketMap {
-	static Hashtable<String, ChannelHandlerContext> controlWebsocketMap;
-	static Hashtable<String, ChannelHandlerContext> messageWebsocketMap;
+public final class WebSocketMap {
+	static final Map<String, ChannelHandlerContext> controlWebsocketMap = new ConcurrentHashMap<>();
+	static final Map<String, ChannelHandlerContext> messageWebsocketMap = new ConcurrentHashMap<>();
 	
-	static Hashtable<ChannelHandlerContext, MessageSentInfo> unackMessageSendingMap;
-	static Hashtable<ChannelHandlerContext, ControlSignalSentInfo> unackControlSignalsMap;
+	static final Map<ChannelHandlerContext, MessageSentInfo> unackMessageSendingMap = new ConcurrentHashMap<>();
+	static final Map<ChannelHandlerContext, ControlSignalSentInfo> unackControlSignalsMap = new ConcurrentHashMap<>();
 
-	private static WebSocketMap instance = null;
+
 
 	private WebSocketMap(){
-
-	}
-	
-	/**
-	 * Singleton Real-time message and cotrol open websockets map.
-	 * Singleton unacknowledged messages and control signals map.
-	 * @param None
-	 * @return WebSocketMap
-	 */
-	public static WebSocketMap getInstance(){
-		if (instance == null) {
-			synchronized (WebSocketMap.class) {
-				if(instance == null){
-					instance = new WebSocketMap();
-					controlWebsocketMap = new Hashtable<String, ChannelHandlerContext>();
-					messageWebsocketMap = new Hashtable<String, ChannelHandlerContext>();
-					unackMessageSendingMap = new Hashtable<ChannelHandlerContext, MessageSentInfo>();
-					unackControlSignalsMap = new Hashtable<ChannelHandlerContext, ControlSignalSentInfo>();
-				}
-			}
-		}
-		return instance;
+		throw new UnsupportedOperationException(WebSocketMap.class + "could not be instantiated");
 	}
 	
 	public static void addWebsocket(char ws, String id, ChannelHandlerContext ctx) {

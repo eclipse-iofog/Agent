@@ -14,124 +14,112 @@ package org.eclipse.iofog.element;
 
 import java.util.List;
 
-import org.eclipse.iofog.utils.Constants;
-
 /**
  * represents IOElements
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class Element {
-	private final String elementId;
-	private final String imageName;
-	private List<PortMapping> portMappings;
-	private long lastModified;
-	private long lastUpdated;
-	private String containerId;
-	private String registry;
-	private String containerIpAddress;
-	private boolean rebuild;
-	private boolean rootHostAccess;
-	private long logSize;
+
+    private final String elementId; //container name
+    private final String imageName;
+    private List<PortMapping> portMappings;
+    private long lastModified;
+    private long lastUpdated;
+    private String containerId;
+    private String registry;
+    private String containerIpAddress;
+    private boolean rebuild;
+    private boolean rootHostAccess;
+    private long logSize;
     private List<VolumeMapping> volumeMappings;
+    private boolean isUpdating;
 
-	public Element(String elementId, String imageName) {
-		this.elementId = elementId;
-		if (Constants.osArch.equalsIgnoreCase("arm"))
-			this.imageName = imageName + "-arm";
-		else
-			this.imageName = imageName;
-		containerId = "";
-	}
+    public Element(String elementId, String imageName) {
+        this.elementId = elementId;
+        this.imageName = imageName;
+        containerId = "";
+    }
 
-	public boolean isRebuild() {
-		return rebuild;
-	}
+    public boolean isRebuild() {
+        return rebuild;
+    }
 
-	public void setRebuild(boolean rebuild) {
-		this.rebuild = rebuild;
-	}
+    public void setRebuild(boolean rebuild) {
+        this.rebuild = rebuild;
+    }
 
-	public String getContainerIpAddress() {
-		return containerIpAddress;
-	}
+    public String getContainerIpAddress() {
+        return containerIpAddress;
+    }
 
-	public void setContainerIpAddress(String containerIpAddress) {
-		this.containerIpAddress = containerIpAddress;
-	}
+    public void setContainerIpAddress(String containerIpAddress) {
+        this.containerIpAddress = containerIpAddress;
+    }
 
-	public String getRegistry() {
-		return registry;
-	}
+    public String getRegistry() {
+        return registry;
+    }
 
-	public void setRegistry(String registry) {
-		this.registry = registry;
-	}
+    public void setRegistry(String registry) {
+        this.registry = registry;
+    }
 
-	public String getContainerId() {
-		return containerId;
-	}
+    public String getContainerId() {
+        return containerId;
+    }
 
-	public void setContainerId(String containerId) {
-		this.containerId = containerId;
-	}
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
+    }
 
-	public List<PortMapping> getPortMappings() {
-		return portMappings;
-	}
+    public List<PortMapping> getPortMappings() {
+        return portMappings;
+    }
 
-	public void setPortMappings(List<PortMapping> portMappings) {
-		this.portMappings = portMappings;
-	}
+    public void setPortMappings(List<PortMapping> portMappings) {
+        this.portMappings = portMappings;
+    }
 
-	public long getLastModified() {
-		return lastModified;
-	}
+    public long getLastModified() {
+        return lastModified;
+    }
 
-	public void setLastModified(long lastModified) {
-		this.lastModified = lastModified;
-	}
+    public void setLastModified(long lastModified) {
+        this.lastModified = lastModified;
+    }
 
-	public String getElementId() {
-		return elementId;
-	}
+    public String getElementId() {
+        return elementId;
+    }
 
-	public String getImageName() {
-		return imageName;
-	}
-	
-	public long getLastUpdated() {
-		return lastUpdated;
-	}
+    public String getImageName() {
+        return imageName;
+    }
 
-	public void setLastUpdated(long lastUpdated) {
-		this.lastUpdated = lastUpdated;
-	}
-	
-	@Override
-	public boolean equals(Object e) {
-		if (e == null)
-			return false;
-		Element element = (Element) e;
-		return this.elementId.equals(element.getElementId());
-	}
+    public long getLastUpdated() {
+        return lastUpdated;
+    }
 
-	public boolean isRootHostAccess() {
-		return rootHostAccess;
-	}
+    public void setLastUpdated(long lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
 
-	public void setRootHostAccess(boolean rootHostAccess) {
-		this.rootHostAccess = rootHostAccess;
-	}
+    public boolean isRootHostAccess() {
+        return rootHostAccess;
+    }
 
-	public long getLogSize() {
-		return logSize;
-	}
+    public void setRootHostAccess(boolean rootHostAccess) {
+        this.rootHostAccess = rootHostAccess;
+    }
 
-	public void setLogSize(long logSize) {
-		this.logSize = logSize;
-	}
+    public long getLogSize() {
+        return logSize;
+    }
+
+    public void setLogSize(long logSize) {
+        this.logSize = logSize;
+    }
 
     public List<VolumeMapping> getVolumeMappings() {
         return volumeMappings;
@@ -140,5 +128,26 @@ public class Element {
     public void setVolumeMappings(List<VolumeMapping> volumeMappings) {
         this.volumeMappings = volumeMappings;
     }
+
+	public boolean isUpdating() {
+		return isUpdating;
+	}
+
+	public void setUpdating(boolean updating) {
+		isUpdating = updating;
+	}
+
+	@Override
+	public boolean equals(Object e) {
+        if (this == e) return true;
+        if (e == null || getClass() != e.getClass()) return false;
+		Element element = (Element) e;
+		return this.elementId.equals(element.getElementId());
+	}
+
+	@Override
+	public int hashCode() {
+		return elementId.hashCode();
+	}
 
 }

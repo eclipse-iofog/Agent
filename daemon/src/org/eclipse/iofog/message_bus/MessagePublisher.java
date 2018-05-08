@@ -21,6 +21,9 @@ import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.ClientProducer;
 import org.hornetq.api.core.client.ClientSession;
 
+import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+
 /**
  * publisher {@link Element}
  * 
@@ -52,7 +55,7 @@ public class MessagePublisher implements AutoCloseable{
 	 * @param message - {@link Message} to be published
 	 * @throws Exception
 	 */
-	protected synchronized void publish(Message message) throws Exception {
+	synchronized void publish(Message message) throws Exception {
 		byte[] bytes = message.getBytes();
 
 		try {
@@ -67,20 +70,17 @@ public class MessagePublisher implements AutoCloseable{
 			producer.send(msg);
 		}
 	}
-	
-	protected void update(ClientProducer producer, ClientSession session) {
-		this.session = session;
-		this.producer = producer;
-	}
-	
-	protected void updateRoute(Route route) {
+
+	synchronized void updateRoute(Route route) {
 		this.route = route;
 	}
 
-	public void close() {
+	public synchronized void close() {
 		try {
 			archive.close();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 
 	/**

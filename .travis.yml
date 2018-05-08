@@ -1,0 +1,83 @@
+sudo: true
+language: java
+jdk: openjdk8
+notifications:
+  email: false
+  slack:
+    rooms:
+      secure: taYfHvkkrx/6FbL2FURMvYuu2vUB9thEK2qIo4DZPOzlwdn5XpqzAFmMXD1kCqDLTPGnhsGknbqkx+zMWIjLg3RCsxNm+yPik98QO9NCMu9L+gjEmxt31m/WGfYyCQ0Gf1/cxvxtrC/TK5T1GzF6XKsRExmDctOexwWJIBnFLP77LbWhKKe3F8DAWtzs8NwEsNGgovbhnqT3RMcymfmdWYyel2cheev79+G1EX0tPar76cAb3fBBHIi+TDeek5BEhcofoFFyBJDFQhTVZ/rImhCT8ilNAA9Eq5JWc2MY9UdYBclIVsNPXmqc9XQyU9LcQu8HjfO/afgZvG727kJCOU0UpM3u8LWHx/TxUqXQ7hspR5V0FdDxe9bvARzyMDtmgjWUracG45E9uwtANYSpv4iC+LchAoF9/9ACDN13ubAYBlS6WB6NbwlH2OwVf4IAsu52WCOntT/lvECnDB7Lo01hEu8cd8D64So6ftmokdehfGdhzLf6Ngg0YzfD3nS1ULmwKz0ytHeSJRSbXUdP/1XoEbp1/RaJVMauEoRDh34GEORh5brsBZ5f66C/O4caiYbpgrRLUMGDxHqD5ujKg0U809KG9suJf26eoErjzUDHRsQOg/6PxvpCPZBmi34hAh39W17jiea/C0DLTFdMEaCj7dqfwihr+pr0dtZlox0=
+    on_success: change
+    on_failure: always
+stages:
+- name: build
+  if: branch IN (develop, master, dev_package)
+- name: dev_build
+  if: branch = develop
+- name: package_build
+  if: branch IN (master, dev_package)
+
+jobs:
+  include:
+  - stage: build
+    if: type IN (pull_request)
+  - stage: dev_build
+    if: type IN (push)
+    before_install:
+    - sudo apt-get install sshpass xml-twig-tools
+    script:
+    - export VERSION=`xml_grep 'version' pom.xml --text_only`
+    - mvn clean install
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP 
+      "service iofog stop; rm -rf /usr/bin/iofogd_bckp.jar /usr/bin/iofog_bckp.jar; mv /usr/bin/iofogd.jar
+      /usr/bin/iofogd_bckp.jar; mv /usr/bin/iofog.jar /usr/bin/iofog_bckp.jar"
+    - sshpass -p $DEV_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
+      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofogd.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
+      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
+      "service iofog start"
+  - stage: package_build
+    if: type IN (push)
+    before_install:
+    - sudo apt-get install sshpass xml-twig-tools
+    script:
+    - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
+    - export VERSION=`xml_grep 'version' pom.xml --text_only`
+    - mvn clean install
+    - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "rm -rf /iofog-packaging-rpm/*; rm -rf /iofog-packaging/*;"
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no -r iofog-packaging-rpm/*
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp -r iofog-packaging/*
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofogd.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging/usr/bin/iofog.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-daemon-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofogd.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-client-jar-with-dependencies.jar
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-packaging-rpm/usr/bin/iofog.jar
+    - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
+      $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP "cd /iofog-packaging; fpm -s dir -t deb -n \"iofog${DEV}\" 
+      -v $VERSION -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade 
+      upgrade.sh --after-upgrade debian.sh etc usr; package_cloud push iofog/iofog/ubuntu/precise 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/trusty iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iofog/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iofog/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/wily 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/xenial iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iofog/iofog/debian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iofog/iofog/debian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/debian/stretch 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/debian/buster iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iofog/iofog/raspbian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
+      iofog/iofog/raspbian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/raspbian/stretch 
+      iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/raspbian/buster iofog${DEV}_${VERSION}_all.deb; 
+      cd /iofog-packaging-rpm; fpm -s dir -t rpm -n \"iofog${DEV}\" -v $VERSION -a all --rpm-os 'linux' 
+      --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr; 
+      package_cloud push iofog/iofog/fedora/22 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud 
+      push iofog/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/fedora/24 
+      iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
+    - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then sshpass -p $PRE_PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
+      $PRE_PROD_MACHINE_USERNAME@$PRE_PROD_MACHINE_IP "apt-get install --only-upgrade iofog-dev -y"; 
+      else sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
+      $PROD_MACHINE_USERNAME@PROD_MACHINE_IP "apt-get install --only-upgrade iofog -y"; fi

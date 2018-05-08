@@ -12,13 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientMessage;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * receiver {@link Element}
@@ -27,10 +29,12 @@ import org.hornetq.api.core.client.ClientMessage;
  *
  */
 public class MessageReceiver implements AutoCloseable{
+	private static final String MODULE_NAME = "MessageReceiver";
+
 	private final String name;
 
 	private MessageListener listener;
-	private ClientConsumer consumer;
+	private final ClientConsumer consumer;
 
 	public MessageReceiver(String name, ClientConsumer consumer) {
 		this.name = name;
@@ -44,7 +48,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * @return list of {@link Message}
 	 * @throws Exception
 	 */
-	protected synchronized List<Message> getMessages() throws Exception {
+	synchronized List<Message> getMessages() throws Exception {
 		List<Message> result = new ArrayList<>();
 		
 		if (consumer != null || listener == null) {
@@ -84,7 +88,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * enables real-time receiving for this {@link Element}
 	 * 
 	 */
-	protected void enableRealTimeReceiving() {
+	void enableRealTimeReceiving() {
 		if (consumer == null || consumer.isClosed())
 			return;
 		listener = new MessageListener(new MessageCallback(name));
@@ -99,13 +103,15 @@ public class MessageReceiver implements AutoCloseable{
 	 * disables real-time receiving for this {@link Element}
 	 * 
 	 */
-	protected void disableRealTimeReceiving() {
+	void disableRealTimeReceiving() {
 		try {
 			if (consumer == null || listener == null || consumer.getMessageHandler() == null)
 				return;
 			listener = null;
 			consumer.setMessageHandler(null);
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 	
 	public void close() {
@@ -114,6 +120,8 @@ public class MessageReceiver implements AutoCloseable{
 		disableRealTimeReceiving();
 		try {
 			consumer.close();
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 }

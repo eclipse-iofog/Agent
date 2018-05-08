@@ -12,15 +12,17 @@
  *******************************************************************************/
 package org.eclipse.iofog.resource_consumption_manager;
 
+import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.functional.Pair;
+
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
-import java.util.Comparator;
 
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
-import org.eclipse.iofog.utils.logging.LoggingService;
+import static org.eclipse.iofog.utils.Constants.GET_USAGE_DATA_FREQ_SECONDS;
+import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 
 /**
  * Resource Consumption Manager module
@@ -28,13 +30,24 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  * @author saeid
  *
  */
-public class ResourceConsumptionManager {
-	private String MODULE_NAME = "Resource Consumption Manager";
+public class ResourceConsumptionManager implements IOFogModule {
+
+	private static final String MODULE_NAME = "Resource Consumption Manager";
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
-	
+
 	private ResourceConsumptionManager() {}
-	
+
+	@Override
+	public int getModuleIndex() {
+		return RESOURCE_CONSUMPTION_MANAGER;
+	}
+
+	@Override
+	public String getModuleName() {
+		return MODULE_NAME;
+	}
+
 	public static ResourceConsumptionManager getInstance() {
 		if (instance == null) {
 			synchronized (ResourceConsumptionManager.class) {
@@ -54,9 +67,9 @@ public class ResourceConsumptionManager {
 	private Runnable getUsageData = () -> {
 		while (true) {
 			try {
-				Thread.sleep(Constants.GET_USAGE_DATA_FREQ_SECONDS * 1000);
+				Thread.sleep(GET_USAGE_DATA_FREQ_SECONDS * 1000);
 
-				LoggingService.logInfo(MODULE_NAME, "get usage data");
+				logInfo("get usage data");
 
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();
@@ -74,7 +87,9 @@ public class ResourceConsumptionManager {
 					float amount = diskUsage - (diskLimit * 0.75f);
 					removeArchives(amount);
 				}
-			} catch (Exception e) {}
+			} catch (Exception e) {
+			    logInfo("Error getting usage data : " + e.getMessage());
+            }
 		}
 	};
 
@@ -87,29 +102,25 @@ public class ResourceConsumptionManager {
 		String archivesDirectory = Configuration.getDiskDirectory() + "messages/archive/";
 		
 		final File workingDirectory = new File(archivesDirectory);
-		File[] filesList = workingDirectory.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String fileName) {
-				return fileName.substring(fileName.indexOf(".")).equals(".idx");
-			}
-		});
-		
-		Arrays.sort(filesList, new Comparator<File>() {
-			public int compare(File o1, File o2) {
+		File[] filesList = workingDirectory.listFiles((dir, fileName) ->
+				fileName.substring(fileName.indexOf(".")).equals(".idx"));
+
+		if (filesList != null) {
+			Arrays.sort(filesList, (o1, o2) -> {
 				String t1 = o1.getName().substring(o1.getName().indexOf('_') + 1, o1.getName().indexOf("."));
 				String t2 = o2.getName().substring(o2.getName().indexOf('_') + 1, o2.getName().indexOf("."));
 				return t1.compareTo(t2);
+			});
+
+			for (File indexFile : filesList) {
+				File dataFile = new File(archivesDirectory + indexFile.getName().substring(0, indexFile.getName().indexOf('.')) + ".iomsg");
+				amount -= indexFile.length();
+				indexFile.delete();
+				amount -= dataFile.length();
+				dataFile.delete();
+				if (amount < 0)
+					break;
 			}
-		});
-		
-		for (File indexFile : filesList) {
-			File dataFile = new File(archivesDirectory + indexFile.getName().substring(0, indexFile.getName().indexOf('.')) + ".iomsg");
-			amount -= indexFile.length();
-			indexFile.delete();
-			amount -= dataFile.length();
-			dataFile.delete();
-			if (amount < 0)
-				break;
 		}
 	}
 	
@@ -134,37 +145,33 @@ public class ResourceConsumptionManager {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		String processId = processName.split("@")[0];
 
-		long utimeBefore, utimeAfter, totalBefore, totalAfter;
-		float usage = 0;
+		Pair<Long, Long> before = parseStat(processId);
+		waitForSecond();
+		Pair<Long, Long> after = parseStat(processId);
+
+		return 100f * (after._1() - before._1()) / (after._2() - before._2());
+	}
+
+	private void waitForSecond() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException exp) {
+			logWarning("Thread was interrupted : " + exp.getMessage());
+		}
+
+	}
+
+	private Pair<Long, Long> parseStat(String processId){
+		long time = 0, total = 0;
+
 		try {
 			String line;
 			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
 				line = br.readLine();
-				utimeBefore = Long.parseLong(line.split(" ")[13]);
+				time = Long.parseLong(line.split(" ")[13]);
 			}
 
-			totalBefore = 0;
-            try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
-                line = br.readLine();
-                while (line != null) {
-                    String[] items = line.split(" ");
-                    if (items[0].equals("cpu")) {
-                        for (int i = 1; i < items.length; i++)
-                            if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-                                totalBefore += Long.parseLong(items[i]);
-                        break;
-                    }
-                }
-            }
-
-			Thread.sleep(1000);
-
-			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
-				line = br.readLine();
-				utimeAfter = Long.parseLong(line.split(" ")[13]);
-			}
-
-			totalAfter = 0;
+			total = 0;
 
 			try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
 				line = br.readLine();
@@ -173,17 +180,16 @@ public class ResourceConsumptionManager {
 					if (items[0].equals("cpu")) {
 						for (int i = 1; i < items.length; i++)
 							if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-								totalAfter += Long.parseLong(items[i]);
+								total += Long.parseLong(items[i]);
 						break;
 					}
 				}
 			}
-
-			usage = 100f * (utimeAfter - utimeBefore) / (totalAfter - totalBefore);
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		} catch (IOException exp) {
+			logWarning("Error getting CPU usage : " + exp.getMessage());
 		}
-		return usage;
+
+		return Pair.of(time, total);
 	}
 
 	/**
@@ -227,7 +233,7 @@ public class ResourceConsumptionManager {
 
 		new Thread(getUsageData, "ResourceConsumptionManager : GetUsageData").start();
 
-		LoggingService.logInfo(MODULE_NAME, "started");
+		logInfo("started");
 	}
 
 }

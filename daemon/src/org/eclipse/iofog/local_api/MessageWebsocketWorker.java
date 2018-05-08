@@ -31,14 +31,13 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
  * @since 2016
  */
 public class MessageWebsocketWorker implements Runnable{
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 	private static final Byte OPCODE_MSG = 0xD;
 //	private static int count = 0;
 	
 	/**
 	 * Initiating message sending for the unacknowledged messages
 	 * If tried for 10 times, then disable real-time service for the channel
-	 * @param none
 	 * @return void
 	 */
 	@Override
@@ -65,12 +64,10 @@ public class MessageWebsocketWorker implements Runnable{
 				}
 			}
 		}
-		return;
 	}
 	
 	/**
 	 * Helper method to send real-time messages
-	 * @param ChannelHandlerContext
 	 * @return void
 	 */
 	private void sendRealTimeMessage(ChannelHandlerContext ctx){
@@ -84,20 +81,13 @@ public class MessageWebsocketWorker implements Runnable{
 
 		//Send Opcode
 		buffer1.writeByte(OPCODE_MSG);
-		int totalMsgLength = 0;
 
-		byte[] bytesMsg = null;
-		try {
-			bytesMsg = message.getBytes();
-		} catch (Exception e) {
-			LoggingService.logInfo(MODULE_NAME, "Problem in retrieving the message");
-		}
-		totalMsgLength = bytesMsg.length;
+		byte[] bytesMsg = message.getBytes();
+		int totalMsgLength = bytesMsg.length;
 		//Total Length
 		buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
 		//Message
 		buffer1.writeBytes(bytesMsg);
 		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		return;
 	}
 }

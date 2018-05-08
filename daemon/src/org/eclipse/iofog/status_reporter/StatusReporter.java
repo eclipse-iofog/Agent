@@ -16,7 +16,9 @@ import org.eclipse.iofog.field_agent.FieldAgentStatus;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBusStatus;
 import org.eclipse.iofog.process_manager.ProcessManagerStatus;
+import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
+import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
@@ -30,65 +32,67 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Status Reporter module
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public final class StatusReporter {
-	
-	private static SupervisorStatus supervisorStatus = new SupervisorStatus();
-	private static ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = new ResourceConsumptionManagerStatus();
-	private static FieldAgentStatus fieldAgentStatus = new FieldAgentStatus();
-	private static StatusReporterStatus statusReporterStatus = new StatusReporterStatus();
-	private static ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
-	private static LocalApiStatus localApiStatus = new LocalApiStatus();
-	private static MessageBusStatus messageBusStatus = new MessageBusStatus();
 
-	private static String MODULE_NAME = "Status Reporter";
-	
+	private static final SupervisorStatus supervisorStatus = new SupervisorStatus();
+	private static final ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = new ResourceConsumptionManagerStatus();
+	private static final ResourceManagerStatus resourceManagerStatus = new ResourceManagerStatus();
+	private static final FieldAgentStatus fieldAgentStatus = new FieldAgentStatus();
+	private static final StatusReporterStatus statusReporterStatus = new StatusReporterStatus();
+	private static final ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
+	private static final LocalApiStatus localApiStatus = new LocalApiStatus();
+	private static final MessageBusStatus messageBusStatus = new MessageBusStatus();
+	private static final SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
+
+	private final static String MODULE_NAME = "Status Reporter";
+
 	/**
 	 * sets system time property
-	 * 
 	 */
-	private static Runnable setStatusReporterSystemTime = () -> {
+	private static final Runnable setStatusReporterSystemTime = () -> {
 		try {
 			setStatusReporterStatus().setSystemTime(System.currentTimeMillis());
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
 	};
-	
+
 	private StatusReporter() {
 	}
 
 	/**
 	 * returns report for "status" command-line parameter
-	 * 
+	 *
 	 * @return status report
 	 */
 	public static String getStatusReport() {
 		StringBuilder result = new StringBuilder();
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(statusReporterStatus.getSystemTime());
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
-				
+
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
-		String connectionStatus = fieldAgentStatus.getContollerStatus() == ControllerStatus.OK ? "ok" : 
-			(fieldAgentStatus.getContollerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned"); 
-		result.append("ioFog daemon                : " + supervisorStatus.getDaemonStatus().name());
-		result.append("\\nMemory Usage                : about " + String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage()) + " MiB");
+		String connectionStatus = fieldAgentStatus.getContollerStatus() == ControllerStatus.OK ? "ok" :
+				(fieldAgentStatus.getContollerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned");
+		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
+		result.append("\\nMemory Usage                : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage())).append(" MiB");
 		if (diskUsage < 1)
-			result.append("\\nDisk Usage                  : about " + String.format("%.2f", diskUsage * 1024) + " MiB");
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage * 1024)).append(" MiB");
 		else
-			result.append("\\nDisk Usage                  : about " + String.format("%.2f", diskUsage) + " GiB");
-		result.append("\\nCPU Usage                   : about " + String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage()) + "%");
-		result.append("\\nRunning Elements            : " + processManagerStatus.getRunningElementsCount());
-		result.append("\\nConnection to Controller    : " + connectionStatus);
-		result.append(String.format("\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages())); 
-		result.append("\\nSystem Time                 : " + 		dateFormat.format(cal.getTime()));
-		
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage)).append(" GiB");
+		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage())).append("%");
+		result.append("\\nRunning Elements            : ").append(processManagerStatus.getRunningElementsCount());
+		result.append("\\nConnection to Controller    : ").append(connectionStatus);
+		result.append(String.format("\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
+		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
+
 		return result.toString();
 	}
-	
+
 	public static SupervisorStatus setSupervisorStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return supervisorStatus;
@@ -97,6 +101,11 @@ public final class StatusReporter {
 	public static ResourceConsumptionManagerStatus setResourceConsumptionManagerStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return resourceConsumptionManagerStatus;
+	}
+
+	public static ResourceManagerStatus setResourceManagerStatus() {
+		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
+		return resourceManagerStatus;
 	}
 
 	public static MessageBusStatus setMessageBusStatus() {
@@ -113,16 +122,21 @@ public final class StatusReporter {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return statusReporterStatus;
 	}
-	
+
 	public static ProcessManagerStatus setProcessManagerStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return processManagerStatus;
 	}
 
+	public static SshProxyManagerStatus setSshProxyManagerStatus() {
+		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
+		return sshManagerStatus;
+	}
+
 	public static ProcessManagerStatus getProcessManagerStatus() {
 		return processManagerStatus;
 	}
-	
+
 	public static LocalApiStatus setLocalApiStatus() {
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return localApiStatus;
@@ -131,13 +145,17 @@ public final class StatusReporter {
 	public static SupervisorStatus getSupervisorStatus() {
 		return supervisorStatus;
 	}
-	
+
 	public static MessageBusStatus getMessageBusStatus() {
 		return messageBusStatus;
 	}
 
 	public static ResourceConsumptionManagerStatus getResourceConsumptionManagerStatus() {
 		return resourceConsumptionManagerStatus;
+	}
+
+	public static ResourceManagerStatus getResourceManagerStatus() {
+		return resourceManagerStatus;
 	}
 
 	public static FieldAgentStatus getFieldAgentStatus() {
@@ -152,9 +170,12 @@ public final class StatusReporter {
 		return localApiStatus;
 	}
 
+	public static SshProxyManagerStatus getSshManagerStatus() {
+		return sshManagerStatus;
+	}
+
 	/**
 	 * starts Status Reporter module
-	 * 
 	 */
 	public static void start() {
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);

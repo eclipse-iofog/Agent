@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -30,10 +29,11 @@ public class WebsocketUtil {
 	
 	/**
 	 * Remove inactive websocket from the open websocket map
-	 * @param ChannelHandlerContext, Hashtable<String, ChannelHandlerContext>
+	 * @param ctx
+	 * @param socketMap
 	 * @return void
 	 */
-	public static synchronized void removeWebsocketContextFromMap(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap){
+	public static synchronized void removeWebsocketContextFromMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
 		for (Iterator<Map.Entry<String,ChannelHandlerContext>> it = socketMap.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<String,ChannelHandlerContext> e = it.next();
 			if (ctx.equals(e.getValue())) {
@@ -45,10 +45,11 @@ public class WebsocketUtil {
 	
 	/**
 	 * Check if the container has open real-time websocket
-	 * @param ChannelHandlerContext, Hashtable<String, ChannelHandlerContext>
+	 * @param ctx
+	 * @param socketMap
 	 * @return boolean
 	 */
-	public static boolean hasContextInMap(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap) throws Exception{
+	public static boolean hasContextInMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap) {
 		for (ChannelHandlerContext context: socketMap.values()) 
 			if (context.equals(ctx))
 				return true;
@@ -58,15 +59,15 @@ public class WebsocketUtil {
 	
 	/**
 	 * Get id for the real-time socket channel
-	 * @param ChannelHandlerContext, Hashtable<String, ChannelHandlerContext>
+	 * @param ctx
+	 * @param socketMap
 	 * @return String
 	 */
-	public static String getIdForWebsocket(ChannelHandlerContext ctx, Hashtable<String, ChannelHandlerContext> socketMap){
+	public static String getIdForWebsocket(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
 		String id = "";
-		for (Iterator<Map.Entry<String,ChannelHandlerContext>> it = socketMap.entrySet().iterator(); it.hasNext();) {
-			Map.Entry<String,ChannelHandlerContext> e = it.next();
+		for (Map.Entry<String, ChannelHandlerContext> e : socketMap.entrySet()) {
 			if (ctx.equals(e.getValue())) {
-				LoggingService.logInfo(MODULE_NAME,"Context found as real-time websocket");
+				LoggingService.logInfo(MODULE_NAME, "Context found as real-time websocket");
 				return e.getKey();
 			}
 		}

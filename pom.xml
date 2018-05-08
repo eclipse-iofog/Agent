@@ -15,12 +15,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eclipse</groupId>
 	<artifactId>iofog</artifactId>
-	<version>0.52</version>
+	<version>0.53</version>
 	<name>iofog</name>
 	<packaging>pom</packaging>
 
 	<modules>
 		<module>daemon</module>
 		<module>client</module>
+		<module>iofog_version_controller</module>
 	</modules>
 </project>

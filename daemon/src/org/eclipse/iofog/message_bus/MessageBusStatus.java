@@ -27,7 +27,7 @@ import javax.json.JsonObjectBuilder;
  */
 public class MessageBusStatus {
 	private long processedMessages;
-	private Map<String, Long> publishedMessagesPerElement;
+	private final Map<String, Long> publishedMessagesPerElement;
 	private float averageSpeed;
 	
 	public MessageBusStatus() {
@@ -53,7 +53,7 @@ public class MessageBusStatus {
 
 		Long n = this.publishedMessagesPerElement.get(element);
 		if (n == null)
-			n = 0l;
+			n = 0L;
 		this.publishedMessagesPerElement.put(element, n + 1);
 		return this;
 	}
@@ -74,12 +74,12 @@ public class MessageBusStatus {
 	
 	public String getJsonPublishedMessagesPerElement() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		publishedMessagesPerElement.entrySet().forEach(entry -> {
+		publishedMessagesPerElement.forEach((key, value) -> {
 			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-					.add("id", entry.getKey())
-					.add("messagecount", entry.getValue());
+					.add("id", key)
+					.add("messagecount", value);
 			arrayBuilder.add(objectBuilder);
-					
+
 		});
 		return arrayBuilder.build().toString();
 	}

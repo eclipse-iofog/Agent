@@ -33,9 +33,11 @@ import org.eclipse.iofog.utils.logging.LoggingService;
  *
  */
 public class MessageArchive implements AutoCloseable{
-	private final byte HEADER_SIZE = 33;
-	private final short MAXIMUM_MESSAGE_PER_FILE = 1000;
-	private final int MAXIMUM_ARCHIVE_SIZE_MB = 1;
+	private static final String MODULE_NAME = "MessageArchive";
+
+	private static final byte HEADER_SIZE = 33;
+	private static final short MAXIMUM_MESSAGE_PER_FILE = 1000;
+	private static final int MAXIMUM_ARCHIVE_SIZE_MB = 1;
 
 	private final String name;
 	private String diskDirectory;
@@ -52,7 +54,7 @@ public class MessageArchive implements AutoCloseable{
 	 * sets the file name for {@link Message} to be archived
 	 * 
 	 */
-	protected void init() {
+	private void init() {
 		currentFileName = "";
 		diskDirectory = Configuration.getDiskDirectory() + "messages/archive/";
 		
@@ -62,12 +64,8 @@ public class MessageArchive implements AutoCloseable{
 		if (!workingDirectory.exists())
 			workingDirectory.mkdirs();
 		
-		FilenameFilter filter = new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String fileName) {
-				return fileName.substring(0, name.length()).equals(name) && fileName.substring(fileName.indexOf(".")).equals(".idx");
-			}
-		};
+		FilenameFilter filter = (dir, fileName) -> fileName.substring(0, name.length()).equals(name)
+				&& fileName.substring(fileName.indexOf(".")).equals(".idx");
 		
 		for (File file : workingDirectory.listFiles(filter)) {
 			if (!file.isFile())
@@ -108,7 +106,7 @@ public class MessageArchive implements AutoCloseable{
 	 * @param timestamp - timestamp of the {@link Message}
 	 * @throws Exception
 	 */
-	protected void save(byte[] message, long timestamp) throws Exception {
+	void save(byte[] message, long timestamp) throws Exception {
 		if (indexFile == null)
 			openFiles(timestamp);
 		
@@ -137,7 +135,9 @@ public class MessageArchive implements AutoCloseable{
 			if (dataFile != null)
 				dataFile.close();
 			currentFileName = "";
-		} catch (Exception e) {}
+		} catch (Exception exp) {
+			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+		}
 	}
 	
 	/**
@@ -147,7 +147,7 @@ public class MessageArchive implements AutoCloseable{
 	 * @return int
 	 */
 	private int getDataSize(byte[] header) {
-		int size = 0;
+		int size;
 		size = header[2];
 		size += BytesUtil.bytesToShort(BytesUtil.copyOfRange(header, 3, 5));
 		size += header[5];
@@ -192,12 +192,8 @@ public class MessageArchive implements AutoCloseable{
 		List<Message> result = new ArrayList<>();
 		
 		File workingDirectory = new File(diskDirectory);
-		FilenameFilter filter = new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String fileName) {
-				return fileName.substring(0, name.length()).equals(name) && fileName.substring(fileName.indexOf(".")).equals(".idx");
-			}
-		};
+		FilenameFilter filter = (dir, fileName) -> fileName.substring(0, name.length()).equals(name)
+				&& fileName.substring(fileName.indexOf(".")).equals(".idx");
 		File[] listOfFiles = workingDirectory.listFiles(filter);
 		Arrays.sort(listOfFiles);
 		

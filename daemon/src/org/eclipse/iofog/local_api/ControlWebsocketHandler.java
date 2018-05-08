@@ -12,25 +12,17 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
-
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Map;
-
-import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.logging.LoggingService;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.*;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.util.ArrayList;
+import java.util.Map;
+
+import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
 
 /**
  * Handler for the real-time control websocket Open real-time control websocket
@@ -40,7 +32,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
  * @since 2016
  */
 public class ControlWebsocketHandler {
-	private final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API";
 
 	private static final Byte OPCODE_PING = 0x9;
 	private static final Byte OPCODE_PONG = 0xA;
@@ -48,8 +40,6 @@ public class ControlWebsocketHandler {
 	private static final Byte OPCODE_CONTROL_SIGNAL = 0xC;
 
 	private static final String WEBSOCKET_PATH = "/v2/control/socket";
-
-	private WebSocketServerHandshaker handshaker;
 
 	/**
 	 * Handler to open the websocket for the real-time control signals
@@ -59,8 +49,8 @@ public class ControlWebsocketHandler {
 	 *
 	 * @return void
 	 */
-	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
-		String uri = req.getUri();
+	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
+		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
 
@@ -76,7 +66,7 @@ public class ControlWebsocketHandler {
 		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(req),
 				null, true, Integer.MAX_VALUE);
-		handshaker = wsFactory.newHandshaker(req);
+		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
 		} else {
@@ -86,7 +76,6 @@ public class ControlWebsocketHandler {
 		WebSocketMap.addWebsocket('C', id, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 
-		return;
 	}
 
 	/**
@@ -97,7 +86,7 @@ public class ControlWebsocketHandler {
 	 * @param frame,
 	 * @return void
 	 */
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
@@ -142,13 +131,11 @@ public class ControlWebsocketHandler {
 	 * @param newConfigMap
 	 * @return void
 	 */
-	public void initiateControlSignal(Map<String, String> oldConfigMap, Map<String, String> newConfigMap)
-			throws Exception {
-		ChannelHandlerContext ctx = null;
+	public void initiateControlSignal(Map<String, String> oldConfigMap, Map<String, String> newConfigMap) {
 
 		// Compare the old and new config map
-		Hashtable<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
-		ArrayList<String> changedConfigElmtsList = new ArrayList<String>();
+		Map<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
+		ArrayList<String> changedConfigElmtsList = new ArrayList<>();
 
 		for (Map.Entry<String, String> newEntry : newConfigMap.entrySet()) {
 			String newMapKey = newEntry.getKey();
@@ -166,7 +153,7 @@ public class ControlWebsocketHandler {
 
 		for (String changedConfigElmtId : changedConfigElmtsList) {
 			if (controlMap.containsKey(changedConfigElmtId)) {
-				ctx = controlMap.get(changedConfigElmtId);
+				ChannelHandlerContext ctx = controlMap.get(changedConfigElmtId);
 				WebSocketMap.unackControlSignalsMap.put(ctx, new ControlSignalSentInfo(1, System.currentTimeMillis()));
 
 				ByteBuf buffer1 = ctx.alloc().buffer();
@@ -183,7 +170,7 @@ public class ControlWebsocketHandler {
 	 * @param req
 	 * @return void
 	 */
-	private static String getWebSocketLocation(HttpRequest req) throws Exception {
+	private static String getWebSocketLocation(HttpRequest req) {
 		String location = req.headers().get(HOST) + WEBSOCKET_PATH;
 		if (LocalApiServer.SSL) {
 			return "wss://" + location;

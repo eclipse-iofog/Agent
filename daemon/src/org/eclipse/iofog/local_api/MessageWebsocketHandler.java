@@ -13,8 +13,9 @@
 package org.eclipse.iofog.local_api;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -42,6 +43,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
  * @since 2016
  */
 public class MessageWebsocketHandler {
+	private static final String MODULE_NAME = "Local API";
 
 	private static final Byte OPCODE_PING = 0x9;
 	private static final Byte OPCODE_PONG = 0xA;
@@ -49,20 +51,16 @@ public class MessageWebsocketHandler {
 	private static final Byte OPCODE_MSG = 0xD;
 	private static final Byte OPCODE_RECEIPT = 0xE;
 
-	private final String MODULE_NAME = "Local API";
 	private static final String WEBSOCKET_PATH = "/v2/message/socket";
-
-	private WebSocketServerHandshaker handshaker;
 
 	/**
 	 * Handler to open the websocket for the real-time message websocket
 	 * 
-	 * @param ChannelHandlerContext,
-	 *            FullHttpRequest
+	 * @param ctx,req
 	 * @return void
 	 */
-	public void handle(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
-		String uri = req.getUri();
+	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
+		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
 		String publisherId;
@@ -77,31 +75,29 @@ public class MessageWebsocketHandler {
 		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(req),
 				null, true, Integer.MAX_VALUE);
-		handshaker = wsFactory.newHandshaker(req);
+		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
 		} else {
 			handshaker.handshake(ctx.channel(), req);
 		}
 
-		Hashtable<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
+		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 		messageSocketMap.put(publisherId, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
 		MessageBus.getInstance().enableRealTimeReceiving(publisherId);
 
 		LoggingService.logInfo(MODULE_NAME, "Handshake end....");
-		return;
 	}
 
 	/**
 	 * Handler for the real-time messages Receive ping and send pong Sending and
 	 * receiving real-time messages
 	 * 
-	 * @param ChannelHandlerContext,
-	 *            WebSocketFrame
+	 * @param ctx, frame
 	 * @return void
 	 */
-	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
@@ -130,7 +126,7 @@ public class MessageWebsocketHandler {
 			byte[] byteArray = new byte[input.readableBytes()];
 			int readerIndex = input.readerIndex();
 			input.getBytes(readerIndex, byteArray);
-			Byte opcode = 0;
+			Byte opcode;
 
 			if(byteArray.length >= 1){
 				opcode = byteArray[0];
@@ -140,38 +136,34 @@ public class MessageWebsocketHandler {
 
 			if (opcode == OPCODE_MSG.intValue()) {
 				if (byteArray.length >= 2) {
-					opcode = byteArray[0];
-					Message message = null;
-
 					if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap)) {
 
 						int totalMsgLength = BytesUtil.bytesToInteger(BytesUtil.copyOfRange(byteArray, 1, 5));
 						try {
-							message = new Message(BytesUtil.copyOfRange(byteArray, 5, totalMsgLength + 5));
-//							LoggingService.logInfo(MODULE_NAME, message.toString());
+							Message message = new Message(BytesUtil.copyOfRange(byteArray, 5, totalMsgLength + 5));
+
+							MessageBusUtil messageBus = new MessageBusUtil();
+							messageBus.publishMessage(message);
+
+							String messageId = message.getId();
+							Long msgTimestamp = message.getTimestamp();
+							ByteBuf buffer1 = ctx.alloc().buffer();
+
+							buffer1.writeByte(OPCODE_RECEIPT.intValue());
+
+							// send Length
+							int msgIdLength = messageId.length();
+							buffer1.writeByte(msgIdLength);
+							buffer1.writeByte(Long.BYTES);
+
+							// Send opcode, id and timestamp
+							buffer1.writeBytes(messageId.getBytes(UTF_8));
+							buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
+							ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 						} catch (Exception e) {
 							LoggingService.logInfo(MODULE_NAME, "wrong message format  " + e.getMessage());
 							LoggingService.logInfo(MODULE_NAME, "Validation fail");
 						}
-
-						MessageBusUtil messageBus = new MessageBusUtil();
-						messageBus.publishMessage(message);
-
-						String messageId = message.getId();
-						Long msgTimestamp = message.getTimestamp();
-						ByteBuf buffer1 = ctx.alloc().buffer();
-
-						buffer1.writeByte(OPCODE_RECEIPT.intValue());
-
-						// send Length
-						int msgIdLength = messageId.length();
-						buffer1.writeByte(msgIdLength);
-						buffer1.writeByte(Long.BYTES);
-
-						// Send opcode, id and timestamp
-						buffer1.writeBytes(messageId.getBytes());
-						buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
-						ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 					}
 					return;
 				}
@@ -190,33 +182,25 @@ public class MessageWebsocketHandler {
 			.disableRealTimeReceiving(WebsocketUtil.getIdForWebsocket(ctx, WebSocketMap.messageWebsocketMap));
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.messageWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
-			return;
 		}
 	}
 
 	/**
 	 * Helper to send real-time messages
 	 * 
-	 * @param String,
-	 *            Message
+	 * @param receiverId, message
 	 * @return void
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
-		ChannelHandlerContext ctx = null;
-		Hashtable<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
+		ChannelHandlerContext ctx;
+		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
 		if (messageSocketMap != null && messageSocketMap.containsKey(receiverId)) {
 			ctx = messageSocketMap.get(receiverId);
 			WebSocketMap.unackMessageSendingMap.put(ctx, new MessageSentInfo(message, 1, System.currentTimeMillis()));
 
-			int totalMsgLength = 0;
-
-			byte[] bytesMsg = null;
-			try {
-				bytesMsg = message.getBytes();
-			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "Problem in retrieving the message");
-			}
+			int totalMsgLength;
+			byte[] bytesMsg = message.getBytes();
 
 			totalMsgLength = bytesMsg.length;
 
@@ -237,7 +221,7 @@ public class MessageWebsocketHandler {
 	/**
 	 * Websocket path
 	 * 
-	 * @param FullHttpRequest
+	 * @param req
 	 * @return void
 	 */
 	private static String getWebSocketLocation(HttpRequest req) {

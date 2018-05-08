@@ -12,25 +12,20 @@
  *******************************************************************************/
 package org.eclipse.iofog;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-
 import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.configuration.ConfigurationItemException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import java.text.ParseException;
+
 public class Daemon {
+	private static  final String MODULE_NAME = "MAIN_DAEMON";
 
 	/**
 	 * check if another instance of iofog is running
@@ -38,13 +33,14 @@ public class Daemon {
 	 * @return boolean
 	 */
 	private static boolean isAnotherInstanceRunning() {
+
 		try {
 			URL url = new URL("http://localhost:54321/v2/commandline");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.getResponseCode();
 			conn.disconnect();
 			return true;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			return false;
 		}
 	}
@@ -62,12 +58,12 @@ public class Daemon {
 		}
 
 		try {
-			String params = "{\"command\":\"";
+			StringBuilder params = new StringBuilder("{\"command\":\"");
 			for (String arg: args) {
-				params += arg + " ";
+				params.append(arg).append(" ");
 			}
-			params = params.trim() + "\"}";
-			byte[] postData = params.trim().getBytes(StandardCharsets.UTF_8);
+			params = new StringBuilder(params.toString().trim() + "\"}");
+			byte[] postData = params.toString().trim().getBytes(UTF_8);
 			
 			URL url = new URL("http://localhost:54321/v2/commandline");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -83,20 +79,22 @@ public class Daemon {
 			if (conn.getResponseCode() != 200) {
 				return false;
 			}
+			StringBuilder result = new StringBuilder();
 
-			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-			String result = "";
-			String output;
-			while ((output = br.readLine()) != null) {
-				result += output;
+			try (BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()),
+					UTF_8))){
+				String output;
+				while ((output = br.readLine()) != null) {
+					result.append(output);
+				}
 			}
+
 
 			conn.disconnect();
 			
-			System.out.println(result.replace("\\n", "\n"));
+			System.out.println(result.toString().replace("\\n", "\n"));
 			return true;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			return false;
 		}
 	}
@@ -106,21 +104,7 @@ public class Daemon {
 	 */
 	private static void setupEnvironment() {
 		final File daemonFilePath = new File(Constants.VAR_RUN);
-		if (!daemonFilePath.exists()) {
-			try {
-				daemonFilePath.mkdirs();
-
-//				UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-//				final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-//				Files.getFileAttributeView(daemonFilePath.toPath(), PosixFileAttributeView.class,
-//						LinkOption.NOFOLLOW_LINKS).setGroup(group);
-//				Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-//				Files.setPosixFilePermissions(daemonFilePath.toPath(), perms);
-			} catch (Exception e) {
-				System.out.println("unable to set up environment: " + e.getMessage());
-				System.exit(1);
-			}
-		}
+		daemonFilePath.mkdirs();
 	}
 
 	/**
@@ -149,7 +133,7 @@ public class Daemon {
 			System.out.println("Error starting logging service\n" + e.getMessage());
 			System.exit(1);
 		}
-		LoggingService.logInfo("Main", "configuration loaded.");
+		LoggingService.logInfo(MODULE_NAME, "configuration loaded.");
 
 	}
 
@@ -158,24 +142,28 @@ public class Daemon {
 	 */
 	private static void outToNull() {
 		Constants.systemOut = System.out;
-		if (!Configuration.debugging) {
-			System.setOut(new PrintStream(new OutputStream() {
-				@Override
-				public void write(int b) {
-					// DO NOTHING
-				}
-			}));
+		try {
+			if (!Configuration.debugging) {
+				System.setOut(new PrintStream(new OutputStream() {
+					@Override
+					public void write(int b) {
+						// DO NOTHING
+					}
+				}, false, UTF_8.name()));
 
-			System.setErr(new PrintStream(new OutputStream() {
-				@Override
-				public void write(int b) {
-					// DO NOTHING
-				}
-			}));
+				System.setErr(new PrintStream(new OutputStream() {
+					@Override
+					public void write(int b) {
+						// DO NOTHING
+					}
+				}, false, UTF_8.name()));
+			}
+		} catch (UnsupportedEncodingException ex) {
+			LoggingService.logInfo(MODULE_NAME, ex.getMessage());
 		}
 	}
 
-	public static void main(String[] args) throws ParseException {			
+	public static void main(String[] args) throws ParseException {
 		loadConfiguration();
 
 		setupEnvironment();
@@ -194,11 +182,13 @@ public class Daemon {
 	
 			outToNull();
 	
-			LoggingService.logInfo("Main", "starting supervisor");
+			LoggingService.logInfo(MODULE_NAME, "starting supervisor");
 			Supervisor supervisor = new Supervisor();
 			try {
 				supervisor.start();
-			} catch (Exception e) {}
+			} catch (Exception exp) {
+				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+			}
 	
 			System.setOut(Constants.systemOut);
 		}

@@ -19,8 +19,8 @@ package org.eclipse.iofog.element;
  *
  */
 public class PortMapping {
-	final String outside;
-	final String inside;
+	private final String outside;
+	private final String inside;
 
 	public PortMapping(String outside, String inside) {
 		this.outside = outside;
@@ -42,11 +42,17 @@ public class PortMapping {
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof PortMapping))
-			return false;
+		if (this == other) return true;
+		if (other == null || getClass() != other.getClass()) return false;
 		
 		PortMapping o = (PortMapping) other;
 		return this.outside.equals(o.outside) && this.inside.equals(o.inside);
 	}
 
+	@Override
+	public int hashCode() {
+		int result = outside.hashCode();
+		result = 31 * result + inside.hashCode();
+		return result;
+	}
 }

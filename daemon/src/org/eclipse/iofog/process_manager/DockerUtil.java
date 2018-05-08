@@ -12,173 +12,140 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TimeZone;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.command.EventsResultCallback;
+import com.github.dockerjava.core.command.PullImageResultCallback;
+import io.netty.util.internal.StringUtil;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.PortMapping;
 import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.Constants.ElementState;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
-import com.github.dockerjava.api.command.PullImageCmd;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.github.dockerjava.api.model.Ports.Binding;
+import javax.json.Json;
+import javax.json.JsonObject;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import io.netty.util.internal.StringUtil;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.eclipse.iofog.process_manager.ElementState.*;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * provides methods for Docker commands
- * 
- * @author saeid
  *
+ * @author saeid
  */
-public class DockerUtil implements AutoCloseable{
+public class DockerUtil {
 	private final String MODULE_NAME = "Docker Util";
-	
+
 	private static DockerUtil instance;
 	private DockerClient dockerClient;
-	
+
 	private DockerUtil() {
+		initDockerClient();
 	}
-	
+
 	public static DockerUtil getInstance() {
 		if (instance == null) {
 			synchronized (DockerUtil.class) {
-				if (instance == null) 
+				if (instance == null)
 					instance = new DockerUtil();
 			}
 		}
 		return instance;
 	}
-	
-	/**
-	 * gets memory usage of given {@link Container}
-	 * 
-	 * @param containerId - id of {@link Container}
-	 * @return memory usage in bytes
-	 */
-	public long getMemoryUsage(String containerId) {
-		if (!hasContainer(containerId)) 
-			return 0;
-		
-		StatsCallback statsCallback = new StatsCallback(); 
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {}
-		}
-		Map<String, Object> memoryUsage = statsCallback.getStats().getMemoryStats();
-		return Long.parseLong(memoryUsage.get("usage").toString());
-	}
-	
-	/**
-	 * computes cpu usage of given {@link Container}
-	 * 
-	 * @param containerId - id of {@link Container}
-	 * @return a float number between 0-100
-	 */
-	@SuppressWarnings("unchecked")
-	public float getCpuUsage(String containerId) {
-		if (!hasContainer(containerId)) 
-			return 0;
-		
-		StatsCallback statsCallback = new StatsCallback(); 
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException e) {}
-		}
-		Map<String, Object> usageBefore = statsCallback.getStats().getCpuStats();
-		float totalBefore = Long.parseLong(((Map<String, Object>) usageBefore.get("cpu_usage")).get("total_usage").toString());;
-		float systemBefore = Long.parseLong((usageBefore.get("system_cpu_usage")).toString());
-		
-		try {
-			Thread.sleep(200);
-		} catch (InterruptedException e) {}
 
-		statsCallback.reset();
-		dockerClient.statsCmd(containerId).withContainerId(containerId).exec(statsCallback);
-		while (!statsCallback.gotStats()) {
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException e) {}
+	/**
+	 * initializes docker client
+	 */
+	private void initDockerClient() {
+		try {
+			DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
+					.withDockerHost(Configuration.getDockerUrl());
+			if (!Constants.DOCKER_API_VERSION.isEmpty()) {
+				configBuilder = configBuilder.withApiVersion(Constants.DOCKER_API_VERSION);
+			}
+			DockerClientConfig config = configBuilder.build();
+			dockerClient = DockerClientBuilder.getInstance(config).build();
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "docker client initialization failed - " + e.getMessage());
+			throw e;
 		}
-		Map<String, Object> usageAfter = statsCallback.getStats().getCpuStats();
-		float totalAfter = Long.parseLong(((Map<String, Object>) usageAfter.get("cpu_usage")).get("total_usage").toString());
-		float systemAfter = Long.parseLong((usageAfter.get("system_cpu_usage")).toString());
-		
-		
-		return Math.abs(1000f * ((totalAfter - totalBefore) / (systemAfter - systemBefore)));
+		addDockerEventHandler();
 	}
-	
+
+	/**
+	 * reinitialization of docker client
+	 */
+	public void reInitDockerClient() {
+		try {
+			if (null != dockerClient) {
+				dockerClient.close();
+			}
+		} catch (IOException e) {
+			LoggingService.logWarning(MODULE_NAME, "docker client closing failed - " + e.getMessage());
+		}
+		initDockerClient();
+	}
+
+
+	/**
+	 * starts docker events handler
+	 */
+	private void addDockerEventHandler() {
+		dockerClient.eventsCmd().exec(new EventsResultCallback() {
+			@Override
+			public void onNext(Event item) {
+				switch (item.getType()) {
+					case CONTAINER:
+					case IMAGE:
+						StatusReporter.setProcessManagerStatus().getElementStatus(item.getId()).setStatus(
+								fromText(item.getStatus()));
+				}
+			}
+		});
+		LoggingService.logInfo(MODULE_NAME, "docker events handler is started");
+	}
+
 	/**
 	 * returns a Docker {@link Image} if exists
-	 * 
+	 *
 	 * @param imageName - name of {@link Image}
 	 * @return {@link Image}
 	 */
-	public Image getImage(String imageName) {
+	private Image getImage(String imageName) {
 		List<Image> images = dockerClient.listImagesCmd().exec();
 		Optional<Image> result = images.stream()
 				.filter(image -> image.getRepoTags()[0].equals(imageName)).findFirst();
 
 		return result.orElse(null);
 	}
-	
-	/**
-	 * connects to Docker daemon
-	 * 
-	 * @throws Exception
-	 */
-	public void connect() throws Exception {
-		DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-				.withApiVersion(Constants.DOCKER_API_VERSION)
-				.withDockerHost(Configuration.getDockerUrl())
-				.build();
 
-		dockerClient = DockerClientBuilder.getInstance(config).build();
-
-		try {
-			Info info = dockerClient.infoCmd().exec();
-			LoggingService.logInfo(MODULE_NAME, "connected to docker daemon: " + info.getName());
-		} catch (Exception e) {
-			LoggingService.logInfo(MODULE_NAME, "connecting to docker failed: " + e.getClass().getName() + " - " + e.getMessage());
-			throw e;
-		}
-	}
-	
 	/**
 	 * generates Docker authConfig
 	 * based on Docker Remote API document
-	 * {@link https://docs.docker.com/engine/reference/api/docker_remote_api/}
-	 * 
+	 *
 	 * @param registry - {@link Registry}
 	 * @return base64 encoded string
 	 */
@@ -187,79 +154,17 @@ public class DockerUtil implements AutoCloseable{
 				.add("username", registry.getUserName())
 				.add("password", registry.getPassword())
 				.add("email", registry.getUserEmail())
-				.add("auth", "")
+				.add("auth", EMPTY)
 				.build();
 		return Base64.getEncoder().encodeToString(auth.toString().getBytes(StandardCharsets.US_ASCII));
 	}
-	
-	/**
-	 * logs in to a {@link Registry}
-	 * 
-	 * @param registry - {@link Registry}
-	 * @throws Exception
-	 */
-	public void login(Registry registry) throws Exception {
-		if (!isConnected()) {
-			try {
-				connect();
-			} catch (Exception e) {
-				throw e;
-			}
-		}
-		LoggingService.logInfo(MODULE_NAME, "logging in to registry");
-		try {
-			DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
-					.withDockerHost(Configuration.getDockerUrl())
-					.withRegistryUsername(registry.getUserName())
-					.withRegistryPassword(registry.getPassword())
-					.withRegistryEmail(registry.getUserEmail())
-					.withRegistryUrl(registry.getUrl());
 
-			if (!Constants.DOCKER_API_VERSION.isEmpty()) {
-				configBuilder = configBuilder.withApiVersion(Constants.DOCKER_API_VERSION);
-			}
-
-			DockerClientConfig config = configBuilder.build();
-
-			dockerClient = DockerClientBuilder.getInstance(config).build();
-//			dockerClient.authCmd().exec();
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "login failed - " + e.getMessage());
-			throw e;
-		}
-	}
-	
-	/**
-	 * closes Docker daemon connection
-	 * 
-	 */
-	public void close() {
-		try {
-			dockerClient.close();
-		} catch (Exception e) {}
-	}
-	
-	/**
-	 * check whether Docker daemon is connected or not
-	 * 
-	 * @return boolean
-	 */
-	public boolean isConnected() {
-		try {
-			dockerClient.infoCmd().exec();
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
-	
 	/**
 	 * starts a {@link Container}
-	 * 
-	 * @param id - id of {@link Container}
-	 * @throws Exception
+	 *
+	 * @param element {@link Element}
 	 */
-	public void startContainer(String id) throws Exception {
+	public void startContainer(Element element) throws NotFoundException, NotModifiedException {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -267,65 +172,67 @@ public class DockerUtil implements AutoCloseable{
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		dockerClient.startContainerCmd(id).exec();
+		dockerClient.startContainerCmd(element.getContainerId()).exec();
 	}
-	
+
 	/**
 	 * stops a {@link Container}
-	 * 
+	 *
 	 * @param id - id of {@link Container}
-	 * @throws Exception
 	 */
-	public void stopContainer(String id) throws Exception {
-		dockerClient.stopContainerCmd(id).exec();
-	}
-	
-	/**
-	 * removes a {@link Container}
-	 * 
-	 * @param id - id of {@link Container}
-	 * @throws Exception
-	 */
-	public void removeContainer(String id) throws Exception {
-		dockerClient.removeContainerCmd(id).withForce(true).exec();
-	}
-	
-	/**
-	 * gets IPv4 address of a {@link Container}
-	 * 
-	 * @param id - id of {@link Container}
-	 * @return ip address
-	 * @throws Exception
-	 */
-	public String getContainerIpAddress(String id) throws Exception {
-		try {
-			InspectContainerResponse inspect =  dockerClient.inspectContainerCmd(id).exec();
-			return inspect.getNetworkSettings().getIpAddress();
-		} catch (Exception e) {
-			throw e;
+	public void stopContainer(String id) throws NotFoundException, NotModifiedException {
+		if (isContainerRunning(id)) {
+			dockerClient.stopContainerCmd(id).exec();
 		}
 	}
-	
+
+	/**
+	 * removes a {@link Container}
+	 *
+	 * @param id - id of {@link Container}
+	 * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
+	 */
+	public void removeContainer(String id, Boolean withRemoveVolumes) throws NotFoundException, NotModifiedException {
+		dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
+	}
+
+	/**
+	 * gets IPv4 address of a {@link Container}
+	 *
+	 * @param id - id of {@link Container}
+	 * @return ip address
+	 */
+	public String getContainerIpAddress(String id) throws NotFoundException, NotModifiedException {
+		try {
+			InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
+			return inspect.getNetworkSettings().getIpAddress();
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
+		}
+	}
+
+	public String getContainerName(Container container) {
+		return container.getNames()[0].substring(1);
+	}
+
 	/**
 	 * returns a {@link Container} if exists
-	 * 
+	 *
 	 * @param elementId - name of {@link Container} (id of {@link Element})
-	 * @return
+	 * @return Optional<Container>
 	 */
-	public Container getContainer(String elementId) {
+	public Optional<Container> getContainer(String elementId) {
 		List<Container> containers = getContainers();
-		Optional<Container> result = containers.stream()
-				.filter(c -> c.getNames()[0].trim().substring(1).equals(elementId)).findFirst();
-		if (result.isPresent())
-			return result.get();
-		else 
-			return null;
+		return containers.stream()
+				.filter(c -> getContainerName(c).equals(elementId))
+				.findAny();
 	}
-	
+
 	/**
 	 * computes started time in milliseconds
-	 * 
-	 * @param startedTime - string representing {@link Container} started time 
+	 *
+	 * @param startedTime - string representing {@link Container} started time
 	 * @return started time in milliseconds
 	 */
 	private long getStartedTime(String startedTime) {
@@ -340,107 +247,204 @@ public class DockerUtil implements AutoCloseable{
 			return 0;
 		}
 	}
-	
+
 	/**
 	 * gets {@link Container} status
-	 * 
-	 * @param id - id of {@link Container}
+	 *
+	 * @param containerId - id of {@link Container}
 	 * @return {@link ElementStatus}
-	 * @throws Exception
 	 */
-	public ElementStatus getContainerStatus(String id) throws Exception {
-		try {
-			ContainerState status = dockerClient.inspectContainerCmd(id).exec().getState();
-			ElementStatus result = new ElementStatus();
-			if (status.getRunning()) {
-				result.setStartTime(getStartedTime(status.getStartedAt()));
-				result.setCpuUsage(0);
-				result.setMemoryUsage(0);
-				result.setStatus(ElementState.RUNNING);
-			} else {
-				result.setStatus(ElementState.STOPPED);
+	public ElementStatus getElementStatus(String containerId) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		ContainerState containerState = inspectInfo.getState();
+		ElementStatus result = new ElementStatus();
+		if (containerState != null) {
+			if (containerState.getStartedAt() != null) {
+				result.setStartTime(getStartedTime(containerState.getStartedAt()));
 			}
-			return result;
-		} catch (Exception e) {
-			throw e;
+			if (containerState.getStatus() != null) {
+				ElementState elementState = ElementState.fromText(containerState.getStatus());
+				result.setStatus(ElementState.RESTARTING.equals(elementState) && RestartStuckChecker.isStuck(containerId) ?
+						ElementState.STUCK_IN_RESTART :
+						elementState);
+			}
+			result.setContainerId(containerId);
+			result.setUsage(containerId);
 		}
+		return result;
 	}
-	
+
+	public Optional<Statistics> getContainerStats(String containerId) {
+		StatsCmd statsCmd = dockerClient.statsCmd(containerId);
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		StatsCallback stats = new StatsCallback(countDownLatch);
+		try (StatsCallback statscallback = statsCmd.exec(stats)) {
+			countDownLatch.await(5, TimeUnit.SECONDS);
+		} catch (InterruptedException | IOException e) {
+			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+		}
+		return Optional.ofNullable(stats.getStats());
+	}
+
+	/**
+	 * return container last start epoch time
+	 *
+	 * @param id container id
+	 * @return long epoch time
+	 */
+	public long getContainerStartedAt(String id) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
+		String startedAt = inspectInfo.getState().getStartedAt();
+		return startedAt != null ? DateTimeFormatter.ISO_INSTANT.parse(startedAt, Instant::from).toEpochMilli() : Instant.now().toEpochMilli();
+	}
+
+	/**
+	 * compares if element's and container's settings are equal
+	 *
+	 * @param containerId container id
+	 * @param element     element
+	 * @return boolean
+	 */
+	public boolean areElementAndContainerEqual(String containerId, Element element) {
+		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
+	}
+
+	/**
+	 * compares if element has root host access, then container will have the NetworkMode 'host',
+	 * otherwise container has to have ExtraHosts
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean
+	 */
+	private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
+		boolean isRootHostAccess = element.isRootHostAccess();
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
+				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
+	}
+
+	/**
+	 * compares if element port mapping is equal to container port mapping
+	 *
+	 * @param inspectInfo result of docker inspect command
+	 * @param element     element
+	 * @return boolean true if port mappings are the same
+	 */
+	private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
+		return getElementPorts(element).equals(getContainerPorts(inspectInfo));
+
+	}
+
+	private List<PortMapping> getElementPorts(Element element) {
+		return element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+	}
+
+	private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
+		HostConfig hostConfig = inspectInfo.getHostConfig();
+		Ports ports = hostConfig.getPortBindings();
+		return ports.getBindings().entrySet().stream()
+				.flatMap(entity -> {
+					String exposedPort = String.valueOf(entity.getKey().getPort());
+					return Arrays.stream(entity.getValue())
+							.map(Binding::getHostPortSpec)
+							.map(hostPort -> new PortMapping(hostPort, exposedPort));
+				})
+				.collect(Collectors.toList());
+	}
+
+	public Optional<String> getContainerStatus(String containerId) {
+		Optional<String> result = Optional.empty();
+		try {
+			InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
+			ContainerState status = inspectInfo.getState();
+			result = Optional.ofNullable(status.getStatus());
+		} catch (Exception exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+		}
+		return result;
+	}
+
+	/**
+	 * returns whether the {@link Container} exists or not
+	 * preferable to perform a check by elementId
+	 *
+	 * @param elementId - id of {@link Element}
+	 * @return boolean true if exists and false in other case
+	 */
+	public boolean hasContainerWithElementId(String elementId) {
+		List<Container> containers = getContainers();
+		return containers.stream()
+				.anyMatch(c -> getContainerName(c).equals(elementId));
+	}
+
+	public boolean isContainerRunning(String containerId) {
+		Optional<String> status = getContainerStatus(containerId);
+		return status.isPresent() && status.get().equalsIgnoreCase(RUNNING.toString());
+	}
+
 	/**
 	 * returns list of {@link Container} installed on Docker daemon
-	 * 
+	 *
 	 * @return list of {@link Container}
 	 */
 	public List<Container> getContainers() {
-		if (!isConnected()) {
-			try {
-				connect();
-			} catch (Exception e) {
-				return null;
-			}
-		}
 		return dockerClient.listContainersCmd().withShowAll(true).exec();
 	}
 
 	/**
 	 * removes a Docker {@link Image}
-	 * 
+	 *
 	 * @param imageName - imageName of {@link Element}
-	 * @throws Exception
 	 */
-	public void removeImage(String imageName) throws Exception {
+	public void removeImage(String imageName) throws NotFoundException, NotModifiedException {
 		Image image = getImage(imageName);
 		if (image == null)
 			return;
 		dockerClient.removeImageCmd(image.getId()).withForce(true).exec();
 	}
-	
-	/**
-	 * returns whether the {@link Container} exists or not
-	 * 
-	 * @param containerId - id of {@link Container}
-	 * @return
-	 */
-	public boolean hasContainer(String containerId) {
-		try {
-			getContainerStatus(containerId);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
 
 	/**
 	 * pulls {@link Image} from {@link Registry}
-	 * 	
+	 *
 	 * @param imageName - imageName of {@link Element}
-	 * @throws Exception
+	 * @param registry  - {@link Registry} where image is placed
 	 */
-	public void pullImage(String imageName) throws Exception {
-		String tag = null;
-		String registry = imageName;
-		if (registry.contains(":")) {
-			String[] sp = registry.split(":");
-			registry = sp[0];
+	public void pullImage(String imageName, Registry registry) throws NotFoundException, NotModifiedException {
+		String tag = null, image;
+		if (imageName.contains(":")) {
+			String[] sp = imageName.split(":");
+			image = sp[0];
 			tag = sp[1];
+		} else {
+			image = imageName;
 		}
-		PullImageCmd req = dockerClient.pullImageCmd(registry).withAuthConfig(dockerClient.authConfig());
+		PullImageCmd req =
+				registry.getIsPublic() ?
+						dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
+						dockerClient.pullImageCmd(image).withAuthConfig(
+								new AuthConfig()
+										.withRegistryAddress(registry.getUrl())
+										.withEmail(registry.getUserEmail())
+										.withUsername(registry.getUserName())
+										.withPassword(registry.getPassword())
+						);
 		if (tag != null)
 			req.withTag(tag);
 		PullImageResultCallback res = new PullImageResultCallback();
 		res = req.exec(res);
 		res.awaitSuccess();
 	}
-	
+
 	/**
 	 * creates {@link Container}
-	 * 
+	 *
 	 * @param element - {@link Element}
-	 * @param host - host ip address
+	 * @param host    - host ip address
 	 * @return id of created {@link Container}
-	 * @throws Exception
 	 */
-	public String createContainer(Element element, String host) throws Exception {
+	public String createContainer(Element element, String host) throws NotFoundException, NotModifiedException {
 		RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
 
 		Ports portBindings = new Ports();
@@ -454,30 +458,30 @@ public class DockerUtil implements AutoCloseable{
 			});
 		List<Volume> volumes = new ArrayList<>();
 		List<Bind> volumeBindings = new ArrayList<>();
-		if(element.getVolumeMappings() != null) {
+		if (element.getVolumeMappings() != null) {
 			element.getVolumeMappings().forEach(volumeMapping -> {
-			    Volume volume = new Volume(volumeMapping.getContainerDestination());
+				Volume volume = new Volume(volumeMapping.getContainerDestination());
 				volumes.add(volume);
-                AccessMode accessMode;
-                try {
-                    accessMode = AccessMode.valueOf(volumeMapping.getAccessMode());
-                } catch (Exception e) {
-                    accessMode = AccessMode.DEFAULT;
-                }
-                volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
+				AccessMode accessMode;
+				try {
+					accessMode = AccessMode.valueOf(volumeMapping.getAccessMode());
+				} catch (Exception e) {
+					accessMode = AccessMode.DEFAULT;
+				}
+				volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
 			});
 		}
-		String[] extraHosts = { "iofabric:" + host, "iofog:" + host };
-		
-		Map<String, String> containerLogConfig = new HashMap<String, String>();
-		int logFiles = 1; 
+		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
+
+		Map<String, String> containerLogConfig = new HashMap<>();
+		int logFiles = 1;
 		if (element.getLogSize() > 2)
-			logFiles = (int) (element.getLogSize() / 2); 
+			logFiles = (int) (element.getLogSize() / 2);
 
 		containerLogConfig.put("max-file", String.valueOf(logFiles));
 		containerLogConfig.put("max-size", "2m");
 		LogConfig containerLog = new LogConfig(LogConfig.LoggingType.DEFAULT, containerLogConfig);
-		
+
 		CreateContainerCmd cmd = dockerClient.createContainerCmd(element.getImageName())
 				.withLogConfig(containerLog)
 				.withCpusetCpus("0")
@@ -486,55 +490,15 @@ public class DockerUtil implements AutoCloseable{
 				.withEnv("SELFNAME=" + element.getElementId())
 				.withName(element.getElementId())
 				.withRestartPolicy(restartPolicy);
-		if(element.getVolumeMappings() != null) {
+		if (element.getVolumeMappings() != null) {
 			cmd = cmd
 					.withVolumes(volumes.toArray(new Volume[volumes.size()]))
 					.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
 		}
-		if (StringUtil.isNullOrEmpty(host))
-			cmd = cmd.withNetworkMode("host").withPrivileged(true);
-		else
-			cmd = cmd.withExtraHosts(extraHosts).withPrivileged(true);
+		cmd = StringUtil.isNullOrEmpty(host)
+				? cmd.withNetworkMode("host").withPrivileged(true)
+				: cmd.withExtraHosts(extraHosts).withPrivileged(true);
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}
-
-	/**
-	 * compares whether an {@link Element} {@link PortMapping} is 
-	 * same as its corresponding {@link Container} or not
-	 * 
-	 * @param element - {@link Element}
-	 * @return boolean
-	 */
-	public boolean comprarePorts(Element element) {
-		List<PortMapping> elementPorts = element.getPortMappings();
-		Container container = getContainer(element.getElementId());
-		if (container == null)
-			return false;
-		ContainerPort[] containerPorts = container.getPorts();
-		
-		if (elementPorts == null && containerPorts == null)
-			return true;
-		else if (containerPorts == null)
-			return  elementPorts.size() == 0;
-		else if (elementPorts == null)
-			return  containerPorts.length == 0;
-		else if (elementPorts.size() != containerPorts.length)
-			return false;
-		
-		for (PortMapping elementPort : elementPorts) {
-			boolean found = false;
-			for (ContainerPort containerPort : containerPorts)
-				if (containerPort.getPrivatePort().toString().equals(elementPort.getInside()))
-					if (containerPort.getPublicPort().toString().equals(elementPort.getOutside())) {
-						found = true;
-						break;
-					}
-			if (!found)
-				return false;
-		}
-		
-		return true;
-	}
-	
 }

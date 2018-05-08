@@ -17,17 +17,14 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import org.eclipse.iofog.message_bus.Message;
-
 public class RestReceiveTest {
 	private int delay;
 	private String receiver;
-	int counter;
+	private int counter;
 	
 	public RestReceiveTest(String receiver, int delay) {
 		this.delay = delay;

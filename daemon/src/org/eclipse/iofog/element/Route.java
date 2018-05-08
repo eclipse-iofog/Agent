@@ -38,11 +38,24 @@ public class Route {
 
 	@Override
 	public String toString() {
-		String in = "\"receivers\" : [";
+		StringBuilder in = new StringBuilder("\"receivers\" : [");
 		if (receivers != null)
 			for (String e : receivers)
-				in += "\"" + e + "\",";
-		in += "]";
+				in.append("\"").append(e).append("\",");
+		in.append("]");
 		return "{" + in + "}";
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Route route = (Route) o;
+		return receivers.equals(route.receivers);
+	}
+
+	@Override
+	public int hashCode() {
+		return receivers.hashCode();
 	}
 }

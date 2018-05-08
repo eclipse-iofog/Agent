@@ -14,46 +14,66 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
+
 /**
  * represents tasks applied on a {@link Container}
- * 
- * @author saeid
  *
+ * @author saeid
  */
 public class ContainerTask {
-	public enum Tasks {
-		ADD,
-		UPDATE,
-		REMOVE;
-	}
-	
-	public Tasks action;
-	public Object data;
-	public int retries;
-	
-	public ContainerTask(Tasks action, Object data) {
-		this.action = action;
-		this.data = data;
-		this.retries = 0;
-	}
-	
-	public ContainerTask(Tasks action, Object data, int retries) {
-		this.action = action;
-		this.data = data;
-		this.retries = retries;
-	}
-	
-	@Override
-	public boolean equals(Object other) {
-		if (!other.getClass().equals(ContainerTask.class))
-			return false;
-		ContainerTask ac = (ContainerTask) other;
-		return ac.action.equals(this.action) && ac.data.equals(data);
-	}
-	
-	@Override
-	public int hashCode() {
-		return action.hashCode() + data.hashCode();
-	}
+
+    public enum Tasks {
+        ADD,
+        UPDATE,
+        REMOVE,
+        REMOVE_WITH_CLEAN_UP
+    }
+
+    private Tasks action;
+    private String elementId;
+    private int retries;
+
+    public ContainerTask(Tasks action, String elementId) {
+        this.action = action;
+        this.elementId = elementId != null ? elementId : EMPTY;
+        this.retries = 0;
+    }
+
+    public Tasks getAction() {
+        return action;
+    }
+
+    public int getRetries() {
+        return retries;
+    }
+
+    public String getElementId() {
+        return elementId;
+    }
+
+    public void incrementRetries() {
+        this.retries++;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ContainerTask that = (ContainerTask) o;
+
+        if (retries != that.retries) return false;
+        if (action != that.action) return false;
+        return elementId.equals(that.elementId);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = action.hashCode();
+        result = 31 * result + elementId.hashCode();
+        result = 31 * result + retries;
+        return result;
+    }
 }
 
