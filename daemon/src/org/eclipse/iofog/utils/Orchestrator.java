@@ -182,21 +182,6 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
-		if (!controllerUrl.toLowerCase().startsWith("https"))
-			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result;
-		
-		StringBuilder uri = new StringBuilder(controllerUrl);
-		
-		uri.append("instance/")
-			.append(command)
-			.append("/id/").append(instanceId)
-			.append("/token/").append(accessToken);
-		
-		if (queryParams != null)
-			queryParams.forEach((key, value) -> uri.append("/").append(key)
-					.append("/").append(value));
-
 		List<NameValuePair> postData = new ArrayList<>();
 		if (postParams != null)
 			postParams.forEach((key, value1) -> {
@@ -204,12 +189,30 @@ public class Orchestrator {
 				postData.add(new BasicNameValuePair(key, value));
 			});
 
+		return getJsonObject(command, queryParams, new UrlEncodedFormEntity(postData));
+	}
+
+	private JsonObject getJsonObject(String command, Map<String, Object> queryParams, HttpEntity httpEntity) throws Exception {
+		if (!controllerUrl.toLowerCase().startsWith("https"))
+			throw new Exception("unable to connect over non-secure connection");
+		JsonObject result;
+
+		StringBuilder uri = new StringBuilder(controllerUrl);
+
+		uri.append("instance/")
+			.append(command)
+			.append("/id/").append(instanceId)
+			.append("/token/").append(accessToken);
+
+		if (queryParams != null)
+			queryParams.forEach((key, value) -> uri.append("/").append(key)
+					.append("/").append(value));
 
 		initialize();
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(uri.toString());
 		post.setConfig(config);
-		post.setEntity(new UrlEncodedFormEntity(postData));
+		post.setEntity(httpEntity);
 
 		try (CloseableHttpResponse response = client.execute(post);
 			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
@@ -220,7 +223,6 @@ public class Orchestrator {
 			} else if (response.getStatusLine().getStatusCode() == 204) {
 				throw new NoContentException("");
 			}
-
 
 			result = jsonReader.readObject();
 		} catch (UnsupportedEncodingException exp) {
@@ -240,23 +242,6 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	public JsonObject sendFileToController(String command, File file) throws Exception {
-		if (!controllerUrl.toLowerCase().startsWith("https"))
-			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result;
-
-		StringBuilder uri = new StringBuilder(controllerUrl);
-
-		uri.append("instance/")
-				.append(command)
-				.append("/id/").append(instanceId)
-				.append("/token/").append(accessToken);
-
-
-		initialize();
-		RequestConfig config = getRequestConfig();
-		HttpPost post = new HttpPost(uri.toString());
-		post.setConfig(config);
-
 		InputStream inputStream = new FileInputStream(file.getName());
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
@@ -264,26 +249,10 @@ public class Orchestrator {
 				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
 
 		HttpEntity entity = builder.build();
-		post.setEntity(entity);
-
-		try (CloseableHttpResponse response = client.execute(post);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-			 JsonReader jsonReader = Json.createReader(in)) {
-
-			if (response.getStatusLine().getStatusCode() == 403) {
-				throw new ForbiddenException();
-			} else if (response.getStatusLine().getStatusCode() == 204) {
-				throw new NoContentException("");
-			}
+		return getJsonObject(command, null, entity);
 
 
-			result = jsonReader.readObject();
-		} catch (UnsupportedEncodingException exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
-			throw exp;
-		}
 
-		return result;
 	}
 
 	/**

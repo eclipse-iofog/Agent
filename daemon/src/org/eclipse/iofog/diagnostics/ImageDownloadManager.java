@@ -41,6 +41,7 @@ public class ImageDownloadManager {
         } else {
             String path = resultSetWithPath.getValue().get(0);
             try {
+                //TODO: think about send few files
                 JsonObject result = orchestrator.sendFileToController("imageSnapshotPut", getFileByFilePath(path));
                 if ("ok".equals(result.getString("status"))) {
                     getFileByFilePath(path).delete();
