@@ -80,4 +80,4 @@ jobs:
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then sshpass -p $PRE_PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
       $PRE_PROD_MACHINE_USERNAME@$PRE_PROD_MACHINE_IP "apt-get install --only-upgrade iofog-dev -y"; 
       else sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $PROD_MACHINE_USERNAME@PROD_MACHINE_IP "apt-get install --only-upgrade iofog -y"; fi
+      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP "apt-get install --only-upgrade iofog -y"; fi
