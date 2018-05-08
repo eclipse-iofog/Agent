@@ -74,7 +74,6 @@ public class FieldAgent implements IOFogModule {
 	private static FieldAgent instance;
 	private boolean initialization;
 	private boolean connected = false;
-	private Object imageSnapshot;
 
 	private FieldAgent() {
 		lastGetChangesList = 0;
@@ -144,8 +143,9 @@ public class FieldAgent implements IOFogModule {
 	 */
 	private boolean notProvisioned() {
 		boolean notProvisioned = StatusReporter.getFieldAgentStatus().getContollerStatus().equals(NOT_PROVISIONED);
-		if (notProvisioned)
+		if (notProvisioned) {
 			logWarning("not provisioned");
+		}
 		return notProvisioned;
 	}
 
@@ -569,11 +569,11 @@ public class FieldAgent implements IOFogModule {
 			JsonArray portMappingObjs = jsonObj.getJsonArray("portmappings");
 			List<PortMapping> pms = portMappingObjs.size() > 0
 					? IntStream.range(0, portMappingObjs.size())
-					.boxed()
-					.map(portMappingObjs::getJsonObject)
-					.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
-							portMapping.getString("insidecontainer")))
-					.collect(toList())
+						.boxed()
+						.map(portMappingObjs::getJsonObject)
+						.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
+								portMapping.getString("insidecontainer")))
+						.collect(toList())
 					: null;
 
 			element.setPortMappings(pms);
@@ -584,12 +584,12 @@ public class FieldAgent implements IOFogModule {
 			JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
 			List<VolumeMapping> vms = volumeMappingObj.size() > 0
 					? IntStream.range(0, volumeMappingObj.size())
-					.boxed()
-					.map(volumeMappingObj::getJsonObject)
-					.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
-							volumeMapping.getString("containerdestination"),
-							volumeMapping.getString("accessmode")))
-					.collect(toList())
+						.boxed()
+						.map(volumeMappingObj::getJsonObject)
+						.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
+								volumeMapping.getString("containerdestination"),
+								volumeMapping.getString("accessmode")))
+						.collect(toList())
 					: null;
 
 			element.setVolumeMappings(vms);
@@ -1137,19 +1137,19 @@ public class FieldAgent implements IOFogModule {
 
 		LoggingService.logInfo(MODULE_NAME, "create image snapshot");
 
-		String imageName = null;
+		String elementId = null;
 
 		try {
 			JsonObject jsonObject = orchestrator.doCommand("imageSnapshotGet", null, null);
 			checkResponseStatus(jsonObject);
-			imageName = jsonObject.getString("uuid");
+			elementId = jsonObject.getString("uuid");
 
 		} catch (Exception e) {
 			logWarning("unable get name of image snapshot : " + e.getMessage());
 		}
 
-		if (imageName != null) {
-			ImageDownloadManager.getInstance().createImageSnapshot(orchestrator, imageName);
+		if (elementId != null) {
+			ImageDownloadManager.createImageSnapshot(orchestrator, elementId);
 		}
 	}
 

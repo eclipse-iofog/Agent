@@ -236,12 +236,10 @@ public class Orchestrator {
 	 *
 	 * @param command - endpoint to be called
 	 * @param file - file to send
-	 * @param elementId -
-	 * @param imageName
 	 * @return result in Json format
 	 * @throws Exception
 	 */
-	public JsonObject sendFileToController(String command, File file, String elementId, String imageName) throws Exception {
+	public JsonObject sendFileToController(String command, File file) throws Exception {
 		if (!controllerUrl.toLowerCase().startsWith("https"))
 			throw new Exception("unable to connect over non-secure connection");
 		JsonObject result;
@@ -259,24 +257,15 @@ public class Orchestrator {
 		HttpPost post = new HttpPost(uri.toString());
 		post.setConfig(config);
 
-		/**/
-
 		InputStream inputStream = new FileInputStream(file.getName());
-//		File file = new File(imageFileName);
-//		String message = "This is a multipart post";
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-//		builder.addBinaryBody
-//				("upfile", file, ContentType.DEFAULT_BINARY, file.getName());
 		builder.addBinaryBody
 				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
-//		builder.addTextBody(elementId, imageName, ContentType.TEXT_PLAIN);
-//
+
 		HttpEntity entity = builder.build();
 		post.setEntity(entity);
-//		HttpResponse response = client.execute(post);
 
-		/***/
 		try (CloseableHttpResponse response = client.execute(post);
 			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
 			 JsonReader jsonReader = Json.createReader(in)) {

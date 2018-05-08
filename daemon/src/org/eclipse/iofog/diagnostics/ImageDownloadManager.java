@@ -1,7 +1,9 @@
 package org.eclipse.iofog.diagnostics;
 
+import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -9,36 +11,24 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class ImageDownloadManager {
+
     private static final String MODULE_NAME = "Image Download Manager";
 
-    private static ImageDownloadManager instance = null;
-
-    public static ImageDownloadManager getInstance() {
-        if (instance == null) {
-            synchronized (ImageDownloadManager.class) {
-                if (instance == null)
-                    instance = new ImageDownloadManager();
-            }
-        }
-        return instance;
-    }
-
-    public void createImageSnapshot(Orchestrator orchestrator, String imageName) {
-        CommandShellResultSet<List<String>, List<String>> resultSetWithImageName =
-                CommandShellExecutor.executeCommand("docker ps | grep " + imageName);
+    public static void createImageSnapshot(Orchestrator orchestrator, String elementId) {
+        Optional<Container> containerOptional = DockerUtil.getInstance().getContainer(elementId);
         String image;
-        if (resultSetWithImageName.getValue() != null && resultSetWithImageName.getValue().size() > 0
-                && resultSetWithImageName.getValue().get(0) != null) {
-            image = resultSetWithImageName.getValue().get(0).split("\\s+")[1];
-
+        if (containerOptional.isPresent()) {
+            Container container = containerOptional.get();
+            image = container.getImage();
         } else {
             throw new IllegalArgumentException();
         }
-        String imageZip = imageName + ".tar.gz";
+        String imageZip = elementId + ".tar.gz";
 
         CommandShellResultSet<List<String>, List<String>> resultSetForCreateZip =
                 CommandShellExecutor.executeCommand("docker save " + image + " | gzip -c > " + imageZip);
@@ -50,15 +40,14 @@ public class ImageDownloadManager {
         } else {
             String path = resultSetWithPath.getValue().get(0);
             try {
-                orchestrator.sendFileToController("imageSnapshotPut", getFileByFilePath(path),
-                        "elementId", imageName );
+                orchestrator.sendFileToController("imageSnapshotPut", getFileByFilePath(path));
             } catch (Exception e) {
                 logWarning(MODULE_NAME, "unable send image snapshot path : " + e.getMessage());
             }
         }
     }
 
-    private File getFileByFilePath(String path) {
+    private static File getFileByFilePath(String path) {
 
         URL url = null;
         try {
