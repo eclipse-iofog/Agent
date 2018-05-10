@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.diagnostics.ImageDownloadManager;
 import org.eclipse.iofog.diagnostics.strace.ElementStraceData;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
 import org.eclipse.iofog.element.*;
@@ -35,10 +36,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -264,9 +262,12 @@ public class FieldAgent implements IOFogModule {
 				if (changes.getBoolean("reboot") && !initialization) {
 					reboot();
 				}
-
-				if (changes.getBoolean("config") && !initialization)
+				if (changes.getBoolean("isimagesnapshot") && !initialization) {
+					createImageSnapshot();
+				}
+				if (changes.getBoolean("config") && !initialization) {
 					getFogConfig();
+				}
 				if (changes.getBoolean("version") && !initialization) {
 					changeVersion();
 				}
@@ -1033,7 +1034,7 @@ public class FieldAgent implements IOFogModule {
 		}
 		return isConnected;
 	}
-	
+
 	private void handleBadControllerStatus() {
 		if (StatusReporter.getFieldAgentStatus().isControllerVerified()) {
 			logWarning("connection to controller has broken");
@@ -1128,4 +1129,28 @@ public class FieldAgent implements IOFogModule {
 		}
 		return Optional.ofNullable(connection);
 	}
+
+	private void createImageSnapshot() {
+		if (notProvisioned() || !isControllerConnected(false)) {
+			return;
+		}
+
+		LoggingService.logInfo(MODULE_NAME, "create image snapshot");
+
+		String elementId = null;
+
+		try {
+			JsonObject jsonObject = orchestrator.doCommand("imageSnapshotGet", null, null);
+			checkResponseStatus(jsonObject);
+			elementId = jsonObject.getString("uuid");
+
+		} catch (Exception e) {
+			logWarning("unable get name of image snapshot : " + e.getMessage());
+		}
+
+		if (elementId != null) {
+			ImageDownloadManager.createImageSnapshot(orchestrator, elementId);
+		}
+	}
+
 }

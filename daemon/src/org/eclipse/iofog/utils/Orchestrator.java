@@ -12,12 +12,16 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
@@ -178,21 +182,6 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
-		if (!controllerUrl.toLowerCase().startsWith("https"))
-			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result;
-		
-		StringBuilder uri = new StringBuilder(controllerUrl);
-		
-		uri.append("instance/")
-			.append(command)
-			.append("/id/").append(instanceId)
-			.append("/token/").append(accessToken);
-		
-		if (queryParams != null)
-			queryParams.forEach((key, value) -> uri.append("/").append(key)
-					.append("/").append(value));
-
 		List<NameValuePair> postData = new ArrayList<>();
 		if (postParams != null)
 			postParams.forEach((key, value1) -> {
@@ -200,12 +189,30 @@ public class Orchestrator {
 				postData.add(new BasicNameValuePair(key, value));
 			});
 
+		return getJsonObject(command, queryParams, new UrlEncodedFormEntity(postData));
+	}
+
+	private JsonObject getJsonObject(String command, Map<String, Object> queryParams, HttpEntity httpEntity) throws Exception {
+		if (!controllerUrl.toLowerCase().startsWith("https"))
+			throw new Exception("unable to connect over non-secure connection");
+		JsonObject result;
+
+		StringBuilder uri = new StringBuilder(controllerUrl);
+
+		uri.append("instance/")
+			.append(command)
+			.append("/id/").append(instanceId)
+			.append("/token/").append(accessToken);
+
+		if (queryParams != null)
+			queryParams.forEach((key, value) -> uri.append("/").append(key)
+					.append("/").append(value));
 
 		initialize();
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(uri.toString());
 		post.setConfig(config);
-		post.setEntity(new UrlEncodedFormEntity(postData));
+		post.setEntity(httpEntity);
 
 		try (CloseableHttpResponse response = client.execute(post);
 			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
@@ -217,19 +224,40 @@ public class Orchestrator {
 				throw new NoContentException("");
 			}
 
-
 			result = jsonReader.readObject();
 		} catch (UnsupportedEncodingException exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
 		}
-		
+
 		return result;
 	}
 
 	/**
+	 * calls IOFog Controller endpoind to send file and returns Json result
+	 *
+	 * @param command - endpoint to be called
+	 * @param file - file to send
+	 * @return result in Json format
+	 * @throws Exception
+	 */
+	public JsonObject sendFileToController(String command, File file) throws Exception {
+		InputStream inputStream = new FileInputStream(file.getName());
+		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+		builder.addBinaryBody
+				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
+
+		HttpEntity entity = builder.build();
+		return getJsonObject(command, null, entity);
+
+
+
+	}
+
+	/**
 	 * updates local variables when changes applied
-	 * 
+	 *
 	 */
 	public void update() {
 		instanceId = Configuration.getInstanceId();
