@@ -31,20 +31,22 @@ public class ImageDownloadManager {
         }
 
         String imageZip = elementId + ".tar.gz";
-
-        CommandShellExecutor.executeCommand("docker save " + image + " | gzip -c > " + imageZip);
+        String imagePath = "/tmp/" + imageZip;
+        CommandShellExecutor.executeCommand("docker save " + image + " | gzip -c > " + imagePath);
 
         CommandShellResultSet<List<String>, List<String>> resultSetWithPath =
-                CommandShellExecutor.executeCommand("readlink -f " + imageZip);
+                CommandShellExecutor.executeCommand("readlink -f " + imagePath);
         if (resultSetWithPath.getError().size() > 0) {
             LoggingService.logWarning(MODULE_NAME, resultSetWithPath.toString());
         } else {
             String path = resultSetWithPath.getValue().get(0);
             try {
                 //TODO: think about send few files
-                JsonObject result = orchestrator.sendFileToController("imageSnapshotPut", getFileByFilePath(path));
+                File imageFile = getFileByImagePath(path);
+                JsonObject result = orchestrator.sendFileToController("imageSnapshotPut", imageFile);
                 if ("ok".equals(result.getString("status"))) {
-                    getFileByFilePath(path).delete();
+                    imageFile.delete();
+                    logWarning(MODULE_NAME, "image snapshot " + imageFile.getName() + " deleted");
                 }
             } catch (Exception e) {
                 logWarning(MODULE_NAME, "unable send image snapshot path : " + e.getMessage());
@@ -52,7 +54,7 @@ public class ImageDownloadManager {
         }
     }
 
-    private static File getFileByFilePath(String path) {
+    private static File getFileByImagePath(String path) {
 
         URL url = null;
         try {
@@ -67,6 +69,5 @@ public class ImageDownloadManager {
 
         return file;
     }
-
 
 }
