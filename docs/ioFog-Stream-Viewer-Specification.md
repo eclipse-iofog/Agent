@@ -1,6 +1,6 @@
 # Stream Viewer Specification
 
-The Stream Viewer system container receives configuration through the ioFabric Local API just like every other container. The configuration is specified here. It hosts a REST API and a standard HTTP Web server that are also specified here.
+The Stream Viewer system container receives configuration through the ioFog Local API just like every other container. The configuration is specified here. It hosts a REST API and a standard HTTP Web server that are also specified here.
 
 #### Container Configuration Example
 <pre>

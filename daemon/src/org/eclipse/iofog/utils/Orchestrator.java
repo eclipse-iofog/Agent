@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  * Saeid Baghbidi
@@ -92,7 +92,7 @@ public class Orchestrator {
 	public JsonObject provision(String key) throws Exception {
 		JsonObject result;
 		try {
-			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fabrictype/" + Configuration.getFogType().getCode());
+			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fogtype/" + Configuration.getFogType().getCode());
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;

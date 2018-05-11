@@ -1,6 +1,6 @@
 # Debug Console Specification
 
-The Debug Console system container receives configuration through the ioFabric Local API just like every other container. The configuration is specified here. It hosts a REST API that is also specified here.
+The Debug Console system container receives configuration through the ioFog Local API just like every other container. The configuration is specified here. It hosts a REST API that is also specified here.
 
 #### Container Configuration Example
 <pre>

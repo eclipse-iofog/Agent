@@ -16,7 +16,7 @@ The tests themselves will be implemented at at the appropriate stages. Unit test
 * Test the response time of the command line functionality
 * Test the speed of setting up the default ioElement containers
 * Test the installation time
-* Test the time needed to provision an ioFabric instance to a fabric controller
+* Test the time needed to provision an ioFog instance to a fog controller
 * Test the data and message throughput
 * Test the speed of setting up additional ioElement containers
 * Test the speed of changing configuration and network settings for ioElement containers
@@ -26,7 +26,7 @@ The tests themselves will be implemented at at the appropriate stages. Unit test
 * Test the installation process on each version of Linux in the supported version list
 * Test the command line functionality thoroughly
 * Test using the help information provided by the program to learn how to operate the program
-* Test the success rate of provisioning an ioFabric instance to a fabric controller
+* Test the success rate of provisioning an ioFog instance to a fog controller
 
 #### Security Tests
 

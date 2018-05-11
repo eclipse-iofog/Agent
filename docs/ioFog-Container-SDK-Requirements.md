@@ -1,6 +1,6 @@
 # Container SDK Requirements
 
-The ioFabric Local API allows developers to use any language and framework to build ioElement containers. It uses standard REST API endpoints that speak JSON for stateless communication and it uses Websockets for real-time message and control communication.
+The ioFog Local API allows developers to use any language and framework to build ioElement containers. It uses standard REST API endpoints that speak JSON for stateless communication and it uses Websockets for real-time message and control communication.
 
 But while the API is easy to work with, it is always nice to skip some coding effort and jump right into the application development. To help developers get started faster and experience fewer issues, we need to provide SDK libraries for popular languages.
 
