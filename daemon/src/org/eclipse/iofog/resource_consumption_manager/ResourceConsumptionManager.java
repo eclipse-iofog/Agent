@@ -21,7 +21,6 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 
-import static org.eclipse.iofog.utils.Constants.GET_USAGE_DATA_FREQ_SECONDS;
 import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 
 /**
@@ -67,7 +66,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 	private Runnable getUsageData = () -> {
 		while (true) {
 			try {
-				Thread.sleep(GET_USAGE_DATA_FREQ_SECONDS * 1000);
+				Thread.sleep(Configuration.getGetUsageDataFreqSeconds() * 1000);
 
 				logInfo("get usage data");
 
