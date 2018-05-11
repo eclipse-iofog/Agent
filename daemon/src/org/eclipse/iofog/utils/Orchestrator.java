@@ -242,7 +242,7 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	public JsonObject sendFileToController(String command, File file) throws Exception {
-		InputStream inputStream = new FileInputStream(file.getName());
+		InputStream inputStream = new FileInputStream(file);
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 		builder.addBinaryBody
@@ -250,9 +250,6 @@ public class Orchestrator {
 
 		HttpEntity entity = builder.build();
 		return getJsonObject(command, null, entity);
-
-
-
 	}
 
 	/**
