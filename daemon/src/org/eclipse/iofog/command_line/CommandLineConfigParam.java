@@ -34,7 +34,8 @@ public enum CommandLineConfigParam {
     ISOLATED_DOCKER_CONTAINER ("on", "idc", "isolated_docker_container", "isolateddockercontainer"),
     GPS_MODE("", "", "", "gpsmode"),
     GPS_COORDINATES(GpsMode.AUTO.name().toLowerCase(), "gps", "gps", "gpscoordinates"),
-	POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq");
+    POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
+    FOG_TYPE("auto", "ft", "fog_type", "");
 
     private final String commandName;
     private final String xmlTag;

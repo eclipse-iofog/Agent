@@ -20,6 +20,7 @@ import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.utils.device_info.ArchitectureType;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -61,7 +62,7 @@ public final class Configuration {
 
 	private static Element configElement;
 	private static Document configFile;
-
+//Directly configurable params
 	private static String accessToken;
 	private static String instanceId;
 	private static String controllerUrl;
@@ -82,10 +83,77 @@ public final class Configuration {
 	private static boolean isolatedDockerContainers;
 	private static String gpsCoordinates;
 	private static GpsMode gpsMode;
+	private static ArchitectureType fogType;
 	private static final Map<String, Object> defaultConfig;
 
 	public static boolean debugging = false;
 
+//Automatic configurable params
+	private static int statusReportFreqSeconds;
+	private static int pingControllerFreqSeconds;
+	private static int speedCalculationFreqMinutes;
+	private static int monitorContainersStatusFreqSeconds;
+	private static int monitorRegistriesStatusFreqSeconds;
+	private static long getUsageDataFreqSeconds;
+	private static String dockerApiVersion;
+	private static int setSystemTimeFreqSeconds;
+
+	private static void updateAutomaticConfigParams() {
+		switch (fogType) {
+			case ARM:
+				statusReportFreqSeconds = 10;
+				pingControllerFreqSeconds = 60;
+				speedCalculationFreqMinutes = 1;
+				monitorContainersStatusFreqSeconds = 30;
+				monitorRegistriesStatusFreqSeconds = 120;
+				getUsageDataFreqSeconds = 20;
+				dockerApiVersion = "1.23";
+				setSystemTimeFreqSeconds = 60;
+				break;
+			case INTEL_AMD:
+				statusReportFreqSeconds = 5;
+				pingControllerFreqSeconds = 60;
+				speedCalculationFreqMinutes = 1;
+				monitorContainersStatusFreqSeconds = 10;
+				monitorRegistriesStatusFreqSeconds = 60;
+				getUsageDataFreqSeconds = 5;
+				dockerApiVersion = "1.23";
+				setSystemTimeFreqSeconds = 60;
+				break;
+		}
+	}
+
+	public static int getStatusReportFreqSeconds() {
+		return statusReportFreqSeconds;
+	}
+
+	public static int getPingControllerFreqSeconds() {
+		return pingControllerFreqSeconds;
+	}
+
+	public static int getSpeedCalculationFreqMinutes() {
+		return speedCalculationFreqMinutes;
+	}
+
+	public static int getMonitorContainersStatusFreqSeconds() {
+		return monitorContainersStatusFreqSeconds;
+	}
+
+	public static int getMonitorRegistriesStatusFreqSeconds() {
+		return monitorRegistriesStatusFreqSeconds;
+	}
+
+	public static long getGetUsageDataFreqSeconds() {
+		return getUsageDataFreqSeconds;
+	}
+
+	public static String getDockerApiVersion() {
+		return dockerApiVersion;
+	}
+
+	public static int getSetSystemTimeFreqSeconds() {
+		return setSystemTimeFreqSeconds;
+	}
 
 	static {
 		defaultConfig = new HashMap<>();
@@ -150,6 +218,14 @@ public final class Configuration {
 
 	public static void setPostDiagnosticsFreq(int postDiagnosticsFreq) {
 		Configuration.postDiagnosticsFreq = postDiagnosticsFreq;
+	}
+
+	public static ArchitectureType getFogType() {
+		return fogType;
+	}
+
+	public static void setFogType(ArchitectureType fogType) {
+		Configuration.fogType = fogType;
 	}
 
 	/**
@@ -446,6 +522,10 @@ public final class Configuration {
 					configureGps(value);
 					writeGpsToConfigFile();
 					break;
+				case FOG_TYPE:
+					configureFogType(value);
+					setNode(FOG_TYPE, value);
+					break;
 				default:
 					throw new ConfigurationItemException("Invalid parameter -" + option);
 			}
@@ -453,6 +533,37 @@ public final class Configuration {
 		saveConfigUpdates();
 
 		return messageMap;
+	}
+
+	/**
+	 * Configures fogType.
+	 *
+	 * @param fogTypeCommand could be "auto" or string that matches one of the {@link ArchitectureType} patterns
+	 * @throws ConfigurationItemException if {@link ArchitectureType} undefined
+	 */
+	private static void configureFogType(String fogTypeCommand) throws ConfigurationItemException {
+		ArchitectureType newFogType = ArchitectureType.UNDEFINED;
+		switch (fogTypeCommand) {
+			case "auto": {
+				newFogType = ArchitectureType.getArchTypeByArchName(System.getProperty("os.arch"));
+				break;
+			}
+			case "intel_amd": {
+				newFogType = ArchitectureType.INTEL_AMD;
+				break;
+			}
+			case "arm": {
+				newFogType = ArchitectureType.ARM;
+				break;
+			}
+		}
+
+		if (newFogType == ArchitectureType.UNDEFINED) {
+			throw new ConfigurationItemException("Couldn't autodetect fogType or unknown fogType type was set.");
+		}
+
+		setFogType(newFogType);
+		updateAutomaticConfigParams();
 	}
 
 	/**
@@ -605,6 +716,7 @@ public final class Configuration {
 		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
 		setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ)));
 		setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
+		configureFogType(getNode(FOG_TYPE));
 
 	}
 
@@ -789,6 +901,8 @@ public final class Configuration {
 		result.append(buildReportLine(getConfigParamMessage(GPS_MODE), gpsMode.name().toLowerCase()));
 		// gps coordinates
 		result.append(buildReportLine(getConfigParamMessage(GPS_COORDINATES), gpsCoordinates));
+		//fog type
+		result.append(buildReportLine(getConfigParamMessage(FOG_TYPE), fogType.name().toLowerCase()));
 
 		return result.toString();
 	}

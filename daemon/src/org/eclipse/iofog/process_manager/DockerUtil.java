@@ -30,7 +30,6 @@ import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.PortMapping;
 import org.eclipse.iofog.element.Registry;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -48,7 +47,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.eclipse.iofog.process_manager.ElementState.*;
+import static org.eclipse.iofog.process_manager.ElementState.RUNNING;
+import static org.eclipse.iofog.process_manager.ElementState.fromText;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -83,8 +83,8 @@ public class DockerUtil {
 		try {
 			DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
 					.withDockerHost(Configuration.getDockerUrl());
-			if (!Constants.DOCKER_API_VERSION.isEmpty()) {
-				configBuilder = configBuilder.withApiVersion(Constants.DOCKER_API_VERSION);
+			if (!Configuration.getDockerApiVersion().isEmpty()) {
+				configBuilder = configBuilder.withApiVersion(Configuration.getDockerApiVersion());
 			}
 			DockerClientConfig config = configBuilder.build();
 			dockerClient = DockerClientBuilder.getInstance(config).build();
@@ -126,20 +126,6 @@ public class DockerUtil {
 			}
 		});
 		LoggingService.logInfo(MODULE_NAME, "docker events handler is started");
-	}
-
-	/**
-	 * returns a Docker {@link Image} if exists
-	 *
-	 * @param imageName - name of {@link Image}
-	 * @return {@link Image}
-	 */
-	private Image getImage(String imageName) {
-		List<Image> images = dockerClient.listImagesCmd().exec();
-		Optional<Image> result = images.stream()
-				.filter(image -> image.getRepoTags()[0].equals(imageName)).findFirst();
-
-		return result.orElse(null);
 	}
 
 	/**
@@ -236,7 +222,7 @@ public class DockerUtil {
 	 * @return started time in milliseconds
 	 */
 	private long getStartedTime(String startedTime) {
-		int milli = Integer.parseInt(startedTime.substring(20, 23));
+		int milli = startedTime.length() > 22 ? Integer.parseInt(startedTime.substring(20, 23)) : 0;
 		startedTime = startedTime.substring(0, 10) + " " + startedTime.substring(11, 19);
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -366,19 +352,6 @@ public class DockerUtil {
 		return result;
 	}
 
-	/**
-	 * returns whether the {@link Container} exists or not
-	 * preferable to perform a check by elementId
-	 *
-	 * @param elementId - id of {@link Element}
-	 * @return boolean true if exists and false in other case
-	 */
-	public boolean hasContainerWithElementId(String elementId) {
-		List<Container> containers = getContainers();
-		return containers.stream()
-				.anyMatch(c -> getContainerName(c).equals(elementId));
-	}
-
 	public boolean isContainerRunning(String containerId) {
 		Optional<String> status = getContainerStatus(containerId);
 		return status.isPresent() && status.get().equalsIgnoreCase(RUNNING.toString());
@@ -393,16 +366,9 @@ public class DockerUtil {
 		return dockerClient.listContainersCmd().withShowAll(true).exec();
 	}
 
-	/**
-	 * removes a Docker {@link Image}
-	 *
-	 * @param imageName - imageName of {@link Element}
-	 */
-	public void removeImage(String imageName) throws NotFoundException, NotModifiedException {
-		Image image = getImage(imageName);
-		if (image == null)
-			return;
-		dockerClient.removeImageCmd(image.getId()).withForce(true).exec();
+	public void removeImageById(String imageId) throws NotFoundException, NotModifiedException {
+		dockerClient.removeImageCmd(imageId).withForce(true).exec();
+		LoggingService.logInfo(MODULE_NAME, String.format("image \"%s\" removed", imageId));
 	}
 
 	/**
