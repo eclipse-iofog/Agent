@@ -140,8 +140,6 @@ public class ContainerManager {
 
 	/**
 	 * removes a {@link Container} by Element id
-	 *
-	 * @throws Exception exception
 	 */
 	private void removeContainerByElementId(String elementId, boolean withCleanUp) {
 
@@ -149,17 +147,17 @@ public class ContainerManager {
 
 		if (containerOptional.isPresent()) {
 			Container container = containerOptional.get();
-			removeContainer(container.getId(), container.getImage(), withCleanUp);
+			removeContainer(container.getId(), container.getImageId(), withCleanUp);
 		}
 	}
 
-	private void removeContainer(String containerId, String imageName, boolean withCleanUp) {
+	private void removeContainer(String containerId, String imageId, boolean withCleanUp) {
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
 			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
-				docker.removeImage(imageName);
+				docker.removeImageById(imageId);
 			}
 
 			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
