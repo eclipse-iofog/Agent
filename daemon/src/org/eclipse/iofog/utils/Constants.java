@@ -58,32 +58,10 @@ public class Constants {
 	public static final int MiB = KiB * KiB;
 	public static final int GiB = KiB * KiB * KiB;
 
-	public static final String osArch = System.getProperty("os.arch");
 
-	public static final int STATUS_REPORT_FREQ_SECONDS = osArch.equals("arm") ? 10 : 5;
-
-	public static final int GET_CHANGES_LIST_FREQ_SECONDS = osArch.equals("arm") ? 30 : 20;
-	public static final int PING_CONTROLLER_FREQ_SECONDS = 60;
-	public static final int POST_STATUS_FREQ_SECONDS = osArch.equals("arm") ? 20 : 5;
-
-	public static final int SPEED_CALCULATION_FREQ_MINUTES = 1;
-
-	public static final int MONITOR_CONTAINERS_STATUS_FREQ_SECONDS = osArch.equals("arm") ? 30 : 10;
-	public static final int MONITOR_REGISTRIES_STATUS_FREQ_SECONDS = osArch.equals("arm") ? 120 : 60;
-
-	public static final long GET_USAGE_DATA_FREQ_SECONDS = osArch.equals("arm") ? 20 : 5;
-
-	public static final String DOCKER_API_VERSION = osArch.equals("arm") ? "1.23" : "1.23";
-
-	public static final int SET_SYSTEM_TIME_FREQ_SECONDS = 60;
-	
-	public static final int FOG_TYPE = osArch.equals("arm") ? 2 : 1;
-	
 	public static final String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
 	public static final String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
 	public static final String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
 	public static final String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";
-	
-	
 }
 

@@ -7,6 +7,8 @@
 	<instance_id/>
 	
 	<controller_cert>/etc/iofog/cert.crt</controller_cert>
+
+	<fog_type>auto</fog_type>
 	
 	<network_interface>eth0</network_interface>
 	
