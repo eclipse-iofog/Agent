@@ -155,10 +155,9 @@ public class Client {
 				+ "                     /#GPS DD.DDD,DD.DDD Use auto to get coordinates by IP,\n"
 				+ "                                         use off to forbid gps,\n"
 				+ "                                         use GPS coordinates in DD format to set them manually\n"
-				+ "                 -ft <auto/#arch_name>   Set fog type.\n"
-				+ "                                         Use auto to detect fog type by system commands,\n"
-				+ "                                         use arm arch names (e.g. arm) intel "
-				+ "                                         or amd arch names (e.g. x86_64) to set it manually\n" + "\n" + "\n"
+				+ "                 -ft <auto               Set fog type.\n"
+				+ "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\n"
+				+ "                                         use arm or intel_amd to set it manually\n" + "\n" + "\n"
 				+ "Report bugs to: bugs@iotracks.com\n" + "ioFog home page: http://iofog.com\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 

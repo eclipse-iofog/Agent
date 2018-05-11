@@ -53,9 +53,8 @@ public enum ArchitectureType {
 	 *
 	 * @return device arch name
 	 */
-	public static String getDeviceArchName() {
-		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("uname -m");
-		return resultSet.getValue().get(0);
+	private static String getDeviceArchName() {
+		return CommandShellExecutor.executeCommand("uname -m").getValue().get(0);
 	}
 
 	/**
@@ -65,9 +64,5 @@ public enum ArchitectureType {
 	 */
 	public static ArchitectureType getDeviceArchType() {
 		return getArchTypeByArchName(getDeviceArchName());
-	}
-
-	public static void main(String[] args) {
-		System.out.println(getArchTypeByArchName("armv4"));
 	}
 }

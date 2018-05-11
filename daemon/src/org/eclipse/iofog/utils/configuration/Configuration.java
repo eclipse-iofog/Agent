@@ -542,14 +542,18 @@ public final class Configuration {
 	 * @throws ConfigurationItemException if {@link ArchitectureType} undefined
 	 */
 	private static void configureFogType(String fogTypeCommand) throws ConfigurationItemException {
-		ArchitectureType newFogType;
+		ArchitectureType newFogType = ArchitectureType.UNDEFINED;
 		switch (fogTypeCommand) {
 			case "auto": {
 				newFogType = ArchitectureType.getArchTypeByArchName(System.getProperty("os.arch"));
 				break;
 			}
-			default: {
-				newFogType = ArchitectureType.getArchTypeByArchName(fogTypeCommand);
+			case "intel_amd": {
+				newFogType = ArchitectureType.INTEL_AMD;
+				break;
+			}
+			case "arm": {
+				newFogType = ArchitectureType.ARM;
 				break;
 			}
 		}
