@@ -630,7 +630,7 @@ public class FieldAgent implements IOFogModule {
 	private final Runnable pingController = () -> {
 		while (true) {
 			try {
-				Thread.sleep(PING_CONTROLLER_FREQ_SECONDS * 1000);
+				Thread.sleep(Configuration.getPingControllerFreqSeconds() * 1000);
 				logInfo("ping controller");
 				ping();
 			} catch (Exception e) {

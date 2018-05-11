@@ -30,7 +30,6 @@ import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.PortMapping;
 import org.eclipse.iofog.element.Registry;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -83,8 +82,8 @@ public class DockerUtil {
 		try {
 			DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
 					.withDockerHost(Configuration.getDockerUrl());
-			if (!Constants.DOCKER_API_VERSION.isEmpty()) {
-				configBuilder = configBuilder.withApiVersion(Constants.DOCKER_API_VERSION);
+			if (!Configuration.getDockerApiVersion().isEmpty()) {
+				configBuilder = configBuilder.withApiVersion(Configuration.getDockerApiVersion());
 			}
 			DockerClientConfig config = configBuilder.build();
 			dockerClient = DockerClientBuilder.getInstance(config).build();
