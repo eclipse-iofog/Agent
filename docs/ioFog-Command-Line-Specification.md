@@ -63,6 +63,7 @@ config                   [OPTION] [VALUE]             Change the software config
                          -df &lt;#seconds&gt;                    Set the post diagnostics frequency
                          -idc &lt;on/off&gt;                     Set the mode on which any not registered docker container will be shutted down
                          -gps &lt;auto/off/#DD.DDD,DD.DDD&gt;    Set gps location of fog. Use auto to get coordinates by IP, use off to forbid gps,use GPS coordinates in DD format to set them manually
+                         -ft &lt;auto/intel_amd/arm&gt;          Set fog type. Use auto to detect fog type by system commands, use arm or intel_amd to set it manually
 
 
 Report bugs to: edgemaster@iofog.org
@@ -278,6 +279,7 @@ iofog config -sd 30
 iofog config -df 20
 iofog config -idc off
 iofog config -gps 53.9,27.56
+iofog config -ft intel_amd
 
 * Any combination of parameters listed here can be entered on the command line simultaneously
 * for example, iofog config -m 2048 -p 80.0 -n wlan0
