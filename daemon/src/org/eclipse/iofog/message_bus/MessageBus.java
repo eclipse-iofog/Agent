@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  * Saeid Baghbidi
@@ -17,7 +17,6 @@ import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementManager;
 import org.eclipse.iofog.element.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -153,7 +152,7 @@ public class MessageBus implements IOFogModule {
 	private final Runnable calculateSpeed = () -> {
 		while (true) {
 			try {
-				Thread.sleep(Constants.SPEED_CALCULATION_FREQ_MINUTES * 60 * 1000);
+				Thread.sleep(Configuration.getSpeedCalculationFreqMinutes() * 60 * 1000);
 
 				logInfo("calculating message processing speed");
 

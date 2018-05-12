@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  * Saeid Baghbidi
@@ -20,6 +20,7 @@ import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.concurrent.Executors;
@@ -110,7 +111,7 @@ public class Supervisor implements IOFogModule {
     private void operationDuration(){
         while (true) {
             try {
-                Thread.sleep(STATUS_REPORT_FREQ_SECONDS * 1000);
+                Thread.sleep(Configuration.getStatusReportFreqSeconds() * 1000);
             } catch (InterruptedException e) {
                 logWarning(e.getMessage());
                 System.exit(1);

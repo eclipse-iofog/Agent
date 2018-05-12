@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  * Saeid Baghbidi
@@ -26,7 +26,6 @@ import java.util.*;
 import static java.lang.String.format;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
-import static org.eclipse.iofog.utils.Constants.MONITOR_CONTAINERS_STATUS_FREQ_SECONDS;
 import static org.eclipse.iofog.utils.Constants.PROCESS_MANAGER;
 
 /**
@@ -92,7 +91,7 @@ public class ProcessManager implements IOFogModule {
 	private final Runnable containersMonitor = () -> {
 		while (true) {
 			try {
-				Thread.sleep(MONITOR_CONTAINERS_STATUS_FREQ_SECONDS * 1000);
+				Thread.sleep(Configuration.getMonitorContainersStatusFreqSeconds() * 1000);
 			} catch (InterruptedException e) {
 				logInfo("Error while sleeping thread : " + e.getMessage());
 			}

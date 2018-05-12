@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  * Saeid Baghbidi
@@ -20,8 +20,8 @@ import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
 import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.text.SimpleDateFormat;
@@ -179,7 +179,7 @@ public final class StatusReporter {
 	 */
 	public static void start() {
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		scheduler.scheduleAtFixedRate(setStatusReporterSystemTime, Constants.SET_SYSTEM_TIME_FREQ_SECONDS, Constants.SET_SYSTEM_TIME_FREQ_SECONDS, TimeUnit.SECONDS);
+		scheduler.scheduleAtFixedRate(setStatusReporterSystemTime, Configuration.getSetSystemTimeFreqSeconds(), Configuration.getSetSystemTimeFreqSeconds(), TimeUnit.SECONDS);
 		LoggingService.logInfo(MODULE_NAME, "started");
 	}
 

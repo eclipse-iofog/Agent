@@ -2,11 +2,13 @@
 <config>
 	<access_token/>
 	
-	<controller_url>https://iotracks.com/api/v2/</controller_url>
+	<controller_url>https://iofog.org/api/v2/</controller_url>
 	
 	<instance_id/>
 	
 	<controller_cert>/etc/iofog/cert.crt</controller_cert>
+
+	<fog_type>auto</fog_type>
 	
 	<network_interface>eth0</network_interface>
 	

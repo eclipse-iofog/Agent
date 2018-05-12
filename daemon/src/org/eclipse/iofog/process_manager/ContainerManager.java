@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Iotracks, Inc.
+ * Copyright (c) 2018 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  * Saeid Baghbidi
@@ -140,8 +140,6 @@ public class ContainerManager {
 
 	/**
 	 * removes a {@link Container} by Element id
-	 *
-	 * @throws Exception exception
 	 */
 	private void removeContainerByElementId(String elementId, boolean withCleanUp) {
 
@@ -149,17 +147,17 @@ public class ContainerManager {
 
 		if (containerOptional.isPresent()) {
 			Container container = containerOptional.get();
-			removeContainer(container.getId(), container.getImage(), withCleanUp);
+			removeContainer(container.getId(), container.getImageId(), withCleanUp);
 		}
 	}
 
-	private void removeContainer(String containerId, String imageName, boolean withCleanUp) {
+	private void removeContainer(String containerId, String imageId, boolean withCleanUp) {
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
 			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
-				docker.removeImage(imageName);
+				docker.removeImageById(imageId);
 			}
 
 			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));

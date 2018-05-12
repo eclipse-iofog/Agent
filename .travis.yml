@@ -78,6 +78,6 @@ jobs:
       push iofog/iofog/fedora/23 iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/fedora/24 
       iofog${DEV}-${VERSION}-1.noarch.rpm; package_cloud push iofog/iofog/el/7 iofog${DEV}-${VERSION}-1.noarch.rpm"
     - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then sshpass -p $PRE_PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $PRE_PROD_MACHINE_USERNAME@$PRE_PROD_MACHINE_IP "apt-get install --only-upgrade iofog-dev -y"; 
+      $PRE_PROD_MACHINE_USERNAME@$PRE_PROD_MACHINE_IP "service iofog stop; apt-get install --only-upgrade iofog-dev -y; service iofog start"; 
       else sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
-      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP "apt-get install --only-upgrade iofog -y"; fi
+      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP "service iofog stop; apt-get install --only-upgrade iofog -y; service iofog start"; fi
