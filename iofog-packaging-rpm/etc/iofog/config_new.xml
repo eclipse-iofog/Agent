@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <config>
 	<access_token/>
-	
-	<controller_url>https://iofog.org/api/v2/</controller_url>
+
+	<controller_url>https://fogcontroller1.iofog.org:54421/api/v2/</controller_url>
 	
 	<instance_id/>
 	
