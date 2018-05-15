@@ -1,8 +1,10 @@
 package org.eclipse.iofog.command_line;
 
 import org.eclipse.iofog.gps.GpsMode;
+
 import java.util.List;
 import java.util.Optional;
+
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
@@ -21,7 +23,7 @@ public enum CommandLineConfigParam {
     DISK_DIRECTORY ("/var/lib/iofog/", "dl","disk_directory", "diskdirectory"),
     MEMORY_CONSUMPTION_LIMIT ("4096", "m", "memory_consumption_limit", "memorylimit"),
     PROCESSOR_CONSUMPTION_LIMIT ("80", "p","processor_consumption_limit", "cpulimit"),
-    CONTROLLER_URL ("https://iofog.org/api/v2/", "a","controller_url", ""),
+    CONTROLLER_URL("https://fogcontroller1.iofog.org:54421/api/v2/", "a", "controller_url", ""),
     CONTROLLER_CERT ("/etc/iofog/cert.crt", "ac","controller_cert", ""),
     DOCKER_URL ("unix:///var/run/docker.sock", "c","docker_url", "dockerurl"),
     NETWORK_INTERFACE ("dynamic", "n","network_interface", "networkinterface"),

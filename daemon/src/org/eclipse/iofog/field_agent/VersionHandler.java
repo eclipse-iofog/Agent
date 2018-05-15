@@ -18,7 +18,7 @@ public class VersionHandler {
 
 	private static final String MODULE_NAME = "Version Handler";
 
-	private final static String PACKAGE_NAME = "iofog";
+	private final static String PACKAGE_NAME = "iofog-dev";
 	private final static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
 	private final static String MAX_RESTARTING_TIMEOUT = "60";
 
