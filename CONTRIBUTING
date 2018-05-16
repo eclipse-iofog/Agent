@@ -1,0 +1,55 @@
+# Contributing to Eclipse ioFog
+
+Thanks for your interest in this project.
+
+## Project description
+
+The Eclipse ioFog set of technologies is a fog computing layer that can be
+installed on any hardware running Linux. Once installed, it provides a universal
+runtime for microservices to run on the edge. In addition to a common runtime,
+ioFog also provides a set of useful services including a message bus, dynamic
+configuration of the microservices, and remote debugging.
+
+* https://projects.eclipse.org/projects/iot.iofog
+
+## Developer resources
+
+Information regarding source code management, builds, coding standards, and
+more.
+
+* https://projects.eclipse.org/projects/iot.iofog/developer
+
+The project maintains the following source code repositories
+
+* https://github.com/ioFog
+* http://git.eclipse.org/c/iofog/org.eclipse.iofog.git
+
+This project uses Bugzilla to track ongoing development and issues.
+
+* Search for issues: https://eclipse.org/bugs/buglist.cgi?product=IoFog
+* Create a new report: https://eclipse.org/bugs/enter_bug.cgi?product=IoFog
+
+Be sure to search for existing bugs before you create another one. Remember that
+contributions are always welcome!
+
+## Eclipse Contributor Agreement
+
+Before your contribution can be accepted by the project team contributors must
+electronically sign the Eclipse Contributor Agreement (ECA).
+
+* http://www.eclipse.org/legal/ECA.php
+
+Commits that are provided by non-committers must have a Signed-off-by field in
+the footer indicating that the author is aware of the terms by which the
+contribution has been provided to the project. The non-committer must
+additionally have an Eclipse Foundation account and must have a signed Eclipse
+Contributor Agreement (ECA) on file.
+
+For more information, please see the Eclipse Committer Handbook:
+https://www.eclipse.org/projects/handbook/#resources-commit
+
+## Contact
+
+Contact the project developers via the project's "dev" list.
+
+* https://dev.eclipse.org/mailman/listinfo/iofog-dev
