@@ -300,10 +300,18 @@ public enum CommandLineAction {
                 "                                         split the log storage limit\\n" +
                 "                 -sf <#seconds>          Set the status update frequency\\n" +
                 "                 -cf <#seconds>          Set the get changes frequency\\n" +
+                "                 -df <#seconds>          Set the post diagnostics frequency\n" +
                 "                 -sd <#seconds>          Set the scan devices frequency\\n" +
                 "                 -idc <on/off>           Set the mode on which any not\\n" +
                 "										  registered docker container will be\\n" +
                 "										  shut down\\n" +
+                "                 -gps <auto/off          Set gps location of fog.\n"
+                + "                   /#GPS DD.DDD,DD.DDD Use auto to get coordinates by IP,\n"
+                + "                                       use off to forbid gps,\n"
+                + "                                       use GPS coordinates in DD format to set them manually\n"
+                + "               -ft <auto               Set fog type.\n"
+                + "                   /intel_amd/arm>     Use auto to detect fog type by system commands,\n"
+                + "                                       use arm or intel_amd to set it manually\n" + "\n" + "\n" +
                 "\\n" +
                 "\\n" +
                 "Report bugs to: edgemaster@iofog.org\\n" +
