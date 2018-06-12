@@ -306,8 +306,8 @@ public enum CommandLineAction {
                 "										  registered docker container will be\\n" +
                 "										  shut down\\n" +
                 "                 -gps <auto/off          Set gps location of fog.\\n" +
-                "                     /#GPS DD.DDD,DD.DDD Use auto to get coordinates by IP,\\n" +
-                "                                         use off to forbid gps,\\n" +
+                "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
+                "                            DD.DDD(lon)  use off to forbid gps,\\n" +
                 "                                         use GPS coordinates in DD format to set them manually\\n" +
                 "                 -ft <auto               Set fog type.\\n" +
                 "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +

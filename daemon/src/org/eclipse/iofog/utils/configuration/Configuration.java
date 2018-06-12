@@ -597,7 +597,7 @@ public final class Configuration {
 	public static void setGpsDataIfValid(GpsMode mode, String gpsCoordinates) throws ConfigurationItemException {
 		if (!isValidCoordinates(gpsCoordinates)) {
 			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
-					+ "Correct format is <DDD.DDDDD,DDD.DDDDD> (GPS DD format)");
+					+ "Correct format is <DDD.DDDDD(lat),DDD.DDDDD(lon)> (GPS DD format)");
 		}
 
 		setGpsCoordinates(gpsCoordinates.trim());
