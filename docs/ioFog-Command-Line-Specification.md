@@ -248,7 +248,7 @@ Log Rolling File Count                   : 10
 Status Update Frequency                  : 30
 Get Changes Frequency                    : 60
 Scan Devices Frequency                   : 60
-Post Dagnostics Frequency                : 10
+Post Diagnostics Frequency                : 10
 Isolated Docker Containers Mode          : on
 GPS mode                                 : auto
 GPS coordinates                          : 53.9,27.5667
