@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.field_agent.enums.VersionCommand.parseJson;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -41,23 +42,23 @@ public class VersionHandler {
 	private static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 
 	static {
-		String distrName = getDistributionName();
-		if (distrName.toLowerCase().contains("ubuntu")
-				|| distrName.toLowerCase().contains("debian")
-				|| distrName.toLowerCase().contains("raspbian")) {
+		String distrName = getDistributionName().toLowerCase();
+		if (distrName.contains("ubuntu")
+				|| distrName.contains("debian")
+				|| distrName.contains("raspbian")) {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
 
-		} else if (distrName.toLowerCase().contains("fedora")) {
+		} else if (distrName.contains("fedora")) {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 
-		} else if (distrName.toLowerCase().contains("red hat")
-				|| distrName.toLowerCase().contains("centos")) {
+		} else if (distrName.contains("red hat")
+				|| distrName.contains("centos")) {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 
-		} else if (distrName.toLowerCase().contains("amazon")) {
+		} else if (distrName.contains("amazon")) {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n 1p";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 		} else {
@@ -67,7 +68,7 @@ public class VersionHandler {
 
 	private static String getDistributionName() {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_LINUX_DISTRIBUTION_NAME);
-		return resultSet.getValue().get(0);
+		return resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : EMPTY;
 	}
 
 	public static String getFogInstalledVersion() {
@@ -81,7 +82,7 @@ public class VersionHandler {
 	}
 
 	private static String parseVersionResult(CommandShellResultSet<List<String>, List<String>> resultSet) {
-		return resultSet.getError().size() == 0 && resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : "";
+		return resultSet.getError().size() == 0 && resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : EMPTY;
 	}
 
 	/**
