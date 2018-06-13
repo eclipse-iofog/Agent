@@ -13,7 +13,6 @@
 
 package org.eclipse.iofog.field_agent;
 
-import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.enums.VersionCommand;
@@ -135,18 +134,14 @@ public class VersionHandler {
 	}
 
 	public static boolean isReadyToUpgrade() {
-		if (SystemUtils.IS_OS_LINUX) {
-			CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("apt-get update");
+		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("apt-get update");
+		if (resultSet.getError().size() != 0) {
+			resultSet = CommandShellExecutor.executeCommand("yum update");
 			if (resultSet.getError().size() != 0) {
-				resultSet = CommandShellExecutor.executeCommand("yum update");
-				if (resultSet.getError().size() != 0) {
-					logWarning(MODULE_NAME, "Unable to update package list");
-				}
+				logWarning(MODULE_NAME, "Unable to update package list");
 			}
-			return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
 		}
-
-		return false;
+		return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
 	}
 
 	public static boolean isReadyToRollback() {
