@@ -23,7 +23,7 @@
 
 	<fog_type>auto</fog_type>
 	
-	<network_interface>eth0</network_interface>
+	<network_interface>dynamic</network_interface>
 	
 	<docker_url>unix:///var/run/docker.sock</docker_url>
 	
