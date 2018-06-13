@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.configuration;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
@@ -653,6 +654,10 @@ public final class Configuration {
 	 * @return
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
+		if (SystemUtils.IS_OS_WINDOWS) { // TODO update for non-eth names
+			return true;
+		}
+
 		try {
 			if (CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
 				return true;

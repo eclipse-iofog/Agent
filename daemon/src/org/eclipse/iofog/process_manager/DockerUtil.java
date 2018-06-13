@@ -461,9 +461,15 @@ public class DockerUtil {
 					.withVolumes(volumes.toArray(new Volume[volumes.size()]))
 					.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
 		}
-		cmd = StringUtil.isNullOrEmpty(host)
-				? cmd.withNetworkMode("host").withPrivileged(true)
-				: cmd.withExtraHosts(extraHosts).withPrivileged(true);
+
+		if (SystemUtils.IS_OS_WINDOWS) {
+			cmd = cmd.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true);
+		} else if (SystemUtils.IS_OS_LINUX) {
+			cmd = element.isRootHostAccess()
+					? cmd.withNetworkMode("host").withPrivileged(true)
+					: cmd.withExtraHosts(extraHosts).withPrivileged(true);
+		}
+
 		CreateContainerResponse resp = cmd.exec();
 		return resp.getId();
 	}

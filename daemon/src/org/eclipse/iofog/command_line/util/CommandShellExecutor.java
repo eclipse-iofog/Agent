@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.command_line.util;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.BufferedReader;
@@ -35,6 +36,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class CommandShellExecutor {
 	private static final String MODULE_NAME = "CommandShellExecutor";
 	private static final String CMD = "/bin/sh";
+	private static final String CMD_WIN = "powershell";
 
 
 	public static CommandShellResultSet<List<String>, List<String>> executeCommand(String command) {
@@ -91,7 +93,7 @@ public class CommandShellExecutor {
 
 	private static String[] computeCommand(String command) {
 		return new String[]{
-				CMD,
+				SystemUtils.IS_OS_WINDOWS ? CMD_WIN : CMD,
 				"-c",
 				command
 		};
@@ -99,7 +101,7 @@ public class CommandShellExecutor {
 
 	private static String[] computeScript(String script, String... args) {
 		String[] command = {
-				CMD,
+				SystemUtils.IS_OS_WINDOWS ? CMD_WIN : CMD,
 				script
 		};
 

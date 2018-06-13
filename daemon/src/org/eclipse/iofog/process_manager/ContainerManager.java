@@ -90,7 +90,7 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
 
 		LoggingService.logInfo(MODULE_NAME, "creating container");
-		String hostName = !element.isRootHostAccess() ? IOFogNetworkInterface.getCurrentIpAddress() : EMPTY;
+		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
 		String id = docker.createContainer(element, hostName);
 		element.setContainerId(id);
 		element.setContainerIpAddress(docker.getContainerIpAddress(id));

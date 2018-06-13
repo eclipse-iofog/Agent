@@ -13,6 +13,7 @@
 package org.eclipse.iofog.field_agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -41,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -65,7 +67,7 @@ import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 public class FieldAgent implements IOFogModule {
 
 	private final String MODULE_NAME = "Field Agent";
-	private final String filesPath = SNAP_COMMON + "/etc/iofog/";
+	private final String filesPath = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./etc/iofog/" : SNAP_COMMON + "/etc/iofog/";
 
 	private Orchestrator orchestrator;
 	private SshProxyManager sshProxyManager;
@@ -130,8 +132,16 @@ public class FieldAgent implements IOFogModule {
 		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
 		result.put("hwinfo", StatusReporter.getResourceManagerStatus().getHwInfo());
 		result.put("version", VERSION);
-		result.put("isreadytoupgrade", isReadyToUpgrade() ? 1 : 0);
-		result.put("isreadytorollback", isReadyToRollback() ? 1 : 0);
+
+        int isReadyToRollback = 0;
+        int isReadyToUpgrade = 0;
+		if (SystemUtils.IS_OS_LINUX) {
+			isReadyToUpgrade = isReadyToUpgrade() ? 1 : 0;
+			isReadyToRollback = isReadyToRollback() ? 1 : 0;
+		}
+
+		result.put("isreadytoupgrade", isReadyToUpgrade);
+		result.put("isreadytorollback", isReadyToRollback);
 
 		return result;
 	}
@@ -240,6 +250,8 @@ public class FieldAgent implements IOFogModule {
 				if (notProvisioned() || !isControllerConnected(false)) {
 					continue;
 				}
+
+				lastGetChangesList = new Timestamp(System.currentTimeMillis()).getTime() / 1000;
 
 				Map<String, Object> queryParams = new HashMap<>();
 				queryParams.put("timestamp", lastGetChangesList);
@@ -390,8 +402,8 @@ public class FieldAgent implements IOFogModule {
 				JsonObject registry = registriesList.getJsonObject(i);
 				Registry.RegistryBuilder registryBuilder = new Registry.RegistryBuilder()
 						.setUrl(registry.getString("url"))
-						.setIsPublic(registry.getBoolean("ispublic"));
-				if (!registry.getBoolean("ispublic")) {
+						.setIsPublic(registry.getBoolean("ispublic", false));
+				if (!registry.getBoolean("ispublic", false)) {
 					registryBuilder.setUserName(registry.getString("username"))
 							.setPassword(registry.getString("password"))
 							.setUserEmail(registry.getString("useremail"));

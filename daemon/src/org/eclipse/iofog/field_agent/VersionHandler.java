@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.field_agent;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.enums.VersionCommand;
@@ -32,7 +33,7 @@ public class VersionHandler {
 	private static final String MODULE_NAME = "Version Handler";
 
 	private final static String PACKAGE_NAME = "iofog-dev";
-	private final static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
+	private final static String BACKUPS_DIR = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./var/backups/iofog" : SNAP_COMMON + "/var/backups/iofog";
 	private final static String MAX_RESTARTING_TIMEOUT = "60";
 
 	private final static String GET_LINUX_DISTRIBUTION_NAME = "grep = /etc/os-release | awk -F\"[=]\" '{print $2}' | sed -n 1p";
@@ -130,6 +131,10 @@ public class VersionHandler {
 	}
 
 	public static boolean isReadyToUpgrade() {
+		if (SystemUtils.IS_OS_WINDOWS) {
+			return false;
+		}
+
 		CommandShellExecutor.executeCommand("apt-get update");
 		return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
 	}
