@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.field_agent;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.enums.VersionCommand;
@@ -26,6 +27,7 @@ import java.util.List;
 
 import static org.eclipse.iofog.field_agent.enums.VersionCommand.parseJson;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
+import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class VersionHandler {
 
@@ -56,8 +58,11 @@ public class VersionHandler {
 			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
 			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 
+		} else if (distrName.toLowerCase().contains("amazon")) {
+			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n 1p";
+			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 		} else {
-			LoggingService.logWarning(MODULE_NAME, "it looks like your distribution is not supported");
+			logWarning(MODULE_NAME, "it looks like your distribution is not supported");
 		}
 	}
 
@@ -77,7 +82,7 @@ public class VersionHandler {
 	}
 
 	private static String parseVersionResult(CommandShellResultSet<List<String>, List<String>> resultSet) {
-		return resultSet.getError().size() == 0 ? resultSet.getValue().get(0) : "";
+		return resultSet.getError().size() == 0 && resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : "";
 	}
 
 	/**
@@ -97,7 +102,7 @@ public class VersionHandler {
 			}
 
 		} catch (UnknownVersionCommandException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			logWarning(MODULE_NAME, e.getMessage());
 		}
 	}
 
@@ -114,7 +119,7 @@ public class VersionHandler {
 		try {
 			Runtime.getRuntime().exec("java -jar /usr/bin/iofogvc.jar " + shToExecute + " " + provisionKey + " " + MAX_RESTARTING_TIMEOUT);
 		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			logWarning(MODULE_NAME, e.getMessage());
 		}
 	}
 
@@ -130,8 +135,18 @@ public class VersionHandler {
 	}
 
 	public static boolean isReadyToUpgrade() {
-		CommandShellExecutor.executeCommand("apt-get update");
-		return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
+		if (SystemUtils.IS_OS_LINUX) {
+			CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("apt-get update");
+			if (resultSet.getError().size() != 0) {
+				resultSet = CommandShellExecutor.executeCommand("yum update");
+				if (resultSet.getError().size() != 0) {
+					logWarning(MODULE_NAME, "Unable to update package list");
+				}
+			}
+			return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
+		}
+
+		return false;
 	}
 
 	public static boolean isReadyToRollback() {
