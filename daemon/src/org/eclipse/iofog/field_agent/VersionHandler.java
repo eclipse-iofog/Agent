@@ -135,12 +135,11 @@ public class VersionHandler {
 	}
 
 	public static boolean isReadyToUpgrade() {
-		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("apt-get update");
-		if (resultSet.getError().size() != 0) {
-			resultSet = CommandShellExecutor.executeCommand("yum update");
-			if (resultSet.getError().size() != 0) {
-				logWarning(MODULE_NAME, "Unable to update package list");
-			}
+		String distrName = getDistributionName().toLowerCase();
+		if (distrName.contains("amazon")) {
+			CommandShellExecutor.executeCommand("yum update");
+		} else {
+			CommandShellExecutor.executeCommand("apt-get update");
 		}
 		return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
 	}
