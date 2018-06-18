@@ -654,7 +654,7 @@ public final class Configuration {
 	 * @return
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
-		if (SystemUtils.IS_OS_WINDOWS) { // TODO update for non-eth names
+		if (SystemUtils.IS_OS_WINDOWS) { // any name could be used for network interface on Win
 			return true;
 		}
 

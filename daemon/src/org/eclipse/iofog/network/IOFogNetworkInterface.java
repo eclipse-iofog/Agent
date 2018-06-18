@@ -66,10 +66,9 @@ public class IOFogNetworkInterface {
      * @throws Exception
      */
     public static InetAddress getInetAddress() throws SocketException {
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
         if (SystemUtils.IS_OS_WINDOWS) {
             try {
-            //    InetAddress addr = InetAddress.getByName(getWindowsIpByInterfaceName(getNetworkInterface()));
+            // TODO too slow, replace later   InetAddress addr = InetAddress.getByName(getWindowsIpByInterfaceName(getNetworkInterface()));
                 InetAddress addr = InetAddress.getByName(getWindowsActiveIp());
 
                 final NetworkInterface interfaceByIp = NetworkInterface.getByInetAddress(addr);

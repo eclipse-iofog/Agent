@@ -42,7 +42,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -132,16 +131,8 @@ public class FieldAgent implements IOFogModule {
 		result.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
 		result.put("hwinfo", StatusReporter.getResourceManagerStatus().getHwInfo());
 		result.put("version", VERSION);
-
-        int isReadyToRollback = 0;
-        int isReadyToUpgrade = 0;
-		if (SystemUtils.IS_OS_LINUX) {
-			isReadyToUpgrade = isReadyToUpgrade() ? 1 : 0;
-			isReadyToRollback = isReadyToRollback() ? 1 : 0;
-		}
-
-		result.put("isreadytoupgrade", isReadyToUpgrade);
-		result.put("isreadytorollback", isReadyToRollback);
+		result.put("isreadytoupgrade", isReadyToUpgrade() ? 1 : 0);
+		result.put("isreadytorollback", isReadyToRollback() ? 1 : 0);
 
 		return result;
 	}

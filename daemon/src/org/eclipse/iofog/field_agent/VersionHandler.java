@@ -41,24 +41,26 @@ public class VersionHandler {
 	private static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 
 	static {
-		String distrName = getDistributionName();
-		if (distrName.toLowerCase().contains("ubuntu")
-				|| distrName.toLowerCase().contains("debian")
-				|| distrName.toLowerCase().contains("raspbian")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
+		if (SystemUtils.IS_OS_LINUX) {
+			String distrName = getDistributionName();
+			if (distrName.toLowerCase().contains("ubuntu")
+					|| distrName.toLowerCase().contains("debian")
+					|| distrName.toLowerCase().contains("raspbian")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
 
-		} else if (distrName.toLowerCase().contains("fedora")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+			} else if (distrName.toLowerCase().contains("fedora")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 
-		} else if (distrName.toLowerCase().contains("red hat")
-				|| distrName.toLowerCase().contains("centos")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+			} else if (distrName.toLowerCase().contains("red hat")
+					|| distrName.toLowerCase().contains("centos")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 
-		} else {
-			LoggingService.logWarning(MODULE_NAME, "it looks like your distribution is not supported");
+			} else {
+				LoggingService.logWarning(MODULE_NAME, "it looks like your distribution is not supported");
+			}
 		}
 	}
 
