@@ -39,6 +39,9 @@ public class ResourceConsumptionManager implements IOFogModule {
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
 
+	private static final String POWERSHELL_GET_CPU_USAGE = "get-wmiobject Win32_PerfFormattedData_PerfProc_Process | ? { $_.IDProcess -eq %s } | select -ExpandProperty PercentProcessorTime";
+
+
 	private ResourceConsumptionManager() {}
 
 	@Override
@@ -204,7 +207,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 	}
 
 	private static String getWinCPUUsage(final String pid) {
-		String cmd = "get-wmiobject Win32_PerfFormattedData_PerfProc_Process | ? { $_.IDProcess -eq " + pid + " } | select -ExpandProperty PercentProcessorTime";
+		String cmd = String.format(POWERSHELL_GET_CPU_USAGE, pid);
 		final CommandShellResultSet<List<String>, List<String>> response = executeCommand(cmd);
 		return !response.getError().isEmpty() || response.getValue().isEmpty() ?
 				"0" :

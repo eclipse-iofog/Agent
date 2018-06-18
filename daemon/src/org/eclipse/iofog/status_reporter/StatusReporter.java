@@ -26,6 +26,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -87,7 +88,7 @@ public final class StatusReporter {
 		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage())).append("%");
 		result.append("\\nRunning Elements            : ").append(processManagerStatus.getRunningElementsCount());
 		result.append("\\nConnection to Controller    : ").append(connectionStatus);
-		result.append(String.format("\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
+		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
 
 		return result.toString();

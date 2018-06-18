@@ -251,8 +251,6 @@ public class FieldAgent implements IOFogModule {
 					continue;
 				}
 
-				lastGetChangesList = new Timestamp(System.currentTimeMillis()).getTime() / 1000;
-
 				Map<String, Object> queryParams = new HashMap<>();
 				queryParams.put("timestamp", lastGetChangesList);
 
