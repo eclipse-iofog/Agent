@@ -55,7 +55,7 @@ public class CommandShellExecutor {
 
 	private static String[] computeScript(String... args) {
 		String[] command = {
-				"nohup",
+				isWindows() ? "" : "nohup",
 				isWindows() ? CMD_WIN : CMD
 		};
 
