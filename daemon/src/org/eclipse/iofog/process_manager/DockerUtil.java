@@ -25,6 +25,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import io.netty.util.internal.StringUtil;
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.element.Element;
 import org.eclipse.iofog.element.ElementStatus;
 import org.eclipse.iofog.element.PortMapping;
