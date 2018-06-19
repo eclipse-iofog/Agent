@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static sun.plugin2.util.SystemUtil.getSystemProperty;
-
 /**
  * Created by ekrylovich
  * on 2/7/18.
@@ -77,7 +75,7 @@ public class CommandShellExecutor {
 	}
 
 	private static boolean isWindows() {
-		String osName = getSystemProperty("os.name");
+		String osName = System.getProperty("os.name");
 		return osName != null && osName.startsWith("Windows");
 	}
 }
