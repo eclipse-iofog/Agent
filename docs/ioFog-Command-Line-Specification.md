@@ -62,7 +62,7 @@ config                   [OPTION] [VALUE]             Change the software config
                          -cf &lt;#seconds&gt;                    Set the get changes frequency
                          -df &lt;#seconds&gt;                    Set the post diagnostics frequency
                          -idc &lt;on/off&gt;                     Set the mode on which any not registered docker container will be shutted down
-                         -gps &lt;auto/off/#DD.DDD,DD.DDD&gt;    Set gps location of fog. Use auto to get coordinates by IP, use off to forbid gps,use GPS coordinates in DD format to set them manually
+                         -gps &lt;auto/off/#DD.DDD(lat),DD.DDD(lon)&gt;    Set gps location of fog. Use auto to get coordinates by IP, use off to forbid gps,use GPS coordinates in DD format to set them manually
                          -ft &lt;auto/intel_amd/arm&gt;          Set fog type. Use auto to detect fog type by system commands, use arm or intel_amd to set it manually
 
 
@@ -248,7 +248,7 @@ Log Rolling File Count                   : 10
 Status Update Frequency                  : 30
 Get Changes Frequency                    : 60
 Scan Devices Frequency                   : 60
-Post Dagnostics Frequency                : 10
+Post Diagnostics Frequency                : 10
 Isolated Docker Containers Mode          : on
 GPS mode                                 : auto
 GPS coordinates                          : 53.9,27.5667

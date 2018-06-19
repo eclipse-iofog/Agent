@@ -56,14 +56,11 @@ public class StraceDiagnosticManger {
 			JsonArray straceElementChanges = diagnosticData.getJsonArray("straceValues");
 			for (JsonValue elementValue : straceElementChanges) {
 				JsonObject element = (JsonObject) elementValue;
-				if (!element.containsKey("elementId")) {
-					continue;
+				if (element.containsKey("elementId")) {
+					String elementId = element.getString("elementId");
+					boolean strace = element.getInt("straceRun", 0) != 0;
+					manageElement(elementId, strace);
 				}
-				String elementId = element.getString("elementId");
-
-				boolean strace = element.getInt("straceRun", 0) != 0;
-
-				manageElement(elementId, strace);
 			}
 		}
 	}
