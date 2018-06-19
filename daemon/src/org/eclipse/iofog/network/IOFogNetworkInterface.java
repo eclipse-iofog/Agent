@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.network;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -29,64 +30,103 @@ import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCo
  * on 2/8/18.
  */
 public class IOFogNetworkInterface {
-	private static final String MODULE_NAME = "IOFogNetworkInterface";
+    private static final String MODULE_NAME = "IOFogNetworkInterface";
 
-	private static final String NETWORK_BASH_COMMAND = "route | grep '^default' | grep -o '[^ ]*$'";
+    private static final String NETWORK_BASH_COMMAND = "route | grep '^default' | grep -o '[^ ]*$'";
+    private static final String NETWORK_POWERSHELL_COMMAND = "Get-NetAdapter -physical | where status -eq 'up' | select -ExpandProperty Name";
 
-	/**
-	 * returns IPv4 host address of IOFog network interface
-	 *
-	 * @return {@link Inet4Address}
-	 * @throws Exception
-	 */
-	public static String getCurrentIpAddress() {
-		Optional<InetAddress> inetAddress = getLocalIp();
-		return inetAddress.map(InetAddress::getHostAddress).orElse("");
-	}
+    private static final String POWERSHELL_GET_IP_BY_INTERFACE_NAME = "Get-NetIPConfiguration | select IPv4Address, InterfaceAlias | where InterfaceAlias -eq '%s' | select -ExpandProperty IPv4Address | select -ExpandProperty IPAddress";
+    private static final String POWERSHELL_GET_ACTIVE_IP = "(Get-WmiObject -Class Win32_NetworkAdapterConfiguration | where {$_.DefaultIPGateway -ne $null}).IPAddress | select-object -first 1";
 
-	private static Optional<InetAddress> getLocalIp(){
-		Optional<InetAddress> inetAddress = Optional.empty();
-		try {
-			inetAddress = Optional.of(getInetAddress());
-		} catch (SocketException exp) {
-			LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + exp.getMessage());
-		}
-		return inetAddress;
-	}
+    /**
+     * returns IPv4 host address of IOFog network interface
+     *
+     * @return {@link Inet4Address}
+     * @throws Exception
+     */
+    public static String getCurrentIpAddress() {
+        Optional<InetAddress> inetAddress = getLocalIp();
+        return inetAddress.map(InetAddress::getHostAddress).orElse("");
+    }
 
-	/**
-	 * returns IPv4 address of IOFog network interface
-	 *
-	 * @return {@link Inet4Address}
-	 * @throws Exception
-	 */
-	public static InetAddress getInetAddress() throws SocketException {
-		final NetworkInterface interfaceByName = NetworkInterface.getByName(getNetworkInterface());
-		if (interfaceByName != null) {
-			final Enumeration<InetAddress> ipAddresses = interfaceByName
-					.getInetAddresses();
-			while (ipAddresses.hasMoreElements()) {
-				InetAddress address = ipAddresses.nextElement();
-				if (address instanceof Inet4Address) {
-					return address;
-				}
-			}
-		}
-		throw new ConnectException(String.format("unable to get ip address \"%s\"", getNetworkInterface()));
-	}
+    private static Optional<InetAddress> getLocalIp() {
+        Optional<InetAddress> inetAddress = Optional.empty();
+        try {
+            inetAddress = Optional.of(getInetAddress());
+        } catch (SocketException exp) {
+            LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + exp.getMessage());
+        }
+        return inetAddress;
+    }
+
+    /**
+     * returns IPv4 address of IOFog network interface
+     *
+     * @return {@link Inet4Address}
+     * @throws Exception
+     */
+    public static InetAddress getInetAddress() throws SocketException {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            try {
+            // TODO too slow, replace later   InetAddress addr = InetAddress.getByName(getWindowsIpByInterfaceName(getNetworkInterface()));
+                InetAddress addr = InetAddress.getByName(getWindowsActiveIp());
+
+                final NetworkInterface interfaceByIp = NetworkInterface.getByInetAddress(addr);
+                return getInetAddressByInterface(interfaceByIp);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        } else {
+            final NetworkInterface interfaceByName = NetworkInterface.getByName(getNetworkInterface());
+            if (interfaceByName != null) {
+               return getInetAddressByInterface(interfaceByName);
+            }
+        }
+
+        throw new ConnectException(String.format("unable to get ip address \"%s\"", getNetworkInterface()));
+    }
+
+    public static InetAddress getInetAddressByInterface(NetworkInterface networkInterface) throws SocketException {
+        final Enumeration<InetAddress> ipAddresses = networkInterface
+                .getInetAddresses();
+        while (ipAddresses.hasMoreElements()) {
+            InetAddress address = ipAddresses.nextElement();
+            if (address instanceof Inet4Address) {
+                return address;
+            }
+        }
+
+        throw new ConnectException(String.format("unable to get ip address \"%s\"", getNetworkInterface()));
+    }
 
 
-	public static String getNetworkInterface(){
-		final String configNetworkInterface = Configuration.getNetworkInterface();
-		return configNetworkInterface.equals("dynamic") ? getOSNetworkInterface() : configNetworkInterface;
-	}
+    public static String getNetworkInterface() {
+        final String configNetworkInterface = Configuration.getNetworkInterface();
+        return configNetworkInterface.equals("dynamic") ? getOSNetworkInterface() : configNetworkInterface;
+    }
 
 
+    private static String getOSNetworkInterface() {
+        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(SystemUtils.IS_OS_WINDOWS ?
+                NETWORK_POWERSHELL_COMMAND : NETWORK_BASH_COMMAND);
+        return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
+                "enp0s25" :
+                interfaces.getValue().get(0);
+    }
 
-	private static String getOSNetworkInterface(){
-		final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(NETWORK_BASH_COMMAND);
-		return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
-			"enp0s25" :
-			interfaces.getValue().get(0);
-	}
+    private static String getWindowsIpByInterfaceName(String interfaceName) {
+        String cmd = String.format(POWERSHELL_GET_IP_BY_INTERFACE_NAME, interfaceName);
+
+        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(cmd);
+        return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
+                "127.0.0.1" :
+                interfaces.getValue().get(0);
+    }
+
+    private static String getWindowsActiveIp() {
+        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(POWERSHELL_GET_ACTIVE_IP);
+        return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
+                "127.0.0.1" :
+                interfaces.getValue().get(0);
+    }
 }

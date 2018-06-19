@@ -21,7 +21,9 @@ import org.eclipse.iofog.utils.Constants.LinkStatus;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -48,6 +50,10 @@ public class ProcessManagerStatus {
 	 */
 	public String getJsonElementsStatus() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+
+		NumberFormat nf = NumberFormat.getInstance(Locale.US);
+		nf.setMaximumFractionDigits(2);
+
 		elementsStatus.forEach((key, status) -> {
 			if (status.getContainerId() != null) {
 				JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
@@ -56,7 +62,7 @@ public class ProcessManagerStatus {
 						.add("status", status.getStatus().toString())
 						.add("starttime", status.getStartTime())
 						.add("operatingduration", status.getOperatingDuration())
-						.add("cpuusage", String.format("%.2f", status.getCpuUsage()))
+						.add("cpuusage", nf.format(status.getCpuUsage()))
 						.add("memoryusage", String.format("%d", status.getMemoryUsage()));
 				arrayBuilder.add(objectBuilder);
 			}

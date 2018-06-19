@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.logging;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
@@ -119,14 +120,29 @@ public final class LoggingService {
 
 		UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
 		final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-		Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
-				LinkOption.NOFOLLOW_LINKS).setGroup(group);
-		Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-		Files.setPosixFilePermissions(logDirectory.toPath(), perms);
+		if (SystemUtils.IS_OS_LINUX) {
+			PosixFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
+					LinkOption.NOFOLLOW_LINKS);
+			fileAttributeView.setGroup(group);
+
+			Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
+			Files.setPosixFilePermissions(logDirectory.toPath(), perms);
+
+		} else if (SystemUtils.IS_OS_WINDOWS) {
+			DosFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), DosFileAttributeView.class,
+					LinkOption.NOFOLLOW_LINKS);
+			fileAttributeView.setReadOnly(false);
+
+			File dir = logDirectory.toPath().toFile();
+			dir.setReadable(true, false);
+			dir.setExecutable(true, false);
+			dir.setWritable(true, false);
+		}
+
 
 		final String logFilePattern = logDirectory.getPath() + "/" + elementId + ".%g.log";
 		Logger logger = elementLogger.get(elementId);
-		
+
 		if (logger != null) {
 			for (Handler f : logger.getHandlers())
 				f.close();

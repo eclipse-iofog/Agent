@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
+import org.apache.commons.lang.SystemUtils;
+
 import java.io.PrintStream;
 
 /**
@@ -61,7 +63,7 @@ public class Constants {
 
 	public static final String SNAP = System.getenv("SNAP") != null ? System.getenv("SNAP") : "";
 	public static final String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ? System.getenv("SNAP_COMMON") : "";
-	public static final String VAR_RUN = SNAP_COMMON + "/var/run/iofog";
-	public static final String CONFIG_DIR = SNAP_COMMON + "/etc/iofog/config.xml";
+	public static final String VAR_RUN = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./var/run/iofog" : SNAP_COMMON + "/var/run/iofog";
+	public static final String CONFIG_DIR = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./etc/iofog/config.xml" : SNAP_COMMON + "/var/run/iofog";
 }
 

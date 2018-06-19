@@ -12,7 +12,9 @@
  *******************************************************************************/
 package org.eclipse.iofog.resource_consumption_manager;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Pair;
@@ -20,12 +22,14 @@ import org.eclipse.iofog.utils.functional.Pair;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.List;
 
+import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCommand;
 import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 
 /**
  * Resource Consumption Manager module
- * 
+ *
  * @author saeid
  *
  */
@@ -34,6 +38,9 @@ public class ResourceConsumptionManager implements IOFogModule {
 	private static final String MODULE_NAME = "Resource Consumption Manager";
 	private float diskLimit, cpuLimit, memoryLimit;
 	private static ResourceConsumptionManager instance;
+
+	private static final String POWERSHELL_GET_CPU_USAGE = "get-wmiobject Win32_PerfFormattedData_PerfProc_Process | ? { $_.IDProcess -eq %s } | select -ExpandProperty PercentProcessorTime";
+
 
 	private ResourceConsumptionManager() {}
 
@@ -137,18 +144,26 @@ public class ResourceConsumptionManager implements IOFogModule {
 
 	/**
 	 * computes cpu usage of IOFog instance
-	 * 
+	 *
 	 * @return float number between 0-100
 	 */
 	private float getCpuUsage() {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		String processId = processName.split("@")[0];
 
-		Pair<Long, Long> before = parseStat(processId);
-		waitForSecond();
-		Pair<Long, Long> after = parseStat(processId);
+		if (SystemUtils.IS_OS_LINUX) {
 
-		return 100f * (after._1() - before._1()) / (after._2() - before._2());
+			Pair<Long, Long> before = parseStat(processId);
+			waitForSecond();
+			Pair<Long, Long> after = parseStat(processId);
+
+			return 100f * (after._1() - before._1()) / (after._2() - before._2());
+		} else if (SystemUtils.IS_OS_WINDOWS) {
+			String response = getWinCPUUsage(processId);
+			return Float.parseFloat(response);
+		} else {
+			return 0f;
+		}
 	}
 
 	private void waitForSecond() {
@@ -164,36 +179,44 @@ public class ResourceConsumptionManager implements IOFogModule {
 		long time = 0, total = 0;
 
 		try {
-			String line;
-			try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
-				line = br.readLine();
-				time = Long.parseLong(line.split(" ")[13]);
-			}
+		    String line;
+		    try (BufferedReader br = new BufferedReader(new FileReader("/proc/" + processId + "/stat"))) {
+		        line = br.readLine();
+		        time = Long.parseLong(line.split(" ")[13]);
+		    }
 
-			total = 0;
+		    total = 0;
 
-			try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
-				line = br.readLine();
-				while (line != null) {
-					String[] items = line.split(" ");
-					if (items[0].equals("cpu")) {
-						for (int i = 1; i < items.length; i++)
-							if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
-								total += Long.parseLong(items[i]);
-						break;
-					}
-				}
-			}
+		    try (BufferedReader br = new BufferedReader(new FileReader("/proc/stat"))) {
+		        line = br.readLine();
+		        while (line != null) {
+		            String[] items = line.split(" ");
+		            if (items[0].equals("cpu")) {
+		                for (int i = 1; i < items.length; i++)
+		                    if (!items[i].trim().equals("") && items[i].matches("[0-9]*"))
+		                        total += Long.parseLong(items[i]);
+		                break;
+		            }
+		        }
+		    }
 		} catch (IOException exp) {
-			logWarning("Error getting CPU usage : " + exp.getMessage());
+		    logWarning("Error getting CPU usage : " + exp.getMessage());
 		}
 
 		return Pair.of(time, total);
 	}
 
+	private static String getWinCPUUsage(final String pid) {
+		String cmd = String.format(POWERSHELL_GET_CPU_USAGE, pid);
+		final CommandShellResultSet<List<String>, List<String>> response = executeCommand(cmd);
+		return !response.getError().isEmpty() || response.getValue().isEmpty() ?
+				"0" :
+				response.getValue().get(0);
+	}
+
 	/**
 	 * computes a directory size
-	 * 
+	 *
 	 * @param name - name of the directory
 	 * @return size in bytes
 	 */

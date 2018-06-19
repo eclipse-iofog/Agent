@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 public class CommandShellExecutor {
 	private static final String MODULE_NAME = "CommandShellExecutor";
 	private static final String CMD = "/bin/sh";
+	private static final String CMD_WIN = "powershell";
 
 	public static CommandShellResultSet<List<String>, List<String>> executeScript(String... args) {
 		String[] fullCommand = computeScript(args);
@@ -52,8 +53,8 @@ public class CommandShellExecutor {
 
 	private static String[] computeScript(String... args) {
 		String[] command = {
-				"nohup",
-				CMD
+				isWindows() ? "" : "nohup",
+				isWindows() ? CMD_WIN : CMD
 		};
 
 		Stream<String> s1 = Arrays.stream(command);
@@ -71,5 +72,10 @@ public class CommandShellExecutor {
 			}
 		}
 		return result;
+	}
+
+	private static boolean isWindows() {
+		String osName = System.getProperty("os.name");
+		return osName != null && osName.startsWith("Windows");
 	}
 }

@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.field_agent;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.enums.VersionCommand;
@@ -34,7 +35,7 @@ public class VersionHandler {
 	private static final String MODULE_NAME = "Version Handler";
 
 	private final static String PACKAGE_NAME = "iofog-dev";
-	private final static String BACKUPS_DIR = SNAP_COMMON + "/var/backups/iofog";
+	private final static String BACKUPS_DIR = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./var/backups/iofog" : SNAP_COMMON + "/var/backups/iofog";
 	private final static String MAX_RESTARTING_TIMEOUT = "60";
 
 	private final static String GET_LINUX_DISTRIBUTION_NAME = "grep = /etc/os-release | awk -F\"[=]\" '{print $2}' | sed -n 1p";
@@ -43,29 +44,31 @@ public class VersionHandler {
 	private static String UPDATE_PACKAGE_REPOSITORY;
 
 	static {
-		String distrName = getDistributionName().toLowerCase();
-		if (distrName.contains("ubuntu")
-				|| distrName.contains("debian")
-				|| distrName.contains("raspbian")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
-			UPDATE_PACKAGE_REPOSITORY = "apt-get update";
+		if (SystemUtils.IS_OS_LINUX) {
+			String distrName = getDistributionName().toLowerCase();
+			if (distrName.contains("ubuntu")
+					|| distrName.contains("debian")
+					|| distrName.contains("raspbian")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
+				UPDATE_PACKAGE_REPOSITORY = "apt-get update";
 
-		} else if (distrName.contains("fedora")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
-			UPDATE_PACKAGE_REPOSITORY = "dnf update";
-		} else if (distrName.contains("red hat")
-				|| distrName.contains("centos")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
-			UPDATE_PACKAGE_REPOSITORY = "yum update";
-		} else if (distrName.contains("amazon")) {
-			GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n 1p";
-			GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n \"$p\"";
-			UPDATE_PACKAGE_REPOSITORY = "yum update";
-		} else {
-			logWarning(MODULE_NAME, "it looks like your distribution is not supported");
+			} else if (distrName.contains("fedora")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+				UPDATE_PACKAGE_REPOSITORY = "dnf update";
+			} else if (distrName.contains("red hat")
+					|| distrName.contains("centos")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+				UPDATE_PACKAGE_REPOSITORY = "yum update";
+			} else if (distrName.contains("amazon")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n 1p";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+				UPDATE_PACKAGE_REPOSITORY = "yum update";
+			} else {
+				logWarning(MODULE_NAME, "it looks like your distribution is not supported");
+			}
 		}
 	}
 
@@ -138,6 +141,10 @@ public class VersionHandler {
 	}
 
 	public static boolean isReadyToUpgrade() {
+		if (SystemUtils.IS_OS_WINDOWS) {
+			return false;
+		}
+
 		CommandShellExecutor.executeCommand(UPDATE_PACKAGE_REPOSITORY);
 		return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
 	}
