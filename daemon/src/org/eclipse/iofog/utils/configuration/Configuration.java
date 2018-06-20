@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.configuration;
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
@@ -597,7 +598,7 @@ public final class Configuration {
 	public static void setGpsDataIfValid(GpsMode mode, String gpsCoordinates) throws ConfigurationItemException {
 		if (!isValidCoordinates(gpsCoordinates)) {
 			throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
-					+ "Correct format is <DDD.DDDDD,DDD.DDDDD> (GPS DD format)");
+					+ "Correct format is <DDD.DDDDD(lat),DDD.DDDDD(lon)> (GPS DD format)");
 		}
 
 		setGpsCoordinates(gpsCoordinates.trim());
@@ -653,6 +654,10 @@ public final class Configuration {
 	 * @return
 	 */
 	private static boolean isValidNetworkInterface(String eth) {
+		if (SystemUtils.IS_OS_WINDOWS) { // any name could be used for network interface on Win
+			return true;
+		}
+
 		try {
 			if (CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
 				return true;
