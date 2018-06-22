@@ -847,12 +847,13 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
-	public Optional<JsonObject> setupCustomer(String customerId, String macAddress, int fogType) {
+	public Optional<JsonObject> setupCustomer(String customerId, String macAddress, String wifiPath, int fogType) {
 		logInfo("setting up customer");
 		Optional<JsonObject> result = Optional.empty();
 		Map<String, Object> postParams = new HashMap<>();
 		postParams.put("customerId", customerId);
 		postParams.put("macAddress", macAddress);
+		postParams.put("wifiPath", wifiPath);
 		postParams.put("fogType", fogType);
 
 		try {

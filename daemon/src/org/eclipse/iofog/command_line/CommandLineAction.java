@@ -281,10 +281,11 @@ public enum CommandLineAction {
 
 			int fogType = 1;
 			String result;
-			if (argsMap.containsKey("-c") && argsMap.containsKey("-m")) {
+			if (argsMap.containsKey("-c") && argsMap.containsKey("-m") && argsMap.containsKey("-p")) {
 				String customerId = argsMap.get("-c");
 				String macAddress = argsMap.get("-m");
-				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, fogType);
+				String wifiPath = argsMap.get("-p");
+				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, wifiPath, fogType);
 				StringBuilder builder = new StringBuilder();
 				if (jsonObjectOptional.isPresent()) {
 					JsonObject jsonObject = jsonObjectOptional.get();
