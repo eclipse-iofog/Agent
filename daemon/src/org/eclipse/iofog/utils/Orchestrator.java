@@ -37,12 +37,14 @@ import javax.net.ssl.TrustManager;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.NoContentException;
 import java.io.*;
-import java.net.*;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
@@ -203,6 +205,56 @@ public class Orchestrator {
 			.append(command)
 			.append("/id/").append(instanceId)
 			.append("/token/").append(accessToken);
+
+		if (queryParams != null)
+			queryParams.forEach((key, value) -> uri.append("/").append(key)
+					.append("/").append(value));
+
+		initialize();
+		RequestConfig config = getRequestConfig();
+		HttpPost post = new HttpPost(uri.toString());
+		post.setConfig(config);
+		post.setEntity(httpEntity);
+
+		try (CloseableHttpResponse response = client.execute(post);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+			 JsonReader jsonReader = Json.createReader(in)) {
+
+			if (response.getStatusLine().getStatusCode() == 403) {
+				throw new ForbiddenException();
+			} else if (response.getStatusLine().getStatusCode() == 204) {
+				throw new NoContentException("");
+			}
+
+			result = jsonReader.readObject();
+		} catch (UnsupportedEncodingException exp) {
+			logWarning(MODULE_NAME, exp.getMessage());
+			throw exp;
+		}
+
+		return result;
+	}
+
+	public JsonObject setupCustomer(Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
+		List<NameValuePair> postData = new ArrayList<>();
+		if (postParams != null)
+			postParams.forEach((key, value1) -> {
+				String value = value1 == null ? "" : value1.toString();
+				postData.add(new BasicNameValuePair(key, value));
+			});
+
+		return getCustomerJsonObject(queryParams, new UrlEncodedFormEntity(postData));
+	}
+
+	private JsonObject getCustomerJsonObject(Map<String, Object> queryParams, HttpEntity httpEntity) throws Exception {
+
+		if (!controllerUrl.toLowerCase().startsWith("https"))
+			throw new Exception("unable to connect over non-secure connection");
+		JsonObject result;
+
+		StringBuilder uri = new StringBuilder(controllerUrl);
+
+		uri.append("oro/setupCustomer");
 
 		if (queryParams != null)
 			queryParams.forEach((key, value) -> uri.append("/").append(key)

@@ -847,6 +847,25 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
+	public Optional<JsonObject> setupCustomer(String customerId, String macAddress, int fogType) {
+		logInfo("setting up customer");
+		Optional<JsonObject> result = Optional.empty();
+		Map<String, Object> postParams = new HashMap<>();
+		postParams.put("customerId", customerId);
+		postParams.put("macAddress", macAddress);
+		postParams.put("fogType", fogType);
+
+		try {
+			JsonObject jsonObject = orchestrator.setupCustomer(null, postParams);
+			result = Optional.of(jsonObject);
+		} catch (CertificateException | SSLHandshakeException e) {
+			verificationFailed();
+		} catch (Exception e) {
+			logWarning("unable to post fog config : " + e.getMessage());
+		}
+		return result;
+	}
+
 	/**
 	 * sends proxy status information to Fog Controller
 	 */

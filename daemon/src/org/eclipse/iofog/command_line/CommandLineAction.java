@@ -29,10 +29,7 @@ import javax.json.stream.JsonParsingException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
@@ -255,22 +252,60 @@ public enum CommandLineAction {
                     .boxed()
                     .collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
 
-            String username;
-            String password;
             String result;
             if (argsMap.containsKey("-u") && argsMap.containsKey("-p")) {
-                username = argsMap.get("-u");
-                password = argsMap.get("-p");
-                HttpPost post = createPostRequest(username, password);
-                result = executePostRequest(post);
+                String username = argsMap.get("-u");
+                String password = argsMap.get("-p");
+                HttpPost post = createLoginPostRequest(username, password);
+                result = executeLoginPostRequest(post);
             } else {
                 result = showHelp();
             }
             return result;
 		}
+	},
+	CUSTOMER {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("customer");
+		}
+
+		@Override
+		public String perform(String[] args) {
+			List<String> argsList = Arrays.asList(args);
+			List<String> argsSubList = argsList.subList(argsList.indexOf("customer"), argsList.size());
+
+			Map<String, String> argsMap = IntStream.range(1, argsSubList.size())
+					.boxed()
+					.collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
+
+			int fogType = 1;
+			String result;
+			if (argsMap.containsKey("-c") && argsMap.containsKey("-m")) {
+				String customerId = argsMap.get("-c");
+				String macAddress = argsMap.get("-m");
+				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, fogType);
+				StringBuilder builder = new StringBuilder();
+				if (jsonObjectOptional.isPresent()) {
+					JsonObject jsonObject = jsonObjectOptional.get();
+					JsonObject tokenData = jsonObject.getJsonObject("tokenData");
+					String token = tokenData.getString("token");
+					String iofogUUID = tokenData.getString("iofog_uuid");
+					builder.append("token: ")
+							.append(token)
+							.append("\\n")
+							.append("iofog_uuid: ")
+							.append(iofogUUID);
+				}
+				result = builder.toString();
+			} else {
+				result = showHelp();
+			}
+			return result;
+		}
 	};
 
-	private static HttpPost createPostRequest(String username, String password) {
+	private static HttpPost createLoginPostRequest(String username, String password) {
 		String payload = "{" +
 				"\"username\": \"" + username + "\", " +
 				"\"password\": \"" + password + "\"" +
@@ -284,7 +319,7 @@ public enum CommandLineAction {
 		return post;
 	}
 
-	private static String executePostRequest(HttpPost post) {
+	private static String executeLoginPostRequest(HttpPost post) {
 		CloseableHttpClient client = HttpClients.createDefault();
 		JsonObject result;
 		StringBuilder builder = new StringBuilder();
