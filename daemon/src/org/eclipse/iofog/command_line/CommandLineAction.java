@@ -29,13 +29,16 @@ import javax.json.stream.JsonParsingException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.CONTROLLER_CERT;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.existParam;
@@ -245,23 +248,25 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
-			if (args.length != 5) {
-				return showHelp();
-			} else {
-				String username;
-				String password;
-				if (args[1].equals("-u") && args[3].equals("-p")) {
-					username = args[2];
-					password = args[4];
-				} else if (args[3].equals("-u") && args[1].equals("-p")) {
-					username = args[4];
-					password = args[2];
-				} else {
-					return showHelp();
-				}
-				HttpPost post = createPostRequest(username, password);
-				return executePostRequest(post);
-			}
+            List<String> argsList = Arrays.asList(args);
+            List<String> argsSubList = argsList.subList(argsList.indexOf("login"), argsList.size());
+
+            Map<String, String> argsMap = IntStream.range(1, argsSubList.size())
+                    .boxed()
+                    .collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
+
+            String username;
+            String password;
+            String result;
+            if (argsMap.containsKey("-u") && argsMap.containsKey("-p")) {
+                username = argsMap.get("-u");
+                password = argsMap.get("-p");
+                HttpPost post = createPostRequest(username, password);
+                result = executePostRequest(post);
+            } else {
+                result = showHelp();
+            }
+            return result;
 		}
 	};
 
