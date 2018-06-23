@@ -88,11 +88,11 @@ See the docs folder in this repository for architecture, project microculture, e
 
 &ensp;- ComSat Update:
 
-        sudo service comsat stop       
-        sudo apt-get install --only-upgrade comsat
-        sudo service comsat start
+        sudo service iofog stop       
+        sudo apt-get install --only-upgrade iofog
+        sudo service iofog start
         or
-        sudo service comsat stop
-        sudo apt-get install --only-upgrade comsat-dev (developer's version)
-        sudo service comsat stop        
+        sudo service iofog stop
+        sudo apt-get install --only-upgrade iofog-dev (developer's version)
+        sudo service iofog stop        
 
