@@ -40,7 +40,7 @@ See the docs folder in this repository for architecture, project microculture, e
      sudo apt-get install oracle-java8-installer
      curl -fsSL https://get.docker.com/ | sh
 
-2 &ensp;Install IOFog
+2.&ensp;Install IOFog
 
      curl -s https://packagecloud.io/install/repositories/iofog/iofog/script.deb.sh | sudo bash
      sudo apt-get install iofog (release version)
@@ -86,7 +86,7 @@ See the docs folder in this repository for architecture, project microculture, e
 - 16.04 - Xenial Xerus
 
 
-&ensp;- ComSat Update:
+&ensp;- IOFog Update:
 
         sudo service iofog stop       
         sudo apt-get install --only-upgrade iofog
