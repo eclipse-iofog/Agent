@@ -33,6 +33,7 @@ public class Client {
 		try {
 			URL url = new URL("http://localhost:54321/v2/commandline");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
 			conn.getResponseCode();
 			conn.disconnect();
 			return true;
