@@ -51,18 +51,13 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
 		}
 
-		// for Client's "isAnotherInstanceRunning" method
 		final String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE, "");
-		if (TextUtils.isEmpty(contentType)) {
+		final boolean emptyContentType = TextUtils.isEmpty(contentType);
+		if (emptyContentType || !(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
-		}
-
-		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
-			String errorMsg = " Incorrect content type ";
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
+			if (!emptyContentType)
+                LoggingService.logWarning(MODULE_NAME, errorMsg);
+            outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
