@@ -847,6 +847,15 @@ public class FieldAgent implements IOFogModule {
 		}
 	}
 
+	/**
+	 * setups Oro Networks customer node
+	 *
+	 * @param customerId Ora Networks customer id
+	 * @param macAddress machine mac address
+	 * @param wifiPath path to wifi data that's required for docker container volume mapping
+	 * @param fogType fog architecture (x86 or arm)
+	 * @return result in Json format
+	 */
 	public Optional<JsonObject> setupCustomer(String customerId, String macAddress, String wifiPath, int fogType) {
 		logInfo("setting up customer");
 		Optional<JsonObject> result = Optional.empty();
@@ -855,9 +864,10 @@ public class FieldAgent implements IOFogModule {
 		postParams.put("macAddress", macAddress);
 		postParams.put("wifiPath", wifiPath);
 		postParams.put("fogType", fogType);
+		String command = "oro/setupCustomer" ;
 
 		try {
-			JsonObject jsonObject = orchestrator.setupCustomer(null, postParams);
+			JsonObject jsonObject = orchestrator.setupCustomer(command, null, postParams);
 			result = Optional.of(jsonObject);
 		} catch (CertificateException | SSLHandshakeException e) {
 			verificationFailed();

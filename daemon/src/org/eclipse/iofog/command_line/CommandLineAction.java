@@ -20,6 +20,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.Json;
@@ -279,12 +280,12 @@ public enum CommandLineAction {
 					.boxed()
 					.collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
 
-			int fogType = 1;
 			String result;
 			if (argsMap.containsKey("-c") && argsMap.containsKey("-m") && argsMap.containsKey("-p")) {
 				String customerId = argsMap.get("-c");
 				String macAddress = argsMap.get("-m");
 				String wifiPath = argsMap.get("-p");
+				int fogType = Configuration.getFogType().getCode();
 				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, wifiPath, fogType);
 				StringBuilder builder = new StringBuilder();
 				if (jsonObjectOptional.isPresent()) {
@@ -297,6 +298,8 @@ public enum CommandLineAction {
 							.append("\\n")
 							.append("iofog_uuid: ")
 							.append(iofogUUID);
+				} else {
+					builder.append("There was an issue retrieving token and iofog uuid.");
 				}
 				result = builder.toString();
 			} else {

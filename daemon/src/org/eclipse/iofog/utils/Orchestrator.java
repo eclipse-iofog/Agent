@@ -175,13 +175,13 @@ public class Orchestrator {
 	}
 
 	/**
-	 * calls IOFog Controller endpoind and returns Json result
+	 * calls IOFog Controller endpoint and returns Json result
 	 * 
 	 * @param command - endpoint to be called
 	 * @param queryParams - query string parameters
 	 * @param postParams - post parameters
 	 * @return result in Json format
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
 		List<NameValuePair> postData = new ArrayList<>();
@@ -191,51 +191,19 @@ public class Orchestrator {
 				postData.add(new BasicNameValuePair(key, value));
 			});
 
-		return getJsonObject(command, queryParams, new UrlEncodedFormEntity(postData));
+		return getJsonObject(queryParams, new UrlEncodedFormEntity(postData), createUri(command));
 	}
 
-	private JsonObject getJsonObject(String command, Map<String, Object> queryParams, HttpEntity httpEntity) throws Exception {
-		if (!controllerUrl.toLowerCase().startsWith("https"))
-			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result;
-
-		StringBuilder uri = new StringBuilder(controllerUrl);
-
-		uri.append("instance/")
-			.append(command)
-			.append("/id/").append(instanceId)
-			.append("/token/").append(accessToken);
-
-		if (queryParams != null)
-			queryParams.forEach((key, value) -> uri.append("/").append(key)
-					.append("/").append(value));
-
-		initialize();
-		RequestConfig config = getRequestConfig();
-		HttpPost post = new HttpPost(uri.toString());
-		post.setConfig(config);
-		post.setEntity(httpEntity);
-
-		try (CloseableHttpResponse response = client.execute(post);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-			 JsonReader jsonReader = Json.createReader(in)) {
-
-			if (response.getStatusLine().getStatusCode() == 403) {
-				throw new ForbiddenException();
-			} else if (response.getStatusLine().getStatusCode() == 204) {
-				throw new NoContentException("");
-			}
-
-			result = jsonReader.readObject();
-		} catch (UnsupportedEncodingException exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
-			throw exp;
-		}
-
-		return result;
-	}
-
-	public JsonObject setupCustomer(Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
+	/**
+	 * calls IOFog Controller endpoint, setups Oro Network customer node and returns Json result
+	 *
+	 * @param command - endpoint to be called
+	 * @param queryParams - query string parameters
+	 * @param postParams - post parameters
+	 * @return result in Json format
+	 * @throws Exception exception
+	 */
+	public JsonObject setupCustomer(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
 		List<NameValuePair> postData = new ArrayList<>();
 		if (postParams != null)
 			postParams.forEach((key, value1) -> {
@@ -243,18 +211,25 @@ public class Orchestrator {
 				postData.add(new BasicNameValuePair(key, value));
 			});
 
-		return getCustomerJsonObject(queryParams, new UrlEncodedFormEntity(postData));
+		StringBuilder uri = new StringBuilder(controllerUrl);
+		uri.append(command);
+
+		return getJsonObject(queryParams, new UrlEncodedFormEntity(postData), uri);
 	}
 
-	private JsonObject getCustomerJsonObject(Map<String, Object> queryParams, HttpEntity httpEntity) throws Exception {
+	private StringBuilder createUri(String command) {
+		StringBuilder uri = new StringBuilder(controllerUrl);
+		uri.append("instance/")
+				.append(command)
+				.append("/id/").append(instanceId)
+				.append("/token/").append(accessToken);
+		return uri;
+	}
 
+	private JsonObject getJsonObject(Map<String, Object> queryParams, HttpEntity httpEntity, StringBuilder uri) throws Exception {
 		if (!controllerUrl.toLowerCase().startsWith("https"))
 			throw new Exception("unable to connect over non-secure connection");
 		JsonObject result;
-
-		StringBuilder uri = new StringBuilder(controllerUrl);
-
-		uri.append("oro/setupCustomer");
 
 		if (queryParams != null)
 			queryParams.forEach((key, value) -> uri.append("/").append(key)
@@ -301,7 +276,8 @@ public class Orchestrator {
 				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
 
 		HttpEntity entity = builder.build();
-		return getJsonObject(command, null, entity);
+
+		return getJsonObject(null, entity, createUri(command));
 	}
 
 	/**
