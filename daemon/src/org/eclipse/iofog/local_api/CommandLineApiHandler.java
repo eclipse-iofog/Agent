@@ -14,6 +14,7 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+import org.apache.http.util.TextUtils;
 import org.eclipse.iofog.command_line.CommandLineParser;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -48,6 +49,14 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 		if (req.method() != POST) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
+		}
+
+		// for Client's "isAnotherInstanceRunning" method
+		final String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE, "");
+		if (TextUtils.isEmpty(contentType)) {
+			String errorMsg = " Incorrect content type ";
+			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
+			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
 		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {

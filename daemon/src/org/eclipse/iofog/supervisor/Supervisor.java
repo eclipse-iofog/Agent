@@ -98,7 +98,6 @@ public class Supervisor implements IOFogModule {
         logInfo("started");
 
         operationDuration();
-
     }
 
 	private void startModule(IOFogModule ioFogModule) throws Exception {
