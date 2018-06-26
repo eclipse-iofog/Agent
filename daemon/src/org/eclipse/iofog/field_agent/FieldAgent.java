@@ -183,7 +183,7 @@ public class FieldAgent implements IOFogModule {
 				deProvision();
 			} catch (Exception e) {
 				logWarning("unable to send status : " + e.getMessage());
-				deProvision();
+//				deProvision();
 				connected = false;
 			}
 		}

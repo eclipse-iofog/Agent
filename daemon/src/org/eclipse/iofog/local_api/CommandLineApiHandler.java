@@ -14,6 +14,7 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+import org.apache.http.util.TextUtils;
 import org.eclipse.iofog.command_line.CommandLineParser;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -50,10 +51,13 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
 		}
 
-		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
+		final String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE, "");
+		final boolean emptyContentType = TextUtils.isEmpty(contentType);
+		if (emptyContentType || !(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
 			String errorMsg = " Incorrect content type ";
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
+			if (!emptyContentType)
+                LoggingService.logWarning(MODULE_NAME, errorMsg);
+            outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
 
