@@ -20,6 +20,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.Json;
@@ -284,7 +285,7 @@ public enum CommandLineAction {
 				String customerId = argsMap.get("-c");
 				String macAddress = argsMap.get("-m");
 				String wifiPath = argsMap.get("-p");
-				int fogType = 1;
+				int fogType = Configuration.getFogType().getCode();
 				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, wifiPath, fogType);
 				StringBuilder builder = new StringBuilder();
 				if (jsonObjectOptional.isPresent()) {
