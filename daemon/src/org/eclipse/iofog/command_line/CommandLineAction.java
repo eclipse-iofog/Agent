@@ -279,12 +279,12 @@ public enum CommandLineAction {
 					.boxed()
 					.collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
 
-			int fogType = 1;
 			String result;
 			if (argsMap.containsKey("-c") && argsMap.containsKey("-m") && argsMap.containsKey("-p")) {
 				String customerId = argsMap.get("-c");
 				String macAddress = argsMap.get("-m");
 				String wifiPath = argsMap.get("-p");
+				int fogType = 1;
 				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, wifiPath, fogType);
 				StringBuilder builder = new StringBuilder();
 				if (jsonObjectOptional.isPresent()) {
@@ -297,6 +297,8 @@ public enum CommandLineAction {
 							.append("\\n")
 							.append("iofog_uuid: ")
 							.append(iofogUUID);
+				} else {
+					builder.append("There was an issue retrieving token and iofog uuid.");
 				}
 				result = builder.toString();
 			} else {
