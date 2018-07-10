@@ -1,1 +1,0 @@
-net localgroup iofog /delete
