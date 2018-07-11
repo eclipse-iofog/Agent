@@ -312,11 +312,11 @@ public class FieldAgent implements IOFogModule {
      * Deletes current fog node from controller and makes deprovision
      */
 	private void deleteNode() {
-		LoggingService.logInfo(MODULE_NAME, "start deleting node");
+		logInfo("start deleting node");
 		try {
 			orchestrator.doCommand("deleteNode", null,null);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logInfo("can't send delete node command");
 		}
 		deProvision();
 	}
