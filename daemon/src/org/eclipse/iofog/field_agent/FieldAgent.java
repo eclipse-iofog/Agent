@@ -261,40 +261,44 @@ public class FieldAgent implements IOFogModule {
 				StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
 				JsonObject changes = result.getJsonObject("changes");
-				if (changes.getBoolean("reboot") && !initialization) {
-					reboot();
-				}
-				if (changes.getBoolean("isimagesnapshot") && !initialization) {
-					createImageSnapshot();
-				}
-				if (changes.getBoolean("config") && !initialization) {
-					getFogConfig();
-				}
-				if (changes.getBoolean("version") && !initialization) {
-					changeVersion();
-				}
-				if (changes.getBoolean("registries") || initialization) {
-					loadRegistries(false);
-					ProcessManager.getInstance().update();
-				}
-				if (changes.getBoolean("containerconfig") || initialization) {
-					loadElementsConfig(false);
-					LocalApi.getInstance().update();
-				}
-				if (changes.getBoolean("containerlist") || initialization) {
-					loadElementsList(false);
-				}
-				if (changes.getBoolean("routing") || initialization) {
-					loadRoutes(false);
-					MessageBus.getInstance().update();
-				}
-				if (changes.getBoolean("proxy") && !initialization) {
-					getProxyConfig().ifPresent(configs ->
-							sshProxyManager.update(configs).thenRun(this::postProxyConfig)
-					);
-				}
-				if (changes.getBoolean("diagnostics") && !initialization) {
-					updateDiagnostics();
+				if (changes.getBoolean("deletenode") && !initialization) {
+					deleteNode();
+				} else {
+					if (changes.getBoolean("reboot") && !initialization) {
+						reboot();
+					}
+					if (changes.getBoolean("isimagesnapshot") && !initialization) {
+						createImageSnapshot();
+					}
+					if (changes.getBoolean("config") && !initialization) {
+						getFogConfig();
+					}
+					if (changes.getBoolean("version") && !initialization) {
+						changeVersion();
+					}
+					if (changes.getBoolean("registries") || initialization) {
+						loadRegistries(false);
+						ProcessManager.getInstance().update();
+					}
+					if (changes.getBoolean("containerconfig") || initialization) {
+						loadElementsConfig(false);
+						LocalApi.getInstance().update();
+					}
+					if (changes.getBoolean("containerlist") || initialization) {
+						loadElementsList(false);
+					}
+					if (changes.getBoolean("routing") || initialization) {
+						loadRoutes(false);
+						MessageBus.getInstance().update();
+					}
+					if (changes.getBoolean("proxy") && !initialization) {
+						getProxyConfig().ifPresent(configs ->
+								sshProxyManager.update(configs).thenRun(this::postProxyConfig)
+						);
+					}
+					if (changes.getBoolean("diagnostics") && !initialization) {
+						updateDiagnostics();
+					}
 				}
 
 				initialization = false;
@@ -303,6 +307,19 @@ public class FieldAgent implements IOFogModule {
 			}
 		}
 	};
+
+    /**
+     * Deletes current fog node from controller and makes deprovision
+     */
+	private void deleteNode() {
+		logInfo("start deleting node");
+		try {
+			orchestrator.doCommand("deleteNode", null,null);
+		} catch (Exception e) {
+			logInfo("can't send delete node command");
+		}
+		deProvision();
+	}
 
 	/**
 	 * Remote reboot of Linux machine from IOFog controller
