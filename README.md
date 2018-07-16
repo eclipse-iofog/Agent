@@ -30,3 +30,69 @@ There should be an ioFog code base for every processing platform that becomes pa
 
 
 See the docs folder in this repository for architecture, project microculture, engineering philosophy, functional specifications, and more.
+
+**IOFog Setup**
+
+1.&ensp;In order to install IOFog, you need to have Java and Docker installed on your machine.
+
+     sudo add-apt-repository ppa:webupd8team/java
+     sudo apt-get update
+     sudo apt-get install oracle-java8-installer
+     curl -fsSL https://get.docker.com/ | sh
+
+2.&ensp;Install IOFog
+
+     curl -s https://packagecloud.io/install/repositories/iofog/iofog/script.deb.sh | sudo bash
+     sudo apt-get install iofog (release version)
+     or
+     sudo apt-get install iofog-dev (developer's version)
+	   
+    
+**Usage**
+
+1.&ensp;To view help menu
+
+        sudo iofog help
+
+2.&ensp;To view current status
+
+        sudo iofog status   
+
+3.&ensp;To view version and license
+
+        sudo iofog version
+        
+4.&ensp;To view current configuration
+
+        sudo iofog info
+        
+5.&ensp;Provision iofog for use
+
+        sudo iofog provision ABCDWXYZ
+
+**Logs**
+- Log files are located at '/var/log/iofog'
+
+**System Requirements (Recommended)**
+- Processor: 64 bit Dual Core or better
+- RAM: 1 GB minimum
+- Hard Disk: 5 GB minimum
+- Java Runtime (JRE) 8 or higher
+- Docker 1.10 or higher
+- Linux kernel 3.10 or higher
+
+**Platforms Supported (Ubuntu Linux)**
+- 14.04 - Trusty Tahr
+- 16.04 - Xenial Xerus
+
+
+&ensp;- IOFog Update:
+
+        sudo service iofog stop       
+        sudo apt-get install --only-upgrade iofog
+        sudo service iofog start
+        or
+        sudo service iofog stop
+        sudo apt-get install --only-upgrade iofog-dev (developer's version)
+        sudo service iofog stop        
+
