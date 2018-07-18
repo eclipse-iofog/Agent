@@ -467,7 +467,7 @@ public class DockerUtil {
 				cmd = element.isRootHostAccess()
 						? cmd.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true)
 						: cmd.withExtraHosts(extraHosts).withPrivileged(true);
-		} else if (SystemUtils.IS_OS_LINUX) {
+		} else if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
 			cmd = element.isRootHostAccess()
 					? cmd.withNetworkMode("host").withPrivileged(true)
 					: cmd.withExtraHosts(extraHosts).withPrivileged(true);

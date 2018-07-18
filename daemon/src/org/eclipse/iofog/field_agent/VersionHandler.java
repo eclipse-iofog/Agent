@@ -141,7 +141,7 @@ public class VersionHandler {
 	}
 
 	public static boolean isReadyToUpgrade() {
-		if (SystemUtils.IS_OS_WINDOWS) {
+		if (SystemUtils.IS_OS_WINDOWS ||  SystemUtils.IS_OS_MAC) {
 			return false;
 		}
 
