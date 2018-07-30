@@ -94,7 +94,7 @@ public class VersionHandler {
 	private static boolean isPackageRepositoryUpdated() {
 		boolean isPackageRepositoryUpdated;
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT);
-		if (resultSet.getError().size() == 0 && resultSet.getValue().size() > 0) {
+		if (resultSet.getError().size() == 0 || resultSet.getValue().size() > 0) {
 			logWarning(MODULE_NAME, "Unable to update package repository. Another app is currently holding package manager lock");
 			isPackageRepositoryUpdated = false;
 		} else {
