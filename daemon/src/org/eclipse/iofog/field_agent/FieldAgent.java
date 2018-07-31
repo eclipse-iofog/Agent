@@ -836,7 +836,7 @@ public class FieldAgent implements IOFogModule {
 			return;
 		}
 
-		logInfo(" ilary posting fog config");
+		logInfo("posting fog config");
 		Map<String, Object> postParams = new HashMap<>();
 		postParams.put(NETWORK_INTERFACE.getJsonProperty(), IOFogNetworkInterface.getNetworkInterface());
 		postParams.put(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl());

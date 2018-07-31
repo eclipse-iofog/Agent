@@ -42,6 +42,7 @@ public class VersionHandler {
 	private static String GET_IOFOG_PACKAGE_INSTALLED_VERSION;
 	private static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 	private static String UPDATE_PACKAGE_REPOSITORY;
+	private static String GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT;
 
 	static {
 		if (SystemUtils.IS_OS_LINUX) {
@@ -52,20 +53,23 @@ public class VersionHandler {
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
 				UPDATE_PACKAGE_REPOSITORY = "apt-get update";
-
+				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/lib/apt/lists/lock /var/cache/apt/archives/lock";
 			} else if (distrName.contains("fedora")) {
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 				UPDATE_PACKAGE_REPOSITORY = "dnf update";
+				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/cache/dnf/metadata_lock.pid";
 			} else if (distrName.contains("red hat")
 					|| distrName.contains("centos")) {
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 				UPDATE_PACKAGE_REPOSITORY = "yum update";
+				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/run/yum.pid";
 			} else if (distrName.contains("amazon")) {
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n 1p";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n \"$p\"";
 				UPDATE_PACKAGE_REPOSITORY = "yum update";
+				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/run/yum.pid";
 			} else {
 				logWarning(MODULE_NAME, "it looks like your distribution is not supported");
 			}
@@ -77,14 +81,30 @@ public class VersionHandler {
 		return resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : EMPTY;
 	}
 
-	public static String getFogInstalledVersion() {
+	private static String getFogInstalledVersion() {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_IOFOG_PACKAGE_INSTALLED_VERSION);
 		return parseVersionResult(resultSet);
 	}
 
-	public static String  getFogCandidateVersion() {
+	private static String  getFogCandidateVersion() {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_IOFOG_PACKAGE_CANDIDATE_VERSION);
 		return parseVersionResult(resultSet);
+	}
+
+	private static boolean isPackageRepositoryUpdated() {
+		boolean isPackageRepositoryUpdated;
+		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT);
+		//if lock file exists and not empty
+		if (resultSet.getError().size() == 0 && resultSet.getValue().size() > 0) {
+			logWarning(MODULE_NAME, "Unable to update package repository. Another app is currently holding package manager lock");
+			isPackageRepositoryUpdated = false;
+		}
+		// if lock file doesn't exist or empty
+		else {
+			CommandShellExecutor.executeCommand(UPDATE_PACKAGE_REPOSITORY);
+			isPackageRepositoryUpdated = true;
+		}
+		return isPackageRepositoryUpdated;
 	}
 
 	private static String parseVersionResult(CommandShellResultSet<List<String>, List<String>> resultSet) {
@@ -95,7 +115,7 @@ public class VersionHandler {
 	 * performs change version operation, received from ioFog controller
 	 *
 	 */
-	public static void changeVersion(JsonObject actionData) {
+	static void changeVersion(JsonObject actionData) {
 		LoggingService.logInfo(MODULE_NAME, "trying to change version action");
 
 		try{
@@ -140,16 +160,21 @@ public class VersionHandler {
 		}
 	}
 
-	public static boolean isReadyToUpgrade() {
-		if (SystemUtils.IS_OS_WINDOWS) {
-			return false;
-		}
+	static boolean isReadyToUpgrade() {
+		return isNotWindows()
+				&& isPackageRepositoryUpdated()
+				&& areNotVersionsSame();
+	}
 
-		CommandShellExecutor.executeCommand(UPDATE_PACKAGE_REPOSITORY);
+	private static boolean isNotWindows() {
+		return !SystemUtils.IS_OS_WINDOWS;
+	}
+
+	private static boolean areNotVersionsSame() {
 		return !(getFogInstalledVersion().equals(getFogCandidateVersion()));
 	}
 
-	public static boolean isReadyToRollback() {
+	static boolean isReadyToRollback() {
 		String[] backupsFiles = new File(BACKUPS_DIR).list();
 		return !(backupsFiles == null || backupsFiles.length == 0);
 	}
