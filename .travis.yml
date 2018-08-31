@@ -66,6 +66,7 @@ jobs:
       package_cloud push iofog/iofog/ubuntu/utopic iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iofog/iofog/ubuntu/vivid iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/wily 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/ubuntu/xenial iofog${DEV}_${VERSION}_all.deb; 
+      package_cloud push iofog/iofog/ubuntu/bionic iofog${DEV}_${VERSION}_all.deb;
       package_cloud push iofog/iofog/debian/wheezy iofog${DEV}_${VERSION}_all.deb; package_cloud push 
       iofog/iofog/debian/jessie iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/debian/stretch 
       iofog${DEV}_${VERSION}_all.deb; package_cloud push iofog/iofog/debian/buster iofog${DEV}_${VERSION}_all.deb; 
