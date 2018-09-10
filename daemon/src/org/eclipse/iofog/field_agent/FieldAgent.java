@@ -173,18 +173,12 @@ public class FieldAgent implements IOFogModule {
 				JsonObject result = orchestrator.doCommand("status", null, status);
 				checkResponseStatus(result);
 
-				if (!connected) {
-					connected = true;
-					postFogConfig();
-				}
 			} catch (CertificateException | SSLHandshakeException e) {
 				verificationFailed();
 			} catch (ForbiddenException e) {
 				deProvision();
 			} catch (Exception e) {
 				logWarning("unable to send status : " + e.getMessage());
-				deProvision();
-				connected = false;
 			}
 		}
 	};
