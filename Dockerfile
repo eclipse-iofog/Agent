@@ -1,7 +1,6 @@
 FROM ubuntu:14.04
-MAINTAINER jerome.petazzoni@docker.com
 
-# Let's start with some basic stuff.
+# Adding packages
 RUN apt-get update -qq && apt-get install -qqy \
     apt-transport-https \
     ca-certificates \
@@ -24,6 +23,10 @@ RUN chmod +x /usr/local/bin/wrapdocker
 
 # Define additional metadata for our image.
 VOLUME /var/lib/docker
+
+# Install fog agent
 RUN curl -s https://packagecloud.io/install/repositories/iofog/iofog/script.deb.sh | bash && \
     apt-get install iofog
+
+# Start wrapper and fog-agent
 CMD usr/local/bin/wrapdocker && java -jar /usr/bin/iofogd.jar start
