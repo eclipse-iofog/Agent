@@ -945,7 +945,7 @@ public class FieldAgent implements IOFogModule {
 	 * @param key - provisioning key sent by command-line
 	 * @return String
 	 */
-	public JsonObject provision(String key) {
+	public JsonObject provision(String key/*, boolean isDevMode*/) {
 		logInfo("provisioning");
 		JsonObject provisioningResult;
 

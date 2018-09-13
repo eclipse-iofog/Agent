@@ -86,6 +86,7 @@ public final class Configuration {
 	private static GpsMode gpsMode;
 	private static ArchitectureType fogType;
 	private static final Map<String, Object> defaultConfig;
+	private static boolean developerMode;
 
 	public static boolean debugging = false;
 
@@ -227,6 +228,14 @@ public final class Configuration {
 
 	public static void setFogType(ArchitectureType fogType) {
 		Configuration.fogType = fogType;
+	}
+
+	public static boolean isDeveloperMode() {
+		return developerMode;
+	}
+
+	public static void setDeveloperMode(boolean developerMode) {
+		Configuration.developerMode = developerMode;
 	}
 
 	/**
@@ -527,6 +536,9 @@ public final class Configuration {
 					configureFogType(value);
 					setNode(FOG_TYPE, value);
 					break;
+				case DEV_MODE:
+					setNode(DEV_MODE, value);
+					setDeveloperMode(!value.equals("off"));
 				default:
 					throw new ConfigurationItemException("Invalid parameter -" + option);
 			}
@@ -722,6 +734,7 @@ public final class Configuration {
 		setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ)));
 		setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
 		configureFogType(getNode(FOG_TYPE));
+		setDeveloperMode(!getNode(DEV_MODE).equals("off"));
 
 	}
 
@@ -872,6 +885,8 @@ public final class Configuration {
 		result.append(buildReportLine(getIpAddressMessage(), ipAddress));
 		// network interface
 		result.append(buildReportLine(getConfigParamMessage(NETWORK_INTERFACE), networkInterface));
+		// developer mode
+		result.append(buildReportLine(getConfigParamMessage(DEV_MODE), (developerMode ? "on" : "off")));
 		// controller url
 		result.append(buildReportLine(getConfigParamMessage(CONTROLLER_URL), controllerUrl));
 		// controller cert dir

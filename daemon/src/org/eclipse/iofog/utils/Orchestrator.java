@@ -115,11 +115,15 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	private void initialize() throws Exception {
-		TrustManager[] trustManager = new TrustManager[] {new X509TrustManagerImpl(controllerCert)};
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-		sslContext.init(null, trustManager, new SecureRandom());
-		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-	    client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+	    if (!Configuration.isDeveloperMode()) {
+            TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManager, new SecureRandom());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+            client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        } else {
+	        client = HttpClients.createDefault();
+        }
 	}
 	
 	/**
@@ -147,8 +151,11 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	private JsonObject getJSON(String surl) throws Exception {
-		if (!surl.toLowerCase().startsWith("https"))
-			throw new UnknownHostException("unable to connect over non-secure connection");
+		// disable certificates for dev mode
+		if(!Configuration.isDeveloperMode()) {
+			if (!surl.toLowerCase().startsWith("https"))
+				throw new UnknownHostException("unable to connect over non-secure connection");
+		}
 		initialize();
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(surl);
@@ -288,11 +295,13 @@ public class Orchestrator {
 		instanceId = Configuration.getInstanceId();
 		accessToken = Configuration.getAccessToken();
 		controllerUrl = Configuration.getControllerUrl();
-		try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
-			controllerCert = getCert(fileInputStream);
-		} catch (IOException e) {
-			controllerCert = null;
-		}
+		if (!Configuration.isDeveloperMode()) {
+            try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
+                controllerCert = getCert(fileInputStream);
+            } catch (IOException e) {
+                controllerCert = null;
+            }
+        }
 		try {
 			initialize();
 		} catch (Exception exp) {

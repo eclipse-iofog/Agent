@@ -15,9 +15,11 @@
 <config>
 	<access_token/>
 
-	<controller_url>https://fogcontroller1.iofog.org:54421/api/v2/</controller_url>
+	<controller_url>http://localhost:54421/api/v2/</controller_url>
 	
 	<instance_id/>
+
+	<dev_mode>on</dev_mode>
 	
 	<controller_cert>/etc/iofog/cert.crt</controller_cert>
 
