@@ -114,8 +114,8 @@ public class Orchestrator {
 	 * 
 	 * @throws Exception
 	 */
-	private void initialize() throws Exception {
-	    if (!Configuration.isDeveloperMode()) {
+	private void initialize(boolean secure) throws Exception {
+	    if (secure) {
             TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustManager, new SecureRandom());
@@ -152,11 +152,14 @@ public class Orchestrator {
 	 */
 	private JsonObject getJSON(String surl) throws Exception {
 		// disable certificates for dev mode
-		if(!Configuration.isDeveloperMode()) {
-			if (!surl.toLowerCase().startsWith("https"))
+		boolean secure = true;
+		if(!surl.toLowerCase().startsWith("https")){
+			if(!Configuration.isDeveloperMode())
 				throw new UnknownHostException("unable to connect over non-secure connection");
+			else
+				secure = false;
 		}
-		initialize();
+		initialize(secure);
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(surl);
 		post.setConfig(config);
@@ -234,15 +237,21 @@ public class Orchestrator {
 	}
 
 	private JsonObject getJsonObject(Map<String, Object> queryParams, HttpEntity httpEntity, StringBuilder uri) throws Exception {
-		if (!controllerUrl.toLowerCase().startsWith("https"))
-			throw new Exception("unable to connect over non-secure connection");
+		// disable certificates for dev mode
+		boolean secure = true;
+		if(!controllerUrl.toLowerCase().startsWith("https")){
+			if(!Configuration.isDeveloperMode())
+				throw new UnknownHostException("unable to connect over non-secure connection");
+			else
+				secure = false;
+		}
 		JsonObject result;
 
 		if (queryParams != null)
 			queryParams.forEach((key, value) -> uri.append("/").append(key)
 					.append("/").append(value));
 
-		initialize();
+		initialize(secure);
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(uri.toString());
 		post.setConfig(config);
@@ -295,15 +304,20 @@ public class Orchestrator {
 		instanceId = Configuration.getInstanceId();
 		accessToken = Configuration.getAccessToken();
 		controllerUrl = Configuration.getControllerUrl();
-		if (!Configuration.isDeveloperMode()) {
+		// disable certificates for dev mode
+		boolean secure = true;
+		if (controllerUrl.toLowerCase().startsWith("https")) {
             try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
                 controllerCert = getCert(fileInputStream);
             } catch (IOException e) {
                 controllerCert = null;
             }
-        }
+        } else {
+			controllerCert = null;
+			secure = false;
+		}
 		try {
-			initialize();
+			initialize(secure);
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 		}
