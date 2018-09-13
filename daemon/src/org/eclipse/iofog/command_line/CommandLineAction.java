@@ -148,7 +148,7 @@ public enum CommandLineAction {
             } else {
                 result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errormessage"));
             }
-            return format(getProvisionMessage(), result);
+            return format(getProvisionMessage(), provisionKey, result);
         }
     },
     CONFIG_ACTION {
