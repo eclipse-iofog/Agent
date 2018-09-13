@@ -260,7 +260,21 @@ public enum CommandLineAction {
                 HttpPost post = createLoginPostRequest(username, password);
                 result = executeLoginPostRequest(post);
             } else {
-                result = showHelp();
+                result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errormessage"));
+            }
+            return format(getProvisionMessage(), provisionKey, result);
+        }
+    },
+    CONFIG_ACTION {
+        @Override
+        public List<String> getKeys() {
+            return singletonList("config");
+        }
+
+        @Override
+        public String perform(String[] args) {
+            if (args.length == 1) {
+                return showHelp();
             }
             return result;
 		}

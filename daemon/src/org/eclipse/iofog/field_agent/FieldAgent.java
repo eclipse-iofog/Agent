@@ -37,7 +37,10 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -173,18 +176,12 @@ public class FieldAgent implements IOFogModule {
 				JsonObject result = orchestrator.doCommand("status", null, status);
 				checkResponseStatus(result);
 
-				if (!connected) {
-					connected = true;
-					postFogConfig();
-				}
 			} catch (CertificateException | SSLHandshakeException e) {
 				verificationFailed();
 			} catch (ForbiddenException e) {
 				deProvision();
 			} catch (Exception e) {
 				logWarning("unable to send status : " + e.getMessage());
-//				deProvision();
-				connected = false;
 			}
 		}
 	};
@@ -292,9 +289,7 @@ public class FieldAgent implements IOFogModule {
 						MessageBus.getInstance().update();
 					}
 					if (changes.getBoolean("proxy") && !initialization) {
-						getProxyConfig().ifPresent(configs ->
-								sshProxyManager.update(configs).thenRun(this::postProxyConfig)
-						);
+						sshProxyManager.update(getProxyConfig());
 					}
 					if (changes.getBoolean("diagnostics") && !initialization) {
 						updateDiagnostics();
@@ -836,7 +831,7 @@ public class FieldAgent implements IOFogModule {
 			return;
 		}
 
-		logInfo(" ilary posting fog config");
+		logInfo("posting fog config");
 		Map<String, Object> postParams = new HashMap<>();
 		postParams.put(NETWORK_INTERFACE.getJsonProperty(), IOFogNetworkInterface.getNetworkInterface());
 		postParams.put(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl());
@@ -865,75 +860,23 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	/**
-	 * setups Oro Networks customer node
-	 *
-	 * @param customerId Ora Networks customer id
-	 * @param macAddress machine mac address
-	 * @param wifiPath path to wifi data that's required for docker container volume mapping
-	 * @param fogType fog architecture (x86 or arm)
-	 * @return result in Json format
-	 */
-	public Optional<JsonObject> setupCustomer(String customerId, String macAddress, String wifiPath, int fogType) {
-		logInfo("setting up customer");
-		Optional<JsonObject> result = Optional.empty();
-		Map<String, Object> postParams = new HashMap<>();
-		postParams.put("customerId", customerId);
-		postParams.put("macAddress", macAddress);
-		postParams.put("wifiPath", wifiPath);
-		postParams.put("fogType", fogType);
-		String command = "oro/setupCustomer" ;
-
-		try {
-			JsonObject jsonObject = orchestrator.setupCustomer(command, null, postParams);
-			result = Optional.of(jsonObject);
-		} catch (CertificateException | SSLHandshakeException e) {
-			verificationFailed();
-		} catch (Exception e) {
-			logWarning("unable to post fog config : " + e.getMessage());
-		}
-		return result;
-	}
-
-	/**
-	 * sends proxy status information to Fog Controller
-	 */
-	private void postProxyConfig() {
-		logInfo("post proxy config");
-		if (notProvisioned() || !isControllerConnected(false)) {
-			return;
-		}
-
-		Map<String, Object> postParams = new HashMap<>();
-		postParams.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
-
-		try {
-			JsonObject result = orchestrator.doCommand("proxyconfig/changes", null, postParams);
-			checkResponseStatus(result);
-		} catch (CertificateException | SSLHandshakeException e) {
-			verificationFailed();
-		} catch (Exception e) {
-			logWarning("unable to post proxy config : " + e.getMessage());
-		}
-	}
-
-	/**
 	 * gets IOFog proxy configuration from IOFog controller
 	 */
-	private Optional<JsonObject> getProxyConfig() {
+	private JsonObject getProxyConfig() {
 		LoggingService.logInfo(MODULE_NAME, "get proxy config");
+		JsonObject result = null;
 
-		if (notProvisioned() || !isControllerConnected(false)) {
-			return Optional.empty();
+		if (!notProvisioned() && isControllerConnected(false)) {
+			try {
+				JsonObject proxyConfig = orchestrator.doCommand("proxyconfig", null, null);
+				checkResponseStatus(proxyConfig);
+				result = proxyConfig.getJsonObject("config");
+			} catch (Exception e) {
+				LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
+			}
 		}
 
-		try {
-			JsonObject result = orchestrator.doCommand("proxyconfig", null, null);
-			checkResponseStatus(result);
-			return Optional.of(result.getJsonObject("config"));
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
-			return Optional.empty();
-		}
+		return result;
 	}
 
 	/**
