@@ -84,11 +84,12 @@ public class ContainerManager {
 	}
 
 	private String createContainer(Element element) throws Exception {
-		Registry registry = getRegistry(element);
-		LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
-		docker.pullImage(element.getImageName(), registry);
-		LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
-
+		if (!element.getRegistry().equals("from_cache")){
+			Registry registry = getRegistry(element);
+			LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
+			docker.pullImage(element.getImageName(), registry);
+			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
+		}
 		LoggingService.logInfo(MODULE_NAME, "creating container");
 		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
 		String id = docker.createContainer(element, hostName);
