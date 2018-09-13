@@ -888,7 +888,7 @@ public class FieldAgent implements IOFogModule {
 	 * @param key - provisioning key sent by command-line
 	 * @return String
 	 */
-	public JsonObject provision(String key/*, boolean isDevMode*/) {
+	public JsonObject provision(String key) {
 		logInfo("provisioning");
 		JsonObject provisioningResult;
 
