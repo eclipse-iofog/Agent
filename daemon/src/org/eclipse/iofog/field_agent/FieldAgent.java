@@ -37,7 +37,10 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -286,9 +289,7 @@ public class FieldAgent implements IOFogModule {
 						MessageBus.getInstance().update();
 					}
 					if (changes.getBoolean("proxy") && !initialization) {
-						getProxyConfig().ifPresent(configs ->
-								sshProxyManager.update(configs).thenRun(this::postProxyConfig)
-						);
+						sshProxyManager.update(getProxyConfig());
 					}
 					if (changes.getBoolean("diagnostics") && !initialization) {
 						updateDiagnostics();
@@ -859,45 +860,23 @@ public class FieldAgent implements IOFogModule {
 	}
 
 	/**
-	 * sends proxy status information to Fog Controller
-	 */
-	private void postProxyConfig() {
-		logInfo("post proxy config");
-		if (notProvisioned() || !isControllerConnected(false)) {
-			return;
-		}
-
-		Map<String, Object> postParams = new HashMap<>();
-		postParams.put("proxystatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus());
-
-		try {
-			JsonObject result = orchestrator.doCommand("proxyconfig/changes", null, postParams);
-			checkResponseStatus(result);
-		} catch (CertificateException | SSLHandshakeException e) {
-			verificationFailed();
-		} catch (Exception e) {
-			logWarning("unable to post proxy config : " + e.getMessage());
-		}
-	}
-
-	/**
 	 * gets IOFog proxy configuration from IOFog controller
 	 */
-	private Optional<JsonObject> getProxyConfig() {
+	private JsonObject getProxyConfig() {
 		LoggingService.logInfo(MODULE_NAME, "get proxy config");
+		JsonObject result = null;
 
-		if (notProvisioned() || !isControllerConnected(false)) {
-			return Optional.empty();
+		if (!notProvisioned() && isControllerConnected(false)) {
+			try {
+				JsonObject proxyConfig = orchestrator.doCommand("proxyconfig", null, null);
+				checkResponseStatus(proxyConfig);
+				result = proxyConfig.getJsonObject("config");
+			} catch (Exception e) {
+				LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
+			}
 		}
 
-		try {
-			JsonObject result = orchestrator.doCommand("proxyconfig", null, null);
-			checkResponseStatus(result);
-			return Optional.of(result.getJsonObject("config"));
-		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
-			return Optional.empty();
-		}
+		return result;
 	}
 
 	/**

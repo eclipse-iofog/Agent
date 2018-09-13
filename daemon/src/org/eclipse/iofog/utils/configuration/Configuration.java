@@ -98,6 +98,7 @@ public final class Configuration {
 	private static long getUsageDataFreqSeconds;
 	private static String dockerApiVersion;
 	private static int setSystemTimeFreqSeconds;
+	private static int monitorSshTunnelStatusFreqSeconds;
 
 	private static void updateAutomaticConfigParams() {
 		switch (fogType) {
@@ -110,6 +111,7 @@ public final class Configuration {
 				getUsageDataFreqSeconds = 20;
 				dockerApiVersion = "1.23";
 				setSystemTimeFreqSeconds = 60;
+				monitorSshTunnelStatusFreqSeconds = 30;
 				break;
 			case INTEL_AMD:
 				statusReportFreqSeconds = 5;
@@ -120,6 +122,7 @@ public final class Configuration {
 				getUsageDataFreqSeconds = 5;
 				dockerApiVersion = "1.23";
 				setSystemTimeFreqSeconds = 60;
+				monitorSshTunnelStatusFreqSeconds = 10;
 				break;
 		}
 	}
@@ -134,6 +137,10 @@ public final class Configuration {
 
 	public static int getSpeedCalculationFreqMinutes() {
 		return speedCalculationFreqMinutes;
+	}
+
+	public static int getMonitorSshTunnelStatusFreqSeconds() {
+		return monitorSshTunnelStatusFreqSeconds;
 	}
 
 	public static int getMonitorContainersStatusFreqSeconds() {
