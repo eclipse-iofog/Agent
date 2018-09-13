@@ -91,11 +91,11 @@ public class SshConnection {
 	 *
 	 * @return boolean
 	 */
-	public boolean isConnected() {
+	public synchronized boolean isConnected() {
 		return this.session != null && session.isConnected();
 	}
 
-	public boolean isCloseFlag() {
+	public synchronized boolean isCloseFlag() {
 		return closeFlag;
 	}
 

@@ -15,6 +15,7 @@ package org.eclipse.iofog.proxy;
 
 import com.jcraft.jsch.JSchException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Unit;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -24,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 import static org.eclipse.iofog.utils.functional.Unit.UNIT;
+import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 
 /**
  * SSH Proxy Manager Module
@@ -42,24 +44,38 @@ public class SshProxyManager {
 
     /**
      * starts or stops ssh tunnel according to current config
-     * @param configs json object with proxy configs
+     * @param config json object with proxy configs
      * @return completable future of type void
      */
-    public CompletableFuture<Unit> update(JsonObject configs) {
+    public CompletableFuture<Unit> update(JsonObject config) {
         CompletableFuture<Unit> completableFuture = CompletableFuture.completedFuture(UNIT);
-        setSshConnection(configs);
-        if (connection.isConnected() && connection.isCloseFlag()) {
-            close();
-        } else if (!connection.isConnected() && !connection.isCloseFlag()){
-            completableFuture = open();
-        } else if (connection.isConnected() && !connection.isCloseFlag()) {
-            handleUnexpectedTunnelState("The tunnel is already opened. Please close it first.", OPEN);
+        if (config != null) {
+            setSshConnection(config);
+            completableFuture = processValidConfig();
         } else {
-            handleUnexpectedTunnelState("The tunnel is already closed", CLOSED);
+            handleUnexpectedTunnelState("Received invalid proxy config", FAILED);
         }
+
         return completableFuture;
     }
 
+    private CompletableFuture<Unit> processValidConfig() {
+        CompletableFuture<Unit> completableFuture = CompletableFuture.completedFuture(UNIT);
+        if (connection.isConnected()) {
+            if (connection.isCloseFlag()) {
+                close();
+            } else {
+                handleUnexpectedTunnelState("The tunnel is already opened. Please close it first.", OPEN);
+            }
+        } else {
+            if (connection.isCloseFlag()) {
+                handleUnexpectedTunnelState("The tunnel is already closed", CLOSED);
+            } else {
+                completableFuture = open();
+            }
+        }
+        return completableFuture;
+    }
 
     /**
      * handles unexpected situations like tunnel is already opened or closed
@@ -110,7 +126,8 @@ public class SshProxyManager {
 
     private void onSuccess() {
         setSshProxyManagerStatus(OPEN, EMPTY);
-        LoggingService.logInfo(MODULE_NAME, "opened ssh tunnel");
+        logInfo(MODULE_NAME, "opened ssh tunnel");
+        CompletableFuture.runAsync(monitorSshTunnel());
     }
 
     private void onError(Throwable ex) {
@@ -119,13 +136,29 @@ public class SshProxyManager {
         setSshProxyManagerStatus(FAILED, errMsg);
     }
 
+    private Runnable monitorSshTunnel() {
+        return () -> {
+            while(connection.isConnected()) {
+                logInfo(MODULE_NAME, "ssh tunnel heartbeat message");
+                try {
+                    Thread.sleep(Configuration.getMonitorSshTunnelStatusFreqSeconds() * 1000);
+                } catch (InterruptedException e) {
+                    logInfo(MODULE_NAME, "Error while sleeping thread : " + e.getMessage());
+                }
+            }
+            if (!connection.isCloseFlag()) {
+                setSshProxyManagerStatus(CLOSED, EMPTY);
+            }
+        };
+    }
+
     /**
      * closes ssh tunnel
      */
     private void close() {
         connection.getSession().disconnect();
         setSshProxyManagerStatus(CLOSED, EMPTY);
-        LoggingService.logInfo(MODULE_NAME, "closed ssh tunnel");
+        logInfo(MODULE_NAME, "closed ssh tunnel");
     }
 
     /**
