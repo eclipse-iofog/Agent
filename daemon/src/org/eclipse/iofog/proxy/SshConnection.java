@@ -43,7 +43,7 @@ public class SshConnection {
 	/**
 	 * opens reverse proxy on specified host
 	 */
-	public Supplier<Void> openSshTunnel() {
+	public synchronized Supplier<Void> openSshTunnel() {
 		return () -> {
 			try {
 				session = jschSSHChannel.getSession(username, host, localPort);
@@ -69,7 +69,7 @@ public class SshConnection {
 	 * @param rsaKey server rsa key
 	 * @param closeFlag flag indicating if connection should be closed or opened
 	 */
-	public void setProxyInfo(String username, String password, String host, int rport, int lport, String rsaKey, boolean closeFlag) {
+	public synchronized void setProxyInfo(String username, String password, String host, int rport, int lport, String rsaKey, boolean closeFlag) {
 		this.username = username;
 		this.password = password;
 		this.host = host;
