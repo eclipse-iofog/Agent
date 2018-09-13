@@ -539,6 +539,7 @@ public final class Configuration {
 				case DEV_MODE:
 					setNode(DEV_MODE, value);
 					setDeveloperMode(!value.equals("off"));
+					break;
 				default:
 					throw new ConfigurationItemException("Invalid parameter -" + option);
 			}
