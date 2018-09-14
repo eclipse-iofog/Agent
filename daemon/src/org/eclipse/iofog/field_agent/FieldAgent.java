@@ -583,11 +583,11 @@ public class FieldAgent implements IOFogModule {
 			JsonArray portMappingObjs = jsonObj.getJsonArray("portmappings");
 			List<PortMapping> pms = portMappingObjs.size() > 0
 					? IntStream.range(0, portMappingObjs.size())
-						.boxed()
-						.map(portMappingObjs::getJsonObject)
-						.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
-								portMapping.getString("insidecontainer")))
-						.collect(toList())
+					.boxed()
+					.map(portMappingObjs::getJsonObject)
+					.map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
+							portMapping.getString("insidecontainer")))
+					.collect(toList())
 					: null;
 
 			element.setPortMappings(pms);
@@ -598,12 +598,12 @@ public class FieldAgent implements IOFogModule {
 			JsonArray volumeMappingObj = object.getJsonArray("volumemappings");
 			List<VolumeMapping> vms = volumeMappingObj.size() > 0
 					? IntStream.range(0, volumeMappingObj.size())
-						.boxed()
-						.map(volumeMappingObj::getJsonObject)
-						.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
-								volumeMapping.getString("containerdestination"),
-								volumeMapping.getString("accessmode")))
-						.collect(toList())
+					.boxed()
+					.map(volumeMappingObj::getJsonObject)
+					.map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostdestination"),
+							volumeMapping.getString("containerdestination"),
+							volumeMapping.getString("accessmode")))
+					.collect(toList())
 					: null;
 
 			element.setVolumeMappings(vms);

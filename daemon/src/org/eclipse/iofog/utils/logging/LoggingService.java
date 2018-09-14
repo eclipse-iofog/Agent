@@ -120,7 +120,7 @@ public final class LoggingService {
 
 		UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
 		final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName("iofog");
-		if (SystemUtils.IS_OS_LINUX) {
+		if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
 			PosixFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
 					LinkOption.NOFOLLOW_LINKS);
 			fileAttributeView.setGroup(group);

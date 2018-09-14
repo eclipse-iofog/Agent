@@ -33,10 +33,12 @@ public class IOFogNetworkInterface {
     private static final String MODULE_NAME = "IOFogNetworkInterface";
 
     private static final String NETWORK_BASH_COMMAND = "route | grep '^default' | grep -o '[^ ]*$'";
-    private static final String NETWORK_POWERSHELL_COMMAND = "Get-NetAdapter -physical | where status -eq 'up' | select -ExpandProperty Name";
 
+    private static final String NETWORK_POWERSHELL_COMMAND = "Get-NetAdapter -physical | where status -eq 'up' | select -ExpandProperty Name";
     private static final String POWERSHELL_GET_IP_BY_INTERFACE_NAME = "Get-NetIPConfiguration | select IPv4Address, InterfaceAlias | where InterfaceAlias -eq '%s' | select -ExpandProperty IPv4Address | select -ExpandProperty IPAddress";
     private static final String POWERSHELL_GET_ACTIVE_IP = "(Get-WmiObject -Class Win32_NetworkAdapterConfiguration | where {$_.DefaultIPGateway -ne $null}).IPAddress | select-object -first 1";
+
+    private static final String NETWORK_MACOS_COMMAND = "netstat -rn | grep '^default' | grep -o '[^ ]*$'";
 
     /**
      * returns IPv4 host address of IOFog network interface
@@ -107,8 +109,16 @@ public class IOFogNetworkInterface {
 
 
     private static String getOSNetworkInterface() {
-        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(SystemUtils.IS_OS_WINDOWS ?
-                NETWORK_POWERSHELL_COMMAND : NETWORK_BASH_COMMAND);
+        String command = NETWORK_BASH_COMMAND;
+        if (SystemUtils.IS_OS_WINDOWS) {
+            command = NETWORK_POWERSHELL_COMMAND;
+        } else if (SystemUtils.IS_OS_LINUX) {
+            command = NETWORK_BASH_COMMAND;
+        } else if (SystemUtils.IS_OS_MAC) {
+            command = NETWORK_MACOS_COMMAND;
+        }
+
+        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(command);
         return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
                 "enp0s25" :
                 interfaces.getValue().get(0);

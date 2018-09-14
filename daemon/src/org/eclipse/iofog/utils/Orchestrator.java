@@ -37,12 +37,14 @@ import javax.net.ssl.TrustManager;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.NoContentException;
 import java.io.*;
-import java.net.*;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
@@ -112,12 +114,16 @@ public class Orchestrator {
 	 * 
 	 * @throws Exception
 	 */
-	private void initialize() throws Exception {
-		TrustManager[] trustManager = new TrustManager[] {new X509TrustManagerImpl(controllerCert)};
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-		sslContext.init(null, trustManager, new SecureRandom());
-		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-	    client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+	private void initialize(boolean secure) throws Exception {
+	    if (secure) {
+            TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManager, new SecureRandom());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
+            client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        } else {
+	        client = HttpClients.createDefault();
+        }
 	}
 	
 	/**
@@ -145,9 +151,15 @@ public class Orchestrator {
 	 * @throws Exception
 	 */
 	private JsonObject getJSON(String surl) throws Exception {
-		if (!surl.toLowerCase().startsWith("https"))
-			throw new UnknownHostException("unable to connect over non-secure connection");
-		initialize();
+		// disable certificates for dev mode
+		boolean secure = true;
+		if(!surl.toLowerCase().startsWith("https")){
+			if(!Configuration.isDeveloperMode())
+				throw new UnknownHostException("unable to connect over non-secure connection");
+			else
+				secure = false;
+		}
+		initialize(secure);
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(surl);
 		post.setConfig(config);
@@ -173,13 +185,13 @@ public class Orchestrator {
 	}
 
 	/**
-	 * calls IOFog Controller endpoind and returns Json result
+	 * calls IOFog Controller endpoint and returns Json result
 	 * 
 	 * @param command - endpoint to be called
 	 * @param queryParams - query string parameters
 	 * @param postParams - post parameters
 	 * @return result in Json format
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
 		List<NameValuePair> postData = new ArrayList<>();
@@ -189,26 +201,57 @@ public class Orchestrator {
 				postData.add(new BasicNameValuePair(key, value));
 			});
 
-		return getJsonObject(command, queryParams, new UrlEncodedFormEntity(postData));
+		return getJsonObject(queryParams, new UrlEncodedFormEntity(postData), createUri(command));
 	}
 
-	private JsonObject getJsonObject(String command, Map<String, Object> queryParams, HttpEntity httpEntity) throws Exception {
-		if (!controllerUrl.toLowerCase().startsWith("https"))
-			throw new Exception("unable to connect over non-secure connection");
-		JsonObject result;
+	/**
+	 * calls IOFog Controller endpoint, setups Oro Network customer node and returns Json result
+	 *
+	 * @param command - endpoint to be called
+	 * @param queryParams - query string parameters
+	 * @param postParams - post parameters
+	 * @return result in Json format
+	 * @throws Exception exception
+	 */
+	public JsonObject setupCustomer(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
+		List<NameValuePair> postData = new ArrayList<>();
+		if (postParams != null)
+			postParams.forEach((key, value1) -> {
+				String value = value1 == null ? "" : value1.toString();
+				postData.add(new BasicNameValuePair(key, value));
+			});
 
 		StringBuilder uri = new StringBuilder(controllerUrl);
+		uri.append(command);
 
+		return getJsonObject(queryParams, new UrlEncodedFormEntity(postData), uri);
+	}
+
+	private StringBuilder createUri(String command) {
+		StringBuilder uri = new StringBuilder(controllerUrl);
 		uri.append("instance/")
-			.append(command)
-			.append("/id/").append(instanceId)
-			.append("/token/").append(accessToken);
+				.append(command)
+				.append("/id/").append(instanceId)
+				.append("/token/").append(accessToken);
+		return uri;
+	}
+
+	private JsonObject getJsonObject(Map<String, Object> queryParams, HttpEntity httpEntity, StringBuilder uri) throws Exception {
+		// disable certificates for dev mode
+		boolean secure = true;
+		if(!controllerUrl.toLowerCase().startsWith("https")){
+			if(!Configuration.isDeveloperMode())
+				throw new UnknownHostException("unable to connect over non-secure connection");
+			else
+				secure = false;
+		}
+		JsonObject result;
 
 		if (queryParams != null)
 			queryParams.forEach((key, value) -> uri.append("/").append(key)
 					.append("/").append(value));
 
-		initialize();
+		initialize(secure);
 		RequestConfig config = getRequestConfig();
 		HttpPost post = new HttpPost(uri.toString());
 		post.setConfig(config);
@@ -249,7 +292,8 @@ public class Orchestrator {
 				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
 
 		HttpEntity entity = builder.build();
-		return getJsonObject(command, null, entity);
+
+		return getJsonObject(null, entity, createUri(command));
 	}
 
 	/**
@@ -260,13 +304,20 @@ public class Orchestrator {
 		instanceId = Configuration.getInstanceId();
 		accessToken = Configuration.getAccessToken();
 		controllerUrl = Configuration.getControllerUrl();
-		try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
-			controllerCert = getCert(fileInputStream);
-		} catch (IOException e) {
+		// disable certificates for dev mode
+		boolean secure = true;
+		if (controllerUrl.toLowerCase().startsWith("https")) {
+            try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {
+                controllerCert = getCert(fileInputStream);
+            } catch (IOException e) {
+                controllerCert = null;
+            }
+        } else {
 			controllerCert = null;
+			secure = false;
 		}
 		try {
-			initialize();
+			initialize(secure);
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 		}
