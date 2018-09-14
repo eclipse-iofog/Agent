@@ -13,30 +13,17 @@
 
 package org.eclipse.iofog.command_line;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.field_agent.FieldAgent;
-import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.stream.JsonParsingException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.CONTROLLER_CERT;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.existParam;
@@ -49,8 +36,8 @@ import static org.eclipse.iofog.utils.configuration.Configuration.*;
 /**
  * Command Line Action Enum
  *
- * @author ilaryionava
  * @since 1/24/18.
+ * @author ilaryionava
  */
 public enum CommandLineAction {
 
@@ -161,7 +148,7 @@ public enum CommandLineAction {
 			} else {
 				result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errormessage"));
 			}
-			return format(getProvisionMessage(), result);
+			return format(getProvisionMessage(), provisionKey, result);
 		}
 	},
 	CONFIG_ACTION {
@@ -217,12 +204,12 @@ public enum CommandLineAction {
 				HashMap<String, String> errorMap = setConfig(config, false);
 
 				for (Map.Entry<String, String> e : errorMap.entrySet())
-					result.append("\\n\tError : ").append(e.getValue());
+					result.append("\\n\tError : " + e.getValue());
 
-				for (Map.Entry<String, Object> e : config.entrySet()) {
-					if (!errorMap.containsKey(e.getKey())) {
+				for (Map.Entry<String, Object> e : config.entrySet()){
+					if(!errorMap.containsKey(e.getKey())){
 						String newValue = e.getValue().toString();
-						if (e.getValue().toString().startsWith("+")) newValue = e.getValue().toString().substring(1);
+						if(e.getValue().toString().startsWith("+")) newValue = e.getValue().toString().substring(1);
 						result.append("\\n\tChange accepted for Parameter : - ")
 								.append(e.getKey())
 								.append(", Old value was :")
@@ -232,155 +219,27 @@ public enum CommandLineAction {
 				}
 			} catch (Exception e) {
 				LoggingService.logWarning(MODULE_NAME, "error updating new config.");
-				result.append("error updating new config : ").append(e.getMessage());
+				result.append("error updating new config : " + e.getMessage());
 			}
 
 			return result.toString();
 		}
-	},
-	LOGIN {
-		@Override
-		public List<String> getKeys() {
-			return singletonList("login");
-		}
-
-		@Override
-		public String perform(String[] args) {
-            List<String> argsList = Arrays.asList(args);
-            List<String> argsSubList = argsList.subList(argsList.indexOf("login"), argsList.size());
-
-            Map<String, String> argsMap = IntStream.range(1, argsSubList.size())
-                    .boxed()
-                    .collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
-
-            String result;
-            if (argsMap.containsKey("-u") && argsMap.containsKey("-p")) {
-                String username = argsMap.get("-u");
-                String password = argsMap.get("-p");
-                HttpPost post = createLoginPostRequest(username, password);
-                result = executeLoginPostRequest(post);
-            } else {
-                result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errormessage"));
-            }
-            return format(getProvisionMessage(), provisionKey, result);
-        }
-    },
-    CONFIG_ACTION {
-        @Override
-        public List<String> getKeys() {
-            return singletonList("config");
-        }
-
-        @Override
-        public String perform(String[] args) {
-            if (args.length == 1) {
-                return showHelp();
-            }
-            return result;
-		}
-	},
-	CUSTOMER {
-		@Override
-		public List<String> getKeys() {
-			return singletonList("customer");
-		}
-
-		@Override
-		public String perform(String[] args) {
-			List<String> argsList = Arrays.asList(args);
-			List<String> argsSubList = argsList.subList(argsList.indexOf("customer"), argsList.size());
-
-			Map<String, String> argsMap = IntStream.range(1, argsSubList.size())
-					.boxed()
-					.collect(toMap(i -> argsSubList.get(i - 1), argsSubList::get));
-
-			String result;
-			if (argsMap.containsKey("-c") && argsMap.containsKey("-m") && argsMap.containsKey("-p")) {
-				String customerId = argsMap.get("-c");
-				String macAddress = argsMap.get("-m");
-				String wifiPath = argsMap.get("-p");
-				int fogType = Configuration.getFogType().getCode();
-				Optional<JsonObject> jsonObjectOptional = FieldAgent.getInstance().setupCustomer(customerId, macAddress, wifiPath, fogType);
-				StringBuilder builder = new StringBuilder();
-				if (jsonObjectOptional.isPresent()) {
-					JsonObject jsonObject = jsonObjectOptional.get();
-					JsonObject tokenData = jsonObject.getJsonObject("tokenData");
-					String token = tokenData.getString("token");
-					String iofogUUID = tokenData.getString("iofog_uuid");
-					builder.append("token: ")
-							.append(token)
-							.append("\\n")
-							.append("iofog_uuid: ")
-							.append(iofogUUID);
-				} else {
-					builder.append("There was an issue retrieving token and iofog uuid.");
-				}
-				result = builder.toString();
-			} else {
-				result = showHelp();
-			}
-			return result;
-		}
 	};
-
-	private static HttpPost createLoginPostRequest(String username, String password) {
-		String payload = "{" +
-				"\"username\": \"" + username + "\", " +
-				"\"password\": \"" + password + "\"" +
-				"}";
-		StringEntity entity = new StringEntity(payload, ContentType.APPLICATION_JSON);
-		String uri = "https://cloud.oronetworks.com/api/Login";
-		HttpPost post = new HttpPost(uri);
-		post.setHeader("Content-type", "application/json");
-		post.setHeader("Accept", "application/json");
-		post.setEntity(entity);
-		return post;
-	}
-
-	private static String executeLoginPostRequest(HttpPost post) {
-		CloseableHttpClient client = HttpClients.createDefault();
-		JsonObject result;
-		StringBuilder builder = new StringBuilder();
-		try (CloseableHttpResponse response = client.execute(post);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-			 JsonReader jsonReader = Json.createReader(in)) {
-
-			if (response.getStatusLine().getStatusCode() == OK) {
-				result = jsonReader.readObject();
-				String customerId = result.getString("customerId");
-				String token = result.getString("token");
-				builder.append("customerId: ")
-						.append(customerId)
-						.append("\\n")
-						.append("token: ")
-						.append(token);
-			} else if (response.getStatusLine().getStatusCode() == UNAUTHORIZED) {
-				builder.append("Provided credentials aren't valid");
-			} else {
-				builder.append("There was an issue retrieving customer information.\\n")
-						.append("Make sure uri https://cloud.oronetworks.com/api/Login is accessible");
-			}
-		} catch (IOException | JsonParsingException ex) {
-			builder.append(ex.getMessage());
-		}
-		return builder.toString();
-	}
 
 	public abstract List<String> getKeys();
 
 	public abstract String perform(String[] args);
 
 	public static CommandLineAction getActionByKey(String cmdKey) {
-		for (CommandLineAction action : values()) {
-			if (action.getKeys().contains(cmdKey)) {
+		for (CommandLineAction action:
+				CommandLineAction.values()) {
+			if(action.getKeys().contains(cmdKey)) {
 				return action;
 			}
 		}
 		return HELP_ACTION;
 	}
 
-	private static final int OK = 200;
-	private static final int UNAUTHORIZED = 401;
 	private static final String CMD_CONFIG_DEFAULTS = "defaults";
 	public static final String MODULE_NAME = "Command Line Parser";
 
@@ -410,8 +269,6 @@ public enum CommandLineAction {
 				"info                                     Display the current configuration\\n" +
 				"                                         and other information about the\\n" +
 				"                                         software\\n" +
-				"login            -u <username>           Login to Oro Networks application\\n" +
-				"                 -p <password>           \\n" +
 				"config           [Parameter] [VALUE]     Change the software configuration\\n" +
 				"                                         according to the options provided\\n" +
 				"                 defaults                Reset configuration to default values\\n" +
@@ -455,8 +312,8 @@ public enum CommandLineAction {
 				"                 -ft <auto               Set fog type.\\n" +
 				"                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
 				"                                         use arm or intel_amd to set it manually\\n" +
-                "                 -dev <on/off>           Set the developer's mode without using ssl \\n" +
-                "                                         certificates. \\n" +
+				"                 -dev <on/off>           Set the developer's mode without using ssl \\n" +
+				"                                         certificates. \\n" +
 				"\\n" +
 				"\\n" +
 				"Report bugs to: edgemaster@iofog.org\\n" +
