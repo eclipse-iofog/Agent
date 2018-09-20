@@ -944,10 +944,10 @@ public class FieldAgent implements IOFogModule {
 			provisioningResult = buildProvisionFailResponse("Certificate error", e);
 		} catch (ConnectException e) {
 			StatusReporter.setFieldAgentStatus().setControllerVerified(true);
-			provisioningResult = buildProvisionFailResponse("SshConnection error: invalid network interface.", e);
+			provisioningResult = buildProvisionFailResponse("Connection error: invalid network interface.", e);
 		} catch (UnknownHostException e) {
 			StatusReporter.setFieldAgentStatus().setControllerVerified(false);
-			provisioningResult = buildProvisionFailResponse("SshConnection error: unable to connect to fog controller.", e);
+			provisioningResult = buildProvisionFailResponse("Connection error: unable to connect to fog controller.", e);
 		} catch (Exception e) {
 			provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
 		}
