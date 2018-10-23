@@ -68,7 +68,7 @@ public final class LoggingService {
 	 * @param msg - message
 	 */
 	public static void logWarning(String moduleName, String msg) {
-		if (Configuration.debugging) {
+		if (Configuration.debugging || logger == null) {
 			System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
 		} else {
 			logger.log(Level.WARNING, String.format("[%s] : %s", moduleName, msg));
