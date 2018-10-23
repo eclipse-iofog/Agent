@@ -608,10 +608,6 @@ public final class Configuration {
 			currentMode = GpsMode.MANUAL;
 		}
 
-		if (gpsCoordinates == null) {
-			throw new ConfigurationItemException("Can't perform " + gpsCoordinatesCommand + " action for gps config");
-		}
-
 		setGpsDataIfValid(currentMode, gpsCoordinates);
 	}
 
