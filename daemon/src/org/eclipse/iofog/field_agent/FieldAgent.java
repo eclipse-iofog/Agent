@@ -775,7 +775,7 @@ public class FieldAgent implements IOFogModule {
             if (Configuration.getScanDevicesFreq() != scanDevicesFreq)
                 instanceConfig.put(SCAN_DEVICES_FREQ.getCommandName(), scanDevicesFreq);
 
-            if (Configuration.isIsolatedDockerContainers() != watchdogEnabled)
+            if (Configuration.isWatchdogEnabled() != watchdogEnabled)
                 instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabledValue);
 
             if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
@@ -815,7 +815,7 @@ public class FieldAgent implements IOFogModule {
                 .add(STATUS_UPDATE_FREQ.getJsonProperty(), Configuration.getStatusUpdateFreq())
                 .add(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq())
                 .add(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq())
-                .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isIsolatedDockerContainers() ? "on" : "off")
+                .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isWatchdogEnabled() ? "on" : "off")
                 .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase())
                 .add(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates())
                 .build();

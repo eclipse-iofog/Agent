@@ -149,7 +149,7 @@ public class ProcessManager implements IOFogModule {
 
 	private void removeInappropriateContainers(Set<String> toRemoveWithCleanUpMicroserviceUuids) {
 		docker.getContainers().forEach(container -> {
-			// remove old containers and unknown for ioFog containers when IsolatedDockerContainers mode is ON
+			// remove old containers and unknown for ioFog containers when watchdogEnabled mode is ON
 			// remove only old containers when the mode is OFF
 			if (shouldContainerBeRemoved(container, toRemoveWithCleanUpMicroserviceUuids)) {
 				addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
@@ -164,7 +164,7 @@ public class ProcessManager implements IOFogModule {
 		boolean areNotInCleanUpMicroservices = !toRemoveWithCleanUpMicroserviceUuids.contains(microserviceUuid);
 		boolean exists = microserviceManager.microserviceExists(microserviceManager.getCurrentMicroservices(), microserviceUuid);
 
-		return (isNotPresent && areNotInCleanUpMicroservices) && (Configuration.isIsolatedDockerContainers() || exists);
+		return (isNotPresent && areNotInCleanUpMicroservices) && (Configuration.isWatchdogEnabled() || exists);
 	}
 
 	/**
