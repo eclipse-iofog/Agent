@@ -12,37 +12,49 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
+import sun.security.krb5.Config;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.naming.AuthenticationException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.NoContentException;
 import java.io.*;
+import java.net.Authenticator;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +62,7 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * provides methods for IOFog controller
- * 
+ *
  * @author saeid
  *
  */
@@ -63,14 +75,14 @@ public class Orchestrator {
 	private CloseableHttpClient client;
 
 	private static final String MODULE_NAME = "Orchestrator";
-	
+
 	public Orchestrator() {
 		this.update();
 	}
 
 	/**
 	 * ping IOFog controller
-	 * 
+	 *
 	 * @return ping result
 	 * @throws Exception
 	 */
@@ -81,12 +93,12 @@ public class Orchestrator {
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
-		} 
+		}
 	}
 
 	/**
 	 * does provisioning
-	 * 
+	 *
 	 * @param key - provisioning key
 	 * @return result in Json format
 	 * @throws Exception
@@ -94,41 +106,46 @@ public class Orchestrator {
 	public JsonObject provision(String key) throws Exception {
 		JsonObject result;
 		try {
-			result = getJSON(controllerUrl + "instance/provision/key/" + key + "/fogtype/" + Configuration.getFogType().getCode());
+			JsonObject json = Json.createObjectBuilder()
+					.add("key", key)
+					.add("type", Configuration.getFogType().getCode())
+					.build();
+
+			result = request("provision", RequestType.POST, null, json);//getJSON(controllerUrl + "iofog/agent/provision/" + key + "/fogtype/" + Configuration.getFogType().getCode());
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
-		} 
+		}
 		return result;
 	}
-	
+
 	private RequestConfig getRequestConfig() throws Exception {
 		return RequestConfig.copy(RequestConfig.DEFAULT)
 				.setLocalAddress(IOFogNetworkInterface.getInetAddress())
 				.setConnectTimeout(CONNECTION_TIMEOUT)
 				.build();
 	}
-	
+
 	/**
 	 * initialize {@link TrustManager}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	private void initialize(boolean secure) throws Exception {
-	    if (secure) {
-            TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustManager, new SecureRandom());
-            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-            client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-        } else {
-	        client = HttpClients.createDefault();
-        }
+		if (secure) {
+			TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
+			SSLContext sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(null, trustManager, new SecureRandom());
+			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+			client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+		} else {
+			client = HttpClients.createDefault();
+		}
 	}
-	
+
 	/**
 	 * converts {@link InputStream} to {@link Certificate}
-	 * 
+	 *
 	 * @param is - {@link InputStream}
 	 * @return {@link Certificate}
 	 */
@@ -142,10 +159,10 @@ public class Orchestrator {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * gets Json result of a IOFog Controller endpoint
-	 * 
+	 *
 	 * @param surl - endpoind to be called
 	 * @return result in Json format
 	 * @throws Exception
@@ -161,12 +178,13 @@ public class Orchestrator {
 		}
 		initialize(secure);
 		RequestConfig config = getRequestConfig();
-		HttpPost post = new HttpPost(surl);
-		post.setConfig(config);
+		HttpGet get = new HttpGet(surl);
+		//HttpPost post = new HttpPost(surl);
+		get.setConfig(config);
 
 		JsonObject result;
-		
-		try (CloseableHttpResponse response = client.execute(post)) {
+
+		try (CloseableHttpResponse response = client.execute(get)) {
 
 			if (response.getStatusLine().getStatusCode() != 200) {
 				if (response.getStatusLine().getStatusCode() == 404)
@@ -184,59 +202,25 @@ public class Orchestrator {
 		return result;
 	}
 
-	/**
-	 * calls IOFog Controller endpoint and returns Json result
-	 * 
-	 * @param command - endpoint to be called
-	 * @param queryParams - query string parameters
-	 * @param postParams - post parameters
-	 * @return result in Json format
-	 * @throws Exception exception
-	 */
-	public JsonObject doCommand(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
-		List<NameValuePair> postData = new ArrayList<>();
-		if (postParams != null)
-			postParams.forEach((key, value1) -> {
-				String value = value1 == null ? "" : value1.toString();
-				postData.add(new BasicNameValuePair(key, value));
-			});
+	public JsonObject request(String command, RequestType requestType, Map<String, Object> queryParams, JsonObject json) throws Exception {
+		if (json == null) {
+			json = Json.createObjectBuilder().build();
+		}
 
-		return getJsonObject(queryParams, new UrlEncodedFormEntity(postData), createUri(command));
-	}
-
-	/**
-	 * calls IOFog Controller endpoint, setups Oro Network customer node and returns Json result
-	 *
-	 * @param command - endpoint to be called
-	 * @param queryParams - query string parameters
-	 * @param postParams - post parameters
-	 * @return result in Json format
-	 * @throws Exception exception
-	 */
-	public JsonObject setupCustomer(String command, Map<String, Object> queryParams, Map<String, Object> postParams) throws Exception {
-		List<NameValuePair> postData = new ArrayList<>();
-		if (postParams != null)
-			postParams.forEach((key, value1) -> {
-				String value = value1 == null ? "" : value1.toString();
-				postData.add(new BasicNameValuePair(key, value));
-			});
-
-		StringBuilder uri = new StringBuilder(controllerUrl);
-		uri.append(command);
-
-		return getJsonObject(queryParams, new UrlEncodedFormEntity(postData), uri);
+		return getJsonObject(queryParams, requestType, new StringEntity(json.toString(), ContentType.APPLICATION_JSON), createUri(command));
 	}
 
 	private StringBuilder createUri(String command) {
 		StringBuilder uri = new StringBuilder(controllerUrl);
-		uri.append("instance/")
-				.append(command)
-				.append("/id/").append(instanceId)
-				.append("/token/").append(accessToken);
+		uri.append("agent/")
+				.append(command);
+//				.append("/id/").append(instanceId)
+//				.append("/token/").append(accessToken);
 		return uri;
 	}
 
-	private JsonObject getJsonObject(Map<String, Object> queryParams, HttpEntity httpEntity, StringBuilder uri) throws Exception {
+
+	private JsonObject getJsonObject(Map<String, Object> queryParams, RequestType requestType, HttpEntity httpEntity, StringBuilder uri) throws Exception {
 		// disable certificates for dev mode
 		boolean secure = true;
 		if(!controllerUrl.toLowerCase().startsWith("https")){
@@ -252,20 +236,61 @@ public class Orchestrator {
 					.append("/").append(value));
 
 		initialize(secure);
+        HttpRequestBase req = null;
+
+
 		RequestConfig config = getRequestConfig();
-		HttpPost post = new HttpPost(uri.toString());
-		post.setConfig(config);
-		post.setEntity(httpEntity);
 
-		try (CloseableHttpResponse response = client.execute(post);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-			 JsonReader jsonReader = Json.createReader(in)) {
+		switch(requestType) {
+            case GET:
+                req = new HttpGet(uri.toString());
+                break;
+            case POST:
+                req = new HttpPost(uri.toString());
+                ((HttpPost) req).setEntity(httpEntity);
+                break;
+            case PUT:
+                req = new HttpPut(uri.toString());
+                ((HttpPut) req).setEntity(httpEntity);
+                break;
+            case PATCH:
+                req = new HttpPatch(uri.toString());
+                ((HttpPatch) req).setEntity(httpEntity);
+                break;
+            case DELETE:
+                req = new HttpDelete(uri.toString());
+        //        ((HttpDelete) req).setEntity(httpEntity);
+                break;
+            default:
+                req = new HttpGet(uri.toString());
+                break;
+        }
 
-			if (response.getStatusLine().getStatusCode() == 403) {
-				throw new ForbiddenException();
-			} else if (response.getStatusLine().getStatusCode() == 204) {
-				throw new NoContentException("");
+		req.setConfig(config);
+
+		String token = Configuration.getAccessToken();
+		if (!StringUtils.isEmpty(token)) {
+			req.addHeader(new BasicHeader("Authorization", token));
+		}
+
+		try (CloseableHttpResponse response = client.execute(req)) {
+			switch (response.getStatusLine().getStatusCode()) {
+				case 204:
+					return Json.createObjectBuilder().build();
+				case 400:
+					throw new BadRequestException();
+				case 401:
+					throw new AuthenticationException();
+				case 403:
+					throw new ForbiddenException();
+				case 404:
+					throw new NotFoundException();
+				case 500:
+					throw new InternalServerErrorException();
 			}
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+			JsonReader jsonReader = Json.createReader(in);
 
 			result = jsonReader.readObject();
 		} catch (UnsupportedEncodingException exp) {
@@ -284,16 +309,15 @@ public class Orchestrator {
 	 * @return result in Json format
 	 * @throws Exception
 	 */
-	public JsonObject sendFileToController(String command, File file) throws Exception {
+	public void sendFileToController(String command, File file) throws Exception {
 		InputStream inputStream = new FileInputStream(file);
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-		builder.addBinaryBody
-				("upstream", inputStream, ContentType.create("application/zip"), file.getName());
+		builder.addBinaryBody("upstream", inputStream, ContentType.create("application/zip"), file.getName());
 
 		HttpEntity entity = builder.build();
 
-		return getJsonObject(null, entity, createUri(command));
+		getJsonObject(null, RequestType.POST, entity, createUri(command));
 	}
 
 	/**

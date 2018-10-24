@@ -28,7 +28,7 @@ public class StraceDiagnosticManger {
 
 	private static final String MODULE_NAME = "STrace Diagnostic Manager";
 
-	private final List<ElementStraceData> monitoringElements;
+	private final List<MicroserviceStraceData> monitoringMicroservices;
 	private static StraceDiagnosticManger instance = null;
 
 	public static StraceDiagnosticManger getInstance() {
@@ -42,63 +42,63 @@ public class StraceDiagnosticManger {
 	}
 
 	private StraceDiagnosticManger() {
-		this.monitoringElements = new CopyOnWriteArrayList<>();
+		this.monitoringMicroservices = new CopyOnWriteArrayList<>();
 	}
 
-	public List<ElementStraceData> getMonitoringElements() {
-		return monitoringElements;
+	public List<MicroserviceStraceData> getMonitoringMicroservices() {
+		return monitoringMicroservices;
 	}
 
-	public void updateMonitoringElements(JsonObject diagnosticData) {
-		LoggingService.logInfo(MODULE_NAME, "trying to update strace monitoring elements");
+	public void updateMonitoringMicroservices(JsonObject diagnosticData) {
+		LoggingService.logInfo(MODULE_NAME, "trying to update strace monitoring microservices");
 
 		if (diagnosticData.containsKey("straceValues")) {
-			JsonArray straceElementChanges = diagnosticData.getJsonArray("straceValues");
-			for (JsonValue elementValue : straceElementChanges) {
-				JsonObject element = (JsonObject) elementValue;
-				if (element.containsKey("elementId")) {
-					String elementId = element.getString("elementId");
-					boolean strace = element.getInt("straceRun", 0) != 0;
-					manageElement(elementId, strace);
+			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
+			for (JsonValue microserviceValue : straceMicroserviceChanges) {
+				JsonObject microservice = (JsonObject) microserviceValue;
+				if (microservice.containsKey("microserviceId")) {
+					String microserviceUuid = microservice.getString("microserviceId");
+					boolean strace = microservice.getInt("straceRun", 0) != 0;
+					manageMicroservice(microserviceUuid, strace);
 				}
 			}
 		}
 	}
 
-	private void manageElement(String elementId, boolean strace) {
-		Optional<ElementStraceData> elementOptional = getDataByElementId(elementId);
-		if (elementOptional.isPresent() && !strace) {
-			offDiagnosticElement(elementOptional.get());
-		} else if (!elementOptional.isPresent() && strace) {
-			createAndRunDiagnosticElement(elementId);
+	private void manageMicroservice(String microserviceUuid, boolean strace) {
+		Optional<MicroserviceStraceData> microserviceOptional = getDataByMicroserviceUuid(microserviceUuid);
+		if (microserviceOptional.isPresent() && !strace) {
+			offDiagnosticMicroservice(microserviceOptional.get());
+		} else if (!microserviceOptional.isPresent() && strace) {
+			createAndRunDiagnosticMicroservice(microserviceUuid);
 		}
 	}
 
-	private void createAndRunDiagnosticElement(String elementId) {
+	private void createAndRunDiagnosticMicroservice(String microserviceUuid) {
 		try {
-			int pid = getPidByElementId(elementId);
-			ElementStraceData elementStraceData = new ElementStraceData(elementId, pid, true);
-			this.monitoringElements.add(elementStraceData);
+			int pid = getPidByMicroserviceUuid(microserviceUuid);
+			MicroserviceStraceData microserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
+			this.monitoringMicroservices.add(microserviceStraceData);
 
-			runStrace(elementStraceData);
+			runStrace(microserviceStraceData);
 		} catch (IllegalArgumentException e) {
 			logWarning(MODULE_NAME, "Can't get pid of process");
 		}
 	}
 
-	private void offDiagnosticElement(ElementStraceData elementStraceData) {
-		elementStraceData.getStraceRun().set(false);
-		this.monitoringElements.remove(elementStraceData);
+	private void offDiagnosticMicroservice(MicroserviceStraceData microserviceStraceData) {
+		microserviceStraceData.getStraceRun().set(false);
+		this.monitoringMicroservices.remove(microserviceStraceData);
 	}
 
-	public Optional<ElementStraceData> getDataByElementId(String elementId) {
-		return this.monitoringElements.stream()
-				.filter(element -> element.getElementId().equals(elementId))
+	public Optional<MicroserviceStraceData> getDataByMicroserviceUuid(String microserviceUuid) {
+		return this.monitoringMicroservices.stream()
+				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
 				.findFirst();
 	}
 
-	private int getPidByElementId(String elementId) throws IllegalArgumentException {
-		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + elementId);
+	private int getPidByMicroserviceUuid(String microserviceUuid) throws IllegalArgumentException {
+		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + microserviceUuid);
 
 		if (resultSet.getValue() != null && resultSet.getValue().size() > 1 && resultSet.getValue().get(1) != null) {
 			String pid = resultSet.getValue().get(1).split("\\s+")[1];
@@ -108,10 +108,10 @@ public class StraceDiagnosticManger {
 		}
 	}
 
-	private void runStrace(ElementStraceData elementStraceData) {
-		String straceCommand = "strace -p " + elementStraceData.getPid();
-		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, elementStraceData.getResultBuffer());
-		CommandShellExecutor.executeDynamicCommand(straceCommand, resultSet, elementStraceData.getStraceRun());
+	private void runStrace(MicroserviceStraceData microserviceStraceData) {
+		String straceCommand = "strace -p " + microserviceStraceData.getPid();
+		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, microserviceStraceData.getResultBuffer());
+		CommandShellExecutor.executeDynamicCommand(straceCommand, resultSet, microserviceStraceData.getStraceRun());
 	}
 
 }

@@ -35,7 +35,7 @@ public class FieldAgentStatus {
 		return contollerStatus;
 	}
 
-	public void setContollerStatus(Constants.ControllerStatus contollerStatus) {
+	public void setControllerStatus(Constants.ControllerStatus contollerStatus) {
 		this.contollerStatus = contollerStatus;
 	}
 

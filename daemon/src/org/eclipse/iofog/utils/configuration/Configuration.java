@@ -531,8 +531,8 @@ public final class Configuration {
 					setNode(POST_DIAGNOSTICS_FREQ, value);
 					setPostDiagnosticsFreq(Integer.parseInt(value));
 					break;
-				case ISOLATED_DOCKER_CONTAINER:
-					setNode(ISOLATED_DOCKER_CONTAINER, value);
+				case WATCHDOG_ENABLED:
+					setNode(WATCHDOG_ENABLED, value);
 					setIsolatedDockerContainers(!value.equals("off"));
 					break;
 				case GPS_COORDINATES:
@@ -736,7 +736,7 @@ public final class Configuration {
 		setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
 		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
 		setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ)));
-		setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
+		setIsolatedDockerContainers(!getNode(WATCHDOG_ENABLED).equals("off"));
 		configureFogType(getNode(FOG_TYPE));
 		setDeveloperMode(!getNode(DEV_MODE).equals("off"));
 
@@ -920,7 +920,7 @@ public final class Configuration {
 		// post diagnostics frequency
 		result.append(buildReportLine(getConfigParamMessage(POST_DIAGNOSTICS_FREQ), format("%d", postDiagnosticsFreq)));
 		// log file directory
-		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
+		result.append(buildReportLine(getConfigParamMessage(WATCHDOG_ENABLED), (isolatedDockerContainers ? "on" : "off")));
 		// gps mode
 		result.append(buildReportLine(getConfigParamMessage(GPS_MODE), gpsMode.name().toLowerCase()));
 		// gps coordinates

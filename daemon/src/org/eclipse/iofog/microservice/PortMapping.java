@@ -10,10 +10,10 @@
  * Kilton Hopkins
  *  Ashita Nagar
  *******************************************************************************/
-package org.eclipse.iofog.element;
+package org.eclipse.iofog.microservice;
 
 /**
- * represents IOElements port mappings
+ * represents Microservices port mappings
  * 
  * @author saeid
  *

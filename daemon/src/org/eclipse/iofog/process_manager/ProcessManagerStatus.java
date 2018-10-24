@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.element.ElementStatus;
-import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.MicroserviceManager;
+import org.eclipse.iofog.microservice.MicroserviceStatus;
+import org.eclipse.iofog.microservice.Registry;
 import org.eclipse.iofog.utils.Constants.LinkStatus;
 
 import javax.json.Json;
@@ -33,37 +33,37 @@ import java.util.Map;
  *
  */
 public class ProcessManagerStatus {
-	private int runningElementsCount;
-	private final Map<String, ElementStatus> elementsStatus;
+	private int runningMicroservicesCount;
+	private final Map<String, MicroserviceStatus> microservicesStatus;
 	private final Map<String, LinkStatus> registriesStatus;
 
 	public ProcessManagerStatus() {
-		elementsStatus = new HashMap<>();
+		microservicesStatus = new HashMap<>();
 		registriesStatus = new HashMap<>();
-		runningElementsCount = 0;
+		runningMicroservicesCount = 0;
 	}
 	
 	/**
-	 * returns {@link Element} status in json format
+	 * returns {@link Microservice} status in json format
 	 * 
 	 * @return string in json format
 	 */
-	public String getJsonElementsStatus() {
+	public String getJsonMicroservicesStatus() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 
 		NumberFormat nf = NumberFormat.getInstance(Locale.US);
 		nf.setMaximumFractionDigits(2);
 
-		elementsStatus.forEach((key, status) -> {
+		microservicesStatus.forEach((key, status) -> {
 			if (status.getContainerId() != null) {
 				JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
 						.add("id", key)
 						.add("containerId", status.getContainerId())
 						.add("status", status.getStatus().toString())
-						.add("starttime", status.getStartTime())
-						.add("operatingduration", status.getOperatingDuration())
-						.add("cpuusage", nf.format(status.getCpuUsage()))
-						.add("memoryusage", String.format("%d", status.getMemoryUsage()));
+						.add("startTime", status.getStartTime())
+						.add("operatingDuration", status.getOperatingDuration())
+						.add("cpuUsage", nf.format(status.getCpuUsage()))
+						.add("memoryUsage", String.format("%d", status.getMemoryUsage()));
 				arrayBuilder.add(objectBuilder);
 			}
 		});
@@ -80,39 +80,39 @@ public class ProcessManagerStatus {
 		registriesStatus.forEach((key, value) -> {
 			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
 					.add("url", key)
-					.add("linkstatus", value.toString());
+					.add("linkStatus", value.toString());
 			arrayBuilder.add(objectBuilder);
 
 		});
 		return arrayBuilder.build().toString();
 	}
 
-	public int getRunningElementsCount() {
-		return runningElementsCount;
+	public int getRunningMicroservicesCount() {
+		return runningMicroservicesCount;
 	}
 
-	public ProcessManagerStatus setRunningElementsCount(int count) {
-		this.runningElementsCount = count;
+	public ProcessManagerStatus setRunningMicroservicesCount(int count) {
+		this.runningMicroservicesCount = count;
 		return this;
 	}
 
-	public ProcessManagerStatus setElementsStatus(String elementId, ElementStatus status) {
-		synchronized (elementsStatus) {
-			this.elementsStatus.put(elementId, status);
+	public ProcessManagerStatus setMicroservicesStatus(String microserviceUuid, MicroserviceStatus status) {
+		synchronized (microservicesStatus) {
+			this.microservicesStatus.put(microserviceUuid, status);
 		}
 		return this;
 	}
 	
-	public ElementStatus getElementStatus(String elementId) {
-		synchronized (elementsStatus) {
-			if (!this.elementsStatus.containsKey(elementId))
-				this.elementsStatus.put(elementId, new ElementStatus());
+	public MicroserviceStatus getMicroserviceStatus(String microserviceUuid) {
+		synchronized (microservicesStatus) {
+			if (!this.microservicesStatus.containsKey(microserviceUuid))
+				this.microservicesStatus.put(microserviceUuid, new MicroserviceStatus());
 		}
-		return elementsStatus.get(elementId);
+		return microservicesStatus.get(microserviceUuid);
 	}
 
 	public int getRegistriesCount() {
-		return ElementManager.getInstance().getRegistries().size();
+		return MicroserviceManager.getInstance().getRegistries().size();
 	}
 
 	public Map<String, LinkStatus> getRegistriesStatus() {

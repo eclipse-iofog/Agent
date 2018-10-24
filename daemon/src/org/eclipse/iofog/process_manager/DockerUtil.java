@@ -24,12 +24,11 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import io.netty.util.internal.StringUtil;
 import org.apache.commons.lang.SystemUtils;
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementStatus;
-import org.eclipse.iofog.element.PortMapping;
-import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.MicroserviceStatus;
+import org.eclipse.iofog.microservice.PortMapping;
+import org.eclipse.iofog.microservice.Registry;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -48,8 +47,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.eclipse.iofog.process_manager.ElementState.RUNNING;
-import static org.eclipse.iofog.process_manager.ElementState.fromText;
+import static org.eclipse.iofog.process_manager.MicroserviceState.RUNNING;
+import static org.eclipse.iofog.process_manager.MicroserviceState.fromText;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -121,7 +120,7 @@ public class DockerUtil {
 				switch (item.getType()) {
 					case CONTAINER:
 					case IMAGE:
-						StatusReporter.setProcessManagerStatus().getElementStatus(item.getId()).setStatus(
+						StatusReporter.setProcessManagerStatus().getMicroserviceStatus(item.getId()).setStatus(
 								fromText(item.getStatus()));
 				}
 			}
@@ -149,9 +148,9 @@ public class DockerUtil {
 	/**
 	 * starts a {@link Container}
 	 *
-	 * @param element {@link Element}
+	 * @param microservice {@link Microservice}
 	 */
-	public void startContainer(Element element) throws NotFoundException, NotModifiedException {
+	public void startContainer(Microservice microservice) throws NotFoundException, NotModifiedException {
 //		long totalMemory = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
 //		long jvmMemory = Runtime.getRuntime().maxMemory();
 //		long requiredMemory = (long) Math.min(totalMemory * 0.25, 256 * Constants.MiB);
@@ -159,7 +158,7 @@ public class DockerUtil {
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
 
-		dockerClient.startContainerCmd(element.getContainerId()).exec();
+		dockerClient.startContainerCmd(microservice.getContainerId()).exec();
 	}
 
 	/**
@@ -206,13 +205,13 @@ public class DockerUtil {
 	/**
 	 * returns a {@link Container} if exists
 	 *
-	 * @param elementId - name of {@link Container} (id of {@link Element})
+	 * @param microserviceUuid - name of {@link Container} (id of {@link Microservice})
 	 * @return Optional<Container>
 	 */
-	public Optional<Container> getContainer(String elementId) {
+	public Optional<Container> getContainer(String microserviceUuid) {
 		List<Container> containers = getContainers();
 		return containers.stream()
-				.filter(c -> getContainerName(c).equals(elementId))
+				.filter(c -> getContainerName(c).equals(microserviceUuid))
 				.findAny();
 	}
 
@@ -239,21 +238,21 @@ public class DockerUtil {
 	 * gets {@link Container} status
 	 *
 	 * @param containerId - id of {@link Container}
-	 * @return {@link ElementStatus}
+	 * @return {@link MicroserviceStatus}
 	 */
-	public ElementStatus getElementStatus(String containerId) {
+	public MicroserviceStatus getMicroserviceStatus(String containerId) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
 		ContainerState containerState = inspectInfo.getState();
-		ElementStatus result = new ElementStatus();
+		MicroserviceStatus result = new MicroserviceStatus();
 		if (containerState != null) {
 			if (containerState.getStartedAt() != null) {
 				result.setStartTime(getStartedTime(containerState.getStartedAt()));
 			}
 			if (containerState.getStatus() != null) {
-				ElementState elementState = ElementState.fromText(containerState.getStatus());
-				result.setStatus(ElementState.RESTARTING.equals(elementState) && RestartStuckChecker.isStuck(containerId) ?
-						ElementState.STUCK_IN_RESTART :
-						elementState);
+				MicroserviceState microserviceState = MicroserviceState.fromText(containerState.getStatus());
+				result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId) ?
+						MicroserviceState.STUCK_IN_RESTART :
+						microserviceState);
 			}
 			result.setContainerId(containerId);
 			result.setUsage(containerId);
@@ -286,46 +285,46 @@ public class DockerUtil {
 	}
 
 	/**
-	 * compares if element's and container's settings are equal
+	 * compares if microservice's and container's settings are equal
 	 *
 	 * @param containerId container id
-	 * @param element     element
+	 * @param microservice     microservice
 	 * @return boolean
 	 */
-	public boolean areElementAndContainerEqual(String containerId, Element element) {
+	public boolean areMicroserviceAndContainerEqual(String containerId, Microservice microservice) {
 		InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
-		return isPortMappingEqual(inspectInfo, element) && isNetworkModeEqual(inspectInfo, element);
+		return isPortMappingEqual(inspectInfo, microservice) && isNetworkModeEqual(inspectInfo, microservice);
 	}
 
 	/**
-	 * compares if element has root host access, then container will have the NetworkMode 'host',
+	 * compares if microservice has root host access, then container will have the NetworkMode 'host',
 	 * otherwise container has to have ExtraHosts
 	 *
 	 * @param inspectInfo result of docker inspect command
-	 * @param element     element
+	 * @param microservice     microservice
 	 * @return boolean
 	 */
-	private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Element element) {
-		boolean isRootHostAccess = element.isRootHostAccess();
+	private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
+		boolean isRootHostAccess = microservice.isRootHostAccess();
 		HostConfig hostConfig = inspectInfo.getHostConfig();
 		return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
 				|| !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
 	}
 
 	/**
-	 * compares if element port mapping is equal to container port mapping
+	 * compares if microservice port mapping is equal to container port mapping
 	 *
 	 * @param inspectInfo result of docker inspect command
-	 * @param element     element
+	 * @param microservice     microservice
 	 * @return boolean true if port mappings are the same
 	 */
-	private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Element element) {
-		return getElementPorts(element).equals(getContainerPorts(inspectInfo));
+	private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
+		return getMicroservicePorts(microservice).equals(getContainerPorts(inspectInfo));
 
 	}
 
-	private List<PortMapping> getElementPorts(Element element) {
-		return element.getPortMappings() != null ? element.getPortMappings() : new ArrayList<>();
+	private List<PortMapping> getMicroservicePorts(Microservice microservice) {
+		return microservice.getPortMappings() != null ? microservice.getPortMappings() : new ArrayList<>();
 	}
 
 	private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
@@ -375,7 +374,7 @@ public class DockerUtil {
 	/**
 	 * pulls {@link Image} from {@link Registry}
 	 *
-	 * @param imageName - imageName of {@link Element}
+	 * @param imageName - imageName of {@link Microservice}
 	 * @param registry  - {@link Registry} where image is placed
 	 */
 	public void pullImage(String imageName, Registry registry) throws NotFoundException, NotModifiedException {
@@ -407,17 +406,17 @@ public class DockerUtil {
 	/**
 	 * creates {@link Container}
 	 *
-	 * @param element - {@link Element}
+	 * @param microservice - {@link Microservice}
 	 * @param host    - host ip address
 	 * @return id of created {@link Container}
 	 */
-	public String createContainer(Element element, String host) throws NotFoundException, NotModifiedException {
+	public String createContainer(Microservice microservice, String host) throws NotFoundException, NotModifiedException {
 		RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
 
 		Ports portBindings = new Ports();
 		List<ExposedPort> exposedPorts = new ArrayList<>();
-		if (element.getPortMappings() != null)
-			element.getPortMappings().forEach(mapping -> {
+		if (microservice.getPortMappings() != null)
+			microservice.getPortMappings().forEach(mapping -> {
 				ExposedPort internal = ExposedPort.tcp(Integer.parseInt(mapping.getInside()));
 				Binding external = Binding.bindPort(Integer.parseInt(mapping.getOutside()));
 				portBindings.bind(internal, external);
@@ -425,8 +424,8 @@ public class DockerUtil {
 			});
 		List<Volume> volumes = new ArrayList<>();
 		List<Bind> volumeBindings = new ArrayList<>();
-		if (element.getVolumeMappings() != null) {
-			element.getVolumeMappings().forEach(volumeMapping -> {
+		if (microservice.getVolumeMappings() != null) {
+			microservice.getVolumeMappings().forEach(volumeMapping -> {
 				Volume volume = new Volume(volumeMapping.getContainerDestination());
 				volumes.add(volume);
 				AccessMode accessMode;
@@ -442,33 +441,33 @@ public class DockerUtil {
 
 		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
-		if (element.getLogSize() > 2)
-			logFiles = (int) (element.getLogSize() / 2);
+		if (microservice.getLogSize() > 2)
+			logFiles = (int) (microservice.getLogSize() / 2);
 
 		containerLogConfig.put("max-file", String.valueOf(logFiles));
 		containerLogConfig.put("max-size", "2m");
 		LogConfig containerLog = new LogConfig(LogConfig.LoggingType.DEFAULT, containerLogConfig);
 
-		CreateContainerCmd cmd = dockerClient.createContainerCmd(element.getImageName())
+		CreateContainerCmd cmd = dockerClient.createContainerCmd(microservice.getImageName())
 				.withLogConfig(containerLog)
 				.withCpusetCpus("0")
 				.withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
 				.withPortBindings(portBindings)
-				.withEnv("SELFNAME=" + element.getElementId())
-				.withName(element.getElementId())
+				.withEnv("SELFNAME=" + microservice.getMicroserviceUuid())
+				.withName(microservice.getMicroserviceUuid())
 				.withRestartPolicy(restartPolicy);
-		if (element.getVolumeMappings() != null) {
+		if (microservice.getVolumeMappings() != null) {
 			cmd = cmd
 					.withVolumes(volumes.toArray(new Volume[volumes.size()]))
 					.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
 		}
 
 		if (SystemUtils.IS_OS_WINDOWS) {
-				cmd = element.isRootHostAccess()
+				cmd = microservice.isRootHostAccess()
 						? cmd.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true)
 						: cmd.withExtraHosts(extraHosts).withPrivileged(true);
 		} else if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
-			cmd = element.isRootHostAccess()
+			cmd = microservice.isRootHostAccess()
 					? cmd.withNetworkMode("host").withPrivileged(true)
 					: cmd.withExtraHosts(extraHosts).withPrivileged(true);
 		}

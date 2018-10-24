@@ -10,10 +10,10 @@
  * Kilton Hopkins
  *  Ashita Nagar
  *******************************************************************************/
-package org.eclipse.iofog.element;
+package org.eclipse.iofog.microservice;
 
 /**
- * represents IOElements volume mappings for Docker run options
+ * represents microservice volume mappings for Docker run options
  *
  * @author ilaryionava
  */

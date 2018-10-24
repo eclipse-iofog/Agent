@@ -42,7 +42,7 @@ public final class LoggingService {
 	private static final String MODULE_NAME = "LoggingService";
 
 	private static Logger logger = null;
-	private static final Map<String, Logger> elementLogger = new HashMap<>();
+	private static final Map<String, Logger> microserviceLogger = new HashMap<>();
 
 	private LoggingService() {
 
@@ -107,11 +107,11 @@ public final class LoggingService {
 	}
 	
 	/**
-	 * sets up elements logging
+	 * sets up microservice logging
 	 * 
 	 * @throws IOException
 	 */
-	public static void setupElementLogger(String elementId, long logSize) throws IOException {
+	public static void setupMicroserviceLogger(String microserviceUuid, long logSize) throws IOException {
 		int maxFileSize = (int) (logSize * 1_000_000); 
 		int logFileCount = Math.round(logSize);
 		final File logDirectory = new File(Configuration.getLogDiskDirectory());
@@ -140,28 +140,32 @@ public final class LoggingService {
 		}
 
 
-		final String logFilePattern = logDirectory.getPath() + "/" + elementId + ".%g.log";
-		Logger logger = elementLogger.get(elementId);
+		final String logFilePattern = logDirectory.getPath() + "/" + microserviceUuid + ".%g.log";
+		Logger logger = microserviceLogger.get(microserviceUuid);
 
 		if (logger != null) {
 			for (Handler f : logger.getHandlers())
 				f.close();
 		} 
-		
+
+		if (logFileCount == 0) {
+			logFileCount = 1;
+		}
+
 		Handler logFileHandler = new FileHandler(logFilePattern, maxFileSize / logFileCount, logFileCount);
 	
 		logFileHandler.setFormatter(new LogFormatter());
 	
-		logger = Logger.getLogger(elementId);
+		logger = Logger.getLogger(microserviceUuid);
 		logger.addHandler(logFileHandler);
 
 		logger.setUseParentHandlers(false);
 
-		elementLogger.put(elementId, logger);
+		microserviceLogger.put(microserviceUuid, logger);
 	}
 	
-	public static boolean elementLogInfo(String elementId, String msg) {
-		Logger logger = elementLogger.get(elementId);
+	public static boolean microserviceLogInfo(String microserviceUuid, String msg) {
+		Logger logger = microserviceLogger.get(microserviceUuid);
 		if (logger == null) {
 			logNullLogger();
 			return false;
@@ -171,8 +175,8 @@ public final class LoggingService {
 		return true;
 	}
 	
-	public static boolean elementLogWarning(String elementId, String msg) {
-		Logger logger = elementLogger.get(elementId);
+	public static boolean microserviceLogWarning(String microserviceUuid, String msg) {
+		Logger logger = microserviceLogger.get(microserviceUuid);
 		if (logger == null) {
 			logNullLogger();
 			return false;

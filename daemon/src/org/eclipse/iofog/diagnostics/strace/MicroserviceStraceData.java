@@ -18,21 +18,21 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ElementStraceData {
+public class MicroserviceStraceData {
 
-	private final String elementId;
+	private final String microserviceUuid;
 	private int pid;
 	private final AtomicBoolean straceRun = new AtomicBoolean();
 	private List<String> resultBuffer = new CopyOnWriteArrayList<>();
 
-	public ElementStraceData(String elementId, int pid, boolean straceRun) {
-		this.elementId = elementId;
+	public MicroserviceStraceData(String microserviceUuid, int pid, boolean straceRun) {
+		this.microserviceUuid = microserviceUuid;
 		this.pid = pid;
 		this.straceRun.set(straceRun);
 	}
 
-	public String getElementId() {
-		return elementId;
+	public String getMicroserviceUuid() {
+		return microserviceUuid;
 	}
 
 	public List<String> getResultBuffer() {
@@ -57,8 +57,8 @@ public class ElementStraceData {
 
 	@Override
 	public String toString() {
-		return "ElementStraceData{" +
-				"elementId='" + elementId + '\'' +
+		return "MicroserviceStraceData{" +
+				"microserviceUuid='" + microserviceUuid + '\'' +
 				", pid=" + pid +
 				", straceRun=" + straceRun +
 				", resultBuffer=" + resultBuffer +
@@ -69,9 +69,9 @@ public class ElementStraceData {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		ElementStraceData that = (ElementStraceData) o;
+		MicroserviceStraceData that = (MicroserviceStraceData) o;
 		return pid == that.pid &&
-				Objects.equals(elementId, that.elementId) &&
+				Objects.equals(microserviceUuid, that.microserviceUuid) &&
 				Objects.equals(straceRun, that.straceRun) &&
 				Objects.equals(resultBuffer, that.resultBuffer);
 	}
@@ -79,7 +79,7 @@ public class ElementStraceData {
 	@Override
 	public int hashCode() {
 
-		return Objects.hash(elementId, pid, straceRun, resultBuffer);
+		return Objects.hash(microserviceUuid, pid, straceRun, resultBuffer);
 	}
 
 	public String getResultBufferAsString() {

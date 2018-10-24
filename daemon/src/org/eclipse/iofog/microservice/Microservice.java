@@ -10,22 +10,22 @@
  * Kilton Hopkins
  *  Ashita Nagar
  *******************************************************************************/
-package org.eclipse.iofog.element;
+package org.eclipse.iofog.microservice;
 
 import java.util.List;
 
 /**
- * represents IOElements
+ * represents Microservices
  *
  * @author saeid
  */
-public class Element {
+public class Microservice {
 
-    private final String elementId; //container name
+    private final String microserviceUuid; //container name
     private final String imageName;
     private List<PortMapping> portMappings;
-    private long lastModified;
-    private long lastUpdated;
+    private String config;
+    private List<String> routes;
     private String containerId;
     private String registry;
     private String containerIpAddress;
@@ -35,8 +35,8 @@ public class Element {
     private List<VolumeMapping> volumeMappings;
     private boolean isUpdating;
 
-    public Element(String elementId, String imageName) {
-        this.elementId = elementId;
+    public Microservice(String microserviceUuid, String imageName) {
+        this.microserviceUuid = microserviceUuid;
         this.imageName = imageName;
         containerId = "";
     }
@@ -81,28 +81,20 @@ public class Element {
         this.portMappings = portMappings;
     }
 
-    public long getLastModified() {
-        return lastModified;
+    public String getConfig() {
+        return config;
     }
 
-    public void setLastModified(long lastModified) {
-        this.lastModified = lastModified;
+    public void setConfig(String config) {
+        this.config = config;
     }
 
-    public String getElementId() {
-        return elementId;
+    public String getMicroserviceUuid() {
+        return microserviceUuid;
     }
 
     public String getImageName() {
         return imageName;
-    }
-
-    public long getLastUpdated() {
-        return lastUpdated;
-    }
-
-    public void setLastUpdated(long lastUpdated) {
-        this.lastUpdated = lastUpdated;
     }
 
     public boolean isRootHostAccess() {
@@ -141,13 +133,20 @@ public class Element {
 	public boolean equals(Object e) {
         if (this == e) return true;
         if (e == null || getClass() != e.getClass()) return false;
-		Element element = (Element) e;
-		return this.elementId.equals(element.getElementId());
+		Microservice microservice = (Microservice) e;
+		return this.microserviceUuid.equals(microservice.getMicroserviceUuid());
 	}
 
 	@Override
 	public int hashCode() {
-		return elementId.hashCode();
+		return microserviceUuid.hashCode();
 	}
 
+    public List<String> getRoutes() {
+        return routes;
+    }
+
+    public void setRoutes(List<String> routes) {
+        this.routes = routes;
+    }
 }

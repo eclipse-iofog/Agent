@@ -10,33 +10,33 @@
  * Kilton Hopkins
  *  Ashita Nagar
  *******************************************************************************/
-package org.eclipse.iofog.element;
+package org.eclipse.iofog.microservice;
 
 
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Statistics;
 import org.eclipse.iofog.process_manager.DockerUtil;
-import org.eclipse.iofog.process_manager.ElementState;
+import org.eclipse.iofog.process_manager.MicroserviceState;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * represents IOElement status
+ * represents microservice status
  * 
  * @author saeid
  *
  */
-public class ElementStatus {
+public class MicroserviceStatus {
 
-	private ElementState status;
+	private MicroserviceState status;
 	private long startTime;
 	private float cpuUsage;
 	private long memoryUsage;
 	private String containerId;
 
-	private static final String MODULE_NAME = ElementStatus.class.getSimpleName();
+	private static final String MODULE_NAME = MicroserviceStatus.class.getSimpleName();
 
 	public float getCpuUsage() {
 		return cpuUsage;
@@ -54,11 +54,11 @@ public class ElementStatus {
 		this.memoryUsage = memoryUsage;
 	}
 
-	public ElementState getStatus() {
+	public MicroserviceState getStatus() {
 		return status;
 	}
 
-	public void setStatus(ElementState status) {
+	public void setStatus(MicroserviceState status) {
 		this.status = status;
 	}
 
@@ -83,7 +83,7 @@ public class ElementStatus {
 	}
 
 	/**
-	 * set in {@link ElementStatus} cpu usage and memory usage of given {@link Container}
+	 * set in {@link MicroserviceStatus} cpu usage and memory usage of given {@link Container}
 	 *
 	 * @param containerId - id of {@link Container}
 	 */
@@ -144,7 +144,7 @@ public class ElementStatus {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		ElementStatus that = (ElementStatus) o;
+		MicroserviceStatus that = (MicroserviceStatus) o;
 		return status == that.status;
 	}
 
