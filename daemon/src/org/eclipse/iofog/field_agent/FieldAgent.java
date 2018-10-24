@@ -159,7 +159,7 @@ public class FieldAgent implements IOFogModule {
         while (true) {
             logInfo("start posting IOFog status");
             try {
-                Thread.sleep(Configuration.getStatusUpdateFreq() * 1000);
+                Thread.sleep(Configuration.getStatusFrequency() * 1000);
 
                 JsonObject status = getFogStatus();
                 if (Configuration.debugging) {
@@ -231,7 +231,7 @@ public class FieldAgent implements IOFogModule {
     private final Runnable getChangesList = () -> {
         while (true) {
             try {
-                Thread.sleep(Configuration.getGetChangesFreq() * 1000);
+                Thread.sleep(Configuration.getChangeFrequency() * 1000);
 
                 logInfo("get changes list");
                 if (notProvisioned() || !isControllerConnected(false)) {
@@ -729,9 +729,9 @@ public class FieldAgent implements IOFogModule {
             float logLimit = Float.parseFloat(configs.getString(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()));
             String logDirectory = configs.getString(LOG_DISK_DIRECTORY.getJsonProperty());
             int logFileCount = Integer.parseInt(configs.getString(LOG_FILE_COUNT.getJsonProperty()));
-            int statusUpdateFreq = Integer.parseInt(configs.getString(STATUS_UPDATE_FREQ.getJsonProperty()));
-            int getChangesFreq = Integer.parseInt(configs.getString(GET_CHANGES_FREQ.getJsonProperty()));
-            int scanDevicesFreq = Integer.parseInt(configs.getString(SCAN_DEVICES_FREQ.getJsonProperty()));
+            int statusFrequency = Integer.parseInt(configs.getString(STATUS_FREQUENCY.getJsonProperty()));
+            int changeFrequency = Integer.parseInt(configs.getString(CHANGE_FREQUENCY.getJsonProperty()));
+            int deviceScanFrequency = Integer.parseInt(configs.getString(DEVICE_SCAN_FREQUENCY.getJsonProperty()));
             String watchdogEnabledValue = configs.getString(WATCHDOG_ENABLED.getJsonProperty());
             boolean watchdogEnabled = !watchdogEnabledValue.equals("off");
             String gpsCoordinates = configs.getString(GPS_COORDINATES.getJsonProperty());
@@ -766,14 +766,14 @@ public class FieldAgent implements IOFogModule {
             if (Configuration.getLogFileCount() != logFileCount)
                 instanceConfig.put(LOG_FILE_COUNT.getCommandName(), logFileCount);
 
-            if (Configuration.getStatusUpdateFreq() != statusUpdateFreq)
-                instanceConfig.put(STATUS_UPDATE_FREQ.getCommandName(), statusUpdateFreq);
+            if (Configuration.getStatusFrequency() != statusFrequency)
+                instanceConfig.put(STATUS_FREQUENCY.getCommandName(), statusFrequency);
 
-            if (Configuration.getGetChangesFreq() != getChangesFreq)
-                instanceConfig.put(GET_CHANGES_FREQ.getCommandName(), getChangesFreq);
+            if (Configuration.getChangeFrequency() != changeFrequency)
+                instanceConfig.put(CHANGE_FREQUENCY.getCommandName(), changeFrequency);
 
-            if (Configuration.getScanDevicesFreq() != scanDevicesFreq)
-                instanceConfig.put(SCAN_DEVICES_FREQ.getCommandName(), scanDevicesFreq);
+            if (Configuration.getDeviceScanFrequency() != deviceScanFrequency)
+                instanceConfig.put(DEVICE_SCAN_FREQUENCY.getCommandName(), deviceScanFrequency);
 
             if (Configuration.isWatchdogEnabled() != watchdogEnabled)
                 instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabledValue);
@@ -812,9 +812,9 @@ public class FieldAgent implements IOFogModule {
                 .add(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getLogDiskLimit())
                 .add(LOG_DISK_DIRECTORY.getJsonProperty(), Configuration.getLogDiskDirectory())
                 .add(LOG_FILE_COUNT.getJsonProperty(), Configuration.getLogFileCount())
-                .add(STATUS_UPDATE_FREQ.getJsonProperty(), Configuration.getStatusUpdateFreq())
-                .add(GET_CHANGES_FREQ.getJsonProperty(), Configuration.getGetChangesFreq())
-                .add(SCAN_DEVICES_FREQ.getJsonProperty(), Configuration.getScanDevicesFreq())
+                .add(STATUS_FREQUENCY.getJsonProperty(), Configuration.getStatusFrequency())
+                .add(CHANGE_FREQUENCY.getJsonProperty(), Configuration.getChangeFrequency())
+                .add(DEVICE_SCAN_FREQUENCY.getJsonProperty(), Configuration.getDeviceScanFrequency())
                 .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isWatchdogEnabled() ? "on" : "off")
                 .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase())
                 .add(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates())

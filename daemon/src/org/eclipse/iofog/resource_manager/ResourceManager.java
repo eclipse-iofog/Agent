@@ -52,7 +52,7 @@ public class ResourceManager implements IOFogModule {
             FieldAgent.getInstance().sendUSBInfoFromHalToController();
             FieldAgent.getInstance().sendHWInfoFromHalToController();
             try {
-                Thread.sleep(Configuration.getScanDevicesFreq() * 1000);
+                Thread.sleep(Configuration.getDeviceScanFrequency() * 1000);
             } catch (InterruptedException e) {
                 LoggingService.logWarning(MODULE_NAME, e.getMessage());
             }

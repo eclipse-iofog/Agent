@@ -177,7 +177,7 @@ public final class Configuration {
 		Configuration.watchdogEnabled = watchdogEnabled;
 	}
 
-	public static int getStatusUpdateFreq() {
+	public static int getStatusFrequency() {
 		return statusUpdateFreq;
 	}
 
@@ -185,7 +185,7 @@ public final class Configuration {
 		Configuration.statusUpdateFreq = statusUpdateFreq;
 	}
 
-	public static int getGetChangesFreq() {
+	public static int getChangeFrequency() {
 		return getChangesFreq;
 	}
 
@@ -193,7 +193,7 @@ public final class Configuration {
 		Configuration.getChangesFreq = getChangesFreq;
 	}
 
-	public static int getScanDevicesFreq() {
+	public static int getDeviceScanFrequency() {
 		return scanDevicesFreq;
 	}
 
@@ -475,7 +475,7 @@ public final class Configuration {
 					setNode(LOG_FILE_COUNT, value);
 					setLogFileCount(Integer.parseInt(value));
 					break;
-				case STATUS_UPDATE_FREQ:
+				case STATUS_FREQUENCY:
 					try {
 						intValue = Integer.parseInt(value);
 					} catch (NumberFormatException e) {
@@ -486,10 +486,10 @@ public final class Configuration {
 						messageMap.put(option, "Status update frequency must be greater than 1");
 						break;
 					}
-					setNode(STATUS_UPDATE_FREQ, value);
+					setNode(STATUS_FREQUENCY, value);
 					setStatusUpdateFreq(Integer.parseInt(value));
 					break;
-				case GET_CHANGES_FREQ:
+				case CHANGE_FREQUENCY:
 					try {
 						intValue = Integer.parseInt(value);
 					} catch (NumberFormatException e) {
@@ -500,10 +500,10 @@ public final class Configuration {
 						messageMap.put(option, "Get changes frequency must be greater than 1");
 						break;
 					}
-					setNode(GET_CHANGES_FREQ, value);
+					setNode(CHANGE_FREQUENCY, value);
 					setGetChangesFreq(Integer.parseInt(value));
 					break;
-				case SCAN_DEVICES_FREQ:
+				case DEVICE_SCAN_FREQUENCY:
 					try {
 						intValue = Integer.parseInt(value);
 					} catch (NumberFormatException e) {
@@ -514,7 +514,7 @@ public final class Configuration {
 						messageMap.put(option, "Get scan devices frequency must be greater than 1");
 						break;
 					}
-					setNode(SCAN_DEVICES_FREQ, value);
+					setNode(DEVICE_SCAN_FREQUENCY, value);
 					setScanDevicesFreq(Integer.parseInt(value));
 					break;
 				case POST_DIAGNOSTICS_FREQ:
@@ -732,9 +732,9 @@ public final class Configuration {
 		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT)));
 		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT)));
 		configureGps(getNode(GPS_COORDINATES));
-		setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ)));
-		setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
-		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
+		setGetChangesFreq(Integer.parseInt(getNode(CHANGE_FREQUENCY)));
+		setScanDevicesFreq(Integer.parseInt(getNode(DEVICE_SCAN_FREQUENCY)));
+		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_FREQUENCY)));
 		setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ)));
 		setWatchdogEnabled(!getNode(WATCHDOG_ENABLED).equals("off"));
 		configureFogType(getNode(FOG_TYPE));
@@ -912,11 +912,11 @@ public final class Configuration {
 		// log files count
 		result.append(buildReportLine(getConfigParamMessage(LOG_FILE_COUNT), format("%d", logFileCount)));
 		// status update frequency
-		result.append(buildReportLine(getConfigParamMessage(STATUS_UPDATE_FREQ), format("%d", statusUpdateFreq)));
+		result.append(buildReportLine(getConfigParamMessage(STATUS_FREQUENCY), format("%d", statusUpdateFreq)));
 		// status update frequency
-		result.append(buildReportLine(getConfigParamMessage(GET_CHANGES_FREQ), format("%d", getChangesFreq)));
+		result.append(buildReportLine(getConfigParamMessage(CHANGE_FREQUENCY), format("%d", getChangesFreq)));
 		// scan devices frequency
-		result.append(buildReportLine(getConfigParamMessage(SCAN_DEVICES_FREQ), format("%d", scanDevicesFreq)));
+		result.append(buildReportLine(getConfigParamMessage(DEVICE_SCAN_FREQUENCY), format("%d", scanDevicesFreq)));
 		// post diagnostics frequency
 		result.append(buildReportLine(getConfigParamMessage(POST_DIAGNOSTICS_FREQ), format("%d", postDiagnosticsFreq)));
 		// log file directory
