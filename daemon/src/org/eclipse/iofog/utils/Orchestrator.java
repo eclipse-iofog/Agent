@@ -111,7 +111,7 @@ public class Orchestrator {
 					.add("type", Configuration.getFogType().getCode())
 					.build();
 
-			result = request("provision", RequestType.POST, null, json);//getJSON(controllerUrl + "iofog/agent/provision/" + key + "/fogtype/" + Configuration.getFogType().getCode());
+			result = request("provision", RequestType.POST, null, json);
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
@@ -179,7 +179,6 @@ public class Orchestrator {
 		initialize(secure);
 		RequestConfig config = getRequestConfig();
 		HttpGet get = new HttpGet(surl);
-		//HttpPost post = new HttpPost(surl);
 		get.setConfig(config);
 
 		JsonObject result;
@@ -214,8 +213,6 @@ public class Orchestrator {
 		StringBuilder uri = new StringBuilder(controllerUrl);
 		uri.append("agent/")
 				.append(command);
-//				.append("/id/").append(instanceId)
-//				.append("/token/").append(accessToken);
 		return uri;
 	}
 
