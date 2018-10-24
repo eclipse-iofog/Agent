@@ -259,7 +259,6 @@ public class Orchestrator {
                 break;
             case DELETE:
                 req = new HttpDelete(uri.toString());
-        //        ((HttpDelete) req).setEntity(httpEntity);
                 break;
             default:
                 req = new HttpGet(uri.toString());
