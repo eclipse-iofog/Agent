@@ -19,19 +19,19 @@ package org.eclipse.iofog.microservice;
  *
  */
 public class PortMapping {
-	private final String outside;
-	private final String inside;
+	private final int outside;
+	private final int inside;
 
-	public PortMapping(String outside, String inside) {
+	public PortMapping(int outside, int inside) {
 		this.outside = outside;
 		this.inside = inside;
 	}
 
-	public String getOutside() {
+	public int getOutside() {
 		return outside;
 	}
 
-	public String getInside() {
+	public int getInside() {
 		return inside;
 	}
 
@@ -46,13 +46,6 @@ public class PortMapping {
 		if (other == null || getClass() != other.getClass()) return false;
 		
 		PortMapping o = (PortMapping) other;
-		return this.outside.equals(o.outside) && this.inside.equals(o.inside);
-	}
-
-	@Override
-	public int hashCode() {
-		int result = outside.hashCode();
-		result = 31 * result + inside.hashCode();
-		return result;
-	}
+		return this.outside == o.outside && this.inside == o.inside;
+	}z
 }
