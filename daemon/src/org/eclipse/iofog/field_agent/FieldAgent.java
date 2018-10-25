@@ -1103,7 +1103,7 @@ public class FieldAgent implements IOFogModule {
         String microserviceUuid = null;
 
         try {
-            JsonObject jsonObject = orchestrator.request("imageSnapshot", RequestType.GET, null, null);
+            JsonObject jsonObject = orchestrator.request("image-snapshot", RequestType.GET, null, null);
             microserviceUuid = jsonObject.getString("uuid");
         } catch (Exception e) {
             logWarning("Unable get name of image snapshot : " + e.getMessage());

@@ -56,7 +56,7 @@ public class ImageDownloadManager {
             try {
                 //TODO: think about send few files
                 File imageFile = getFileByImagePath(path);
-                orchestrator.sendFileToController("imageSnapshotPut", imageFile);
+                orchestrator.sendFileToController("image-snapshot", imageFile);
                 imageFile.delete();
                 logWarning(MODULE_NAME, "image snapshot " + imageFile.getName() + " deleted");
             } catch (Exception e) {
