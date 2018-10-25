@@ -856,7 +856,8 @@ public class FieldAgent implements IOFogModule {
 
         if (!notProvisioned() && isControllerConnected(false)) {
             try {
-                result = orchestrator.request("proxy", RequestType.GET, null, null);
+                JsonObject response = orchestrator.request("proxy", RequestType.GET, null, null);
+                result = response.getJsonObject("proxy");
             } catch (Exception e) {
                 LoggingService.logWarning(MODULE_NAME, "unable to get proxy config : " + e.getMessage());
             }
