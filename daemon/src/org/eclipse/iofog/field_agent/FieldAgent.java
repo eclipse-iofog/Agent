@@ -555,8 +555,8 @@ public class FieldAgent implements IOFogModule {
                         ? IntStream.range(0, portMappingObjs.size())
                         .boxed()
                         .map(portMappingObjs::getJsonObject)
-                        .map(portMapping -> new PortMapping(portMapping.getString("outsidecontainer"),
-                                portMapping.getString("insidecontainer")))
+                        .map(portMapping -> new PortMapping(portMapping.getString("portExternal"),
+                                portMapping.getString("portInternal")))
                         .collect(toList())
                         : null;
 
