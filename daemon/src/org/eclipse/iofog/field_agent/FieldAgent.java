@@ -831,15 +831,14 @@ public class FieldAgent implements IOFogModule {
                 .add(STATUS_FREQUENCY.getJsonProperty(), Configuration.getStatusFrequency())
                 .add(CHANGE_FREQUENCY.getJsonProperty(), Configuration.getChangeFrequency())
                 .add(DEVICE_SCAN_FREQUENCY.getJsonProperty(), Configuration.getDeviceScanFrequency())
-                .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isWatchdogEnabled() ? "on" : "off")
+                .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isWatchdogEnabled())
                 .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase())
-                .add(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates())
                 .add("latitude", latitude)
                 .add("longitude", longitude)
                 .build();
 
         try {
-            orchestrator.request("config/changes", RequestType.GET, null, json);
+            orchestrator.request("config", RequestType.PATCH, null, json);
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
         } catch (Exception e) {
