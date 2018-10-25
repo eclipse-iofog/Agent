@@ -362,6 +362,10 @@ public class FieldAgent implements IOFogModule {
             return;
         }
 
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return; // TODO implement
+        }
+
         try {
             JsonObject result = orchestrator.request("strace", RequestType.GET, null, null);
 
@@ -717,7 +721,6 @@ public class FieldAgent implements IOFogModule {
 
         try {
             JsonObject result = orchestrator.request("config", RequestType.GET, null, null);
-            checkResponseStatus(result);
 
             JsonObject configs = result.getJsonObject("config");
             String networkInterface = configs.getString(NETWORK_INTERFACE.getJsonProperty());
@@ -1000,12 +1003,6 @@ public class FieldAgent implements IOFogModule {
             logWarning("connection to controller has broken");
         } else {
             verificationFailed();
-        }
-    }
-
-    private void checkResponseStatus(JsonObject result) {
-        if (!result.getString("status").equals("ok")) {
-            throw new RuntimeException("error from fog controller, make sure ioFog is provisioned");
         }
     }
 
