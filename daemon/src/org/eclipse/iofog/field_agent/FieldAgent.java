@@ -882,7 +882,7 @@ public class FieldAgent implements IOFogModule {
             provisioningResult = orchestrator.provision(key);
 
             StatusReporter.setFieldAgentStatus().setControllerStatus(OK);
-            Configuration.setInstanceId(provisioningResult.getString("uuid"));
+            Configuration.setIofogUuid(provisioningResult.getString("uuid"));
             Configuration.setAccessToken(provisioningResult.getString("token"));
 
             Configuration.saveConfigUpdates();
@@ -948,7 +948,7 @@ public class FieldAgent implements IOFogModule {
 
         StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
         try {
-            Configuration.setInstanceId("");
+            Configuration.setIofogUuid("");
             Configuration.setAccessToken("");
             Configuration.saveConfigUpdates();
         } catch (Exception e) {
@@ -975,7 +975,7 @@ public class FieldAgent implements IOFogModule {
      * starts Field Agent module
      */
     public void start() {
-        if (isNullOrEmpty(Configuration.getInstanceId()) || isNullOrEmpty(Configuration.getAccessToken()))
+        if (isNullOrEmpty(Configuration.getIofogUuid()) || isNullOrEmpty(Configuration.getAccessToken()))
             StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
 
         microserviceManager = MicroserviceManager.getInstance();

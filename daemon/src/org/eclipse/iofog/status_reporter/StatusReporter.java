@@ -86,7 +86,7 @@ public final class StatusReporter {
 		else
 			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage)).append(" GiB");
 		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage())).append("%");
-		result.append("\\nRunning Microservices            : ").append(processManagerStatus.getRunningMicroservicesCount());
+		result.append("\\nRunning Microservices       : ").append(processManagerStatus.getRunningMicroservicesCount());
 		result.append("\\nConnection to Controller    : ").append(connectionStatus);
 		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));

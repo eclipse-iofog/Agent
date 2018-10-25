@@ -57,8 +57,8 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 public class Orchestrator {
     private static final int CONNECTION_TIMEOUT = 5000;
     private String controllerUrl;
-    private String instanceId;
-    private String accessToken;
+    private String iofogUuid;
+    private String iofogAccessToken;
     private Certificate controllerCert;
     private CloseableHttpClient client;
 
@@ -308,8 +308,8 @@ public class Orchestrator {
      * updates local variables when changes applied
      */
     public void update() {
-        instanceId = Configuration.getInstanceId();
-        accessToken = Configuration.getAccessToken();
+        iofogUuid = Configuration.getIofogUuid();
+        iofogAccessToken = Configuration.getAccessToken();
         controllerUrl = Configuration.getControllerUrl();
         // disable certificates for dev mode
         boolean secure = true;
