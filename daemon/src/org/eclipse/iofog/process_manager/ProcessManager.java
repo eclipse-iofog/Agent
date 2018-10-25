@@ -214,7 +214,7 @@ public class ProcessManager implements IOFogModule {
 	};
 
 	private void retryTask(ContainerTask task) {
-		if (StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) || task.getAction().equals(REMOVE)) {
+		if (StatusReporter.getFieldAgentStatus().getControllerStatus().equals(OK) || task.getAction().equals(REMOVE)) {
 			if (task.getRetries() < 5) {
 				task.incrementRetries();
 				addTask(task);

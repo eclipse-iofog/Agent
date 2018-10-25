@@ -31,7 +31,7 @@ public class FieldAgentStatus {
 		contollerStatus = ControllerStatus.BROKEN;
 	}
 	
-	public Constants.ControllerStatus getContollerStatus() {
+	public Constants.ControllerStatus getControllerStatus() {
 		return contollerStatus;
 	}
 

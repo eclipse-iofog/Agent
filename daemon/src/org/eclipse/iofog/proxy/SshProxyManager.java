@@ -84,7 +84,9 @@ public class SshProxyManager {
      */
     private void handleUnexpectedTunnelState(String errMsg, SshConnectionStatus status) {
         LoggingService.logWarning(MODULE_NAME, errMsg);
-        setSshProxyManagerStatus(status, errMsg);
+        if (connection != null && connection.getUsername() != null) {
+            setSshProxyManagerStatus(status, errMsg);
+        }
     }
 
     /**

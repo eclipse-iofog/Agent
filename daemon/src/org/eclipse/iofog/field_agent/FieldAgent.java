@@ -145,7 +145,7 @@ public class FieldAgent implements IOFogModule {
      * @return boolean
      */
     private boolean notProvisioned() {
-        boolean notProvisioned = StatusReporter.getFieldAgentStatus().getContollerStatus().equals(NOT_PROVISIONED);
+        boolean notProvisioned = StatusReporter.getFieldAgentStatus().getControllerStatus().equals(NOT_PROVISIONED);
         if (notProvisioned) {
             logWarning("not provisioned");
         }
@@ -238,8 +238,6 @@ public class FieldAgent implements IOFogModule {
                     continue;
                 }
 
-                //    Map<String, Object> queryParams = new HashMap<>();
-                //    queryParams.put("timestamp", lastGetChangesList);
 
                 JsonObject result;
                 try {
@@ -313,7 +311,7 @@ public class FieldAgent implements IOFogModule {
     private void deleteNode() {
         logInfo("start deleting node");
         try {
-            orchestrator.request("deleteNode", RequestType.DELETE, null, null);
+            orchestrator.request("delete-node", RequestType.DELETE, null, null);
         } catch (Exception e) {
             logInfo("can't send delete node command");
         }
@@ -1006,7 +1004,7 @@ public class FieldAgent implements IOFogModule {
      */
     private boolean isControllerConnected(boolean fromFile) {
         boolean isConnected = false;
-        if ((!StatusReporter.getFieldAgentStatus().getContollerStatus().equals(OK) && !ping()) && !fromFile) {
+        if ((!StatusReporter.getFieldAgentStatus().getControllerStatus().equals(OK) && !ping()) && !fromFile) {
             handleBadControllerStatus();
         } else {
             isConnected = true;

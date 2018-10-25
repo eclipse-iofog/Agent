@@ -77,8 +77,8 @@ public final class StatusReporter {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
 
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
-		String connectionStatus = fieldAgentStatus.getContollerStatus() == ControllerStatus.OK ? "ok" :
-				(fieldAgentStatus.getContollerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned");
+		String connectionStatus = fieldAgentStatus.getControllerStatus() == ControllerStatus.OK ? "ok" :
+				(fieldAgentStatus.getControllerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned");
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
 		result.append("\\nMemory Usage                : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage())).append(" MiB");
 		if (diskUsage < 1)
