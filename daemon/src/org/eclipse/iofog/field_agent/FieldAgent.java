@@ -724,19 +724,20 @@ public class FieldAgent implements IOFogModule {
 
             String networkInterface = configs.getString(NETWORK_INTERFACE.getJsonProperty());
             String dockerUrl = configs.getString(DOCKER_URL.getJsonProperty());
-            float diskLimit = Float.parseFloat(configs.getString(DISK_CONSUMPTION_LIMIT.getJsonProperty()));
+            double diskLimit = configs.getJsonNumber(DISK_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
             String diskDirectory = configs.getString(DISK_DIRECTORY.getJsonProperty());
-            float memoryLimit = Float.parseFloat(configs.getString(MEMORY_CONSUMPTION_LIMIT.getJsonProperty()));
-            float cpuLimit = Float.parseFloat(configs.getString(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty()));
-            float logLimit = Float.parseFloat(configs.getString(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()));
+            double memoryLimit = configs.getJsonNumber(MEMORY_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
+            double cpuLimit = configs.getJsonNumber(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
+            double logLimit = configs.getJsonNumber(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
             String logDirectory = configs.getString(LOG_DISK_DIRECTORY.getJsonProperty());
-            int logFileCount = Integer.parseInt(configs.getString(LOG_FILE_COUNT.getJsonProperty()));
-            int statusFrequency = Integer.parseInt(configs.getString(STATUS_FREQUENCY.getJsonProperty()));
-            int changeFrequency = Integer.parseInt(configs.getString(CHANGE_FREQUENCY.getJsonProperty()));
-            int deviceScanFrequency = Integer.parseInt(configs.getString(DEVICE_SCAN_FREQUENCY.getJsonProperty()));
-            String watchdogEnabledValue = configs.getString(WATCHDOG_ENABLED.getJsonProperty());
-            boolean watchdogEnabled = !watchdogEnabledValue.equals("off");
-            String gpsCoordinates = configs.getString(GPS_COORDINATES.getJsonProperty());
+            int logFileCount = configs.getInt(LOG_FILE_COUNT.getJsonProperty());
+            int statusFrequency = configs.getInt(STATUS_FREQUENCY.getJsonProperty());
+            int changeFrequency = configs.getInt(CHANGE_FREQUENCY.getJsonProperty());
+            int deviceScanFrequency = configs.getInt(DEVICE_SCAN_FREQUENCY.getJsonProperty());
+            boolean watchdogEnabled = configs.getBoolean(WATCHDOG_ENABLED.getJsonProperty());
+            double latitude = configs.getJsonNumber("latitude").doubleValue();
+            double longitude = configs.getJsonNumber("longitude").doubleValue();
+            String gpsCoordinates = latitude + "," + longitude;
 
             Map<String, Object> instanceConfig = new HashMap<>();
 
@@ -778,7 +779,7 @@ public class FieldAgent implements IOFogModule {
                 instanceConfig.put(DEVICE_SCAN_FREQUENCY.getCommandName(), deviceScanFrequency);
 
             if (Configuration.isWatchdogEnabled() != watchdogEnabled)
-                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabledValue);
+                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled);
 
             if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
                 instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
