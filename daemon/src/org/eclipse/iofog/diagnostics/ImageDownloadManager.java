@@ -40,7 +40,8 @@ public class ImageDownloadManager {
             Container container = containerOptional.get();
             image = container.getImage();
         } else {
-            throw new IllegalArgumentException();
+            logWarning(MODULE_NAME, "image snapshot: container not running.");
+            return;
         }
 
         String imageZip = microserviceUuid + ".tar.gz";
