@@ -720,9 +720,8 @@ public class FieldAgent implements IOFogModule {
         }
 
         try {
-            JsonObject result = orchestrator.request("config", RequestType.GET, null, null);
+            JsonObject configs = orchestrator.request("config", RequestType.GET, null, null);
 
-            JsonObject configs = result.getJsonObject("config");
             String networkInterface = configs.getString(NETWORK_INTERFACE.getJsonProperty());
             String dockerUrl = configs.getString(DOCKER_URL.getJsonProperty());
             float diskLimit = Float.parseFloat(configs.getString(DISK_CONSUMPTION_LIMIT.getJsonProperty()));
@@ -805,6 +804,20 @@ public class FieldAgent implements IOFogModule {
         }
 
         logInfo("posting fog config");
+        double latitude, longitude;
+        try {
+            String gpsCoordinates = Configuration.getGpsCoordinates();
+
+            String[] coords = gpsCoordinates.split(",");
+
+            latitude = Double.parseDouble(coords[0]);
+            longitude = Double.parseDouble(coords[1]);
+        } catch (Exception e) {
+            latitude = 0;
+            longitude = 0;
+            logWarning("Error while parsing GPS coordinates");
+        }
+
         JsonObject json = Json.createObjectBuilder()
                 .add(NETWORK_INTERFACE.getJsonProperty(), IOFogNetworkInterface.getNetworkInterface())
                 .add(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl())
@@ -821,6 +834,8 @@ public class FieldAgent implements IOFogModule {
                 .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isWatchdogEnabled() ? "on" : "off")
                 .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase())
                 .add(GPS_COORDINATES.getJsonProperty(), Configuration.getGpsCoordinates())
+                .add("latitude", latitude)
+                .add("longitude", longitude)
                 .build();
 
         try {
