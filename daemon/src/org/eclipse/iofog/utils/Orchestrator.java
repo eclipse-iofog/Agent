@@ -93,17 +93,12 @@ public class Orchestrator {
      */
     public JsonObject provision(String key) throws Exception {
         JsonObject result;
-        try {
-            JsonObject json = Json.createObjectBuilder()
-                    .add("key", key)
-                    .add("type", Configuration.getFogType().getCode())
-                    .build();
+        JsonObject json = Json.createObjectBuilder()
+                .add("key", key)
+                .add("type", Configuration.getFogType().getCode())
+                .build();
 
-            result = request("provision", RequestType.POST, null, json);
-        } catch (Exception exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
-            throw exp;
-        }
+        result = request("provision", RequestType.POST, null, json);
         return result;
     }
 
@@ -262,15 +257,15 @@ public class Orchestrator {
                 case 204:
                     return Json.createObjectBuilder().build();
                 case 400:
-                    throw new BadRequestException();
+                    throw new BadRequestException(response.getStatusLine().getReasonPhrase());
                 case 401:
-                    throw new AuthenticationException();
+                    throw new AuthenticationException(response.getStatusLine().getReasonPhrase());
                 case 403:
-                    throw new ForbiddenException();
+                    throw new ForbiddenException(response.getStatusLine().getReasonPhrase());
                 case 404:
-                    throw new NotFoundException();
+                    throw new NotFoundException(response.getStatusLine().getReasonPhrase());
                 case 500:
-                    throw new InternalServerErrorException();
+                    throw new InternalServerErrorException(response.getStatusLine().getReasonPhrase());
             }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
