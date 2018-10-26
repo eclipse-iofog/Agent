@@ -47,5 +47,5 @@ public class PortMapping {
 		
 		PortMapping o = (PortMapping) other;
 		return this.outside == o.outside && this.inside == o.inside;
-	}z
+	}
 }

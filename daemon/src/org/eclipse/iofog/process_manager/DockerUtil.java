@@ -332,10 +332,10 @@ public class DockerUtil {
 		Ports ports = hostConfig.getPortBindings();
 		return ports.getBindings().entrySet().stream()
 				.flatMap(entity -> {
-					String exposedPort = String.valueOf(entity.getKey().getPort());
+					int exposedPort = entity.getKey().getPort();
 					return Arrays.stream(entity.getValue())
 							.map(Binding::getHostPortSpec)
-							.map(hostPort -> new PortMapping(hostPort, exposedPort));
+							.map(hostPort -> new PortMapping(Integer.valueOf(hostPort), exposedPort));
 				})
 				.collect(Collectors.toList());
 	}
@@ -417,8 +417,8 @@ public class DockerUtil {
 		List<ExposedPort> exposedPorts = new ArrayList<>();
 		if (microservice.getPortMappings() != null)
 			microservice.getPortMappings().forEach(mapping -> {
-				ExposedPort internal = ExposedPort.tcp(Integer.parseInt(mapping.getInside()));
-				Binding external = Binding.bindPort(Integer.parseInt(mapping.getOutside()));
+				ExposedPort internal = ExposedPort.tcp(mapping.getInside());
+				Binding external = Binding.bindPort(mapping.getOutside());
 				portBindings.bind(internal, external);
 				exposedPorts.add(internal);
 			});
