@@ -301,7 +301,7 @@ public class Orchestrator {
 
         HttpEntity entity = builder.build();
 
-        getJsonObject(null, RequestType.POST, entity, createUri(command));
+        getJsonObject(null, RequestType.PUT, entity, createUri(command));
     }
 
     /**
