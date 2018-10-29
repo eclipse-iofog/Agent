@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.toList;
 public enum CommandLineConfigParam {
 
     ACCESS_TOKEN("", "", "access_token", ""),
-    INSTANCE_ID("", "", "instance_id", ""),
+    IOFOG_UUID("", "", "iofog_uuid", ""),
 
     DISK_CONSUMPTION_LIMIT ("50", "d","disk_consumption_limit", "diskLimit"),
     DISK_DIRECTORY ("/var/lib/iofog/", "dl","disk_directory", "diskDirectory"),

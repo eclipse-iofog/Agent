@@ -709,7 +709,6 @@ public final class Configuration {
 	 * @throws Exception
 	 */
 	public static void loadConfig() throws Exception {
-		// TODO: load configuration XML file here
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -718,7 +717,7 @@ public final class Configuration {
 
 		configElement = (Element) getFirstNodeByTagName("config");
 
-		setIofogUuid(getNode(INSTANCE_ID));
+		setIofogUuid(getNode(IOFOG_UUID));
 		setAccessToken(getNode(ACCESS_TOKEN));
 		setControllerUrl(getNode(CONTROLLER_URL));
 		setControllerCert(getNode(CONTROLLER_CERT));
@@ -822,7 +821,7 @@ public final class Configuration {
 	}
 
 	public static void setIofogUuid(String iofogUuid) throws ConfigurationItemException {
-		setNode(INSTANCE_ID, iofogUuid);
+		setNode(IOFOG_UUID, iofogUuid);
 		Configuration.iofogUuid = iofogUuid;
 	}
 
