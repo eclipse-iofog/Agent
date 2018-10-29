@@ -883,7 +883,7 @@ public final class Configuration {
 		ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
 		StringBuilder result = new StringBuilder();
-		// instance id
+		// iofog UUID
 		result.append(buildReportLine(getIofogUuidMessage(), isNotBlank(iofogUuid) ? iofogUuid : "not provisioned"));
 		//ip address
 		result.append(buildReportLine(getIpAddressMessage(), ipAddress));

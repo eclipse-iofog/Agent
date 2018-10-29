@@ -209,15 +209,15 @@ public class Orchestrator {
             else
                 secure = false;
         }
-        JsonObject result;
+
+        JsonObject result = Json.createObjectBuilder().build();
 
         if (queryParams != null)
             queryParams.forEach((key, value) -> uri.append("/").append(key)
                     .append("/").append(value));
 
         initialize(secure);
-        HttpRequestBase req = null;
-
+        HttpRequestBase req;
 
         RequestConfig config = getRequestConfig();
 
@@ -253,25 +253,31 @@ public class Orchestrator {
         }
 
         try (CloseableHttpResponse response = client.execute(req)) {
+            String errorMessage = "";
+            if (response.getEntity() != null) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                JsonReader jsonReader = Json.createReader(in);
+
+                result = jsonReader.readObject();
+                errorMessage = result.getString("message", "");
+            }
+
+
             switch (response.getStatusLine().getStatusCode()) {
                 case 204:
                     return Json.createObjectBuilder().build();
                 case 400:
-                    throw new BadRequestException(response.getStatusLine().getReasonPhrase());
+                    throw new BadRequestException(errorMessage);
                 case 401:
-                    throw new AuthenticationException(response.getStatusLine().getReasonPhrase());
+                    throw new AuthenticationException(errorMessage);
                 case 403:
-                    throw new ForbiddenException(response.getStatusLine().getReasonPhrase());
+                    throw new ForbiddenException(errorMessage);
                 case 404:
-                    throw new NotFoundException(response.getStatusLine().getReasonPhrase());
+                    throw new NotFoundException(errorMessage);
                 case 500:
-                    throw new InternalServerErrorException(response.getStatusLine().getReasonPhrase());
+                    throw new InternalServerErrorException(errorMessage);
             }
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-            JsonReader jsonReader = Json.createReader(in);
-
-            result = jsonReader.readObject();
         } catch (UnsupportedEncodingException exp) {
             logWarning(MODULE_NAME, exp.getMessage());
             throw exp;

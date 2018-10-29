@@ -866,7 +866,7 @@ public class FieldAgent implements IOFogModule {
 
     /**
      * does the provisioning.
-     * If successfully provisioned, updates Instance ID and Access Token in
+     * If successfully provisioned, updates Iofog UUID and Access Token in
      * configuration file and loads Microservice data, otherwise sets appropriate
      * status.
      *
