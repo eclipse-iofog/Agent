@@ -16,7 +16,7 @@
     <parent>
         <artifactId>iofog-agent</artifactId>
         <groupId>org.eclipse</groupId>
-        <version>1.0.0</version>
+        <version>0.9.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
