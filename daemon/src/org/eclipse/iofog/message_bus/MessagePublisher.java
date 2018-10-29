@@ -14,8 +14,8 @@ package org.eclipse.iofog.message_bus;
 
 import java.util.List;
 
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.ClientProducer;
@@ -25,7 +25,7 @@ import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
- * publisher {@link Element}
+ * publisher {@link Microservice}
  * 
  * @author saeid
  *
@@ -84,7 +84,7 @@ public class MessagePublisher implements AutoCloseable{
 	}
 
 	/**
-	 * retrieves list of {@link Message} published by this {@link Element} 
+	 * retrieves list of {@link Message} published by this {@link Microservice}
 	 * within a time frame
 	 * 
 	 * @param from - beginning of time frame

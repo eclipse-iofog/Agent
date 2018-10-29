@@ -143,10 +143,10 @@ public enum CommandLineAction {
 			String result;
 			if (provisioningResult == null) {
 				result = getProvisionCommonErrorMessage();
-			} else if (provisioningResult.getString("status").equals("ok")) {
-				result = format(getProvisionStatusSuccessMessage(), provisioningResult.getString("id"));
+			} else if (provisioningResult.containsKey("uuid")) {
+				result = format(getProvisionStatusSuccessMessage(), provisioningResult.getString("uuid"));
 			} else {
-				result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errormessage"));
+				result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errorMessage"));
 			}
 			return format(getProvisionMessage(), provisionKey, result);
 		}

@@ -10,7 +10,7 @@
  * Kilton Hopkins
  *  Ashita Nagar
  *******************************************************************************/
-package org.eclipse.iofog.element;
+package org.eclipse.iofog.microservice;
 
 import java.util.Objects;
 

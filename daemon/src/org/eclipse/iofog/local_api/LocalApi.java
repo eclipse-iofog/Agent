@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import org.eclipse.iofog.element.ElementManager;
+import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
@@ -91,7 +91,7 @@ public class LocalApi implements Runnable {
 	 * Get the containers configuration and store it.
 	 */
 	private void retrieveContainerConfig() {
-			ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
+			ConfigurationMap.containerConfigMap = MicroserviceManager.getInstance().getConfigs();
 			LoggingService.logInfo(MODULE_NAME, "Container configuration retrieved");
 	}
 
@@ -99,7 +99,7 @@ public class LocalApi implements Runnable {
 	 * Update the containers configuration and store it.
 	 */
 	private void updateContainerConfig() {
-		ConfigurationMap.containerConfigMap = ElementManager.getInstance().getConfigs();
+		ConfigurationMap.containerConfigMap = MicroserviceManager.getInstance().getConfigs();
 		LoggingService.logInfo(MODULE_NAME, "Container configuration updated");
 	}
 

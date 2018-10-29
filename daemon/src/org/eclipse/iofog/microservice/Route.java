@@ -10,13 +10,13 @@
  * Kilton Hopkins
  *  Ashita Nagar
  *******************************************************************************/
-package org.eclipse.iofog.element;
+package org.eclipse.iofog.microservice;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * represents IOElements routings
+ * represents microservice routings
  * 
  * @author saeid
  *

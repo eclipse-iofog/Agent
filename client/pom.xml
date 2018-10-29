@@ -15,8 +15,8 @@
 
 	<parent>
 		<groupId>org.eclipse</groupId>
-		<artifactId>iofog</artifactId>
-		<version>0.56</version>
+		<artifactId>iofog-agent</artifactId>
+		<version>1.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	

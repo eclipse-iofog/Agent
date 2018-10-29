@@ -124,7 +124,7 @@ To perform quality assurance testing on the ioFog product, the same test steps n
 
 * Back in your Linux command line, type 'iofog provision ABCDWXYZ' and replace the ABCDWXYZ with your provisioning key (it is case sensitive) and verify the results
 
-	* The output will display a success message if the process is successful and will show an instance ID
+	* The output will display a success message if the process is successful and will show an Iofog UUID
 
 	* The output will dipslay an error if the process not successful (a common problem is having the wrong URL for the fog controller set in the configuration)
 

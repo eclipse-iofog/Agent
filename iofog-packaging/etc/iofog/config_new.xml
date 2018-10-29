@@ -17,7 +17,7 @@
 
 	<controller_url>http://localhost:54421/api/v2/</controller_url>
 	
-	<instance_id/>
+	<iofog_uuid/>
 
 	<dev_mode>on</dev_mode>
 	

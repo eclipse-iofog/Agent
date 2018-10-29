@@ -49,7 +49,7 @@ public class SshProxyManager {
      */
     public CompletableFuture<Unit> update(JsonObject config) {
         CompletableFuture<Unit> completableFuture = CompletableFuture.completedFuture(UNIT);
-        if (config != null) {
+        if (config != null && !config.isEmpty()) {
             setSshConnection(config);
             completableFuture = processValidConfig();
         } else {
@@ -84,7 +84,9 @@ public class SshProxyManager {
      */
     private void handleUnexpectedTunnelState(String errMsg, SshConnectionStatus status) {
         LoggingService.logWarning(MODULE_NAME, errMsg);
-        setSshProxyManagerStatus(status, errMsg);
+        if (connection != null && connection.getUsername() != null) {
+            setSshProxyManagerStatus(status, errMsg);
+        }
     }
 
     /**

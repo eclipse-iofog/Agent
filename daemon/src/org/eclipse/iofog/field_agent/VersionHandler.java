@@ -118,6 +118,10 @@ public class VersionHandler {
 	static void changeVersion(JsonObject actionData) {
 		LoggingService.logInfo(MODULE_NAME, "trying to change version action");
 
+		if (SystemUtils.IS_OS_WINDOWS) {
+			return; // TODO implement
+		}
+
 		try{
 
 			VersionCommand versionCommand = parseJson(actionData);

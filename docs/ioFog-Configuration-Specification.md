@@ -7,7 +7,7 @@ ioFog can also be configured using the command line or using the fog controller 
 #### Configuration Items
 
 * access_token - the access token granted by a fog controller to the ioFog instance during the provisioning process
-* instance_id - the unique identifier given to this ioFog instance by the fog controller
+* iofog_uuid - the unique identifier given to this ioFog instance by the fog controller
 * controller_url - the root URL for the fog controller from which this ioFog instance should take its commands
 * controller_cert - the file path for the SSL certficate corresponding to the fog controller (for proving its identity)
 * network_interface - the name of the network interface that should be used for determining the IP address of this ioFog instance

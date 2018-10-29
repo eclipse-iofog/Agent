@@ -27,11 +27,11 @@ import javax.json.JsonObjectBuilder;
  */
 public class MessageBusStatus {
 	private long processedMessages;
-	private final Map<String, Long> publishedMessagesPerElement;
+	private final Map<String, Long> publishedMessagesPerMicroservice;
 	private float averageSpeed;
 	
 	public MessageBusStatus() {
-		publishedMessagesPerElement = new HashMap<>();
+		publishedMessagesPerMicroservice = new HashMap<>();
 		processedMessages = 0;
 		averageSpeed = 0;
 	}
@@ -40,21 +40,21 @@ public class MessageBusStatus {
 		return processedMessages;
 	}
 
-	public Long getPublishedMessagesPerElement(String element) {
-		return publishedMessagesPerElement.get(element);
+	public Long getPublishedMessagesPerMicroservice(String microservice) {
+		return publishedMessagesPerMicroservice.get(microservice);
 	}
 
-	public Map<String, Long> getPublishedMessagesPerElement() {
-		return publishedMessagesPerElement;
+	public Map<String, Long> getPublishedMessagesPerMicroservice() {
+		return publishedMessagesPerMicroservice;
 	}
 
-	public MessageBusStatus increasePublishedMessagesPerElement(String element) {
+	public MessageBusStatus increasePublishedMessagesPerMicroservice(String microservice) {
 		this.processedMessages++;
 
-		Long n = this.publishedMessagesPerElement.get(element);
+		Long n = this.publishedMessagesPerMicroservice.get(microservice);
 		if (n == null)
 			n = 0L;
-		this.publishedMessagesPerElement.put(element, n + 1);
+		this.publishedMessagesPerMicroservice.put(microservice, n + 1);
 		return this;
 	}
 
@@ -67,14 +67,14 @@ public class MessageBusStatus {
 		return this;
 	}
 	
-	public void removePublishedMessagesPerElement(String element) {
-		if (publishedMessagesPerElement.containsKey(element))
-			publishedMessagesPerElement.remove(element);
+	public void removePublishedMessagesPerMicroservice(String microservice) {
+		if (publishedMessagesPerMicroservice.containsKey(microservice))
+			publishedMessagesPerMicroservice.remove(microservice);
 	}
 	
-	public String getJsonPublishedMessagesPerElement() {
+	public String getJsonPublishedMessagesPerMicroservice() {
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		publishedMessagesPerElement.forEach((key, value) -> {
+		publishedMessagesPerMicroservice.forEach((key, value) -> {
 			JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
 					.add("id", key)
 					.add("messagecount", value);

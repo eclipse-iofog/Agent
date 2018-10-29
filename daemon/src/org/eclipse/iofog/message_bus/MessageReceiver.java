@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientMessage;
@@ -23,7 +23,7 @@ import java.util.List;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
- * receiver {@link Element}
+ * receiver {@link Microservice}
  * 
  * @author saeid
  *
@@ -43,7 +43,7 @@ public class MessageReceiver implements AutoCloseable{
 	}
 
 	/**
-	 * receivers list of {@link Message} sent to this {@link Element}
+	 * receivers list of {@link Message} sent to this {@link Microservice}
 	 * 
 	 * @return list of {@link Message}
 	 * @throws Exception
@@ -85,7 +85,7 @@ public class MessageReceiver implements AutoCloseable{
 	}
 	
 	/**
-	 * enables real-time receiving for this {@link Element}
+	 * enables real-time receiving for this {@link Microservice}
 	 * 
 	 */
 	void enableRealTimeReceiving() {
@@ -100,7 +100,7 @@ public class MessageReceiver implements AutoCloseable{
 	}
 	
 	/**
-	 * disables real-time receiving for this {@link Element}
+	 * disables real-time receiving for this {@link Microservice}
 	 * 
 	 */
 	void disableRealTimeReceiving() {

@@ -15,8 +15,8 @@ package org.eclipse.iofog.message_bus;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -36,7 +36,7 @@ public class MessageBusUtil {
 	 */
 	public void publishMessage(Message message) {
 		long timestamp = System.currentTimeMillis();
-		StatusReporter.setMessageBusStatus().increasePublishedMessagesPerElement(message.getPublisher());
+		StatusReporter.setMessageBusStatus().increasePublishedMessagesPerMicroservice(message.getPublisher());
 		message.setId(messageBus.getNextId());
 		message.setTimestamp(timestamp);
 		
@@ -53,7 +53,7 @@ public class MessageBusUtil {
 	/**
 	 * gets list of {@link Message} for receiver
 	 * 
-	 * @param receiver - ID of {@link Element}
+	 * @param receiver - ID of {@link Microservice}
 	 * @return list of {@link Message}
 	 */
 	public List<Message> getMessages(String receiver) {
@@ -72,8 +72,8 @@ public class MessageBusUtil {
 	/**
 	 * gets list of {@link Message} within a time frame
 	 * 
-	 * @param publisher - ID of {@link Element}
-	 * @param receiver - ID of {@link Element}
+	 * @param publisher - ID of {@link Microservice}
+	 * @param receiver - ID of {@link Microservice}
 	 * @param from - beginning of time frame
 	 * @param to - end of time frame
 	 * @return list of {@link Message}
