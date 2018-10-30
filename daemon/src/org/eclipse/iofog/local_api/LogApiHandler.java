@@ -64,11 +64,11 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 				jsonObject.containsKey("id")){
 			String logMessage = jsonObject.getString("message");
 			String logType = jsonObject.getString("type");
-			String elementId = jsonObject.getString("id");
+			String microserviceUuid = jsonObject.getString("id");
 			if (logType.equals("info")) {
-				result = LoggingService.elementLogInfo(elementId, logMessage);
+				result = LoggingService.microserviceLogInfo(microserviceUuid, logMessage);
 			} else {
-				result = LoggingService.elementLogWarning(elementId, logMessage);
+				result = LoggingService.microserviceLogWarning(microserviceUuid, logMessage);
 			}
 		}
 		if (!result) {

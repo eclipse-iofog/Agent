@@ -33,17 +33,18 @@ public class ImageDownloadManager {
 
     private static final String MODULE_NAME = "Image Download Manager";
 
-    public static void createImageSnapshot(Orchestrator orchestrator, String elementId) {
-        Optional<Container> containerOptional = DockerUtil.getInstance().getContainer(elementId);
+    public static void createImageSnapshot(Orchestrator orchestrator, String microserviceUuid) {
+        Optional<Container> containerOptional = DockerUtil.getInstance().getContainer(microserviceUuid);
         String image;
         if (containerOptional.isPresent()) {
             Container container = containerOptional.get();
             image = container.getImage();
         } else {
-            throw new IllegalArgumentException();
+            logWarning(MODULE_NAME, "image snapshot: container not running.");
+            return;
         }
 
-        String imageZip = elementId + ".tar.gz";
+        String imageZip = microserviceUuid + ".tar.gz";
         String imagePath = "/tmp/" + imageZip;
         CommandShellExecutor.executeCommand("docker save " + image + " | gzip -c > " + imagePath);
 
@@ -56,11 +57,9 @@ public class ImageDownloadManager {
             try {
                 //TODO: think about send few files
                 File imageFile = getFileByImagePath(path);
-                JsonObject result = orchestrator.sendFileToController("imageSnapshotPut", imageFile);
-                if ("ok".equals(result.getString("status"))) {
-                    imageFile.delete();
-                    logWarning(MODULE_NAME, "image snapshot " + imageFile.getName() + " deleted");
-                }
+                orchestrator.sendFileToController("image-snapshot", imageFile);
+                imageFile.delete();
+                logWarning(MODULE_NAME, "image snapshot " + imageFile.getName() + " deleted");
             } catch (Exception e) {
                 logWarning(MODULE_NAME, "unable send image snapshot path : " + e.getMessage());
             }

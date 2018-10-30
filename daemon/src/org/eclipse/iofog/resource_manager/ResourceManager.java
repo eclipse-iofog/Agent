@@ -27,8 +27,8 @@ public class ResourceManager implements IOFogModule {
     private static final String MODULE_NAME = ResourceManager.class.getSimpleName();
     public static final String HW_INFO_URL = "http://localhost:54331/hal/hwc/lshw";
     public static final String USB_INFO_URL = "http://localhost:54331/hal/hwc/lsusb";
-    public static final String COMMAND_HW_INFO = "hw_info";
-    public static final String COMMAND_USB_INFO = "usb_info";
+    public static final String COMMAND_HW_INFO = "hal/hw";
+    public static final String COMMAND_USB_INFO = "hal/usb";
 
     @Override
     public int getModuleIndex() {
@@ -49,10 +49,10 @@ public class ResourceManager implements IOFogModule {
     private Runnable getUsageData = () -> {
 
         while (true) {
-                FieldAgent.getInstance().sendUSBInfoFromHalToController();
+            FieldAgent.getInstance().sendUSBInfoFromHalToController();
             FieldAgent.getInstance().sendHWInfoFromHalToController();
             try {
-                Thread.sleep(Configuration.getScanDevicesFreq() * 1000);
+                Thread.sleep(Configuration.getDeviceScanFrequency() * 1000);
             } catch (InterruptedException e) {
                 LoggingService.logWarning(MODULE_NAME, e.getMessage());
             }

@@ -50,12 +50,12 @@ public class Client {
 	 */
 	private static boolean sendCommandlineParameters(String... args) {
 		try {
-			String params = "{\"command\":\"";
+			StringBuilder params = new StringBuilder("{\"command\":\"");
 			for (String arg: args) {
-				params += arg + " ";
+				params.append(arg).append(" ");
 			}
-			params = params.trim() + "\"}";
-			byte[] postData = params.trim().getBytes(StandardCharsets.UTF_8);
+			params = new StringBuilder(params.toString().trim() + "\"}");
+			byte[] postData = params.toString().trim().getBytes(StandardCharsets.UTF_8);
 			
 			URL url = new URL("http://localhost:54321/v2/commandline");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -74,15 +74,15 @@ public class Client {
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 
-			String result = "";
+			StringBuilder result = new StringBuilder();
 			String output;
 			while ((output = br.readLine()) != null) {
-				result += output;
+				result.append(output);
 			}
 
 			conn.disconnect();
 			
-			System.out.println(result.replace("\\n", "\n"));
+			System.out.println(result.toString().replace("\\n", "\n"));
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -95,8 +95,8 @@ public class Client {
 	 * @return String
 	 */
 	private static String showHelp() {
-		StringBuilder help = new StringBuilder();
-		help.append("Usage 1: iofog [OPTION]\n" + "Usage 2: iofog [COMMAND] <Argument>\n"
+
+		return ("Usage 1: iofog [OPTION]\n" + "Usage 2: iofog [COMMAND] <Argument>\n"
 				+ "Usage 3: iofog [COMMAND] [Parameter] <Value>\n" + "\n"
 				+ "Option           GNU long option         Meaning\n"
 				+ "======           ===============         =======\n"
@@ -117,6 +117,8 @@ public class Client {
 				+ "info                                     Display the current configuration\n"
 				+ "                                         and other information about the\n"
 				+ "                                         software\n"
+				+ "login            -u <username>           Login to Oro Networks application\n"
+				+ "                 -p <password>           \n"
 				+ "config           [Parameter] [VALUE]     Change the software configuration\n"
 				+ "                                         according to the options provided\n"
 				+ "                 defaults                Reset configuration to default values\n"
@@ -158,23 +160,18 @@ public class Client {
 				+ "                                         use GPS coordinates in DD format to set them manually\n"
 				+ "                 -ft <auto               Set fog type.\n"
 				+ "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\n"
-				+ "                                         use arm or intel_amd to set it manually\n" + "\n" + "\n"
-				+ "Report bugs to: edgemaster@iofog.org\n" + "ioFog home page: http://iofog.org\n"
+				+ "                                         use arm or intel_amd to set it manually\n"
+				+ "                 -dev <on/off>           Set the developer's mode without using ssl \\n"
+				+ "                                         certificates. \\n" + "\n" + "\n"
+				+ "Report bugs to: edgemaster@iofog.org\n" + "ioFog Agent home page: http://iofog.org\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
-
-		return help.toString();
 	}
 
 	private static String version() {
-		StringBuilder result = new StringBuilder();
-		
-    result.append("ioFog 0.56 ");
-		result.append("\nCopyright (C) 2018 Edgeworx, Inc.");
-
-		result.append("\nEclipse ioFog is provided under the Eclipse Public License (EPL2)");
-		result.append("\nhttps://www.eclipse.org/legal/epl-v20.html");
-
-		return result.toString();
+		return "ioFog 0.56 " +
+				"\nCopyright (C) 2018 Edgeworx, Inc." +
+				"\nEclipse ioFog is provided under the Eclipse Public License (EPL2)" +
+				"\nhttps://www.eclipse.org/legal/epl-v20.html";
 	}
 
 	public static void main(String[] args) throws ParseException {
@@ -182,12 +179,16 @@ public class Client {
 			args = new String[] { "help" };
 
 		if (isAnotherInstanceRunning()) {
-			if (args[0].equals("stop")) {
-				System.out.println("Enter \"service iofog stop\"");
-			} else if (args[0].equals("start")) {
-				System.out.println("iofog is already running.");
-			} else {
-				sendCommandlineParameters(args);
+			switch (args[0]) {
+				case "stop":
+					System.out.println("Enter \"service iofog stop\"");
+					break;
+				case "start":
+					System.out.println("iofog is already running.");
+					break;
+				default:
+					sendCommandlineParameters(args);
+					break;
 			}
 		} else {
 			switch (args[0]) {

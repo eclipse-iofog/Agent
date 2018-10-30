@@ -1,0 +1,22 @@
+_iofog-agent()
+{
+	local cur prev opts base
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+	opts="--help --version -h -? -v help version status provision deprovision info config"
+	
+	case "${prev}" in
+		config)
+			;;
+		provision)
+			;;
+		*)
+			;;
+	esac
+
+
+	COMPREPLY=($(compgen -W "${opts}" -- ${cur}))  
+	return 0
+}
+complete -F _iofog-agent iofog-agent

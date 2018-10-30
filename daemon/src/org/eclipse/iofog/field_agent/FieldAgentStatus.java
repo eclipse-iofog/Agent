@@ -31,11 +31,11 @@ public class FieldAgentStatus {
 		contollerStatus = ControllerStatus.BROKEN;
 	}
 	
-	public Constants.ControllerStatus getContollerStatus() {
+	public Constants.ControllerStatus getControllerStatus() {
 		return contollerStatus;
 	}
 
-	public void setContollerStatus(Constants.ControllerStatus contollerStatus) {
+	public void setControllerStatus(Constants.ControllerStatus contollerStatus) {
 		this.contollerStatus = contollerStatus;
 	}
 

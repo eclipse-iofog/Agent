@@ -14,15 +14,13 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.element.Registry;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.MicroserviceManager;
+import org.eclipse.iofog.microservice.Registry;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Optional;
-
-import static org.apache.commons.lang.StringUtils.EMPTY;
 
 /**
  * provides methods to manage Docker containers
@@ -32,12 +30,12 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 public class ContainerManager {
 
 	private DockerUtil docker;
-	private final ElementManager elementManager;
+	private final MicroserviceManager microserviceManager;
 
 	private static final String MODULE_NAME = "Container Manager";
 
 	public ContainerManager() {
-		elementManager = ElementManager.getInstance();
+		microserviceManager = MicroserviceManager.getInstance();
 	}
 
 	/**
@@ -45,26 +43,26 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	private String addContainer(Element element) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "rebuilding/creating \"" + element.getImageName() + "\" if it's needed");
+	private String addContainer(Microservice microservice) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "rebuilding/creating \"" + microservice.getImageName() + "\" if it's needed");
 
-		Optional<Container> containerOptional = docker.getContainer(element.getElementId());
+		Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 
 		String containerId = containerOptional.map(Container::getId).orElse(null);
-		if (containerOptional.isPresent() && element.isRebuild()) {
-			containerId = updateContainer(element, true);
+		if (containerOptional.isPresent() && microservice.isRebuild()) {
+			containerId = updateContainer(microservice, true);
 		} else if (!containerOptional.isPresent()) {
-			containerId = createContainer(element);
+			containerId = createContainer(microservice);
 
 		}
 		return containerId;
 	}
 
-	private Registry getRegistry(Element element) throws Exception {
+	private Registry getRegistry(Microservice microservice) throws Exception {
 		Registry registry;
-		registry = elementManager.getRegistry(element.getRegistry());
+		registry = microserviceManager.getRegistry(microservice.getRegistry());
 		if (registry == null) {
-			throw new Exception(String.format("registry is not valid \"%s\"", element.getRegistry()));
+			throw new Exception(String.format("registry is not valid \"%s\"", microservice.getRegistry()));
 		}
 		return registry;
 	}
@@ -75,57 +73,58 @@ public class ContainerManager {
 	 * @param withCleanUp if true then removes old image and volumes
 	 * @throws Exception exception
 	 */
-	private String updateContainer(Element element, boolean withCleanUp) throws Exception {
-		element.setUpdating(true);
-		removeContainerByElementId(element.getElementId(), withCleanUp);
-		String id = createContainer(element);
-		element.setUpdating(false);
+	private String updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
+		microservice.setUpdating(true);
+		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
+		String id = createContainer(microservice);
+		microservice.setUpdating(false);
 		return id;
 	}
 
-	private String createContainer(Element element) throws Exception {
-		Registry registry = getRegistry(element);
-		LoggingService.logInfo(MODULE_NAME, "pulling \"" + element.getImageName() + "\" from registry");
-		docker.pullImage(element.getImageName(), registry);
-		LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", element.getImageName()));
-
+	private String createContainer(Microservice microservice) throws Exception {
+		if (!microservice.getRegistry().equals("from_cache")){
+			Registry registry = getRegistry(microservice);
+			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
+			docker.pullImage(microservice.getImageName(), registry);
+			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", microservice.getImageName()));
+		}
 		LoggingService.logInfo(MODULE_NAME, "creating container");
 		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
-		String id = docker.createContainer(element, hostName);
-		element.setContainerId(id);
-		element.setContainerIpAddress(docker.getContainerIpAddress(id));
+		String id = docker.createContainer(microservice, hostName);
+		microservice.setContainerId(id);
+		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
 		LoggingService.logInfo(MODULE_NAME, "container is created");
-		startContainer(element);
-		element.setRebuild(false);
+		startContainer(microservice);
+		microservice.setRebuild(false);
 		return id;
 	}
 
 	/**
 	 * starts a {@link Container} and sets appropriate status
 	 */
-	private void startContainer(Element element) {
-		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", element.getImageName()));
+	private void startContainer(Microservice microservice) {
+		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", microservice.getImageName()));
 		try {
-			if (!docker.isContainerRunning(element.getContainerId())) {
-				docker.startContainer(element);
+			if (!docker.isContainerRunning(microservice.getContainerId())) {
+				docker.startContainer(microservice);
 			}
-			Optional<String> statusOptional = docker.getContainerStatus(element.getContainerId());
+			Optional<String> statusOptional = docker.getContainerStatus(microservice.getContainerId());
 			String status = statusOptional.orElse("unknown");
-			LoggingService.logInfo(MODULE_NAME, String.format("starting %s, status: %s", element.getImageName(), status));
-			element.setContainerIpAddress(docker.getContainerIpAddress(element.getContainerId()));
+			LoggingService.logInfo(MODULE_NAME, String.format("starting %s, status: %s", microservice.getImageName(), status));
+			microservice.setContainerIpAddress(docker.getContainerIpAddress(microservice.getContainerId()));
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
-					String.format("container \"%s\" not found - %s", element.getImageName(), ex.getMessage()));
+					String.format("container \"%s\" not found - %s", microservice.getImageName(), ex.getMessage()));
 		}
 	}
 
 	/**
 	 * stops a {@link Container}
 	 *
-	 * @param elementId id of the {@link Element}
+	 * @param microserviceUuid id of the {@link Microservice}
 	 */
-	private void stopContainer(String elementId) {
-		Optional<Container> containerOptional = docker.getContainer(elementId);
+	private void stopContainer(String microserviceUuid) {
+		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 		containerOptional.ifPresent(container -> {
 			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", container.getId()));
 			try {
@@ -139,11 +138,11 @@ public class ContainerManager {
 	}
 
 	/**
-	 * removes a {@link Container} by Element id
+	 * removes a {@link Container} by Microservice uuid
 	 */
-	private void removeContainerByElementId(String elementId, boolean withCleanUp) {
+	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) {
 
-		Optional<Container> containerOptional = docker.getContainer(elementId);
+		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 
 		if (containerOptional.isPresent()) {
 			Container container = containerOptional.get();
@@ -174,24 +173,24 @@ public class ContainerManager {
 	 */
 	public void execute(ContainerTask task) throws Exception {
 		docker = DockerUtil.getInstance();
-		Optional<Element> elementOptional = elementManager.findLatestElementById(task.getElementId());
+		Optional<Microservice> microserviceOptional = microserviceManager.findLatestMicroserviceByUuid(task.getMicroserviceUuid());
 		switch (task.getAction()) {
 			case ADD:
-				if (elementOptional.isPresent()) {
-					addContainer(elementOptional.get());
+				if (microserviceOptional.isPresent()) {
+					addContainer(microserviceOptional.get());
 					break;
 				}
 			case UPDATE:
-				if (elementOptional.isPresent()) {
-					updateContainer(elementOptional.get(), false);
+				if (microserviceOptional.isPresent()) {
+					updateContainer(microserviceOptional.get(), false);
 					break;
 				}
 			case REMOVE:
-				removeContainerByElementId(task.getElementId(), false);
+				removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), false);
 				break;
 
 			case REMOVE_WITH_CLEAN_UP:
-				removeContainerByElementId(task.getElementId(), true);
+				removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), true);
 				break;
 		}
 	}

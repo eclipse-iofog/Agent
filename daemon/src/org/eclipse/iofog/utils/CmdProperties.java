@@ -70,8 +70,8 @@ public class CmdProperties {
         return cmdProperties.getProperty(configParam.name().toLowerCase());
     }
 
-    public static String getInstanceIdMessage() {
-        return cmdProperties.getProperty("instance_id");
+    public static String getIofogUuidMessage() {
+        return cmdProperties.getProperty("iofog_uuid");
     }
 
     public static String getIpAddressMessage() {
