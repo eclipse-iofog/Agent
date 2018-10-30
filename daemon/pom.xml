@@ -21,7 +21,7 @@
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>iofog-daemon</artifactId>
+	<artifactId>iofog-agent-daemon</artifactId>
 
 
 	<build>
@@ -70,7 +70,7 @@
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
-							<finalName>iofog-daemon</finalName>
+							<finalName>iofog-agent-daemon</finalName>
 						</configuration>
 					</execution>
 				</executions>
