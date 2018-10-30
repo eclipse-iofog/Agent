@@ -61,5 +61,5 @@ jobs:
       package_cloud push iofog/iofog-agent/fedora/26 iofog-agent${DEV}-${VERSION}-1.noarch.rpm; 
       package_cloud push iofog/iofog-agent/fedora/27 iofog-agent${DEV}-${VERSION}-1.noarch.rpm; 
       package_cloud push iofog/iofog-agent/fedora/28 iofog-agent${DEV}-${VERSION}-1.noarch.rpm; 
-      package_cloud push iofog/iofog/el/6 iofog-agent${DEV}-${VERSION}-1.noarch.rpm; 
+      package_cloud push iofog/iofog-agent/el/6 iofog-agent${DEV}-${VERSION}-1.noarch.rpm; 
       package_cloud push iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm"
