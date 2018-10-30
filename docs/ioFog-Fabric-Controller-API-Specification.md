@@ -38,11 +38,11 @@ This endpoint just gives you a response from the fog controller with its status.
 </pre>
 
 
-#### Get ioFog Instance ID and Access Token
+#### Get ioFog UUID and Access Token
 
-This endpoint registers the ioFog instance that is submitting the provisioning key and delivers the ioFog instance ID along with an access token that must be submitted for any further API interaction. The access token remains valid until it is revoked. If it becomes invalid, the ioFog instance must be re-provisioned to re-establish access to the fog controller API.
+This endpoint registers the ioFog instance that is submitting the provisioning key and delivers the ioFog UUID along with an access token that must be submitted for any further API interaction. The access token remains valid until it is revoked. If it becomes invalid, the ioFog instance must be re-provisioned to re-establish access to the fog controller API.
 
-The ioFog Instance ID provided by this endpoint is a 128-bit random ID formatted in base58. We use base58 for compactness, readability, portability, and transmission safety between systems.
+The ioFog UUID provided by this endpoint is a 128-bit random ID formatted in base58. We use base58 for compactness, readability, portability, and transmission safety between systems.
 
 ##### Endpoint
 
@@ -97,7 +97,7 @@ This endpoint allows the ioFog instance to send its status information to the fo
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
@@ -187,7 +187,7 @@ This endpoint provides the configuration for the ioFog instance. Note that some 
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
@@ -221,7 +221,7 @@ This endpoint allows the ioFog instance to send its configuration to the fog con
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
@@ -279,7 +279,7 @@ This endpoint lists the current changes for the ioFog instance. Much of the time
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 
@@ -352,7 +352,7 @@ The container IDs provided by this endpoint are 128-bit random IDs formatted in 
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
@@ -404,7 +404,7 @@ This endpoint provides the JSON configuration strings for all of the containers 
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
@@ -459,7 +459,7 @@ This endpoint provides the routing plan for all containers. Note that no contain
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>
@@ -514,7 +514,7 @@ This endpoint provides the list of Docker container registries that the ioFog in
 ##### Querystring Parameters
 
 <pre>
-	id - the instance ID held by the ioFog instance (example shown here as 4sd9whcfh)
+	UUID - the UUID held by the ioFog instance (example shown here as 4sd9whcfh)
     
     token - the access token given to the ioFog instance for accessing the API (example shown here as 3498wfesdhusdvkjh3refkjhsdpaohrg)
 </pre>

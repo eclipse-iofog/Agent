@@ -65,7 +65,7 @@ public final class Configuration {
 	private static Document configFile;
 //Directly configurable params
 	private static String accessToken;
-	private static String instanceId;
+	private static String iofogUuid;
 	private static String controllerUrl;
 	private static String controllerCert;
 	private static String networkInterface;
@@ -77,11 +77,11 @@ public final class Configuration {
 	private static float logDiskLimit;
 	private static String logDiskDirectory;
 	private static int logFileCount;
-	private static int statusUpdateFreq;
-	private static int getChangesFreq;
-	private static int scanDevicesFreq;
+	private static int statusFrequency;
+	private static int changeFrequency;
+	private static int deviceScanFrequency;
 	private static int postDiagnosticsFreq;
-	private static boolean isolatedDockerContainers;
+	private static boolean watchdogEnabled;
 	private static String gpsCoordinates;
 	private static GpsMode gpsMode;
 	private static ArchitectureType fogType;
@@ -169,36 +169,36 @@ public final class Configuration {
 		stream(values()).forEach(cmdParam -> defaultConfig.put(cmdParam.getCommandName(), cmdParam.getDefaultValue()));
 	}
 
-	public static boolean isIsolatedDockerContainers() {
-		return isolatedDockerContainers;
+	public static boolean isWatchdogEnabled() {
+		return watchdogEnabled;
 	}
 
-	public static void setIsolatedDockerContainers(boolean isolatedDockerContainers) {
-		Configuration.isolatedDockerContainers = isolatedDockerContainers;
+	public static void setWatchdogEnabled(boolean watchdogEnabled) {
+		Configuration.watchdogEnabled = watchdogEnabled;
 	}
 
-	public static int getStatusUpdateFreq() {
-		return statusUpdateFreq;
+	public static int getStatusFrequency() {
+		return statusFrequency;
 	}
 
-	public static void setStatusUpdateFreq(int statusUpdateFreq) {
-		Configuration.statusUpdateFreq = statusUpdateFreq;
+	public static void setStatusFrequency(int statusFrequency) {
+		Configuration.statusFrequency = statusFrequency;
 	}
 
-	public static int getGetChangesFreq() {
-		return getChangesFreq;
+	public static int getChangeFrequency() {
+		return changeFrequency;
 	}
 
-	public static void setGetChangesFreq(int getChangesFreq) {
-		Configuration.getChangesFreq = getChangesFreq;
+	public static void setChangeFrequency(int changeFrequency) {
+		Configuration.changeFrequency = changeFrequency;
 	}
 
-	public static int getScanDevicesFreq() {
-		return scanDevicesFreq;
+	public static int getDeviceScanFrequency() {
+		return deviceScanFrequency;
 	}
 
-	public static void setScanDevicesFreq(int scanDevicesFreq) {
-		Configuration.scanDevicesFreq = scanDevicesFreq;
+	public static void setDeviceScanFrequency(int deviceScanFrequency) {
+		Configuration.deviceScanFrequency = deviceScanFrequency;
 	}
 
 	public static String getGpsCoordinates() {
@@ -475,7 +475,7 @@ public final class Configuration {
 					setNode(LOG_FILE_COUNT, value);
 					setLogFileCount(Integer.parseInt(value));
 					break;
-				case STATUS_UPDATE_FREQ:
+				case STATUS_FREQUENCY:
 					try {
 						intValue = Integer.parseInt(value);
 					} catch (NumberFormatException e) {
@@ -486,10 +486,10 @@ public final class Configuration {
 						messageMap.put(option, "Status update frequency must be greater than 1");
 						break;
 					}
-					setNode(STATUS_UPDATE_FREQ, value);
-					setStatusUpdateFreq(Integer.parseInt(value));
+					setNode(STATUS_FREQUENCY, value);
+					setStatusFrequency(Integer.parseInt(value));
 					break;
-				case GET_CHANGES_FREQ:
+				case CHANGE_FREQUENCY:
 					try {
 						intValue = Integer.parseInt(value);
 					} catch (NumberFormatException e) {
@@ -500,10 +500,10 @@ public final class Configuration {
 						messageMap.put(option, "Get changes frequency must be greater than 1");
 						break;
 					}
-					setNode(GET_CHANGES_FREQ, value);
-					setGetChangesFreq(Integer.parseInt(value));
+					setNode(CHANGE_FREQUENCY, value);
+					setChangeFrequency(Integer.parseInt(value));
 					break;
-				case SCAN_DEVICES_FREQ:
+				case DEVICE_SCAN_FREQUENCY:
 					try {
 						intValue = Integer.parseInt(value);
 					} catch (NumberFormatException e) {
@@ -514,8 +514,8 @@ public final class Configuration {
 						messageMap.put(option, "Get scan devices frequency must be greater than 1");
 						break;
 					}
-					setNode(SCAN_DEVICES_FREQ, value);
-					setScanDevicesFreq(Integer.parseInt(value));
+					setNode(DEVICE_SCAN_FREQUENCY, value);
+					setDeviceScanFrequency(Integer.parseInt(value));
 					break;
 				case POST_DIAGNOSTICS_FREQ:
 					try {
@@ -531,9 +531,9 @@ public final class Configuration {
 					setNode(POST_DIAGNOSTICS_FREQ, value);
 					setPostDiagnosticsFreq(Integer.parseInt(value));
 					break;
-				case ISOLATED_DOCKER_CONTAINER:
-					setNode(ISOLATED_DOCKER_CONTAINER, value);
-					setIsolatedDockerContainers(!value.equals("off"));
+				case WATCHDOG_ENABLED:
+					setNode(WATCHDOG_ENABLED, value);
+					setWatchdogEnabled(!value.equals("off"));
 					break;
 				case GPS_COORDINATES:
 					configureGps(value);
@@ -709,7 +709,6 @@ public final class Configuration {
 	 * @throws Exception
 	 */
 	public static void loadConfig() throws Exception {
-		// TODO: load configuration XML file here
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -718,7 +717,7 @@ public final class Configuration {
 
 		configElement = (Element) getFirstNodeByTagName("config");
 
-		setInstanceId(getNode(INSTANCE_ID));
+		setIofogUuid(getNode(IOFOG_UUID));
 		setAccessToken(getNode(ACCESS_TOKEN));
 		setControllerUrl(getNode(CONTROLLER_URL));
 		setControllerCert(getNode(CONTROLLER_CERT));
@@ -732,11 +731,11 @@ public final class Configuration {
 		setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT)));
 		setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT)));
 		configureGps(getNode(GPS_COORDINATES));
-		setGetChangesFreq(Integer.parseInt(getNode(GET_CHANGES_FREQ)));
-		setScanDevicesFreq(Integer.parseInt(getNode(SCAN_DEVICES_FREQ)));
-		setStatusUpdateFreq(Integer.parseInt(getNode(STATUS_UPDATE_FREQ)));
+		setChangeFrequency(Integer.parseInt(getNode(CHANGE_FREQUENCY)));
+		setDeviceScanFrequency(Integer.parseInt(getNode(DEVICE_SCAN_FREQUENCY)));
+		setStatusFrequency(Integer.parseInt(getNode(STATUS_FREQUENCY)));
 		setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ)));
-		setIsolatedDockerContainers(!getNode(ISOLATED_DOCKER_CONTAINER).equals("off"));
+		setWatchdogEnabled(!getNode(WATCHDOG_ENABLED).equals("off"));
 		configureFogType(getNode(FOG_TYPE));
 		setDeveloperMode(!getNode(DEV_MODE).equals("off"));
 
@@ -792,8 +791,8 @@ public final class Configuration {
 		return cpuLimit;
 	}
 
-	public static String getInstanceId() {
-		return instanceId;
+	public static String getIofogUuid() {
+		return iofogUuid;
 	}
 
 	public static int getLogFileCount() {
@@ -821,9 +820,9 @@ public final class Configuration {
 		Configuration.accessToken = accessToken;
 	}
 
-	public static void setInstanceId(String instanceId) throws ConfigurationItemException {
-		setNode(INSTANCE_ID, instanceId);
-		Configuration.instanceId = instanceId;
+	public static void setIofogUuid(String iofogUuid) throws ConfigurationItemException {
+		setNode(IOFOG_UUID, iofogUuid);
+		Configuration.iofogUuid = iofogUuid;
 	}
 
 	public static void setControllerUrl(String controllerUrl) {
@@ -883,8 +882,8 @@ public final class Configuration {
 		ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
 		StringBuilder result = new StringBuilder();
-		// instance id
-		result.append(buildReportLine(getInstanceIdMessage(), isNotBlank(instanceId) ? instanceId : "not provisioned"));
+		// iofog UUID
+		result.append(buildReportLine(getIofogUuidMessage(), isNotBlank(iofogUuid) ? iofogUuid : "not provisioned"));
 		//ip address
 		result.append(buildReportLine(getIpAddressMessage(), ipAddress));
 		// network interface
@@ -912,15 +911,15 @@ public final class Configuration {
 		// log files count
 		result.append(buildReportLine(getConfigParamMessage(LOG_FILE_COUNT), format("%d", logFileCount)));
 		// status update frequency
-		result.append(buildReportLine(getConfigParamMessage(STATUS_UPDATE_FREQ), format("%d", statusUpdateFreq)));
+		result.append(buildReportLine(getConfigParamMessage(STATUS_FREQUENCY), format("%d", statusFrequency)));
 		// status update frequency
-		result.append(buildReportLine(getConfigParamMessage(GET_CHANGES_FREQ), format("%d", getChangesFreq)));
+		result.append(buildReportLine(getConfigParamMessage(CHANGE_FREQUENCY), format("%d", changeFrequency)));
 		// scan devices frequency
-		result.append(buildReportLine(getConfigParamMessage(SCAN_DEVICES_FREQ), format("%d", scanDevicesFreq)));
+		result.append(buildReportLine(getConfigParamMessage(DEVICE_SCAN_FREQUENCY), format("%d", deviceScanFrequency)));
 		// post diagnostics frequency
 		result.append(buildReportLine(getConfigParamMessage(POST_DIAGNOSTICS_FREQ), format("%d", postDiagnosticsFreq)));
 		// log file directory
-		result.append(buildReportLine(getConfigParamMessage(ISOLATED_DOCKER_CONTAINER), (isolatedDockerContainers ? "on" : "off")));
+		result.append(buildReportLine(getConfigParamMessage(WATCHDOG_ENABLED), (watchdogEnabled ? "on" : "off")));
 		// gps mode
 		result.append(buildReportLine(getConfigParamMessage(GPS_MODE), gpsMode.name().toLowerCase()));
 		// gps coordinates

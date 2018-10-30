@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -144,9 +144,9 @@ public class MessageBusServer {
 	}
 	
 	/**
-	 * creates a new {@link ClientConsumer} for receiver {@link Element}
+	 * creates a new {@link ClientConsumer} for receiver {@link Microservice}
 	 * 
-	 * @param name - ID of {@link Element}
+	 * @param name - ID of {@link Microservice}
 	 * @throws Exception
 	 */
 	void createCosumer(String name) throws Exception {
@@ -158,9 +158,9 @@ public class MessageBusServer {
 	}
 	
 	/**
-	 * returns {@link ClientConsumer} of a receiver {@link Element}
+	 * returns {@link ClientConsumer} of a receiver {@link Microservice}
 	 * 
-	 * @param receiver - ID of {@link Element}
+	 * @param receiver - ID of {@link Microservice}
 	 * @return {@link ClientConsumer}
 	 */
 	ClientConsumer getConsumer(String receiver) {
@@ -174,9 +174,9 @@ public class MessageBusServer {
 	}
 	
 	/**
-	 * removes {@link ClientConsumer} when a receiver {@link Element} has been removed
+	 * removes {@link ClientConsumer} when a receiver {@link Microservice} has been removed
 	 * 
-	 * @param name - ID of {@link Element}
+	 * @param name - ID of {@link Microservice}
 	 */
 	void removeConsumer(String name) {
 		if (consumers == null)
@@ -185,9 +185,9 @@ public class MessageBusServer {
 	}
 	
 	/**
-	 * creates a new {@link ClientProducer} for publisher {@link Element}
+	 * creates a new {@link ClientProducer} for publisher {@link Microservice}
 	 * 
-	 * @param name - ID of {@link Element}
+	 * @param name - ID of {@link Microservice}
 	 * @throws Exception
 	 */
 	void createProducer(String name) throws Exception {
@@ -198,9 +198,9 @@ public class MessageBusServer {
 	}
 	
 	/**
-	 * returns {@link ClientProducer} of a publisher {@link Element} 
+	 * returns {@link ClientProducer} of a publisher {@link Microservice}
 	 * 
-	 * @param publisher - ID of {@link Element}
+	 * @param publisher - ID of {@link Microservice}
 	 * @return {@link ClientProducer}
 	 */
 	ClientProducer getProducer(String publisher) {
@@ -214,9 +214,9 @@ public class MessageBusServer {
 	}
 	
 	/**
-	 * removes {@link ClientConsumer} when a receiver {@link Element} has been removed
+	 * removes {@link ClientConsumer} when a receiver {@link Microservice} has been removed
 	 * 
-	 * @param name - ID of {@link Element}
+	 * @param name - ID of {@link Microservice}
 	 */
 	void removeProducer(String name) {
 		if (producers == null)

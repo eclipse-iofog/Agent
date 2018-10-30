@@ -198,7 +198,7 @@ iofog provision D98we4sd
 <pre>
 Provisioning with key s734sH9J...
 ...
-[Success - instance ID is fw49hrSuh43SEFuihsdfw4wefuh]
+[Success - Iofog UUID is fw49hrSuh43SEFuihsdfw4wefuh]
 [Failure - &lt;error message from provisioning process&gt;]
 </pre>
 
@@ -232,7 +232,7 @@ iofog info
 ##### Output
 
 <pre>
-Instance ID                              : sdfh43t9EFHSD98hwefiuwefkshd890she
+Iofog UUID                              : sdfh43t9EFHSD98hwefiuwefkshd890she
 IP Address                               : 201.43.0.88
 Network Adapter                          : eth0
 ioFog controller                         : http://iofog.org/controllers/2398yef

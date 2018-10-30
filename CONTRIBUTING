@@ -1,13 +1,13 @@
-# Contributing to Eclipse ioFog
+# Contributing to Eclipse ioFog-Agent
 
 Thanks for your interest in this project.
 
 ## Project description
 
-The Eclipse ioFog set of technologies is a fog computing layer that can be
+The Eclipse ioFog-Agent set of technologies is a fog computing layer that can be
 installed on any hardware running Linux. Once installed, it provides a universal
 runtime for microservices to run on the edge. In addition to a common runtime,
-ioFog also provides a set of useful services including a message bus, dynamic
+ioFog-Agent also provides a set of useful services including a message bus, dynamic
 configuration of the microservices, and remote debugging.
 
 * https://projects.eclipse.org/projects/iot.iofog

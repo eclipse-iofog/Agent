@@ -25,8 +25,8 @@ RUN chmod +x /usr/local/bin/wrapdocker
 VOLUME /var/lib/docker
 
 # Install fog agent
-RUN curl -s https://packagecloud.io/install/repositories/iofog/iofog/script.deb.sh | bash && \
-    apt-get install iofog
+RUN curl -s https://packagecloud.io/install/repositories/iofog/iofog-agent/script.deb.sh | bash && \
+    apt-get install iofog-agent
 
 # Start wrapper and fog-agent
-CMD usr/local/bin/wrapdocker && java -jar /usr/bin/iofogd.jar start
+CMD usr/local/bin/wrapdocker && java -jar /usr/bin/iofog-agentd.jar start

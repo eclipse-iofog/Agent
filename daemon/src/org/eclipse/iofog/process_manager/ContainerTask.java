@@ -31,12 +31,12 @@ public class ContainerTask {
     }
 
     private Tasks action;
-    private String elementId;
+    private String microserviceUuid;
     private int retries;
 
-    public ContainerTask(Tasks action, String elementId) {
+    public ContainerTask(Tasks action, String microserviceUuid) {
         this.action = action;
-        this.elementId = elementId != null ? elementId : EMPTY;
+        this.microserviceUuid = microserviceUuid != null ? microserviceUuid : EMPTY;
         this.retries = 0;
     }
 
@@ -48,8 +48,8 @@ public class ContainerTask {
         return retries;
     }
 
-    public String getElementId() {
-        return elementId;
+    public String getMicroserviceUuid() {
+        return microserviceUuid;
     }
 
     public void incrementRetries() {
@@ -65,13 +65,13 @@ public class ContainerTask {
 
         if (retries != that.retries) return false;
         if (action != that.action) return false;
-        return elementId.equals(that.elementId);
+        return microserviceUuid.equals(that.microserviceUuid);
     }
 
     @Override
     public int hashCode() {
         int result = action.hashCode();
-        result = 31 * result + elementId.hashCode();
+        result = 31 * result + microserviceUuid.hashCode();
         result = 31 * result + retries;
         return result;
     }

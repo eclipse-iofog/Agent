@@ -13,9 +13,9 @@
 package org.eclipse.iofog.message_bus;
 
 import org.eclipse.iofog.IOFogModule;
-import org.eclipse.iofog.element.Element;
-import org.eclipse.iofog.element.ElementManager;
-import org.eclipse.iofog.element.Route;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.MicroserviceManager;
+import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -45,7 +45,7 @@ public class MessageBus implements IOFogModule {
 	private Map<String, MessageReceiver> receivers;
 	private MessageIdGenerator idGenerator;
 	private static MessageBus instance;
-	private ElementManager elementManager;
+	private MicroserviceManager microserviceManager;
 	private final Object updateLock = new Object();
 	
 	private long lastSpeedTime, lastSpeedMessageCount;
@@ -75,9 +75,9 @@ public class MessageBus implements IOFogModule {
 	
 	
 	/**
-	 * enables real-time {@link Message} receiving of an {@link Element} 
+	 * enables real-time {@link Message} receiving of an {@link Microservice}
 	 * 
-	 * @param receiver - ID of {@link Element}
+	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void enableRealTimeReceiving(String receiver) {
 		MessageReceiver rec = receivers.get(receiver); 
@@ -87,9 +87,9 @@ public class MessageBus implements IOFogModule {
 	}
 
 	/**
-	 * disables real-time {@link Message} receiving of an {@link Element} 
+	 * disables real-time {@link Message} receiving of an {@link Microservice}
 	 * 
-	 * @param receiver - ID of {@link Element}
+	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void disableRealTimeReceiving(String receiver) {
 		MessageReceiver rec = receivers.get(receiver); 
@@ -106,7 +106,7 @@ public class MessageBus implements IOFogModule {
 		lastSpeedMessageCount = 0;
 		lastSpeedTime = System.currentTimeMillis();
 		
-		routes = elementManager.getRoutes();
+		routes = microserviceManager.getRoutes();
 		idGenerator = new MessageIdGenerator();
 		publishers = new ConcurrentHashMap<>();
 		receivers = new ConcurrentHashMap<>();
@@ -236,7 +236,7 @@ public class MessageBus implements IOFogModule {
 	 */
 	public void update() {
 		synchronized (updateLock) {
-			Map<String, Route> newRoutes = elementManager.getRoutes();
+			Map<String, Route> newRoutes = microserviceManager.getRoutes();
 			List<String> newPublishers = new ArrayList<>();
 			List<String> newReceivers = new ArrayList<>();
 			
@@ -281,12 +281,12 @@ public class MessageBus implements IOFogModule {
 
 			routes = newRoutes;
 
-			List<Element> latestElements = elementManager.getLatestElements();
-			Map<String, Long> publishedMessagesPerElement = StatusReporter.getMessageBusStatus().getPublishedMessagesPerElement();
-			publishedMessagesPerElement.keySet().removeIf(key -> !elementManager.elementExists(latestElements, key));
-			latestElements.forEach(e -> {
-				if (!publishedMessagesPerElement.keySet().contains(e.getElementId())) {
-					publishedMessagesPerElement.put(e.getElementId(), 0L);
+			List<Microservice> latestMicroservices = microserviceManager.getLatestMicroservices();
+			Map<String, Long> publishedMessagesPerMicroservice = StatusReporter.getMessageBusStatus().getPublishedMessagesPerMicroservice();
+			publishedMessagesPerMicroservice.keySet().removeIf(key -> !microserviceManager.microserviceExists(latestMicroservices, key));
+			latestMicroservices.forEach(e -> {
+				if (!publishedMessagesPerMicroservice.keySet().contains(e.getMicroserviceUuid())) {
+					publishedMessagesPerMicroservice.put(e.getMicroserviceUuid(), 0L);
 				}
 			});
 		}
@@ -306,7 +306,7 @@ public class MessageBus implements IOFogModule {
 	 * 
 	 */
 	public void start() {
-		elementManager = ElementManager.getInstance();
+		microserviceManager = MicroserviceManager.getInstance();
 		
 		messageBusServer = new MessageBusServer();
 		try {
@@ -350,7 +350,7 @@ public class MessageBus implements IOFogModule {
 	/**
 	 * returns {@link MessagePublisher}
 	 * 
-	 * @param publisher - ID of {@link Element}
+	 * @param publisher - ID of {@link Microservice}
 	 * @return
 	 */
 	public MessagePublisher getPublisher(String publisher) {
@@ -360,7 +360,7 @@ public class MessageBus implements IOFogModule {
 	/**
 	 * returns {@link MessageReceiver}
 	 * 
-	 * @param receiver - ID of {@link Element}
+	 * @param receiver - ID of {@link Microservice}
 	 * @return
 	 */
 	public MessageReceiver getReceiver(String receiver) {
@@ -382,6 +382,6 @@ public class MessageBus implements IOFogModule {
 	 * @return
 	 */
 	public synchronized Map<String, Route> getRoutes() {
-		return elementManager.getRoutes();
+		return microserviceManager.getRoutes();
 	}
 }

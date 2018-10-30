@@ -1,16 +1,16 @@
 # Configuration Specification
 
-The ioFog product is configured using an XML file called config.xml located in the "config" directory. The "config" directory location is /etc/iofog.
+The ioFog-Agent product is configured using an XML file called config.xml located in the "config" directory. The "config" directory location is /etc/iofog-agent.
 
-ioFog can also be configured using the command line or using the fog controller to which the ioFog instance has been provisioned. But in either of these cases, the config.xml file will be updated and will still be the only stable local source of configuration.
+ioFog can also be configured using the command line or using the fog controller to which the ioFog-Agent instance has been provisioned. But in either of these cases, the config.xml file will be updated and will still be the only stable local source of configuration.
 
 #### Configuration Items
 
-* access_token - the access token granted by a fog controller to the ioFog instance during the provisioning process
-* instance_id - the unique identifier given to this ioFog instance by the fog controller
-* controller_url - the root URL for the fog controller from which this ioFog instance should take its commands
+* access_token - the access token granted by a fog controller to the ioFog-Agent instance during the provisioning process
+* iofog_uuid - the unique identifier given to this ioFog-Agent instance by the fog controller
+* controller_url - the root URL for the fog controller from which this ioFog-Agent instance should take its commands
 * controller_cert - the file path for the SSL certficate corresponding to the fog controller (for proving its identity)
-* network_interface - the name of the network interface that should be used for determining the IP address of this ioFog instance
+* network_interface - the name of the network interface that should be used for determining the IP address of this ioFog-Agent instance
 * docker_url - the URL of the local Docker API
 * disk_consumption_limit - the limit, in gibibytes (GiB), of disk space that this ioFog instance is allowed to use
 * disk_directory - the directory that this ioFog instance is allowed to use for storage

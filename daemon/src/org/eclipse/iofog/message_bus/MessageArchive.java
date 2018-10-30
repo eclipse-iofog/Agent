@@ -20,14 +20,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import org.eclipse.iofog.element.Element;
+import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 /**
- * archives received {@link Message} from {@link Element}
+ * archives received {@link Message} from {@link Microservice}
  * 
  * @author saeid
  *
@@ -181,7 +181,7 @@ public class MessageArchive implements AutoCloseable{
 	}
 
 	/**
-	 * retrieves list of {@link Message} sent by this {@link Element} within the time frame 
+	 * retrieves list of {@link Message} sent by this {@link Microservice} within the time frame
 	 * 
 	 * @param from - beginning of time frame in milliseconds
 	 * @param to - end of time frame in milliseconds
