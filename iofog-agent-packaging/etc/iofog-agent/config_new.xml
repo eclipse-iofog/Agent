@@ -21,7 +21,7 @@
 
 	<dev_mode>on</dev_mode>
 	
-	<controller_cert>/etc/iofog/cert.crt</controller_cert>
+	<controller_cert>/etc/iofog-agent/cert.crt</controller_cert>
 
 	<fog_type>auto</fog_type>
 	
@@ -31,7 +31,7 @@
 	
 	<disk_consumption_limit>50</disk_consumption_limit>
 	
-	<disk_directory>/var/lib/iofog/</disk_directory>
+	<disk_directory>/var/lib/iofog-agent/</disk_directory>
 	
 	<memory_consumption_limit>4096</memory_consumption_limit>
 	
@@ -39,7 +39,7 @@
 	
 	<log_disk_consumption_limit>10.0</log_disk_consumption_limit>
 	
-	<log_disk_directory>/var/log/iofog/</log_disk_directory>
+	<log_disk_directory>/var/log/iofog-agent/</log_disk_directory>
 
 	<log_file_count>10</log_file_count>
 
