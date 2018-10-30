@@ -21,7 +21,7 @@
 	</parent>
 	
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>iofog-client</artifactId>
+	<artifactId>iofog-agent-client</artifactId>
 	
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -53,7 +53,7 @@
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
-							<finalName>iofog-client</finalName>
+							<finalName>iofog-agent-client</finalName>
 						</configuration>
 					</execution>
 				</executions>
