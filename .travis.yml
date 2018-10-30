@@ -5,7 +5,7 @@ stages:
 - name: build
   if: branch IN (develop, master)
 - name: package_build
-  if: branch = new-iofog-agent
+  if: branch = master
 
 jobs:
   include:
