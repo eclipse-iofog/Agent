@@ -44,7 +44,7 @@ public enum VersionCommand {
 		}
 	};
 
-	public final static String CHANGE_VERSION_SCRIPTS_DIR = SNAP_COMMON + "/usr/share/iofog/";
+	public final static String CHANGE_VERSION_SCRIPTS_DIR = SNAP_COMMON + "/usr/share/iofog-agent/";
 	public final static String UPGRADE_VERSION_SCRIPT = CHANGE_VERSION_SCRIPTS_DIR + "upgrade.sh";
 	public final static String ROLLBACK_VERSION_SCRIPT = CHANGE_VERSION_SCRIPTS_DIR + "rollback.sh";
 

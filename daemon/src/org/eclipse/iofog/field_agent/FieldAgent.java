@@ -69,7 +69,7 @@ import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 public class FieldAgent implements IOFogModule {
 
     private final String MODULE_NAME = "Field Agent";
-    private final String filesPath = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./etc/iofog/" : SNAP_COMMON + "/etc/iofog/";
+    private final String filesPath = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./etc/iofog-agent/" : SNAP_COMMON + "/etc/iofog-agent/";
 
     private Orchestrator orchestrator;
     private SshProxyManager sshProxyManager;

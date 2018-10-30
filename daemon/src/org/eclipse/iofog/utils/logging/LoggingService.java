@@ -87,7 +87,7 @@ public final class LoggingService {
 
 		logDirectory.mkdirs();
 
-		final String logFilePattern = logDirectory.getPath() + "/iofog.%g.log";
+		final String logFilePattern = logDirectory.getPath() + "/iofog-agent.%g.log";
 		
 		if (logger != null) {
 			for (Handler f : logger.getHandlers())

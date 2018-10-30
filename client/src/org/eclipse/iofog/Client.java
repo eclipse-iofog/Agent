@@ -163,7 +163,7 @@ public class Client {
 				+ "                                         use arm or intel_amd to set it manually\n"
 				+ "                 -dev <on/off>           Set the developer's mode without using ssl \\n"
 				+ "                                         certificates. \\n" + "\n" + "\n"
-				+ "Report bugs to: edgemaster@iofog.org\n" + "ioFog home page: http://iofog.org\n"
+				+ "Report bugs to: edgemaster@iofog.org\n" + "ioFog Agent home page: http://iofog.org\n"
 				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 	}
 
