@@ -15,7 +15,7 @@
 <config>
 	<access_token/>
 
-	<controller_url>http://localhost:54421/api/v2/</controller_url>
+	<controller_url>http://localhost:54421/api/v3/</controller_url>
 	
 	<iofog_uuid/>
 
