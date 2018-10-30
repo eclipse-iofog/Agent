@@ -21,7 +21,7 @@ Change directories into the Debian packaging folder. Make a new package build, a
 <pre>
 	Change directory:
 
-	cd /iofog-packaging
+	cd /iofog-agent-packaging
 	
 	See that the other Debian package(s) are present (they have a .deb file extension) and note the current highest version number:
 
@@ -67,7 +67,7 @@ Change directories into the RPM packaging folder. Make a new package build, and 
 <pre>
 	Change directory:
 
-	cd /iofog-packaging-rpm
+	cd /iofog-agent-packaging-rpm
 	
 	See that the other RPM package(s) are present (they have a .rpm file extension) and note the current highest version number:
 

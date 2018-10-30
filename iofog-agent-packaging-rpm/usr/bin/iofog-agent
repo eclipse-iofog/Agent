@@ -1,0 +1,4 @@
+#!/bin/sh
+
+JAR_FILE_NAME=/usr/bin/iofog-agent.jar
+java -jar $JAR_FILE_NAME $@
