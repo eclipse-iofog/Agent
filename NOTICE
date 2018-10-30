@@ -1,12 +1,12 @@
-# Notices for Eclipse ioFog
+# Notices for Eclipse ioFog-Agent
 
-This content is produced and maintained by the Eclipse ioFog project.
+This content is produced and maintained by the Eclipse ioFog-Agent project.
 
 * Project home: https://projects.eclipse.org/projects/iot.iofog
 
 ## Trademarks
 
-Eclipse ioFog is a trademark of the Eclipse Foundation.
+Eclipse ioFog-Agent is a trademark of the Eclipse Foundation.
 
 ## Copyright
 
@@ -27,7 +27,7 @@ SPDX-License-Identifier: EPL-2.0
 The project maintains the following source code repositories:
 
 * https://github.com/ioFog
-* http://git.eclipse.org/c/iofog/org.eclipse.iofog.git
+* http://git.eclipse.org/c/iofog-agent/org.eclipse.iofog.git
 
 ## Third-party Content
 
