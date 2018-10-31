@@ -19,14 +19,10 @@ jobs:
     - sudo apt-get install sshpass xml-twig-tools 
     script:
     - mvn clean install
-    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no 
-      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "service iofog-agent stop"
-    - sshpass -p $DEV_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-agent-daemon-jar-with-dependencies.jar
-      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agentd.jar
-    - sshpass -p $DEV_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar
-      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agent.jar
-   - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no 
-      $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "service iofog-agent start"
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "service iofog-agent stop"
+    - sshpass -p $DEV_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-agent-daemon-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agentd.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agent.jar
+    - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "service iofog-agent start"
   - stage: package_build
     if: type IN (push)
     before_install:
