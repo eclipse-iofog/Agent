@@ -23,20 +23,20 @@ import org.eclipse.iofog.utils.Constants.ControllerStatus;
  */
 public class FieldAgentStatus {
 
-	private Constants.ControllerStatus contollerStatus;
+	private Constants.ControllerStatus controllerStatus;
 	private long lastCommandTime;
 	private boolean controllerVerified;
 
 	public FieldAgentStatus() {
-		contollerStatus = ControllerStatus.BROKEN;
+		controllerStatus = ControllerStatus.BROKEN;
 	}
 	
 	public Constants.ControllerStatus getControllerStatus() {
-		return contollerStatus;
+		return controllerStatus;
 	}
 
-	public void setControllerStatus(Constants.ControllerStatus contollerStatus) {
-		this.contollerStatus = contollerStatus;
+	public void setControllerStatus(Constants.ControllerStatus controllerStatus) {
+		this.controllerStatus = controllerStatus;
 	}
 
 	public long getLastCommandTime() {
