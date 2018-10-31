@@ -26,6 +26,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
@@ -269,6 +270,8 @@ public class Orchestrator {
                 case 400:
                     throw new BadRequestException(errorMessage);
                 case 401:
+                    logWarning(MODULE_NAME, "Invalid authentication ioFog token, switching controller state to broken");
+                    StatusReporter.setFieldAgentStatus().setControllerStatus(Constants.ControllerStatus.BROKEN);
                     throw new AuthenticationException(errorMessage);
                 case 403:
                     throw new ForbiddenException(errorMessage);
