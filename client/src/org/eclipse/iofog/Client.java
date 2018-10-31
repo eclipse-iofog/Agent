@@ -96,8 +96,8 @@ public class Client {
 	 */
 	private static String showHelp() {
 
-		return ("Usage 1: iofog [OPTION]\n" + "Usage 2: iofog [COMMAND] <Argument>\n"
-				+ "Usage 3: iofog [COMMAND] [Parameter] <Value>\n" + "\n"
+		return ("Usage 1: iofog-agent [OPTION]\n" + "Usage 2: iofog-agent [COMMAND] <Argument>\n"
+				+ "Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\n" + "\n"
 				+ "Option           GNU long option         Meaning\n"
 				+ "======           ===============         =======\n"
 				+ "-h, -?           --help                  Show this message\n"
@@ -168,7 +168,7 @@ public class Client {
 	}
 
 	private static String version() {
-		return "ioFog 0.56 " +
+		return "ioFog Agent 1.0.0 " +
 				"\nCopyright (C) 2018 Edgeworx, Inc." +
 				"\nEclipse ioFog is provided under the Eclipse Public License (EPL2)" +
 				"\nhttps://www.eclipse.org/legal/epl-v20.html";
@@ -181,7 +181,7 @@ public class Client {
 		if (isAnotherInstanceRunning()) {
 			switch (args[0]) {
 				case "stop":
-					System.out.println("Enter \"service iofog stop\"");
+					System.out.println("Enter \"service iofog-agent stop\"");
 					break;
 				case "start":
 					System.out.println("iofog is already running.");
@@ -204,7 +204,7 @@ public class Client {
 				System.out.println(version());
 				break;
 			case "start":
-				System.out.println("Enter \"service iofog start\"");
+				System.out.println("Enter \"service iofog-agent start\"");
 				break;
 			default:
 				System.out.println("iofog is not running.");
