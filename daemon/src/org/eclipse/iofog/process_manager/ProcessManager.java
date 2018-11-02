@@ -122,8 +122,7 @@ public class ProcessManager implements IOFogModule {
 					}
 				});
 
-				deleteContainersWithCleanUp(toDeleteWithCleanUpMicroserviceUuids);
-				removeInappropriateContainers(toDeleteWithCleanUpMicroserviceUuids);
+				deleteMicroservices(latestMicroservices);
 				StatusReporter.setProcessManagerStatus().setRunningMicroservicesCount(latestMicroservices.size());
 
 			} catch (Exception ex) {
@@ -133,52 +132,43 @@ public class ProcessManager implements IOFogModule {
 		}
 	};
 
-	private void deleteContainers(List<Microservice> latestMicroservices) {
-//		final List<Microservice> microservicesToDelete = latestMicroservices.stream()
-//				.filter(Microservice::isDelete)
-//				.collect(Collectors.toList());
+	private void deleteMicroservices(List<Microservice> latestMicroservices) {
+		deleteMicroservicesWithoutCleanup(latestMicroservices);
+		deleteMicroservicesWithCleanup(latestMicroservices);
+		deleteOldMicroservices(latestMicroservices);
+		deleteNonAgentMicroservices(latestMicroservices);
+	}
 
-		List<Microservice> microservicesToDelete = latestMicroservices.stream()
+	private void deleteMicroservicesWithoutCleanup(List<Microservice> latestMicroservices) {
+		latestMicroservices.stream()
 				.filter(microservice -> microservice.isDelete() && !microservice.isDeleteWithCleanup())
-				.collect(Collectors.toList());
+				.forEach(microservice -> addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid())));
+	}
 
-		List<Microservice> microservicesToDeleteWithCleanup = latestMicroservices.stream()
+	private void deleteMicroservicesWithCleanup(List<Microservice> latestMicroservices) {
+		latestMicroservices.stream()
 				.filter(microservice -> microservice.isDelete() && microservice.isDeleteWithCleanup())
-				.collect(Collectors.toList());
+				.forEach(microservice -> addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microservice.getMicroserviceUuid())));
+	}
 
-		List<Microservice> oldMicroservices = microserviceManager.getCurrentMicroservices().stream()
+	private void deleteOldMicroservices(List<Microservice> latestMicroservices) {
+		microserviceManager.getCurrentMicroservices().stream()
 				.filter(microservice -> !latestMicroservices.contains(microservice))
-				.collect(Collectors.toList());
+				.forEach(microservice -> addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid())));
+	}
 
+	private void deleteNonAgentMicroservices(List<Microservice> latestMicroservices) {
 		if (Configuration.isWatchdogEnabled()) {
 			Set<Microservice> allAgentMicroservices = Stream.concat(
 					latestMicroservices.stream(), microserviceManager.getCurrentMicroservices().stream())
 					.collect(Collectors.toSet()
-			);
-			List<Container> nonAgentContainers = docker.getContainers().stream()
-					.filter(container -> {
-						String microserviceUuid = docker.getContainerName(container);
-						return allAgentMicroservices.stream()
-								.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid));
-					})
-					.collect(Collectors.toList());
+					);
+			docker.getContainers().stream()
+					.map(container -> docker.getContainerName(container))
+					.filter(microserviceUuid -> allAgentMicroservices.stream()
+							.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
+					.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
 		}
-
-
-
-		docker.getContainers().forEach(container -> {
-			String microserviceUuid = docker.getContainerName(container);
-			Optional<Microservice> microserviceToDeleteOptional = microservicesToDelete.stream()
-					.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
-					.findAny();
-			if (microserviceToDeleteOptional.isPresent()) {
-				if (microserviceToDeleteOptional.get().isDeleteWithCleanup()) {
-					addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microserviceUuid));
-				} else {
-					addTask(new ContainerTask(REMOVE, microserviceUuid));
-				}
-			}
-		});
 	}
 
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
@@ -186,34 +176,6 @@ public class ProcessManager implements IOFogModule {
 		boolean isNotUpdating = !microservice.isUpdating();
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
 		return isNotUpdating && (isNotRunning || areNotEqual);
-	}
-
-	private void deleteContainersWithCleanUp(Set<String> toDeleteWithCleanUpMicroserviceUuids) {
-		toDeleteWithCleanUpMicroserviceUuids.forEach(MicroserviceUuidToDelete -> {
-			if (docker.getContainer(MicroserviceUuidToDelete).isPresent()) {
-				addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, MicroserviceUuidToDelete));
-			}
-		});
-	}
-
-	private void removeInappropriateContainers(Set<String> toRemoveWithCleanUpMicroserviceUuids) {
-		docker.getContainers().forEach(container -> {
-			// remove old containers and unknown for ioFog containers when watchdogEnabled mode is ON
-			// remove only old containers when the mode is OFF
-			if (shouldContainerBeRemoved(container, toRemoveWithCleanUpMicroserviceUuids)) {
-				addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
-			}
-		});
-	}
-
-	private boolean shouldContainerBeRemoved(Container container, Set<String> toRemoveWithCleanUpMicroserviceUuids) {
-		String microserviceUuid = docker.getContainerName(container);
-		Optional<Microservice> microserviceOptional = microserviceManager.findLatestMicroserviceByUuid(microserviceUuid);
-		boolean isNotPresent = !microserviceOptional.isPresent();
-		boolean areNotInCleanUpMicroservices = !toRemoveWithCleanUpMicroserviceUuids.contains(microserviceUuid);
-		boolean exists = microserviceManager.microserviceExists(microserviceManager.getCurrentMicroservices(), microserviceUuid);
-
-		return (isNotPresent && areNotInCleanUpMicroservices) && (Configuration.isWatchdogEnabled() || exists);
 	}
 
 	/**
