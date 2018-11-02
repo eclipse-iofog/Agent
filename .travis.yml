@@ -3,18 +3,16 @@ language: java
 jdk: openjdk8
 stages:
 - name: build
-  if: branch IN (develop, master)
+  if: branch IN (develop, master) AND type = pull_request
 - name: dev_deploy
-  if: branch = develop
+  if: branch = develop AND type = push
 - name: package_build
-  if: branch IN (dev_package, master)
+  if: (branch = develop AND type = cron) OR (branch = master and type = push)
 
 jobs:
   include:
   - stage: build
-    if: type IN (pull_request)
   - stage: dev_deploy
-    if: type IN (push)
     before_install:
     - sudo apt-get install sshpass xml-twig-tools 
     script:
@@ -24,11 +22,10 @@ jobs:
     - sshpass -p $DEV_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agent.jar
     - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP "service iofog-agent start"
   - stage: package_build
-    if: type IN (push)
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
-    - if [ "$TRAVIS_BRANCH" == "dev_package" ]; then export DEV=-dev; fi
+    - if [ "$TRAVIS_BRANCH" == "develop" ]; then export DEV=-dev; fi
     - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no
