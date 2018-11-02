@@ -19,10 +19,10 @@ import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.diagnostics.ImageDownloadManager;
 import org.eclipse.iofog.diagnostics.strace.MicroserviceStraceData;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
-import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
@@ -37,7 +37,6 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -900,9 +899,6 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
             provisioningResult = buildProvisionFailResponse("Certificate error", e);
-        } catch (ConnectException e) {
-            StatusReporter.setFieldAgentStatus().setControllerVerified(true);
-            provisioningResult = buildProvisionFailResponse("Connection error: invalid network interface.", e);
         } catch (UnknownHostException e) {
             StatusReporter.setFieldAgentStatus().setControllerVerified(false);
             provisioningResult = buildProvisionFailResponse("Connection error: unable to connect to fog controller.", e);
