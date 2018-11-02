@@ -24,7 +24,6 @@ public class MicroserviceManager {
 
 	private List<Microservice> latestMicroservices = new ArrayList<>();
 	private List<Microservice> currentMicroservices = new ArrayList<>();
-	private Set<String> toDeleteWithCleanUpMicroserviceUuids = new HashSet<>();
 	private Map<String, Route> routes = new HashMap<>();
 	private Map<String, String> configs = new HashMap<>();
 	private List<Registry> registries = new ArrayList<>();
@@ -49,12 +48,6 @@ public class MicroserviceManager {
 	public List<Microservice> getCurrentMicroservices() {
 		synchronized (MicroserviceManager.class) {
 			return Collections.unmodifiableList(currentMicroservices);
-		}
-	}
-
-	public Set<String> getToDeleteWithCleanUpMicroserviceUuids() {
-		synchronized (MicroserviceManager.class) {
-			return Collections.unmodifiableSet(toDeleteWithCleanUpMicroserviceUuids);
 		}
 	}
 
@@ -95,12 +88,6 @@ public class MicroserviceManager {
 	public void setCurrentMicroservices(List<Microservice> currentMicroservices) {
 		synchronized (MicroserviceManager.class) {
 			this.currentMicroservices = new ArrayList<>(currentMicroservices);
-		}
-	}
-
-	public void setToDeleteWithCleanUpMicroserviceUuids(Set<String> toDeleteWithCleanUpMicroserviceUuids) {
-		synchronized (MicroserviceManager.class) {
-			this.toDeleteWithCleanUpMicroserviceUuids = new HashSet<>(toDeleteWithCleanUpMicroserviceUuids);
 		}
 	}
 

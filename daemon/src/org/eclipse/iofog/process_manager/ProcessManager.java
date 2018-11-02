@@ -22,6 +22,8 @@ import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
@@ -98,7 +100,6 @@ public class ProcessManager implements IOFogModule {
 			logInfo("monitoring containers");
 
 			List<Microservice> latestMicroservices = microserviceManager.getLatestMicroservices();
-			Set<String> toDeleteWithCleanUpMicroserviceUuids = microserviceManager.getToDeleteWithCleanUpMicroserviceUuids();
 			try {
 				latestMicroservices.forEach(microservice -> {
 					Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
@@ -131,6 +132,54 @@ public class ProcessManager implements IOFogModule {
 			microserviceManager.setCurrentMicroservices(latestMicroservices);
 		}
 	};
+
+	private void deleteContainers(List<Microservice> latestMicroservices) {
+//		final List<Microservice> microservicesToDelete = latestMicroservices.stream()
+//				.filter(Microservice::isDelete)
+//				.collect(Collectors.toList());
+
+		List<Microservice> microservicesToDelete = latestMicroservices.stream()
+				.filter(microservice -> microservice.isDelete() && !microservice.isDeleteWithCleanup())
+				.collect(Collectors.toList());
+
+		List<Microservice> microservicesToDeleteWithCleanup = latestMicroservices.stream()
+				.filter(microservice -> microservice.isDelete() && microservice.isDeleteWithCleanup())
+				.collect(Collectors.toList());
+
+		List<Microservice> oldMicroservices = microserviceManager.getCurrentMicroservices().stream()
+				.filter(microservice -> !latestMicroservices.contains(microservice))
+				.collect(Collectors.toList());
+
+		if (Configuration.isWatchdogEnabled()) {
+			Set<Microservice> allAgentMicroservices = Stream.concat(
+					latestMicroservices.stream(), microserviceManager.getCurrentMicroservices().stream())
+					.collect(Collectors.toSet()
+			);
+			List<Container> nonAgentContainers = docker.getContainers().stream()
+					.filter(container -> {
+						String microserviceUuid = docker.getContainerName(container);
+						return allAgentMicroservices.stream()
+								.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid));
+					})
+					.collect(Collectors.toList());
+		}
+
+
+
+		docker.getContainers().forEach(container -> {
+			String microserviceUuid = docker.getContainerName(container);
+			Optional<Microservice> microserviceToDeleteOptional = microservicesToDelete.stream()
+					.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
+					.findAny();
+			if (microserviceToDeleteOptional.isPresent()) {
+				if (microserviceToDeleteOptional.get().isDeleteWithCleanup()) {
+					addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microserviceUuid));
+				} else {
+					addTask(new ContainerTask(REMOVE, microserviceUuid));
+				}
+			}
+		});
+	}
 
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
