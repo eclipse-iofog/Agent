@@ -13,6 +13,7 @@
 package org.eclipse.iofog.field_agent;
 
 import org.apache.commons.lang.SystemUtils;
+import org.apache.http.conn.HttpHostConnectException;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -900,6 +901,8 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
             provisioningResult = buildProvisionFailResponse("Certificate error", e);
+        } catch (HttpHostConnectException e) {
+            provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         } catch (ConnectException e) {
             StatusReporter.setFieldAgentStatus().setControllerVerified(true);
             provisioningResult = buildProvisionFailResponse("Connection error: invalid network interface.", e);
