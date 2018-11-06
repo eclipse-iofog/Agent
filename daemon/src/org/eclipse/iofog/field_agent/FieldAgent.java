@@ -501,7 +501,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
         } catch (Exception e) {
-            logWarning("Unable to get microservices" + e.getMessage());
+            logWarning("Unable to get microservices: " + e.getMessage());
         }
 
         return new ArrayList<>();

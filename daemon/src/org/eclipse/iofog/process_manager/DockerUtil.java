@@ -25,10 +25,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.apache.commons.lang.SystemUtils;
-import org.eclipse.iofog.microservice.Microservice;
-import org.eclipse.iofog.microservice.MicroserviceStatus;
-import org.eclipse.iofog.microservice.PortMapping;
-import org.eclipse.iofog.microservice.Registry;
+import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -47,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.eclipse.iofog.process_manager.MicroserviceState.RUNNING;
-import static org.eclipse.iofog.process_manager.MicroserviceState.fromText;
+import static org.eclipse.iofog.microservice.MicroserviceState.RUNNING;
+import static org.eclipse.iofog.microservice.MicroserviceState.fromText;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -250,9 +247,9 @@ public class DockerUtil {
 			}
 			if (containerState.getStatus() != null) {
 				MicroserviceState microserviceState = MicroserviceState.fromText(containerState.getStatus());
-				result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId) ?
-						MicroserviceState.STUCK_IN_RESTART :
-						microserviceState);
+				result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId)
+						? MicroserviceState.STUCK_IN_RESTART
+						: microserviceState);
 			}
 			result.setContainerId(containerId);
 			result.setUsage(containerId);
