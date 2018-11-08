@@ -142,6 +142,10 @@ public class ProcessManager implements IOFogModule {
 		addTask(new ContainerTask(ADD, microservice.getMicroserviceUuid()));
 	}
 
+	/**
+	 * Deletes microservices which have field "delete" set to true
+	 * @param microservice Microservice object
+	 */
 	private void deleteMicroservice(Microservice microservice) {
 		if (microservice.isDeleteWithCleanup()) {
 			addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microservice.getMicroserviceUuid()));
@@ -163,12 +167,18 @@ public class ProcessManager implements IOFogModule {
 		}
 	}
 
+	/**
+	 * Deletes microservices which don't present in latest microservices list but do present in current microservices list
+	 */
 	private void deleteOldMicroservices() {
 		microserviceManager.getCurrentMicroservices().stream()
 				.filter(microservice -> !microserviceManager.getLatestMicroservices().contains(microservice))
 				.forEach(microservice -> addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid())));
 	}
 
+	/**
+	 * Deletes any microservices which don't belong to iofog agent
+	 */
 	private void deleteNonAgentMicroservices() {
 		if (Configuration.isWatchdogEnabled()) {
 			Set<Microservice> allAgentMicroservices = Stream.concat(
