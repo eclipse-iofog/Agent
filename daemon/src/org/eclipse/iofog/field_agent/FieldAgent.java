@@ -412,6 +412,7 @@ public class FieldAgent implements IOFogModule {
                     registryBuilder.setUserName(registry.getString("username"))
                             .setPassword(registry.getString("password"))
                             .setUserEmail(registry.getString("userEmail"));
+
                 }
                 registries.add(registryBuilder.build());
             }
@@ -478,20 +479,16 @@ public class FieldAgent implements IOFogModule {
                 if (microservicesJson == null) {
                     return loadMicroservices(false);
                 } else {
-                    List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
+                    return IntStream.range(0, microservicesJson.size())
                             .boxed()
                             .map(microservicesJson::getJsonObject)
                             .map(containerJsonObjectToMicroserviceFunction())
                             .collect(toList());
-                    return microservices;
                 }
             } else {
                 JsonObject result = orchestrator.request("microservices", RequestType.GET, null, null);
                 microservicesJson = result.getJsonArray("microservices");
                 saveFile(microservicesJson, filesPath + filename);
-
-                Set<String> toDeleteWithCleanUpMicroserviceIds = new HashSet<>(getToDeleteWithCleanUpIds(microservicesJson));
-                microserviceManager.setToDeleteWithCleanUpMicroserviceUuids(toDeleteWithCleanUpMicroserviceIds);
 
                 List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
                         .boxed()
@@ -504,24 +501,10 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
         } catch (Exception e) {
-            logWarning("Unable to get microservices" + e.getMessage());
+            logWarning("Unable to get microservices: " + e.getMessage());
         }
 
         return new ArrayList<>();
-    }
-
-    private Set<String> getToDeleteWithCleanUpIds(JsonArray microservices) {
-        Set<String> microservicesToDeleteWithCleanup = new HashSet<>();
-
-        for (JsonValue obj : microservices) {
-            JsonObject microservice = (JsonObject) obj;
-            boolean deleteWithCleanup = microservice.getBoolean("deleteWithCleanup", false);
-            if (deleteWithCleanup) {
-                microservicesToDeleteWithCleanup.add(microservice.getString("name"));
-            }
-        }
-
-        return microservicesToDeleteWithCleanup;
     }
 
     private Function<JsonObject, Microservice> containerJsonObjectToMicroserviceFunction() {
@@ -531,8 +514,9 @@ public class FieldAgent implements IOFogModule {
             microservice.setRebuild(jsonObj.getBoolean("rebuild"));
             microservice.setRootHostAccess(jsonObj.getBoolean("rootHostAccess"));
             microservice.setRegistry(jsonObj.getString("registryUrl"));
-
             microservice.setLogSize(jsonObj.getJsonNumber("logSize").longValue());
+            microservice.setDelete(jsonObj.getBoolean("delete"));
+            microservice.setDeleteWithCleanup(jsonObj.getBoolean("deleteWithCleanup"));
 
             JsonValue routesValue = jsonObj.get("routes");
             if (!routesValue.getValueType().equals(JsonValue.ValueType.NULL)) {

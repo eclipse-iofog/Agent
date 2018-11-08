@@ -16,12 +16,15 @@ import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
+import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.MicroserviceStatus;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
@@ -97,74 +100,104 @@ public class ProcessManager implements IOFogModule {
 			}
 			logInfo("monitoring containers");
 
-			List<Microservice> latestMicroservices = microserviceManager.getLatestMicroservices();
-			Set<String> toDeleteWithCleanUpMicroserviceUuids = microserviceManager.getToDeleteWithCleanUpMicroserviceUuids();
 			try {
-				latestMicroservices.forEach(microservice -> {
+				for (Microservice microservice : microserviceManager.getLatestMicroservices()) {
+
 					Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
-					if (!containerOptional.isPresent() || microservice.isRebuild()) {
-						addTask(new ContainerTask(ADD, microservice.getMicroserviceUuid()));
+
+					MicroserviceStatus status = containerOptional.isPresent()
+							? docker.getMicroserviceStatus(containerOptional.get().getId())
+							: new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
+					StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
+
+
+					if (microservice.isDelete()) {
+						if (containerOptional.isPresent()) {
+							deleteMicroservice(microservice);
+						}
+					} else if (!containerOptional.isPresent() || microservice.isRebuild()) {
+						addMicroservice(microservice);
 					} else {
 						Container container = containerOptional.get();
-						microservice.setContainerId(container.getId());
-						try {
-							microservice.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
-						} catch (Exception e) {
-							microservice.setContainerIpAddress("0.0.0.0");
-							logWarning("Can't get ip address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage());
-						}
-						MicroserviceStatus status = docker.getMicroserviceStatus(container.getId());
-						StatusReporter.setProcessManagerStatus().setMicroservicesStatus(docker.getContainerName(container), status);
-						if (shouldContainerBeUpdated(microservice, container, status)) {
-							addTask(new ContainerTask(UPDATE, microservice.getMicroserviceUuid()));
-						}
+						updateMicroservice(container, microservice);
 					}
-				});
+				}
 
-				deleteContainersWithCleanUp(toDeleteWithCleanUpMicroserviceUuids);
-				removeInappropriateContainers(toDeleteWithCleanUpMicroserviceUuids);
-				StatusReporter.setProcessManagerStatus().setRunningMicroservicesCount(latestMicroservices.size());
+				deleteOldMicroservices();
+				deleteNonAgentMicroservices();
+				StatusReporter.setProcessManagerStatus().setRunningMicroservicesCount(docker.getContainers().size());
 
 			} catch (Exception ex) {
 				logWarning(ex.getMessage());
 			}
-			microserviceManager.setCurrentMicroservices(latestMicroservices);
+
+			List<Microservice> currentMicroservices = microserviceManager.getLatestMicroservices().stream()
+					.filter(microservice -> !microservice.isDelete())
+					.collect(Collectors.toList());
+			microserviceManager.setCurrentMicroservices(currentMicroservices);
 		}
 	};
+
+	private void addMicroservice(Microservice microservice) {
+		addTask(new ContainerTask(ADD, microservice.getMicroserviceUuid()));
+	}
+
+	/**
+	 * Deletes microservices which have field "delete" set to true
+	 * @param microservice Microservice object
+	 */
+	private void deleteMicroservice(Microservice microservice) {
+		if (microservice.isDeleteWithCleanup()) {
+			addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microservice.getMicroserviceUuid()));
+		} else {
+			addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid()));
+		}
+	}
+
+	private void updateMicroservice(Container container, Microservice microservice) {
+		microservice.setContainerId(container.getId());
+		try {
+			microservice.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
+		} catch (Exception e) {
+			microservice.setContainerIpAddress("0.0.0.0");
+			logWarning("Can't get ip address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage());
+		}
+		if (shouldContainerBeUpdated(microservice, container, docker.getMicroserviceStatus(container.getId()))) {
+			addTask(new ContainerTask(UPDATE, microservice.getMicroserviceUuid()));
+		}
+	}
+
+	/**
+	 * Deletes microservices which don't present in latest microservices list but do present in current microservices list
+	 */
+	private void deleteOldMicroservices() {
+		microserviceManager.getCurrentMicroservices().stream()
+				.filter(microservice -> !microserviceManager.getLatestMicroservices().contains(microservice))
+				.forEach(microservice -> addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid())));
+	}
+
+	/**
+	 * Deletes any microservices which don't belong to iofog agent
+	 */
+	private void deleteNonAgentMicroservices() {
+		if (Configuration.isWatchdogEnabled()) {
+			Set<Microservice> allAgentMicroservices = Stream.concat(
+					microserviceManager.getLatestMicroservices().stream(), microserviceManager.getCurrentMicroservices().stream())
+					.collect(Collectors.toSet()
+					);
+			docker.getContainers().stream()
+					.map(container -> docker.getContainerName(container))
+					.filter(microserviceUuid -> allAgentMicroservices.stream()
+							.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
+					.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
+		}
+	}
 
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
 		boolean isNotUpdating = !microservice.isUpdating();
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
 		return isNotUpdating && (isNotRunning || areNotEqual);
-	}
-
-	private void deleteContainersWithCleanUp(Set<String> toDeleteWithCleanUpMicroserviceUuids) {
-		toDeleteWithCleanUpMicroserviceUuids.forEach(MicroserviceUuidToDelete -> {
-			if (docker.getContainer(MicroserviceUuidToDelete).isPresent()) {
-				addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, MicroserviceUuidToDelete));
-			}
-		});
-	}
-
-	private void removeInappropriateContainers(Set<String> toRemoveWithCleanUpMicroserviceUuids) {
-		docker.getContainers().forEach(container -> {
-			// remove old containers and unknown for ioFog containers when watchdogEnabled mode is ON
-			// remove only old containers when the mode is OFF
-			if (shouldContainerBeRemoved(container, toRemoveWithCleanUpMicroserviceUuids)) {
-				addTask(new ContainerTask(REMOVE, docker.getContainerName(container)));
-			}
-		});
-	}
-
-	private boolean shouldContainerBeRemoved(Container container, Set<String> toRemoveWithCleanUpMicroserviceUuids) {
-		String microserviceUuid = docker.getContainerName(container);
-		Optional<Microservice> microserviceOptional = microserviceManager.findLatestMicroserviceByUuid(microserviceUuid);
-		boolean isNotPresent = !microserviceOptional.isPresent();
-		boolean areNotInCleanUpMicroservices = !toRemoveWithCleanUpMicroserviceUuids.contains(microserviceUuid);
-		boolean exists = microserviceManager.microserviceExists(microserviceManager.getCurrentMicroservices(), microserviceUuid);
-
-		return (isNotPresent && areNotInCleanUpMicroservices) && (Configuration.isWatchdogEnabled() || exists);
 	}
 
 	/**
@@ -204,7 +237,7 @@ public class ProcessManager implements IOFogModule {
 			}
 			try {
 				containerManager.execute(newTask);
-				logInfo(newTask.getAction() + " finished for container with name " + newTask.getMicroserviceUuid());
+				logInfo(newTask.getAction() + " action completed for container " + newTask.getMicroserviceUuid());
 			} catch (Exception e) {
 				logWarning(newTask.getAction() + " unsuccessfully container with name " + newTask.getMicroserviceUuid() + " , error: " + e.getMessage());
 

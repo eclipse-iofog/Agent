@@ -34,6 +34,8 @@ public class Microservice {
     private long logSize;
     private List<VolumeMapping> volumeMappings;
     private boolean isUpdating;
+    private boolean delete;
+    private boolean deleteWithCleanup;
 
     public Microservice(String microserviceUuid, String imageName) {
         this.microserviceUuid = microserviceUuid;
@@ -129,7 +131,23 @@ public class Microservice {
 		isUpdating = updating;
 	}
 
-	@Override
+    public boolean isDelete() {
+        return delete;
+    }
+
+    public void setDelete(boolean delete) {
+        this.delete = delete;
+    }
+
+    public boolean isDeleteWithCleanup() {
+        return deleteWithCleanup;
+    }
+
+    public void setDeleteWithCleanup(boolean deleteWithCleanUp) {
+        this.deleteWithCleanup = deleteWithCleanUp;
+    }
+
+    @Override
 	public boolean equals(Object e) {
         if (this == e) return true;
         if (e == null || getClass() != e.getClass()) return false;

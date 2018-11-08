@@ -16,7 +16,6 @@ package org.eclipse.iofog.microservice;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Statistics;
 import org.eclipse.iofog.process_manager.DockerUtil;
-import org.eclipse.iofog.process_manager.MicroserviceState;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Map;
@@ -35,6 +34,14 @@ public class MicroserviceStatus {
 	private float cpuUsage;
 	private long memoryUsage;
 	private String containerId;
+
+	public MicroserviceStatus() {
+	}
+
+	public MicroserviceStatus(MicroserviceState status) {
+		this.status = status;
+		this.containerId = "";
+	}
 
 	private static final String MODULE_NAME = MicroserviceStatus.class.getSimpleName();
 
