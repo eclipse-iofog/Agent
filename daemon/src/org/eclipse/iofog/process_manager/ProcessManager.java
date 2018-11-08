@@ -113,7 +113,7 @@ public class ProcessManager implements IOFogModule {
 
 					if (microservice.isDelete()) {
 						if (containerOptional.isPresent()) {
-							removeMicroservice(microservice);
+							deleteMicroservice(microservice);
 						}
 					} else if (!containerOptional.isPresent() || microservice.isRebuild()) {
 						addMicrosrvice(microservice);
@@ -142,7 +142,7 @@ public class ProcessManager implements IOFogModule {
 		addTask(new ContainerTask(ADD, microservice.getMicroserviceUuid()));
 	}
 
-	private void removeMicroservice(Microservice microservice) {
+	private void deleteMicroservice(Microservice microservice) {
 		if (microservice.isDeleteWithCleanup()) {
 			addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microservice.getMicroserviceUuid()));
 		} else {
