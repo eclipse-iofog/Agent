@@ -772,7 +772,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
         } catch (Exception e) {
-            logWarning("unable to get fog config : " + e.getMessage());
+            logWarning("Unable to get fog config : " + e.getMessage());
         }
     }
 
