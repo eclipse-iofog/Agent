@@ -95,10 +95,14 @@ public final class LoggingService {
 		}
 
 		if (maxFileSize < Constants.MiB) {
+			System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit>" +
+					" config parameter's value is negative, using default 1 Mb limit");
 			maxFileSize = Constants.MiB;
 		}
 
 		if (logFileCount < 1) {
+			System.out.println("[" + MODULE_NAME + "] Warning: current <log_file_count> config parameter's" +
+					" value is below l, using default 1 log file value");
 			logFileCount = 1;
 		}
 
