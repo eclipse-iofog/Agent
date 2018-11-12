@@ -93,8 +93,18 @@ public final class LoggingService {
 			for (Handler f : logger.getHandlers())
 				f.close();
 		}
-		
-		Handler logFileHandler = new FileHandler(logFilePattern, (maxFileSize / logFileCount) * 1_000, logFileCount);
+
+		if (maxFileSize < Constants.MiB) {
+			maxFileSize = Constants.MiB;
+		}
+
+		if (logFileCount < 1) {
+			logFileCount = 1;
+		}
+
+		int limit = (maxFileSize / logFileCount) * 1_000;
+
+		Handler logFileHandler = new FileHandler(logFilePattern, limit, logFileCount);
 	
 		logFileHandler.setFormatter(new LogFormatter());
 	
