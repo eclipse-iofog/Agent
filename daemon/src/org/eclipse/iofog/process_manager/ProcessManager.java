@@ -103,23 +103,24 @@ public class ProcessManager implements IOFogModule {
 			try {
 				for (Microservice microservice : microserviceManager.getLatestMicroservices()) {
 
-					Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
+					if (!microservice.isUpdating()) {
+						Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 
-					MicroserviceStatus status = containerOptional.isPresent()
-							? docker.getMicroserviceStatus(containerOptional.get().getId())
-							: new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
-					StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
+						MicroserviceStatus status = containerOptional.isPresent()
+								? docker.getMicroserviceStatus(containerOptional.get().getId())
+								: new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
+						StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
 
-
-					if (microservice.isDelete()) {
-						if (containerOptional.isPresent()) {
-							deleteMicroservice(microservice);
+						if (microservice.isDelete()) {
+							if (containerOptional.isPresent()) {
+								deleteMicroservice(microservice);
+							}
+						} else if (!containerOptional.isPresent()) {
+							addMicroservice(microservice);
+						} else {
+							Container container = containerOptional.get();
+							updateMicroservice(container, microservice);
 						}
-					} else if (!containerOptional.isPresent() || microservice.isRebuild()) {
-						addMicroservice(microservice);
-					} else {
-						Container container = containerOptional.get();
-						updateMicroservice(container, microservice);
 					}
 				}
 
@@ -195,9 +196,8 @@ public class ProcessManager implements IOFogModule {
 
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
-		boolean isNotUpdating = !microservice.isUpdating();
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
-		return isNotUpdating && (isNotRunning || areNotEqual);
+		return isNotRunning || areNotEqual;
 	}
 
 	/**

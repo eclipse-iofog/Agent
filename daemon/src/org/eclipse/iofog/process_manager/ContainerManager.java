@@ -43,19 +43,12 @@ public class ContainerManager {
 	 *
 	 * @throws Exception exception
 	 */
-	private String addContainer(Microservice microservice) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "rebuilding/creating \"" + microservice.getImageName() + "\" if it's needed");
-
+	private void addContainer(Microservice microservice) throws Exception {
 		Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
-
-		String containerId = containerOptional.map(Container::getId).orElse(null);
-		if (containerOptional.isPresent() && microservice.isRebuild()) {
-			containerId = updateContainer(microservice, true);
-		} else if (!containerOptional.isPresent()) {
-			containerId = createContainer(microservice);
-
+		if (!containerOptional.isPresent()) {
+			LoggingService.logInfo(MODULE_NAME, "creating \"" + microservice.getImageName() + "\"");
+			createContainer(microservice);
 		}
-		return containerId;
 	}
 
 	private Registry getRegistry(Microservice microservice) throws Exception {
@@ -73,15 +66,14 @@ public class ContainerManager {
 	 * @param withCleanUp if true then removes old image and volumes
 	 * @throws Exception exception
 	 */
-	private String updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
+	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
 		microservice.setUpdating(true);
 		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
-		String id = createContainer(microservice);
+		createContainer(microservice);
 		microservice.setUpdating(false);
-		return id;
 	}
 
-	private String createContainer(Microservice microservice) throws Exception {
+	private void createContainer(Microservice microservice) throws Exception {
 		if (!microservice.getRegistry().equals("from_cache")){
 			Registry registry = getRegistry(microservice);
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
@@ -96,7 +88,6 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "container is created");
 		startContainer(microservice);
 		microservice.setRebuild(false);
-		return id;
 	}
 
 	/**
@@ -182,7 +173,7 @@ public class ContainerManager {
 				}
 			case UPDATE:
 				if (microserviceOptional.isPresent()) {
-					updateContainer(microserviceOptional.get(), false);
+					updateContainer(microserviceOptional.get(), microserviceOptional.get().isRebuild());
 					break;
 				}
 			case REMOVE:
