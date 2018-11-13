@@ -1,6 +1,18 @@
 sudo: true
 language: java
 jdk: openjdk8
+notifications:
+  email: false
+  slack:
+    rooms:
+      - secure: GVT7WQ6zLSEPdfyWKpe2KHtJcRnG3Ga41jFG5ThKUzNLAQxF00MzPPqqx9azrWdxJlNCwamz3tXM2npWP8BMcftwHUT1pljsSusLeUzzy1CAQvaDE0Jw0m3A8s9OqjYXm0BapP9L/dgp5STkHYh6vI55FihJ/DnPJDTh81ix+mfgdKZagaIEEsXDEOvsjzyq6i6YrRhJKe4PMMem5NPoNmwc/dtGZ8AcMN/l2KsGKeNL1SZvIsQjVRxM4b5RRNPv9njkEHucWAfrnIIrbnvIBDKcVVGucxciENcpPEpsR0pXqm7CD+gm1wPCwCllACFp5hEITC3Qu89rYDzuaKPpbmjcbM6GjalVacx6c14qLOE8mGfzGQacYkT7a2a9oh7OuCULP5S2dVb+obd/snJemzu+o6svKDTfEOlWqmzGATJG6Xm04DNcdEkR4HQFGhAWbWuLrm1B/SwSgZE/lA5SGdMEeE0XufVTORw0kLR6/Fv9fuRj0nDaYfflDHh5n/ZfdwHmsmImXBTrs9GxaAcDPRoQ09SEWi6jKgwrbe0ZG5e21CYh5j8NU3CeKpnKtnIm8tgqIPB0q0UrVc7WcMLfMs9CqFAl1XmDX36RSMw4kedXJCXsP3QQK4R0opN5SNUoo9xjzW4QO+5UwN2/VjGOXOjz1SEx/vuV75v59IWIkTE=
+    on_success: always
+    on_failure: always
+    template:
+    - Repo `%{repository_slug}` *%{result}* build (<%{build_url}|#%{build_number}>)
+      for commit (<%{compare_url}|%{commit}>) on branch `%{branch}`.
+    - 'Execution time: *%{duration}*'
+    - 'Message: %{message}'
 stages:
 - name: build
   if: branch IN (develop, master) AND type = pull_request
@@ -99,7 +111,3 @@ jobs:
       package_cloud push iofog/iofog-agent/el/6 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
       package_cloud yank iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
       package_cloud push iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm"
-notifications:
-  slack:
-    rooms:
-      secure: GVT7WQ6zLSEPdfyWKpe2KHtJcRnG3Ga41jFG5ThKUzNLAQxF00MzPPqqx9azrWdxJlNCwamz3tXM2npWP8BMcftwHUT1pljsSusLeUzzy1CAQvaDE0Jw0m3A8s9OqjYXm0BapP9L/dgp5STkHYh6vI55FihJ/DnPJDTh81ix+mfgdKZagaIEEsXDEOvsjzyq6i6YrRhJKe4PMMem5NPoNmwc/dtGZ8AcMN/l2KsGKeNL1SZvIsQjVRxM4b5RRNPv9njkEHucWAfrnIIrbnvIBDKcVVGucxciENcpPEpsR0pXqm7CD+gm1wPCwCllACFp5hEITC3Qu89rYDzuaKPpbmjcbM6GjalVacx6c14qLOE8mGfzGQacYkT7a2a9oh7OuCULP5S2dVb+obd/snJemzu+o6svKDTfEOlWqmzGATJG6Xm04DNcdEkR4HQFGhAWbWuLrm1B/SwSgZE/lA5SGdMEeE0XufVTORw0kLR6/Fv9fuRj0nDaYfflDHh5n/ZfdwHmsmImXBTrs9GxaAcDPRoQ09SEWi6jKgwrbe0ZG5e21CYh5j8NU3CeKpnKtnIm8tgqIPB0q0UrVc7WcMLfMs9CqFAl1XmDX36RSMw4kedXJCXsP3QQK4R0opN5SNUoo9xjzW4QO+5UwN2/VjGOXOjz1SEx/vuV75v59IWIkTE=
