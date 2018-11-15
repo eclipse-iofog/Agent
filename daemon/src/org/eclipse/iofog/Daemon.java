@@ -119,7 +119,7 @@ public class Daemon {
 			System.out.println(e.getMessage());
 			System.exit(1);
 		} catch (Exception e) {
-			System.out.println("error accessing " + Constants.CONFIG_DIR);
+			System.out.println("Error while parsing " + Constants.CONFIG_DIR + ". " + e.getMessage());
 			System.exit(1);
 		}
 	}
