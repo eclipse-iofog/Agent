@@ -111,3 +111,9 @@ jobs:
       package_cloud push iofog/iofog-agent/el/6 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
       package_cloud yank iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
       package_cloud push iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm"
+    - if [ "$TRAVIS_BRANCH" == "develop" ]; then 
+      sshpass -p $PRE_PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PRE_PROD_MACHINE_USERNAME@$PRE_PROD_MACHINE_IP
+      "service iofog-agent stop; apt-get install --only-upgrade iofog-agent-dev; service iofog-agent start";
+      else sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
+      "service iofog-agent stop; apt-get install --only-upgrade iofog-agent; service iofog-agent start";
+      fi
