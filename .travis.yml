@@ -15,7 +15,7 @@ notifications:
     - 'Message: %{message}'
 stages:
 - name: build
-  if: branch IN (develop, master) AND type = push
+  if: type = pull_request
 - name: dev_deploy
   if: branch = develop AND type = push
 - name: package_build
