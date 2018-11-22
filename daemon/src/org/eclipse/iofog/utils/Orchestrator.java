@@ -78,7 +78,7 @@ public class Orchestrator {
     public boolean ping() throws Exception {
         try {
             JsonObject result = getJSON(controllerUrl + "status");
-            return result.getString("status").equals("ok");
+            return result.getString("status").equals("online");
         } catch (Exception exp) {
             logWarning(MODULE_NAME, exp.getMessage());
             throw exp;
