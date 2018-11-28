@@ -16,6 +16,30 @@ else
 fi
 #echo "Check for config.xml"
 
+if [ -f /etc/iofog-agent/config-development.xml ];
+then
+  rm /etc/iofog-agent/config-development_new.xml
+else
+  mv /etc/iofog-agent/config-development_new.xml /etc/iofog-agent/config-development.xml
+fi
+#echo "Check for config-development.xml"
+
+if [ -f /etc/iofog-agent/config-production.xml ];
+then
+  rm /etc/iofog-agent/config-production_new.xml
+else
+  mv /etc/iofog-agent/config-production_new.xml /etc/iofog-agent/config-production.xml
+fi
+#echo "Check for config-production.xml"
+
+if [ -f /etc/iofog-agent/config-switcher.xml ];
+then
+  rm /etc/iofog-agent/config-switcher_new.xml
+else
+  mv /etc/iofog-agent/config-switcher_new.xml /etc/iofog-agent/config-switcher.xml
+fi
+#echo "Check for config-switcher.xml"
+
 if [ -f /etc/iofog-agent/cert.crt ];
 then
   rm /etc/iofog-agent/cert_new.crt
