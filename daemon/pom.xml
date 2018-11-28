@@ -117,8 +117,13 @@
 		</dependency>
 		<dependency>
 			<groupId>org.hornetq</groupId>
-			<artifactId>hornetq-core</artifactId>
-			<version>2.3.0.BETA1</version>
+			<artifactId>hornetq-core-client</artifactId>
+			<version>2.3.0.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hornetq</groupId>
+			<artifactId>hornetq-server</artifactId>
+			<version>2.3.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish</groupId>
