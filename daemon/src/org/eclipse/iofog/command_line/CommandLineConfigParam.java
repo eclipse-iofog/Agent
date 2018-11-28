@@ -46,7 +46,7 @@ public enum CommandLineConfigParam {
     STATUS_FREQUENCY("10", "sf", "status_update_freq", "statusFrequency"),
     CHANGE_FREQUENCY("20", "cf", "get_changes_freq", "changeFrequency"),
     DEVICE_SCAN_FREQUENCY("60", "sd", "scan_devices_freq", "deviceScanFrequency"),
-    WATCHDOG_ENABLED("on", "idc", "watchdogEnabled", "watchdogEnabled"),
+    WATCHDOG_ENABLED("off", "idc", "isolated_docker_container", "watchdogEnabled"),
     GPS_MODE ("", "", "", "gpsMode"),
     GPS_COORDINATES (GpsMode.AUTO.name().toLowerCase(), "gps", "gps", "gpscoordinates"),
     POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
