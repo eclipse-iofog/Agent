@@ -109,22 +109,6 @@ public class Daemon {
 	}
 
 	/**
-	 * loads config.xml
-	 */
-	private static void loadConfiguration() {
-		try {
-			Configuration.loadConfig();
-		} catch (ConfigurationItemException e) {
-			System.out.println("invalid configuration item(s).");
-			System.out.println(e.getMessage());
-			System.exit(1);
-		} catch (Exception e) {
-			System.out.println("Error while parsing " + Constants.CONFIG_DIR + ". " + e.getMessage());
-			System.exit(1);
-		}
-	}
-
-	/**
 	 * starts logging service
 	 */
 	private static void startLoggingService() {
@@ -165,7 +149,7 @@ public class Daemon {
 	}
 
 	public static void main(String[] args) throws ParseException {
-		loadConfiguration();
+		Configuration.load();
 
 		setupEnvironment();
 		

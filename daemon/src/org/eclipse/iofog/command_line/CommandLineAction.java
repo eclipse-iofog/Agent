@@ -14,6 +14,8 @@
 package org.eclipse.iofog.command_line;
 
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.JsonObject;
@@ -127,6 +129,27 @@ public enum CommandLineAction {
 			return getConfigReport();
 		}
 	},
+	SWITCH_ACTION {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("switch");
+		}
+
+		@Override
+		public String perform(String[] args) {
+			if (args.length < 2) {
+				return showHelp();
+			}
+
+			String environment = args[1];
+			try {
+				ConfigSwitcherState state = ConfigSwitcherState.parse(environment);
+				return Configuration.setupConfigSwitcher(state);
+			} catch(Exception e) {
+				return e.getMessage();
+			}
+		}
+	},
 	PROVISION_ACTION {
 		@Override
 		public List<String> getKeys() {
@@ -200,7 +223,8 @@ public enum CommandLineAction {
 
 			try {
 
-				HashMap<String, String> oldValuesMap = getOldNodeValuesForParameters(config.keySet());
+				HashMap<String, String> oldValuesMap = getOldNodeValuesForParameters(config.keySet(),
+						Configuration.getCurrentConfig());
 				HashMap<String, String> errorMap = setConfig(config, false);
 
 				for (Map.Entry<String, String> e : errorMap.entrySet())
@@ -269,6 +293,7 @@ public enum CommandLineAction {
 				"info                                     Display the current configuration\\n" +
 				"                                         and other information about the\\n" +
 				"                                         software\\n" +
+				"switch           <dev|prod|def>          Switch to different config \\n" +
 				"config           [Parameter] [VALUE]     Change the software configuration\\n" +
 				"                                         according to the options provided\\n" +
 				"                 defaults                Reset configuration to default values\\n" +

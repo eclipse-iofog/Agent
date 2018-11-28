@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ /********************************************************************************
+  ~  * Copyright (c) 2018 Edgeworx, Inc.
+  ~  *
+  ~  * This program and the accompanying materials are made available under the
+  ~  * terms of the Eclipse Public License v. 2.0 which is available at
+  ~  * http://www.eclipse.org/legal/epl-2.0
+  ~  *
+  ~  * SPDX-License-Identifier: EPL-2.0
+  ~  ********************************************************************************/
+  ~
+  -->
+
+<config>
+	<access_token/>
+
+	<controller_url>http://localhost:51121/api/v3/</controller_url>
+	
+	<iofog_uuid/>
+
+	<dev_mode>on</dev_mode>
+	
+	<controller_cert>/etc/iofog-agent/cert.crt</controller_cert>
+
+	<fog_type>auto</fog_type>
+	
+	<network_interface>dynamic</network_interface>
+	
+	<docker_url>unix:///var/run/docker.sock</docker_url>
+	
+	<disk_consumption_limit>50</disk_consumption_limit>
+	
+	<disk_directory>/var/lib/iofog-agent/</disk_directory>
+	
+	<memory_consumption_limit>4096</memory_consumption_limit>
+	
+	<processor_consumption_limit>80.0</processor_consumption_limit>
+	
+	<log_disk_consumption_limit>10.0</log_disk_consumption_limit>
+	
+	<log_disk_directory>/var/log/iofog-agent/</log_disk_directory>
+
+	<log_file_count>10</log_file_count>
+
+	<status_update_freq>30</status_update_freq>
+
+	<get_changes_freq>60</get_changes_freq>
+
+	<post_diagnostics_freq>10</post_diagnostics_freq>
+
+	<scan_devices_freq>60</scan_devices_freq>
+
+	<gps>auto</gps>
+</config>
