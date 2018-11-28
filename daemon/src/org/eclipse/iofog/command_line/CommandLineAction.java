@@ -13,9 +13,7 @@
 
 package org.eclipse.iofog.command_line;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.eclipse.iofog.field_agent.FieldAgent;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
