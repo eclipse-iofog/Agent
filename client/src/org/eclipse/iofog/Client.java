@@ -95,76 +95,82 @@ public class Client {
 	 * @return String
 	 */
 	private static String showHelp() {
-
-		return ("Usage 1: iofog-agent [OPTION]\n" + "Usage 2: iofog-agent [COMMAND] <Argument>\n"
-				+ "Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\n" + "\n"
-				+ "Option           GNU long option         Meaning\n"
-				+ "======           ===============         =======\n"
-				+ "-h, -?           --help                  Show this message\n"
-				+ "-v               --version               Display the software version and\n"
-				+ "                                         license information\n" + "\n" + "\n"
-				+ "Command          Arguments               Meaning\n"
-				+ "=======          =========               =======\n"
-				+ "help                                     Show this message\n"
-				+ "version                                  Display the software version and\n"
-				+ "                                         license information\n"
-				+ "status                                   Display current status information\n"
-				+ "                                         about the software\n"
-				+ "provision        <provisioning key>      Attach this software to the\n"
-				+ "                                         configured ioFog controller\n"
-				+ "deprovision                              Detach this software from all\n"
-				+ "                                         ioFog controllers\n"
-				+ "info                                     Display the current configuration\n"
-				+ "                                         and other information about the\n"
-				+ "                                         software\n"
-				+ "login            -u <username>           Login to Oro Networks application\n"
-				+ "                 -p <password>           \n"
-				+ "config           [Parameter] [VALUE]     Change the software configuration\n"
-				+ "                                         according to the options provided\n"
-				+ "                 defaults                Reset configuration to default values\n"
-				+ "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\n"
-				+ "                                         that the software is allowed to use\n"
-				+ "                 -dl <dir>               Set the directory to use for disk\n"
-				+ "                                         storage\n"
-				+ "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\n"
-				+ "                                         the software is allowed to use for\n"
-				+ "                                         messages\n"
-				+ "                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\n"
-				+ "                                         time that the software is allowed\n"
-				+ "                                         to use\n"
-				+ "                 -a <uri>                Set the uri of the fog controller\n"
-				+ "                                         to which this software connects\n"
-				+ "                 -ac <filepath>          Set the file path of the SSL/TLS\n"
-				+ "                                         certificate for validating the fog\n"
-				+ "                                         controller identity\n"
-				+ "                 -c <uri>                Set the UNIX socket or network address\n"
-				+ "                                         that the Docker daemon is using\n"
-				+ "                 -n <network adapter>    Set the name of the network adapter\n"
-				+ "                                         that holds the correct IP address of \n"
-				+ "                                         this machine\n"
-				+ "                 -l <#MB Limit>          Set the limit, in MiB, of disk space\n"
-				+ "                                         that the log files can consume\n"
-				+ "                 -ld <dir>               Set the directory to use for log file\n"
-				+ "                                         storage\n"
-				+ "                 -lc <#log files>        Set the number of log files to evenly\n"
-				+ "                                         split the log storage limit\n"
-				+ "                 -sf <#seconds>          Set the status update frequency\n"
-				+ "                 -cf <#seconds>          Set the get changes frequency\n"
-				+ "                 -df <#seconds>          Set the post diagnostics frequency\n"
-				+ "                 -idc <on/off>           Set the mode on which any not\\n"
-				+ "                                         registered docker container will be\n"
-				+ "                                         shutted down\n" + "\n" + "\n"
-				+ "                 -gps <auto/off          Set gps location of fog.\n"
-				+ "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\n"
-				+ "                            DD.DDD(lon)  use off to forbid gps,\n"
-				+ "                                         use GPS coordinates in DD format to set them manually\n"
-				+ "                 -ft <auto               Set fog type.\n"
-				+ "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\n"
-				+ "                                         use arm or intel_amd to set it manually\n"
-				+ "                 -dev <on/off>           Set the developer's mode without using ssl \\n"
-				+ "                                         certificates. \\n" + "\n" + "\n"
-				+ "Report bugs to: edgemaster@iofog.org\n" + "ioFog Agent home page: http://iofog.org\n"
-				+ "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
+		return ("Usage 1: iofog-agent [OPTION]\\n" +
+			"Usage 2: iofog-agent [COMMAND] <Argument>\\n" +
+			"Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\\n" +
+			"\\n" +
+			"Option           GNU long option         Meaning\\n" +
+			"======           ===============         =======\\n" +
+			"-h, -?           --help                  Show this message\\n" +
+			"-v               --version               Display the software version and\\n" +
+			"                                         license information\\n" +
+			"\\n" +
+			"\\n" +
+			"Command          Arguments               Meaning\\n" +
+			"=======          =========               =======\\n" +
+			"help                                     Show this message\\n" +
+			"version                                  Display the software version and\\n" +
+			"                                         license information\\n" +
+			"status                                   Display current status information\\n" +
+			"                                         about the software\\n" +
+			"provision        <provisioning key>      Attach this software to the\\n" +
+			"                                         configured ioFog controller\\n" +
+			"deprovision                              Detach this software from all\\n" +
+			"                                         ioFog controllers\\n" +
+			"info                                     Display the current configuration\\n" +
+			"                                         and other information about the\\n" +
+			"                                         software\\n" +
+			"switch           <dev|prod|def>          Switch to different config \\n" +
+			"config           [Parameter] [VALUE]     Change the software configuration\\n" +
+			"                                         according to the options provided\\n" +
+			"                 defaults                Reset configuration to default values\\n" +
+			"                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
+			"                                         that the software is allowed to use\\n" +
+			"                 -dl <dir>               Set the directory to use for disk\\n" +
+			"                                         storage\\n" +
+			"                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
+			"                                         the software is allowed to use for\\n" +
+			"                                         messages\\n" +
+			"                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\\n" +
+			"                                         time that the software is allowed\\n" +
+			"                                         to use\\n" +
+			"                 -a <uri>                Set the uri of the fog controller\\n" +
+			"                                         to which this software connects\\n" +
+			"                 -ac <filepath>          Set the file path of the SSL/TLS\\n" +
+			"                                         certificate for validating the fog\\n" +
+			"                                         controller identity\\n" +
+			"                 -c <uri>                Set the UNIX socket or network address\\n" +
+			"                                         that the Docker daemon is using\\n" +
+			"                 -n <network adapter>    Set the name of the network adapter\\n" +
+			"                                         that holds the correct IP address of \\n" +
+			"                                         this machine\\n" +
+			"                 -l <#MB Limit>          Set the limit, in MiB, of disk space\\n" +
+			"                                         that the log files can consume\\n" +
+			"                 -ld <dir>               Set the directory to use for log file\\n" +
+			"                                         storage\\n" +
+			"                 -lc <#log files>        Set the number of log files to evenly\\n" +
+			"                                         split the log storage limit\\n" +
+			"                 -sf <#seconds>          Set the status update frequency\\n" +
+			"                 -cf <#seconds>          Set the get changes frequency\\n" +
+			"                 -df <#seconds>          Set the post diagnostics frequency\\n" +
+			"                 -sd <#seconds>          Set the scan devices frequency\\n" +
+			"                 -idc <on/off>           Set the mode on which any not\\n" +
+			"										  registered docker container will be\\n" +
+			"										  shut down\\n" +
+			"                 -gps <auto/off          Set gps location of fog.\\n" +
+			"                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
+			"                            DD.DDD(lon)  use off to forbid gps,\\n" +
+			"                                         use GPS coordinates in DD format to set them manually\\n" +
+			"                 -ft <auto               Set fog type.\\n" +
+			"                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
+			"                                         use arm or intel_amd to set it manually\\n" +
+			"                 -dev <on/off>           Set the developer's mode without using ssl \\n" +
+			"                                         certificates. \\n" +
+			"\\n" +
+			"\\n" +
+			"Report bugs to: edgemaster@iofog.org\\n" +
+			"ioFog home page: http://iofog.org\\n" +
+			"For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
 	}
 
 	private static String version() {
