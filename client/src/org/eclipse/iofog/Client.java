@@ -174,7 +174,7 @@ public class Client {
 	}
 
 	private static String version() {
-		return "ioFog Agent 1.0.0 " +
+		return "ioFog Agent 1.0.4 " +
 				"\nCopyright (C) 2018 Edgeworx, Inc." +
 				"\nEclipse ioFog is provided under the Eclipse Public License (EPL2)" +
 				"\nhttps://www.eclipse.org/legal/epl-v20.html";
