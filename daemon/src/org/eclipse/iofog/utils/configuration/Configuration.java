@@ -21,6 +21,7 @@ import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -1007,7 +1008,7 @@ public final class Configuration {
     public static void load() {
         try {
             Configuration.loadConfigSwitcher();
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.println("Error while parsing " + Constants.CONFIG_SWITCHER_PATH + ". " + e.getMessage());
             System.exit(1);
         }
@@ -1022,6 +1023,7 @@ public final class Configuration {
             System.out.println("Error while parsing " + Configuration.getCurrentConfigPath() + ". " + e.getMessage());
             System.exit(1);
         }
+
     }
 
     private static String reload(ConfigSwitcherState newState, ConfigSwitcherState previousState) {
@@ -1031,13 +1033,27 @@ public final class Configuration {
 
             Configuration.loadConfigSwitcher();
             Configuration.loadConfig();
+
+            FieldAgent.getInstance().instanceConfigUpdated();
+            ProcessManager.getInstance().instanceConfigUpdated();
+            ResourceConsumptionManager.getInstance().instanceConfigUpdated();
+            LoggingService.instanceConfigUpdated();
+            MessageBus.getInstance().instanceConfigUpdated();
+
             return "Successfully switched to new configuration.";
-        } catch(Exception e) {
+        } catch (Exception e) {
             try {
                 getFirstNodeByTagName(SWITCHER_NODE, configSwitcherFile).setTextContent(previousState.fullValue());
                 updateConfigFile(CONFIG_SWITCHER_PATH, configSwitcherFile);
 
                 load();
+
+                FieldAgent.getInstance().instanceConfigUpdated();
+                ProcessManager.getInstance().instanceConfigUpdated();
+                ResourceConsumptionManager.getInstance().instanceConfigUpdated();
+                LoggingService.instanceConfigUpdated();
+                MessageBus.getInstance().instanceConfigUpdated();
+
                 return "Error while loading new config file, falling back to current configuration";
             } catch (Exception fatalException) {
                 System.out.println("Error while loading previous configuration, try to restart iofog-agent");
@@ -1047,4 +1063,13 @@ public final class Configuration {
         }
     }
 
+    public static void setupSupervisor() {
+        LoggingService.logInfo(MODULE_NAME, "starting supervisor");
+        try {
+            Supervisor supervisor = new Supervisor();
+            supervisor.start();
+        } catch (Exception exp) {
+            LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+        }
+    }
 }

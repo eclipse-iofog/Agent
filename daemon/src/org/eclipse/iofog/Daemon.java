@@ -167,14 +167,8 @@ public class Daemon {
 	
 			outToNull();
 	
-			LoggingService.logInfo(MODULE_NAME, "starting supervisor");
-			Supervisor supervisor = new Supervisor();
-			try {
-				supervisor.start();
-			} catch (Exception exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
-			}
-	
+			Configuration.setupSupervisor();
+
 			System.setOut(Constants.systemOut);
 		}
 	}
