@@ -921,10 +921,6 @@ public class FieldAgent implements IOFogModule {
             return "\nFailure - not provisioned";
         }
 
-        if (!isControllerConnected(false)) {
-            return "\nFailure - not connected to controller";
-        }
-
         StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
         try {
             Configuration.setIofogUuid("");
