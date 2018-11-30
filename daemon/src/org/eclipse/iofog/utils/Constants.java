@@ -105,4 +105,5 @@ public class Constants {
     public static final String CONFIG_SWITCHER_PATH = CONFIG_DIR + "config-switcher.xml";
     public static final String SWITCHER_ELEMENT = "switcher";
     public static final String SWITCHER_NODE = "current_config";
+    public static final String OS_GROUP = "iofog-agent";
 }
