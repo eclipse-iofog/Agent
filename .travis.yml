@@ -19,7 +19,7 @@ stages:
 - name: dev_deploy
   if: branch = develop AND type = push
 - name: package_build
-  if: "(branch = develop AND type = cron) OR (branch = master and type = push)"
+  if: branch = master and type = push
 jobs:
   include:
   - stage: build
@@ -40,7 +40,6 @@ jobs:
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
-    - if [ "$TRAVIS_BRANCH" == "develop" ]; then export DEV=-dev; fi
     - export VERSION=`xml_grep 'version' pom.xml --text_only`
     - mvn clean install
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP
@@ -57,63 +56,59 @@ jobs:
     - sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-agent-client-jar-with-dependencies.jar
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-agent-packaging-rpm/usr/bin/iofog-agent.jar
     - sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP
-      "cd /iofog-agent-packaging; fpm -s dir -t deb -n \"iofog-agent${DEV}\" -v $VERSION
+      "cd /iofog-agent-packaging; fpm -s dir -t deb -n \"iofog-agent\" -v $VERSION
       -a all --deb-no-default-config-files --after-install debian.sh --after-remove
       remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr; package_cloud
-      yank iofog/iofog-agent/ubuntu/precise iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/precise iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/ubuntu/trusty iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/trusty iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/ubuntu/utopic iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/utopic iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/ubuntu/vivid iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/vivid iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/ubuntu/wily iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/wily iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/ubuntu/xenial iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/xenial iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/ubuntu/bionic iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/ubuntu/bionic iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/debian/wheezy iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/debian/wheezy iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/debian/jessie iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/debian/jessie iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/debian/stretch iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/debian/stretch iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/debian/buster iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/debian/buster iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/raspbian/wheezy iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/raspbian/wheezy iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/raspbian/jessie iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/raspbian/jessie iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/raspbian/stretch iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/raspbian/stretch iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud yank iofog/iofog-agent/raspbian/buster iofog-agent${DEV}_${VERSION}_all.deb;
-      package_cloud push iofog/iofog-agent/raspbian/buster iofog-agent${DEV}_${VERSION}_all.deb;
-      cd /iofog-agent-packaging-rpm; fpm -s dir -t rpm -n \"iofog-agent${DEV}\" -v
+      yank iofog/iofog-agent/ubuntu/precise iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/precise iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/ubuntu/trusty iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/trusty iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/ubuntu/utopic iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/utopic iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/ubuntu/vivid iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/vivid iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/ubuntu/wily iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/wily iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/ubuntu/xenial iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/xenial iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/ubuntu/bionic iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/ubuntu/bionic iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/debian/wheezy iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/debian/wheezy iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/debian/jessie iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/debian/jessie iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/debian/stretch iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/debian/stretch iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/debian/buster iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/debian/buster iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/raspbian/wheezy iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/raspbian/wheezy iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/raspbian/jessie iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/raspbian/jessie iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/raspbian/stretch iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/raspbian/stretch iofog-agent_${VERSION}_all.deb;
+      package_cloud yank iofog/iofog-agent/raspbian/buster iofog-agent_${VERSION}_all.deb;
+      package_cloud push iofog/iofog-agent/raspbian/buster iofog-agent_${VERSION}_all.deb;
+      cd /iofog-agent-packaging-rpm; fpm -s dir -t rpm -n \"iofog-agent\" -v
       $VERSION -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh
       --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr; package_cloud yank
-      iofog/iofog-agent/fedora/22 iofog-agent${DEV}-${VERSION}-1.noarch.rpm; package_cloud
-      push iofog/iofog-agent/fedora/22 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/fedora/23 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/fedora/23 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/fedora/24 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/fedora/24 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/fedora/25 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/fedora/25 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/fedora/26 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/fedora/26 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/fedora/27 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/fedora/27 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/fedora/28 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/fedora/28 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/el/6 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/el/6 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud yank iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm;
-      package_cloud push iofog/iofog-agent/el/7 iofog-agent${DEV}-${VERSION}-1.noarch.rpm"
-    - if [ "$TRAVIS_BRANCH" == "develop" ]; then 
-      sshpass -p $PRE_PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PRE_PROD_MACHINE_USERNAME@$PRE_PROD_MACHINE_IP
-      "service iofog-agent stop; apt-get install --only-upgrade iofog-agent-dev -y; service iofog-agent start";
-      else sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
-      "service iofog-agent stop; apt-get install --only-upgrade iofog-agent -y; service iofog-agent start";
-      fi
+      iofog/iofog-agent/fedora/22 iofog-agent-${VERSION}-1.noarch.rpm; package_cloud
+      push iofog/iofog-agent/fedora/22 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/fedora/23 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/fedora/23 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/fedora/24 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/fedora/24 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/fedora/25 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/fedora/25 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/fedora/26 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/fedora/26 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/fedora/27 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/fedora/27 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/fedora/28 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/fedora/28 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/el/6 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/el/6 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud yank iofog/iofog-agent/el/7 iofog-agent-${VERSION}-1.noarch.rpm;
+      package_cloud push iofog/iofog-agent/el/7 iofog-agent-${VERSION}-1.noarch.rpm"
+    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
+      "service iofog-agent stop; apt-get install --only-upgrade iofog-agent -y; service iofog-agent start"
