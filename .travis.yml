@@ -20,8 +20,6 @@ stages:
   if: branch = develop AND type = push
 - name: package_build
   if: branch = master and type = push
-- name: test_release
-  if: branch = dbusel/feature-EWC-398-auto-release
 jobs:
   include:
   - stage: build
@@ -114,9 +112,6 @@ jobs:
       package_cloud push iofog/iofog-agent/el/7 iofog-agent-${VERSION}-1.noarch.rpm"
     - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
       "service iofog-agent stop; apt-get install --only-upgrade iofog-agent -y; service iofog-agent start"
-  - stage: test_release
-    script:
-    - mvn clean install
     before_deploy:
     - git config --global user.name "${GH_USERNAME}";
     - git config credential.helper "store --file=.git/credentials";
@@ -128,4 +123,4 @@ jobs:
       name: "v${VERSION} ($(date +'%m/%d/%Y'))"
       skip_cleanup: true
       on:
-        all_branches: true
+        branch: master
