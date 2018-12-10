@@ -21,7 +21,7 @@ stages:
 - name: package_build
   if: branch = master and type = push
 - name: test_release
-  if: branch = dbusel/feature-EWC-398-auto-release and type = push 
+  if: branch = dbusel/feature-EWC-398-auto-release
 jobs:
   include:
   - stage: build
@@ -125,7 +125,5 @@ jobs:
     deploy:
       provider: releases
       api_key: "${GH_TOKEN}"
-      file_glob: true
-      file: *
       name: "v${VERSION} ($(date +'%m/%d/%Y'))"
       skip_cleanup: true  
