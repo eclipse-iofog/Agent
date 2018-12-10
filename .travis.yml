@@ -121,7 +121,7 @@ jobs:
     - git config --global user.name "${GH_USERNAME}";
     - git config credential.helper "store --file=.git/credentials";
     - echo "https://${GH_TOKEN}:@github.com" > .git/credentials;
-    - git tag $VERSION
+    - git tag ${VERSION}
     deploy:
       provider: releases
       api_key: "${GH_TOKEN}"
