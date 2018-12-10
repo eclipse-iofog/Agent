@@ -126,4 +126,5 @@ jobs:
       provider: releases
       api_key: "${GH_TOKEN}"
       name: "v${VERSION} ($(date +'%m/%d/%Y'))"
-      skip_cleanup: true  
+      skip_cleanup: true
+      all_branches: true
