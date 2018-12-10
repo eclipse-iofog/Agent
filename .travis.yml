@@ -127,4 +127,5 @@ jobs:
       api_key: "${GH_TOKEN}"
       name: "v${VERSION} ($(date +'%m/%d/%Y'))"
       skip_cleanup: true
-      all_branches: true
+      on:
+        all_branches: true
