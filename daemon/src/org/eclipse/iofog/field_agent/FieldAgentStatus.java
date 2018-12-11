@@ -28,7 +28,7 @@ public class FieldAgentStatus {
 	private boolean controllerVerified;
 
 	public FieldAgentStatus() {
-		controllerStatus = ControllerStatus.BROKEN;
+		controllerStatus = ControllerStatus.BROKEN_CERTIFICATE;
 	}
 	
 	public Constants.ControllerStatus getControllerStatus() {

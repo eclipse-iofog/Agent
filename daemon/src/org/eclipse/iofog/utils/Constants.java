@@ -35,7 +35,7 @@ public class Constants {
     }
 
     public enum ControllerStatus {
-        NOT_PROVISIONED, BROKEN, OK
+        NOT_PROVISIONED, BROKEN_CERTIFICATE, OK
     }
 
     public enum ConfigSwitcherState {
