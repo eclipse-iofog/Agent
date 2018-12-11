@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # killing old running processes
-for KILLPID in `ps ax | grep 'iofog-agent' | awk ' { print $1;}'`; do
+for KILLPID in `ps ax | grep 'iofog-agentd' | awk ' { print $1;}'`; do
   kill -9 $KILLPID;
 done
 
