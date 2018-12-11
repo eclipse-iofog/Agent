@@ -218,7 +218,7 @@ public class FieldAgent implements IOFogModule {
     private void verificationFailed() {
         connected = false;
         if (!notProvisioned()) {
-            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN);
+            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN_CERTIFICATE);
             logWarning("controller certificate verification failed");
         }
         StatusReporter.setFieldAgentStatus().setControllerVerified(false);
@@ -589,7 +589,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
         } catch (Exception e) {
-            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN);
+            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN_CERTIFICATE);
             logWarning("Error pinging for controller: " + e.getMessage());
         }
         return false;

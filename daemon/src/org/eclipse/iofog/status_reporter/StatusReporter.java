@@ -78,7 +78,7 @@ public final class StatusReporter {
 
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
 		String connectionStatus = fieldAgentStatus.getControllerStatus() == ControllerStatus.OK ? "ok" :
-				(fieldAgentStatus.getControllerStatus() == ControllerStatus.BROKEN ? "broken" : "not provisioned");
+				(fieldAgentStatus.getControllerStatus() == ControllerStatus.BROKEN_CERTIFICATE ? "broken" : "not provisioned");
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
 		result.append("\\nMemory Usage                : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage())).append(" MiB");
 		if (diskUsage < 1)
