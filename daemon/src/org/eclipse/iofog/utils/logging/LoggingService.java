@@ -109,11 +109,13 @@ public final class LoggingService {
 		long limit = (maxFileSize / logFileCount) * 1_000L;
 		if(limit > Integer.MAX_VALUE) {
 			System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit> config parameter's" +
-					" value is above 4GB, using max 4GB value");
-			limit = 4L * Constants.GiB;
+					" value is above 2GB, using max 2GB value");
+			limit = 2L * Constants.MiB * 1_000L;
 		}
 
-		Handler logFileHandler = new FileHandler(logFilePattern, (int) limit, logFileCount);
+		int intLimit = (int) limit;
+
+		Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
 	
 		logFileHandler.setFormatter(new LogFormatter());
 	
