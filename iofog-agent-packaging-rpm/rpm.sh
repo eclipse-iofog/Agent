@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# killing old running processes
+for KILLPID in `ps ax | grep 'iofog-agentd' | awk ' { print $1;}'`; do
+  kill -9 $KILLPID;
+done
+
 #echo "Starting post-install process..."
 echo 'iofog-agent ALL=(ALL:ALL) ALL' >> /etc/sudoers
 #useradd -r -U -s /usr/bin/nologin iofog-agent
