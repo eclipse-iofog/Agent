@@ -217,9 +217,10 @@ public class FieldAgent implements IOFogModule {
      */
     private void verificationFailed() {
         connected = false;
-        logWarning("controller certificate verification failed");
-        if (!notProvisioned())
+        if (!notProvisioned()) {
             StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN);
+            logWarning("controller certificate verification failed");
+        }
         StatusReporter.setFieldAgentStatus().setControllerVerified(false);
     }
 
