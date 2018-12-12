@@ -51,7 +51,7 @@ jobs:
       $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP:/usr/bin/iofog-agent.jar
     - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
       "service iofog-agent start"
-  - stage: package_build
+  - stage: release
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
