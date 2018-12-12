@@ -31,7 +31,6 @@ import static org.eclipse.iofog.command_line.CommandLineConfigParam.CONTROLLER_C
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.existParam;
 import static org.eclipse.iofog.status_reporter.StatusReporter.getStatusReport;
 import static org.eclipse.iofog.utils.CmdProperties.*;
-import static org.eclipse.iofog.utils.Constants.VERSION;
 import static org.eclipse.iofog.utils.Constants.systemOut;
 import static org.eclipse.iofog.utils.configuration.Configuration.*;
 
@@ -86,7 +85,7 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
-			return format(getVersionMessage(), VERSION);
+			return format(getVersionMessage(), getVersion());
 		}
 	},
 	STATUS_ACTION {

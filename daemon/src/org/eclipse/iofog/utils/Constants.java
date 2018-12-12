@@ -66,8 +66,6 @@ public class Constants {
         }
     }
 
-    public static final String VERSION = "1.0.5";
-
     public static final int NUMBER_OF_MODULES = 7;
 
     public static final int RESOURCE_CONSUMPTION_MANAGER = 0;

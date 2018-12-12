@@ -25,6 +25,12 @@
 	
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+		<resources>
+			<resource>
+				<directory>src</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -86,8 +92,5 @@
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
-
-	<dependencies>
-	</dependencies>
 
 </project>
