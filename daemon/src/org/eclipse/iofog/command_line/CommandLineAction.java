@@ -241,8 +241,8 @@ public enum CommandLineAction {
 					}
 				}
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "error updating new config.");
-				result.append("error updating new config : " + e.getMessage());
+				LoggingService.logWarning(MODULE_NAME, "Error updating new config.");
+				result.append("Error updating new config : " + e.getMessage());
 			}
 
 			return result.toString();
