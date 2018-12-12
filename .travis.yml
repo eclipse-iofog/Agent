@@ -18,7 +18,9 @@ stages:
   if: type = pull_request
 - name: dev_deploy
   if: branch = develop AND type = push
-- name: package_build
+- name: prod_deploy
+  if: branch = release AND type = push
+- name: release
   if: branch = master and type = push
 jobs:
   include:
@@ -35,6 +37,19 @@ jobs:
     - sshpass -p $DEV_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agent.jar
     - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
+      "service iofog-agent start"
+  - stage: prod_deploy
+    before_install:
+    - sudo apt-get install sshpass xml-twig-tools
+    script:
+    - mvn clean install
+    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
+      "service iofog-agent stop"
+    - sshpass -p $PROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-agent-daemon-jar-with-dependencies.jar
+      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP:/usr/bin/iofog-agentd.jar
+    - sshpass -p $PROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar
+      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP:/usr/bin/iofog-agent.jar
+    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
       "service iofog-agent start"
   - stage: package_build
     before_install:
@@ -110,8 +125,6 @@ jobs:
       package_cloud push iofog/iofog-agent/el/6 iofog-agent-${VERSION}-1.noarch.rpm;
       package_cloud yank iofog/iofog-agent/el/7 iofog-agent-${VERSION}-1.noarch.rpm;
       package_cloud push iofog/iofog-agent/el/7 iofog-agent-${VERSION}-1.noarch.rpm"
-    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
-      "service iofog-agent stop; apt-get install --only-upgrade iofog-agent -y; service iofog-agent start"
     before_deploy:
     - git config --global user.name "${GH_USERNAME}";
     - git config credential.helper "store --file=.git/credentials";
