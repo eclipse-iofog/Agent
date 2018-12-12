@@ -536,6 +536,10 @@ public final class Configuration {
                     setPostDiagnosticsFreq(Integer.parseInt(value));
                     break;
                 case WATCHDOG_ENABLED:
+                    if (!"off".equalsIgnoreCase(value) && !"on".equalsIgnoreCase(value)) {
+                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                        break;
+                    }
                     setNode(WATCHDOG_ENABLED, value, configFile, configElement);
                     setWatchdogEnabled(!value.equals("off"));
                     break;
