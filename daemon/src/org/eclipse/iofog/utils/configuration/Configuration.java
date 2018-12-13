@@ -434,8 +434,13 @@ public final class Configuration {
                     setControllerCert(value);
                     break;
                 case DOCKER_URL:
-                    setNode(DOCKER_URL, value, configFile, configElement);
-                    setDockerUrl(value);
+                    if (value.startsWith("tcp://") || value.startsWith("unix://")) {
+                        setNode(DOCKER_URL, value, configFile, configElement);
+                        setDockerUrl(value);
+                    } else {
+                        messageMap.put(option, "Unsupported protocol scheme. Only 'tcp://' or 'unix://' supported.\n");
+                        break;
+                    }
                     break;
                 case NETWORK_INTERFACE:
                     if (defaults || isValidNetworkInterface(value.trim())) {
