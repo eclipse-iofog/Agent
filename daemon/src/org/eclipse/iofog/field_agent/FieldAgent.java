@@ -762,7 +762,7 @@ public class FieldAgent implements IOFogModule {
                 instanceConfig.put(DEVICE_SCAN_FREQUENCY.getCommandName(), deviceScanFrequency);
 
             if (Configuration.isWatchdogEnabled() != watchdogEnabled)
-                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled);
+                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled ? "on" : "off");
 
             if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
                 instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
