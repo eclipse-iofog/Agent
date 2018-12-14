@@ -189,12 +189,20 @@ public class FieldAgent implements IOFogModule {
             if (StraceDiagnosticManger.getInstance().getMonitoringMicroservices().size() > 0) {
                 JsonObjectBuilder builder = Json.createObjectBuilder();
 
+                JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+
                 for (MicroserviceStraceData microservice : StraceDiagnosticManger.getInstance().getMonitoringMicroservices()) {
-                    builder.add(microservice.getMicroserviceUuid(), microservice.getResultBufferAsString());
+                    JsonObjectBuilder straceBuilder = Json.createObjectBuilder();
+
+                    straceBuilder.add("microserviceUuid", microservice.getMicroserviceUuid());
+                    straceBuilder.add("buffer", microservice.getResultBufferAsString());
+
                     microservice.getResultBuffer().clear();
+
+                    arrayBuilder.add(straceBuilder.build());
                 }
 
-                builder.add("timestamp", new Date().getTime());
+                builder.add("straceData", arrayBuilder.build());
                 JsonObject json = builder.build();
 
                 try {
@@ -449,14 +457,14 @@ public class FieldAgent implements IOFogModule {
                 continue;
             }
 
-            String microserviceId = microservice.getMicroserviceUuid();
+            String microserviceUuid = microservice.getMicroserviceUuid();
             Route microserviceRoute = new Route();
 
             for (String jsonRoute : jsonRoutes) {
                 microserviceRoute.getReceivers().add(jsonRoute);
             }
 
-            routes.put(microserviceId, microserviceRoute);
+            routes.put(microserviceUuid, microserviceRoute);
         }
 
         microserviceManager.setRoutes(routes);

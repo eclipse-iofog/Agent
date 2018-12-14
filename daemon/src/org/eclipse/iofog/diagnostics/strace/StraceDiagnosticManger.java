@@ -56,8 +56,8 @@ public class StraceDiagnosticManger {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
 			for (JsonValue microserviceValue : straceMicroserviceChanges) {
 				JsonObject microservice = (JsonObject) microserviceValue;
-				if (microservice.containsKey("microserviceId")) {
-					String microserviceUuid = microservice.getString("microserviceId");
+				if (microservice.containsKey("microserviceUuid")) {
+					String microserviceUuid = microservice.getString("microserviceUuid");
 					boolean strace = microservice.getInt("straceRun", 0) != 0;
 					manageMicroservice(microserviceUuid, strace);
 				}
