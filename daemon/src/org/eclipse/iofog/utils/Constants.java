@@ -35,7 +35,7 @@ public class Constants {
     }
 
     public enum ControllerStatus {
-        NOT_PROVISIONED, BROKEN, OK
+        NOT_PROVISIONED, BROKEN_CERTIFICATE, OK
     }
 
     public enum ConfigSwitcherState {
@@ -65,8 +65,6 @@ public class Constants {
             return aliases[0];
         }
     }
-
-    public static final String VERSION = "1.0.5";
 
     public static final int NUMBER_OF_MODULES = 7;
 

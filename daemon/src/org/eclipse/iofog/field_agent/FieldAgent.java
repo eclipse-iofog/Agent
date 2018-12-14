@@ -56,6 +56,7 @@ import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
+import static org.eclipse.iofog.utils.CmdProperties.getVersion;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
@@ -130,7 +131,7 @@ public class FieldAgent implements IOFogModule {
                 .add("messageSpeed", StatusReporter.getMessageBusStatus().getAverageSpeed())
                 .add("lastCommandTime", StatusReporter.getFieldAgentStatus().getLastCommandTime())
                 .add("tunnelStatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus())
-                .add("version", VERSION)
+                .add("version", getVersion())
                 .add("isReadyToUpgrade", isReadyToUpgrade())
                 .add("isReadyToRollback", isReadyToRollback())
                 .build();
@@ -217,9 +218,10 @@ public class FieldAgent implements IOFogModule {
      */
     private void verificationFailed() {
         connected = false;
-        logWarning("controller certificate verification failed");
-        if (!notProvisioned())
-            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN);
+        if (!notProvisioned()) {
+            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN_CERTIFICATE);
+            logWarning("controller certificate verification failed");
+        }
         StatusReporter.setFieldAgentStatus().setControllerVerified(false);
     }
 
@@ -588,7 +590,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed();
         } catch (Exception e) {
-            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN);
+            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN_CERTIFICATE);
             logWarning("Error pinging for controller: " + e.getMessage());
         }
         return false;
