@@ -14,6 +14,7 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
@@ -148,11 +149,16 @@ public class ProcessManager implements IOFogModule {
 	 * @param microservice Microservice object
 	 */
 	private void deleteMicroservice(Microservice microservice) {
+		disableMicroserviceFeaturesBeforeRemoval(microservice.getMicroserviceUuid());
 		if (microservice.isDeleteWithCleanup()) {
 			addTask(new ContainerTask(REMOVE_WITH_CLEAN_UP, microservice.getMicroserviceUuid()));
 		} else {
 			addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid()));
 		}
+	}
+
+	private void disableMicroserviceFeaturesBeforeRemoval(String microserviceUuid) {
+		StraceDiagnosticManger.getInstance().disableMicroserviceStraceDiagnostics(microserviceUuid);
 	}
 
 	private void updateMicroservice(Container container, Microservice microservice) {
@@ -174,7 +180,10 @@ public class ProcessManager implements IOFogModule {
 	private void deleteOldMicroservices() {
 		microserviceManager.getCurrentMicroservices().stream()
 				.filter(microservice -> !microserviceManager.getLatestMicroservices().contains(microservice))
-				.forEach(microservice -> addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid())));
+				.forEach(microservice -> {
+					disableMicroserviceFeaturesBeforeRemoval(microservice.getMicroserviceUuid());
+					addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid()));
+				});
 	}
 
 	/**
