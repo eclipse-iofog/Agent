@@ -187,26 +187,30 @@ public class FieldAgent implements IOFogModule {
     private final Runnable postDiagnostics = () -> {
         while (true) {
             if (StraceDiagnosticManger.getInstance().getMonitoringMicroservices().size() > 0) {
-                JsonObjectBuilder builder = Json.createObjectBuilder();
+                JsonBuilderFactory factory = Json.createBuilderFactory(null);
+                JsonArrayBuilder arrayBuilder = factory.createArrayBuilder();
 
                 for (MicroserviceStraceData microservice : StraceDiagnosticManger.getInstance().getMonitoringMicroservices()) {
-                    builder.add(microservice.getMicroserviceUuid(), microservice.getResultBufferAsString());
+                    arrayBuilder.add(factory.createObjectBuilder()
+                        .add("microserviceUuid", microservice.getMicroserviceUuid())
+                        .add("buffer", microservice.getResultBufferAsString())
+                    );
                     microservice.getResultBuffer().clear();
                 }
 
-                builder.add("timestamp", new Date().getTime());
-                JsonObject json = builder.build();
+                JsonObject json = factory.createObjectBuilder()
+                    .add("straceData", arrayBuilder).build();
 
                 try {
                     orchestrator.request("strace", RequestType.PUT, null, json);
                 } catch (Exception e) {
                     logWarning("unable send strace logs : " + e.getMessage());
                 }
-            } else {
+
                 try {
                     Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logWarning(e.getMessage());
                 }
             }
         }
@@ -356,7 +360,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private void updateDiagnostics() {
-        LoggingService.logInfo(MODULE_NAME, "get changes is diagnostic list");
+        LoggingService.logInfo(MODULE_NAME, "getting changes for diagnostics");
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
         }
@@ -449,14 +453,14 @@ public class FieldAgent implements IOFogModule {
                 continue;
             }
 
-            String microserviceId = microservice.getMicroserviceUuid();
+            String microserviceUuid = microservice.getMicroserviceUuid();
             Route microserviceRoute = new Route();
 
             for (String jsonRoute : jsonRoutes) {
                 microserviceRoute.getReceivers().add(jsonRoute);
             }
 
-            routes.put(microserviceId, microserviceRoute);
+            routes.put(microserviceUuid, microserviceRoute);
         }
 
         microserviceManager.setRoutes(routes);
