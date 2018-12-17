@@ -187,34 +187,30 @@ public class FieldAgent implements IOFogModule {
     private final Runnable postDiagnostics = () -> {
         while (true) {
             if (StraceDiagnosticManger.getInstance().getMonitoringMicroservices().size() > 0) {
-                JsonObjectBuilder builder = Json.createObjectBuilder();
-
-                JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+                JsonBuilderFactory factory = Json.createBuilderFactory(null);
+                JsonArrayBuilder arrayBuilder = factory.createArrayBuilder();
 
                 for (MicroserviceStraceData microservice : StraceDiagnosticManger.getInstance().getMonitoringMicroservices()) {
-                    JsonObjectBuilder straceBuilder = Json.createObjectBuilder();
-
-                    straceBuilder.add("microserviceUuid", microservice.getMicroserviceUuid());
-                    straceBuilder.add("buffer", microservice.getResultBufferAsString());
-
+                    arrayBuilder.add(factory.createObjectBuilder()
+                        .add("microserviceUuid", microservice.getMicroserviceUuid())
+                        .add("buffer", microservice.getResultBufferAsString())
+                    );
                     microservice.getResultBuffer().clear();
-
-                    arrayBuilder.add(straceBuilder.build());
                 }
 
-                builder.add("straceData", arrayBuilder.build());
-                JsonObject json = builder.build();
+                JsonObject json = factory.createObjectBuilder()
+                    .add("straceData", arrayBuilder).build();
 
                 try {
                     orchestrator.request("strace", RequestType.PUT, null, json);
                 } catch (Exception e) {
                     logWarning("unable send strace logs : " + e.getMessage());
                 }
-            } else {
+
                 try {
                     Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logWarning(e.getMessage());
                 }
             }
         }
@@ -364,7 +360,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private void updateDiagnostics() {
-        LoggingService.logInfo(MODULE_NAME, "get changes is diagnostic list");
+        LoggingService.logInfo(MODULE_NAME, "getting changes for diagnostics");
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
         }
