@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import static java.lang.String.format;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
+import static org.eclipse.iofog.utils.Constants.IOFOG_DOCKER_REPOSITORY;
 import static org.eclipse.iofog.utils.Constants.PROCESS_MANAGER;
 
 /**
@@ -125,8 +126,7 @@ public class ProcessManager implements IOFogModule {
 					}
 				}
 
-				deleteOldMicroservices();
-				deleteNonAgentMicroservices();
+				deleteRemainingMicroservices();
 				StatusReporter.setProcessManagerStatus().setRunningMicroservicesCount(docker.getContainers().size());
 
 			} catch (Exception ex) {
@@ -174,10 +174,23 @@ public class ProcessManager implements IOFogModule {
 		}
 	}
 
+	private void deleteRemainingMicroservices() {
+		deleteOldAgentMicroservices();
+
+		List<Container> allDockerContainers = docker.getContainers();
+		Set<Microservice> allAgentMicroservices = Stream.concat(
+			microserviceManager.getLatestMicroservices().stream(), microserviceManager.getCurrentMicroservices().stream())
+			.collect(Collectors.toSet()
+			);
+
+		deleteObsoleteAgentMicroservices(allAgentMicroservices, allDockerContainers);
+		deleteNonAgentMicroservices(allAgentMicroservices, allDockerContainers);
+	}
+
 	/**
 	 * Deletes microservices which don't present in latest microservices list but do present in current microservices list
 	 */
-	private void deleteOldMicroservices() {
+	private void deleteOldAgentMicroservices() {
 		microserviceManager.getCurrentMicroservices().stream()
 				.filter(microservice -> !microserviceManager.getLatestMicroservices().contains(microservice))
 				.forEach(microservice -> {
@@ -187,19 +200,32 @@ public class ProcessManager implements IOFogModule {
 	}
 
 	/**
-	 * Deletes any microservices which don't belong to iofog agent
+	 * Deletes obsolete agent microservices that aren't present in current or latest microservices list
+	 * @param allAgentMicroservices all microservices run by iofog agent
+	 * @param allDockerContainers all running docker containers
 	 */
-	private void deleteNonAgentMicroservices() {
+	private void deleteObsoleteAgentMicroservices(Set<Microservice> allAgentMicroservices, List<Container> allDockerContainers) {
+		allDockerContainers.stream()
+			.filter(container -> container.getImage().startsWith(IOFOG_DOCKER_REPOSITORY))
+			.map(container -> docker.getContainerName(container))
+			.filter(microserviceUuid -> allAgentMicroservices.stream()
+				.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
+			.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
+	}
+
+	/**
+	 * Deletes any microservices which don't belong to iofog agent
+	 * @param allAgentMicroservices all microservices run by iofog agent
+	 * @param allDockerContainers all running docker containers
+	 */
+	private void deleteNonAgentMicroservices(Set<Microservice> allAgentMicroservices, List<Container> allDockerContainers) {
 		if (Configuration.isWatchdogEnabled()) {
-			Set<Microservice> allAgentMicroservices = Stream.concat(
-					microserviceManager.getLatestMicroservices().stream(), microserviceManager.getCurrentMicroservices().stream())
-					.collect(Collectors.toSet()
-					);
-			docker.getContainers().stream()
-					.map(container -> docker.getContainerName(container))
-					.filter(microserviceUuid -> allAgentMicroservices.stream()
-							.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
-					.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
+			allDockerContainers.stream()
+				.filter(container -> !container.getImage().startsWith(IOFOG_DOCKER_REPOSITORY))
+				.map(container -> docker.getContainerName(container))
+				.filter(microserviceUuid -> allAgentMicroservices.stream()
+						.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
+				.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
 		}
 	}
 
