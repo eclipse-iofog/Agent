@@ -62,7 +62,8 @@ public class SupervisorStatus {
 	}
 	
 	public long getOperationDuration() {
-		return operationDuration - daemonLastStart;
+		long opDuration = operationDuration - daemonLastStart;
+		return opDuration >= 0 ? opDuration : 0;
 	}
 	
 	public SupervisorStatus setOperationDuration(long operationDuration) {

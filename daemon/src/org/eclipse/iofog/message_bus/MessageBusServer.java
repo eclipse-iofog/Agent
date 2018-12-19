@@ -12,11 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -24,14 +19,8 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.TransportConfiguration;
-import org.hornetq.api.core.client.ClientConsumer;
-import org.hornetq.api.core.client.ClientMessage;
-import org.hornetq.api.core.client.ClientProducer;
-import org.hornetq.api.core.client.ClientSession;
+import org.hornetq.api.core.client.*;
 import org.hornetq.api.core.client.ClientSession.QueueQuery;
-import org.hornetq.api.core.client.ClientSessionFactory;
-import org.hornetq.api.core.client.HornetQClient;
-import org.hornetq.api.core.client.ServerLocator;
 import org.hornetq.core.config.impl.ConfigurationImpl;
 import org.hornetq.core.remoting.impl.invm.InVMAcceptorFactory;
 import org.hornetq.core.remoting.impl.invm.InVMConnectorFactory;
@@ -42,6 +31,11 @@ import org.hornetq.core.server.JournalType;
 import org.hornetq.core.settings.impl.AddressFullMessagePolicy;
 import org.hornetq.core.settings.impl.AddressSettings;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * HornetQ server
  * 
@@ -49,7 +43,8 @@ import org.hornetq.core.settings.impl.AddressSettings;
  *
  */
 public class MessageBusServer {
-	
+
+	public static final Object messageBusSessionLock = new Object();
 	private static final String MODULE_NAME = "Message Bus Server";
 	private ClientSessionFactory sf;
 	private HornetQServer server;
@@ -126,21 +121,23 @@ public class MessageBusServer {
 	 * @throws Exception
 	 */
 	void initialize() throws Exception {
-		messageBusSession = sf.createSession(true, true, 0);
-		QueueQuery queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.ADDRESS));
-		if (queueQuery.isExists())
-			messageBusSession.deleteQueue(Constants.ADDRESS);
-		queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.COMMAND_LINE_ADDRESS));
-		if (queueQuery.isExists())
-			messageBusSession.deleteQueue(Constants.COMMAND_LINE_ADDRESS);
-		messageBusSession.createQueue(Constants.ADDRESS, Constants.ADDRESS, false);
-		messageBusSession.createQueue(Constants.COMMAND_LINE_ADDRESS, Constants.COMMAND_LINE_ADDRESS, false);
+		synchronized (messageBusSessionLock) {
+			messageBusSession = sf.createSession(true, true, 0);
+			QueueQuery queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.ADDRESS));
+			if (queueQuery.isExists())
+				messageBusSession.deleteQueue(Constants.ADDRESS);
+			queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.COMMAND_LINE_ADDRESS));
+			if (queueQuery.isExists())
+				messageBusSession.deleteQueue(Constants.COMMAND_LINE_ADDRESS);
+			messageBusSession.createQueue(Constants.ADDRESS, Constants.ADDRESS, false);
+			messageBusSession.createQueue(Constants.COMMAND_LINE_ADDRESS, Constants.COMMAND_LINE_ADDRESS, false);
 
-		commandlineProducer = messageBusSession.createProducer(Constants.COMMAND_LINE_ADDRESS);
-		
-		commandlineConsumer = messageBusSession.createConsumer(Constants.COMMAND_LINE_ADDRESS, String.format("receiver = '%s'", "iofog.commandline.command"));
-		commandlineConsumer.setMessageHandler(new CommandLineHandler());
-		messageBusSession.start();
+			commandlineProducer = messageBusSession.createProducer(Constants.COMMAND_LINE_ADDRESS);
+
+			commandlineConsumer = messageBusSession.createConsumer(Constants.COMMAND_LINE_ADDRESS, String.format("receiver = '%s'", "iofog.commandline.command"));
+			commandlineConsumer.setMessageHandler(new CommandLineHandler());
+			messageBusSession.start();
+		}
 	}
 	
 	/**
@@ -150,10 +147,14 @@ public class MessageBusServer {
 	 * @throws Exception
 	 */
 	void createCosumer(String name) throws Exception {
-		if (consumers == null)
+		if (consumers == null) {
 			consumers = new ConcurrentHashMap<>();
+		}
 
-		ClientConsumer consumer = messageBusSession.createConsumer(Constants.ADDRESS, String.format("receiver = '%s'", name));
+		ClientConsumer consumer;
+		synchronized (messageBusSessionLock) {
+			consumer = messageBusSession.createConsumer(Constants.ADDRESS, String.format("receiver = '%s'", name));
+		}
 		consumers.put(name, consumer);
 	}
 	
@@ -191,9 +192,13 @@ public class MessageBusServer {
 	 * @throws Exception
 	 */
 	void createProducer(String name) throws Exception {
-		if (producers == null)
+		if (producers == null) {
 			producers = new ConcurrentHashMap<>();
-		ClientProducer producer = messageBusSession.createProducer(Constants.ADDRESS);
+		}
+		ClientProducer producer;
+		synchronized (messageBusSessionLock) {
+			producer = messageBusSession.createProducer(Constants.ADDRESS);
+		}
 		producers.put(name, producer);
 	}
 	

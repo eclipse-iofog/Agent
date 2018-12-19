@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import java.util.List;
-
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -21,7 +19,10 @@ import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.ClientProducer;
 import org.hornetq.api.core.client.ClientSession;
 
+import java.util.List;
+
 import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
+import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -67,7 +68,9 @@ public class MessagePublisher implements AutoCloseable{
 			ClientMessage msg = session.createMessage(false);
 			msg.putObjectProperty("receiver", receiver);
 			msg.putBytesProperty("message", bytes);
-			producer.send(msg);
+			synchronized (messageBusSessionLock) {
+				producer.send(msg);
+			}
 		}
 	}
 
