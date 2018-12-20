@@ -140,6 +140,13 @@ public class FieldAgent implements IOFogModule {
     }
 
     /**
+     * executes actions after successful status post request
+     */
+    private void onPostStatusSuccess() {
+        StatusReporter.getProcessManagerStatus().removeNotRunningMicroserviceStatus();
+    }
+
+    /**
      * checks if IOFog is not provisioned
      *
      * @return boolean
@@ -173,7 +180,7 @@ public class FieldAgent implements IOFogModule {
 
                 logInfo("sending IOFog status...");
                 orchestrator.request("status", RequestType.PUT, null, status);
-
+                onPostStatusSuccess();
             } catch (CertificateException | SSLHandshakeException e) {
                 verificationFailed();
             } catch (ForbiddenException e) {
@@ -926,7 +933,7 @@ public class FieldAgent implements IOFogModule {
         if (notProvisioned()) {
             return "\nFailure - not provisioned";
         }
-
+        //// TODO: 20.12.18 make deprovision request to controller in order to mark related microservices as not running
         StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
         try {
             Configuration.setIofogUuid("");
