@@ -109,14 +109,14 @@ public class Supervisor implements IOFogModule {
 
     private void operationDuration(){
         while (true) {
+			StatusReporter.setSupervisorStatus()
+				.setOperationDuration(currentTimeMillis());
             try {
                 Thread.sleep(Configuration.getStatusReportFreqSeconds() * 1000);
             } catch (InterruptedException e) {
                 logWarning(e.getMessage());
                 System.exit(1);
             }
-            StatusReporter.setSupervisorStatus()
-                    .setOperationDuration(currentTimeMillis());
         }
     }
 

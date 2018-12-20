@@ -56,9 +56,9 @@ public class StraceDiagnosticManger {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
 			for (JsonValue microserviceValue : straceMicroserviceChanges) {
 				JsonObject microservice = (JsonObject) microserviceValue;
-				if (microservice.containsKey("microserviceId")) {
-					String microserviceUuid = microservice.getString("microserviceId");
-					boolean strace = microservice.getInt("straceRun", 0) != 0;
+				if (microservice.containsKey("microserviceUuid")) {
+					String microserviceUuid = microservice.getString("microserviceUuid");
+					boolean strace = microservice.getBoolean("straceRun");
 					manageMicroservice(microserviceUuid, strace);
 				}
 			}
@@ -66,36 +66,39 @@ public class StraceDiagnosticManger {
 	}
 
 	private void manageMicroservice(String microserviceUuid, boolean strace) {
-		Optional<MicroserviceStraceData> microserviceOptional = getDataByMicroserviceUuid(microserviceUuid);
-		if (microserviceOptional.isPresent() && !strace) {
-			offDiagnosticMicroservice(microserviceOptional.get());
-		} else if (!microserviceOptional.isPresent() && strace) {
-			createAndRunDiagnosticMicroservice(microserviceUuid);
-		}
+        if (strace) {
+            enableMicroserviceStraceDiagnostics(microserviceUuid);
+        } else {
+            disableMicroserviceStraceDiagnostics(microserviceUuid);
+        }
 	}
 
-	private void createAndRunDiagnosticMicroservice(String microserviceUuid) {
-		try {
-			int pid = getPidByMicroserviceUuid(microserviceUuid);
-			MicroserviceStraceData microserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
-			this.monitoringMicroservices.add(microserviceStraceData);
-
-			runStrace(microserviceStraceData);
-		} catch (IllegalArgumentException e) {
-			logWarning(MODULE_NAME, "Can't get pid of process");
-		}
-	}
-
-	private void offDiagnosticMicroservice(MicroserviceStraceData microserviceStraceData) {
-		microserviceStraceData.getStraceRun().set(false);
-		this.monitoringMicroservices.remove(microserviceStraceData);
-	}
-
-	public Optional<MicroserviceStraceData> getDataByMicroserviceUuid(String microserviceUuid) {
+	private Optional<MicroserviceStraceData> getStraceDataByMicroserviceUuid(String microserviceUuid) {
 		return this.monitoringMicroservices.stream()
 				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
 				.findFirst();
 	}
+
+	public void enableMicroserviceStraceDiagnostics(String microserviceUuid) {
+		try {
+			int pid = getPidByMicroserviceUuid(microserviceUuid);
+			MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
+			this.monitoringMicroservices.removeIf(
+				oldMicroserviceStraceData -> oldMicroserviceStraceData.getMicroserviceUuid().equals(microserviceUuid)
+			);
+			this.monitoringMicroservices.add(newMicroserviceStraceData);
+			runStrace(newMicroserviceStraceData);
+		} catch (IllegalArgumentException e) {
+			logWarning(MODULE_NAME, "Can't get pid of process");
+		}
+    }
+
+	public void disableMicroserviceStraceDiagnostics(String microserviceUuid) {
+        getStraceDataByMicroserviceUuid(microserviceUuid).ifPresent(microserviceStraceData -> {
+            microserviceStraceData.setStraceRun(false);
+            this.monitoringMicroservices.remove(microserviceStraceData);
+        });
+    }
 
 	private int getPidByMicroserviceUuid(String microserviceUuid) throws IllegalArgumentException {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + microserviceUuid);

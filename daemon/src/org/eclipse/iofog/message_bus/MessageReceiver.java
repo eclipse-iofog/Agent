@@ -20,6 +20,7 @@ import org.hornetq.api.core.client.ClientMessage;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -71,8 +72,11 @@ public class MessageReceiver implements AutoCloseable{
 		if (consumer == null || listener != null)
 			return null;
 
-		Message result = null; 
-		ClientMessage msg = consumer.receiveImmediate();
+		Message result = null;
+		ClientMessage msg;
+		synchronized (messageBusSessionLock) {
+			msg = consumer.receiveImmediate();
+		}
 		if (msg != null) {
 			msg.acknowledge();
 			result = new Message(msg.getBytesProperty("message"));
