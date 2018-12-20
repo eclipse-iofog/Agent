@@ -265,15 +265,12 @@ public class DockerUtil {
 	public List<Container> getRunningContainers() {
 		return getContainers().stream()
 			.filter(container -> {
-				InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
-				ContainerState containerState = inspectInfo.getState();
-				if (containerState != null) {
-					if (containerState.getStatus() != null) {
-						return MicroserviceState.fromText(containerState.getStatus()) == MicroserviceState.RUNNING;
-					}
-				}
-				return false;
-			})
+                InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
+                ContainerState containerState = inspectInfo.getState();
+                return containerState != null
+                    && containerState.getStatus() != null
+                    && MicroserviceState.fromText(containerState.getStatus()) == MicroserviceState.RUNNING;
+            })
 			.collect(Collectors.toList());
 	}
 
