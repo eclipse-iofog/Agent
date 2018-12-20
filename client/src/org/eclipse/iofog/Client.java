@@ -143,7 +143,7 @@ public class Client {
 			"                                         that the software is allowed to use\n" +
 			"                 -dl <dir>               Set the directory to use for disk\n" +
 			"                                         storage\n" +
-			"                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\n" +
+			"                 -m <#MB Limit>          Set the limit, in 	MiB, of RAM memory that\n" +
 			"                                         the software is allowed to use for\n" +
 			"                                         messages\n" +
 			"                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\n" +
