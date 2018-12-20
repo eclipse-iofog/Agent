@@ -104,5 +104,5 @@ public class Constants {
     public static final String SWITCHER_ELEMENT = "switcher";
     public static final String SWITCHER_NODE = "current_config";
     public static final String OS_GROUP = "iofog-agent";
-    public static final String IOFOG_DOCKER_REPOSITORY = "iofog/";
+    public static final String IOFOG_DOCKER_CONTAINER_NAME_PREFIX = "iofog_";
 }
