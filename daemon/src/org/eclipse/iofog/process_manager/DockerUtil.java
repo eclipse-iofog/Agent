@@ -27,6 +27,7 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -199,6 +200,10 @@ public class DockerUtil {
 		return container.getNames()[0].substring(1);
 	}
 
+	public String getContainerMicroserviceUuid(Container container) {
+		return getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length());
+	}
+
 	/**
 	 * returns a {@link Container} if exists
 	 *
@@ -208,7 +213,7 @@ public class DockerUtil {
 	public Optional<Container> getContainer(String microserviceUuid) {
 		List<Container> containers = getContainers();
 		return containers.stream()
-				.filter(c -> getContainerName(c).equals(microserviceUuid))
+				.filter(c -> getContainerMicroserviceUuid(c).equals(microserviceUuid))
 				.findAny();
 	}
 
@@ -255,6 +260,30 @@ public class DockerUtil {
 			result.setUsage(containerId);
 		}
 		return result;
+	}
+
+	public List<Container> getRunningContainers() {
+		return getContainers().stream()
+			.filter(container -> {
+                InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
+                ContainerState containerState = inspectInfo.getState();
+                return containerState != null
+                    && containerState.getStatus() != null
+                    && MicroserviceState.fromText(containerState.getStatus()) == MicroserviceState.RUNNING;
+            })
+			.collect(Collectors.toList());
+	}
+
+	public List<Container> getRunningIofogContainers() {
+		return getRunningContainers().stream()
+			.filter(container -> getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
+			.collect(Collectors.toList());
+	}
+
+	public List<Container> getRunningNonIofogContainers() {
+		return getRunningContainers().stream()
+			.filter(container -> !getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
+			.collect(Collectors.toList());
 	}
 
 	public Optional<Statistics> getContainerStats(String containerId) {
@@ -451,7 +480,7 @@ public class DockerUtil {
 				.withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
 				.withPortBindings(portBindings)
 				.withEnv("SELFNAME=" + microservice.getMicroserviceUuid())
-				.withName(microservice.getMicroserviceUuid())
+				.withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
 				.withRestartPolicy(restartPolicy);
 		if (microservice.getVolumeMappings() != null) {
 			cmd = cmd

@@ -316,7 +316,7 @@ public enum CommandLineAction {
 			"                 -n <network adapter>    Set the name of the network adapter\\n" +
 			"                                         that holds the correct IP address of \\n" +
 			"                                         this machine\\n" +
-			"                 -l <#MB Limit>          Set the limit, in MiB, of disk space\\n" +
+			"                 -l <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
 			"                                         that the log files can consume\\n" +
 			"                 -ld <dir>               Set the directory to use for log file\\n" +
 			"                                         storage\\n" +

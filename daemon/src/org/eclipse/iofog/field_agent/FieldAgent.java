@@ -140,6 +140,13 @@ public class FieldAgent implements IOFogModule {
     }
 
     /**
+     * executes actions after successful status post request
+     */
+    private void onPostStatusSuccess() {
+        StatusReporter.getProcessManagerStatus().removeNotRunningMicroserviceStatus();
+    }
+
+    /**
      * checks if IOFog is not provisioned
      *
      * @return boolean
@@ -173,7 +180,7 @@ public class FieldAgent implements IOFogModule {
 
                 logInfo("sending IOFog status...");
                 orchestrator.request("status", RequestType.PUT, null, status);
-
+                onPostStatusSuccess();
             } catch (CertificateException | SSLHandshakeException e) {
                 verificationFailed();
             } catch (ForbiddenException e) {
@@ -187,26 +194,30 @@ public class FieldAgent implements IOFogModule {
     private final Runnable postDiagnostics = () -> {
         while (true) {
             if (StraceDiagnosticManger.getInstance().getMonitoringMicroservices().size() > 0) {
-                JsonObjectBuilder builder = Json.createObjectBuilder();
+                JsonBuilderFactory factory = Json.createBuilderFactory(null);
+                JsonArrayBuilder arrayBuilder = factory.createArrayBuilder();
 
                 for (MicroserviceStraceData microservice : StraceDiagnosticManger.getInstance().getMonitoringMicroservices()) {
-                    builder.add(microservice.getMicroserviceUuid(), microservice.getResultBufferAsString());
+                    arrayBuilder.add(factory.createObjectBuilder()
+                        .add("microserviceUuid", microservice.getMicroserviceUuid())
+                        .add("buffer", microservice.getResultBufferAsString())
+                    );
                     microservice.getResultBuffer().clear();
                 }
 
-                builder.add("timestamp", new Date().getTime());
-                JsonObject json = builder.build();
+                JsonObject json = factory.createObjectBuilder()
+                    .add("straceData", arrayBuilder).build();
 
                 try {
                     orchestrator.request("strace", RequestType.PUT, null, json);
                 } catch (Exception e) {
                     logWarning("unable send strace logs : " + e.getMessage());
                 }
-            } else {
+
                 try {
                     Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logWarning(e.getMessage());
                 }
             }
         }
@@ -356,7 +367,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private void updateDiagnostics() {
-        LoggingService.logInfo(MODULE_NAME, "get changes is diagnostic list");
+        LoggingService.logInfo(MODULE_NAME, "getting changes for diagnostics");
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
         }
@@ -449,14 +460,14 @@ public class FieldAgent implements IOFogModule {
                 continue;
             }
 
-            String microserviceId = microservice.getMicroserviceUuid();
+            String microserviceUuid = microservice.getMicroserviceUuid();
             Route microserviceRoute = new Route();
 
             for (String jsonRoute : jsonRoutes) {
                 microserviceRoute.getReceivers().add(jsonRoute);
             }
 
-            routes.put(microserviceId, microserviceRoute);
+            routes.put(microserviceUuid, microserviceRoute);
         }
 
         microserviceManager.setRoutes(routes);
@@ -762,7 +773,7 @@ public class FieldAgent implements IOFogModule {
                 instanceConfig.put(DEVICE_SCAN_FREQUENCY.getCommandName(), deviceScanFrequency);
 
             if (Configuration.isWatchdogEnabled() != watchdogEnabled)
-                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled);
+                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled ? "on" : "off");
 
             if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
                 instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
@@ -922,7 +933,7 @@ public class FieldAgent implements IOFogModule {
         if (notProvisioned()) {
             return "\nFailure - not provisioned";
         }
-
+        //// TODO: 20.12.18 make deprovision request to controller in order to mark related microservices as not running
         StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
         try {
             Configuration.setIofogUuid("");

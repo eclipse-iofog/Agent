@@ -27,7 +27,6 @@ import org.apache.http.message.BasicHeader;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
-import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
@@ -79,7 +78,7 @@ public class Orchestrator {
     public boolean ping() throws Exception {
         try {
             JsonObject result = getJSON(controllerUrl + "status");
-            return result.getString("status").equals("online");
+            return !result.isNull("status");
         } catch (Exception exp) {
             logWarning(MODULE_NAME, exp.getMessage());
             throw exp;
