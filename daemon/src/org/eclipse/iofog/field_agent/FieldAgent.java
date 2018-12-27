@@ -294,13 +294,13 @@ public class FieldAgent implements IOFogModule {
 
                         if (microserviceConfig) {
                             processMicroserviceConfig(microservices);
+                            LocalApi.getInstance().update();
                         }
 
                         if (routing) {
                             processRoutes(microservices);
+                            MessageBus.getInstance().update();
                         }
-
-                        LocalApi.getInstance().update();
                     }
                     if (changes.getBoolean("tunnel") && !initialization) {
                         sshProxyManager.update(getProxyConfig());

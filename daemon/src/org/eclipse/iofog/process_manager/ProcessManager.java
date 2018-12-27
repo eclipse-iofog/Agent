@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 import static java.lang.String.format;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
-import static org.eclipse.iofog.utils.Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX;
 import static org.eclipse.iofog.utils.Constants.PROCESS_MANAGER;
 
 /**
@@ -209,7 +208,6 @@ public class ProcessManager implements IOFogModule {
 	 */
 	private void deleteObsoleteAgentMicroservices(Set<Microservice> allAgentMicroservices) {
 		docker.getRunningIofogContainers().stream()
-			.filter(container -> docker.getContainerName(container).startsWith(IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
 			.map(container -> docker.getContainerMicroserviceUuid(container))
 			.filter(microserviceUuid -> allAgentMicroservices.stream()
 				.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
