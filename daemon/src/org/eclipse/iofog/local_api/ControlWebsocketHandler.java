@@ -75,7 +75,6 @@ public class ControlWebsocketHandler {
 
 		WebSocketMap.addWebsocket('C', id, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
-
 	}
 
 	/**
