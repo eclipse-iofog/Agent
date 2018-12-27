@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import static java.lang.String.format;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
+import static org.eclipse.iofog.utils.Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX;
 import static org.eclipse.iofog.utils.Constants.PROCESS_MANAGER;
 
 /**
