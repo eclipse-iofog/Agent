@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.Microservice;
@@ -21,6 +22,8 @@ import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Optional;
+
+import static org.eclipse.iofog.microservice.Microservice.deleteLock;
 
 /**
  * provides methods to manage Docker containers
@@ -68,7 +71,9 @@ public class ContainerManager {
 	 */
 	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
 		microservice.setUpdating(true);
-		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
+		synchronized (deleteLock) {
+			removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
+		}
 		createContainer(microservice);
 		microservice.setUpdating(false);
 	}
@@ -147,7 +152,12 @@ public class ContainerManager {
 			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
-				docker.removeImageById(imageId);
+				try {
+					docker.removeImageById(imageId);
+				} catch (ConflictException ex) {
+					LoggingService.logInfo(MODULE_NAME, String.format("image for contaner \"%s\" hasn't been removed", containerId));
+					LoggingService.logInfo(MODULE_NAME, ex.getMessage().replace("\n", ""));
+				}
 			}
 
 			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
