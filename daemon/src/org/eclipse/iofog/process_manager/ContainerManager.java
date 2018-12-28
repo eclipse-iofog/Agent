@@ -155,7 +155,7 @@ public class ContainerManager {
 				try {
 					docker.removeImageById(imageId);
 				} catch (ConflictException ex) {
-					LoggingService.logInfo(MODULE_NAME, String.format("image for contaner \"%s\" hasn't been removed", containerId));
+					LoggingService.logInfo(MODULE_NAME, String.format("Image for container \"%s\" hasn't been removed", containerId));
 					LoggingService.logInfo(MODULE_NAME, ex.getMessage().replace("\n", ""));
 				}
 			}
