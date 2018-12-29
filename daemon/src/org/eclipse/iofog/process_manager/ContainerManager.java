@@ -71,9 +71,7 @@ public class ContainerManager {
 	 */
 	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
 		microservice.setUpdating(true);
-		synchronized (deleteLock) {
-			removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
-		}
+		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
 		createContainer(microservice);
 		microservice.setUpdating(false);
 	}
@@ -137,12 +135,12 @@ public class ContainerManager {
 	 * removes a {@link Container} by Microservice uuid
 	 */
 	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) {
-
-		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
-
-		if (containerOptional.isPresent()) {
-			Container container = containerOptional.get();
-			removeContainer(container.getId(), container.getImageId(), withCleanUp);
+		synchronized (deleteLock) {
+			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
+			if (containerOptional.isPresent()) {
+				Container container = containerOptional.get();
+				removeContainer(container.getId(), container.getImageId(), withCleanUp);
+			}
 		}
 	}
 
