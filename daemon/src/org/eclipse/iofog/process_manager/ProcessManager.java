@@ -20,7 +20,6 @@ import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.MicroserviceStatus;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
@@ -202,7 +201,7 @@ public class ProcessManager implements IOFogModule {
 				oldAgentMicroserviceUuids.add(uuid);
 			} else if (!isCurrentMicroserviceUuid
 				&& !isLatestMicroserviceUuid
-				&& runningContainerNames.contains(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + uuid)) {
+				&& runningContainerNames.contains(DockerUtil.getContainerName(uuid))) {
 				unknownMicroserviceUuids.add(uuid);
 			} else if (!isCurrentMicroserviceUuid
 				&& !isLatestMicroserviceUuid

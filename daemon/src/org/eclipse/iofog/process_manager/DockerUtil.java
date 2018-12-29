@@ -200,8 +200,22 @@ public class DockerUtil {
 		return container.getNames()[0].substring(1);
 	}
 
+	/**
+	 * gets microsreviceUuid (basically just gets substring of container name)
+	 * @param container Container object
+	 * @return microsreviceUuid
+	 */
 	public String getContainerMicroserviceUuid(Container container) {
 		return getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length());
+	}
+
+	/**
+	 * gets container name by microserviceUuid
+	 * @param microserviceUuid
+	 * @return container name
+	 */
+	public static String getContainerName(String microserviceUuid) {
+		return Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microserviceUuid;
 	}
 
 	/**
