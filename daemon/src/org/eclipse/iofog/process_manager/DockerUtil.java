@@ -280,12 +280,6 @@ public class DockerUtil {
 			.collect(Collectors.toList());
 	}
 
-	public List<Container> getRunningNonIofogContainers() {
-		return getRunningContainers().stream()
-			.filter(container -> !getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
-			.collect(Collectors.toList());
-	}
-
 	public Optional<Statistics> getContainerStats(String containerId) {
 		StatsCmd statsCmd = dockerClient.statsCmd(containerId);
 		CountDownLatch countDownLatch = new CountDownLatch(1);

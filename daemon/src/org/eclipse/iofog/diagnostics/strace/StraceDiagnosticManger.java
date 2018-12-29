@@ -15,6 +15,7 @@ package org.eclipse.iofog.diagnostics.strace;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
@@ -81,7 +82,7 @@ public class StraceDiagnosticManger {
 
 	public void enableMicroserviceStraceDiagnostics(String microserviceUuid) {
 		try {
-			int pid = getPidByMicroserviceUuid(microserviceUuid);
+			int pid = getPidByMicroserviceUuid(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microserviceUuid);
 			MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
 			this.monitoringMicroservices.removeIf(
 				oldMicroserviceStraceData -> oldMicroserviceStraceData.getMicroserviceUuid().equals(microserviceUuid)
