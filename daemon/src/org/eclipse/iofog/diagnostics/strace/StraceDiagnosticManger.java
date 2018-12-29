@@ -15,9 +15,12 @@ package org.eclipse.iofog.diagnostics.strace;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.json.*;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -81,7 +84,7 @@ public class StraceDiagnosticManger {
 
 	public void enableMicroserviceStraceDiagnostics(String microserviceUuid) {
 		try {
-			int pid = getPidByMicroserviceUuid(microserviceUuid);
+			int pid = getPidByMicroserviceUuid(DockerUtil.getContainerName(microserviceUuid));
 			MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
 			this.monitoringMicroservices.removeIf(
 				oldMicroserviceStraceData -> oldMicroserviceStraceData.getMicroserviceUuid().equals(microserviceUuid)
