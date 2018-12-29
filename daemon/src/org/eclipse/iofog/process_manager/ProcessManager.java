@@ -20,6 +20,7 @@ import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.MicroserviceStatus;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
@@ -28,9 +29,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static org.eclipse.iofog.microservice.Microservice.deleteLock;
 import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
-import static org.eclipse.iofog.utils.Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX;
 import static org.eclipse.iofog.utils.Constants.PROCESS_MANAGER;
 
 /**
@@ -168,18 +169,69 @@ public class ProcessManager implements IOFogModule {
 	}
 
 	private void deleteRemainingMicroservices() {
-		Set<Microservice> allAgentMicroservices = Stream.concat(
-			microserviceManager.getLatestMicroservices().stream(),
-			microserviceManager.getCurrentMicroservices().stream()
+		Set<String> latestMicroserviceUuids = microserviceManager.getLatestMicroservices().stream()
+			.map(Microservice::getMicroserviceUuid).collect(Collectors.toSet());
+		Set<String> currentMicroserviceUuids = microserviceManager.getCurrentMicroservices().stream()
+			.map(Microservice::getMicroserviceUuid).collect(Collectors.toSet());
+		List<Container> runningContainers;
+		synchronized (deleteLock) {
+			runningContainers = docker.getRunningContainers();
+		}
+		Set<String> runningContainerNames = runningContainers.stream()
+			.map(docker::getContainerName)
+			.collect(Collectors.toSet());
+
+		Set<String> allMicroserviceUuids = Stream.concat(
+			Stream.concat(
+				latestMicroserviceUuids.stream(),
+				currentMicroserviceUuids.stream()
+			),
+			runningContainers.stream()
+				.map(docker::getContainerMicroserviceUuid)
 		)
 			.collect(Collectors.toSet());
-		deleteOldAgentMicroservices();
-		deleteObsoleteAgentMicroservices(allAgentMicroservices);
-		deleteNonAgentMicroservices(allAgentMicroservices);
+
+		Set<String> oldAgentMicroserviceUuids = new HashSet<>();
+		Set<String> unknownMicroserviceUuids = new HashSet<>();
+
+		for (String uuid : allMicroserviceUuids) {
+			boolean isCurrentMicroserviceUuid = currentMicroserviceUuids.contains(uuid);
+			boolean isLatestMicroserviceUuid = latestMicroserviceUuids.contains(uuid);
+
+			if (isCurrentMicroserviceUuid && !isLatestMicroserviceUuid) {
+				oldAgentMicroserviceUuids.add(uuid);
+			} else if (!isCurrentMicroserviceUuid
+				&& !isLatestMicroserviceUuid
+				&& runningContainerNames.contains(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + uuid)) {
+				unknownMicroserviceUuids.add(uuid);
+			} else if (!isCurrentMicroserviceUuid
+				&& !isLatestMicroserviceUuid
+				&& Configuration.isWatchdogEnabled()) {
+				unknownMicroserviceUuids.add(uuid);
+			}
+		}
+
+		deleteOldAgentContainers(oldAgentMicroserviceUuids);
+		deleteUnknownContainers(unknownMicroserviceUuids);
+	}
+
+	private void deleteOldAgentContainers(Set<String> oldAgentContainerNames) {
+		oldAgentContainerNames.forEach(name -> {
+			MicroserviceStatus status = new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
+			StatusReporter.setProcessManagerStatus().setMicroservicesStatus(name, status);
+			disableMicroserviceFeaturesBeforeRemoval(name);
+			addTask(new ContainerTask(REMOVE, name));
+		});
+	}
+
+	private void deleteUnknownContainers(Set<String> unknownContainerNames) {
+		unknownContainerNames.forEach(name -> addTask(new ContainerTask(REMOVE, name)));
 	}
 
 	private void updateRunningMicroservicesCount() {
-		StatusReporter.setProcessManagerStatus().setRunningMicroservicesCount(docker.getRunningIofogContainers().size());
+		synchronized (deleteLock) {
+			StatusReporter.setProcessManagerStatus().setRunningMicroservicesCount(docker.getRunningIofogContainers().size());
+		}
 	}
 
 	private void updateCurrentMicroservices() {
@@ -189,50 +241,11 @@ public class ProcessManager implements IOFogModule {
 		microserviceManager.setCurrentMicroservices(currentMicroservices);
 	}
 
-	/**
-	 * Deletes microservices which don't present in latest microservices list but do present in current microservices list
-	 */
-	private void deleteOldAgentMicroservices() {
-		microserviceManager.getCurrentMicroservices().stream()
-				.filter(microservice -> !microserviceManager.getLatestMicroservices().contains(microservice))
-				.forEach(microservice -> {
-					MicroserviceStatus status = new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
-					StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
-					disableMicroserviceFeaturesBeforeRemoval(microservice.getMicroserviceUuid());
-					addTask(new ContainerTask(REMOVE, microservice.getMicroserviceUuid()));
-				});
-	}
-
-	/**
-	 * Deletes obsolete agent microservices that aren't present in current or latest microservices list
-	 * @param allAgentMicroservices all microservices run by iofog agent
-	 */
-	private void deleteObsoleteAgentMicroservices(Set<Microservice> allAgentMicroservices) {
-		docker.getRunningIofogContainers().stream()
-			.map(container -> docker.getContainerMicroserviceUuid(container))
-			.filter(microserviceUuid -> allAgentMicroservices.stream()
-				.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
-			.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
-	}
-
-	/**
-	 * Deletes any microservices which don't belong to iofog agent
-	 * @param allAgentMicroservices all microservices run by iofog agent
-	 */
-	private void deleteNonAgentMicroservices(Set<Microservice> allAgentMicroservices) {
-		if (Configuration.isWatchdogEnabled()) {
-			docker.getRunningNonIofogContainers().stream()
-				.map(container -> docker.getContainerMicroserviceUuid(container))
-				.filter(microserviceUuid -> allAgentMicroservices.stream()
-						.noneMatch(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid)))
-				.forEach(microserviceUuid -> addTask(new ContainerTask(REMOVE, microserviceUuid)));
-		}
-	}
-
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
-		return isNotRunning || areNotEqual;
+		boolean isRebuild = microservice.isRebuild();
+		return isNotRunning || areNotEqual || isRebuild;
 	}
 
 	/**
