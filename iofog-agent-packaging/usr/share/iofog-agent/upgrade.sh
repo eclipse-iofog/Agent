@@ -14,7 +14,7 @@ iofog-agent deprovision
 service iofog-agent stop
 
 apt-get update
-apt-get install --only-upgrade iofog-agent-dev -y
+apt-get install --only-upgrade iofog-agent -y
 
 starttimestamp=$(date +%s)
 service iofog-agent start
