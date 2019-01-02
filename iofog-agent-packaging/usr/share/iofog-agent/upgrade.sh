@@ -6,7 +6,7 @@ timeout=${2:-60}
 cd /var/backups/iofog-agent
 tar -cvzf config_backup.tar.gz -P /etc/iofog-agent
 
-iofogversion=$(apt-cache policy iofog-agent-dev | grep Installed | awk '{print $2}')
+iofogversion=$(apt-cache policy iofog-agent | grep Installed | awk '{print $2}')
 
 printf 'ver: '$iofogversion > prev_version_data
 
