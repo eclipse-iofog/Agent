@@ -1,13 +1,18 @@
 package org.eclipse.iofog.tracking;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.utils.Constants;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
 import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.security.MessageDigest;
@@ -41,7 +46,7 @@ public class Tracker implements IOFogModule {
 
         senderTimer = new Timer();
         SenderTask senderTask = new SenderTask();
-        senderTimer.schedule(senderTask, senderTask.getSendTimeoutMin() * 1000, senderTask.getSendTimeoutMin() * 1000);
+        senderTimer.schedule(senderTask, senderTask.getSendTimeoutMin() *10* 1000, senderTask.getSendTimeoutMin() * 1000);
     }
 
     @Override
@@ -167,6 +172,7 @@ public class Tracker implements IOFogModule {
 
     private class SenderTask extends TimerTask {
         private final int sendTimeoutMin = 2;
+        HttpClient httpClient = HttpClients.createDefault();
 
         public int getSendTimeoutMin() {
             return sendTimeoutMin;
@@ -192,7 +198,18 @@ public class Tracker implements IOFogModule {
                         jsonArrayBuilder.add(el.toJsonObject());
                     });
 
-            //TODO send jsonArrayBuilder.buid() here
+            //TODO not tested
+            StringEntity requestEntity = new StringEntity(jsonArrayBuilder.build().toString(), ContentType.APPLICATION_JSON);
+
+
+            HttpPost postMethod = new HttpPost("http://example.com/action");
+            postMethod.setEntity(requestEntity);
+
+            try {
+                HttpResponse response = httpClient.execute(postMethod);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
         }
     }
