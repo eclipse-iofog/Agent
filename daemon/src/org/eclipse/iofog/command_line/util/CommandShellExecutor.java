@@ -160,7 +160,9 @@ public class CommandShellExecutor {
             LoggingService.logWarning(MODULE_NAME, e.getMessage());
         } finally {
             process.destroy();
-            killOrphanedProcessesRunnable.run();
+            if (killOrphanedProcessesRunnable != null) {
+                killOrphanedProcessesRunnable.run();
+            }
         }
     }
 }
