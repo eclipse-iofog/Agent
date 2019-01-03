@@ -35,7 +35,7 @@ public class VersionHandler {
 	private static final String MODULE_NAME = "Version Handler";
 
 	private final static String PACKAGE_NAME = "iofog-agent";
-	private final static String BACKUPS_DIR = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./var/backups/iofog-agent" : SNAP_COMMON + "/var/backups/iofog";
+	private final static String BACKUPS_DIR = SystemUtils.IS_OS_WINDOWS ? SNAP_COMMON + "./var/backups/iofog-agent" : SNAP_COMMON + "/var/backups/iofog-agent";
 	private final static String MAX_RESTARTING_TIMEOUT = "60";
 
 	private final static String GET_LINUX_DISTRIBUTION_NAME = "grep = /etc/os-release | awk -F\"[=]\" '{print $2}' | sed -n 1p";

@@ -34,116 +34,135 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * on 2/7/18.
  */
 public class CommandShellExecutor {
-	private static final String MODULE_NAME = "CommandShellExecutor";
-	private static final String CMD = "/bin/sh";
-	private static final String CMD_WIN = "powershell";
+    private static final String MODULE_NAME = "CommandShellExecutor";
+    private static final String CMD = "/bin/sh";
+    private static final String CMD_WIN = "powershell";
 
 
-	public static CommandShellResultSet<List<String>, List<String>> executeCommand(String command) {
-		String[] fullCommand = computeCommand(command);
-		return execute(fullCommand);
-	}
+    public static CommandShellResultSet<List<String>, List<String>> executeCommand(String command) {
+        String[] fullCommand = computeCommand(command);
+        return execute(fullCommand);
+    }
 
-	public static CommandShellResultSet<List<String>, List<String>> executeScript(String script, String... args) {
-		String[] fullCommand = computeScript(script, args);
-		return execute(fullCommand);
-	}
+    public static CommandShellResultSet<List<String>, List<String>> executeScript(String script, String... args) {
+        String[] fullCommand = computeScript(script, args);
+        return execute(fullCommand);
+    }
 
-	public static void executeDynamicCommand(String command, CommandShellResultSet<List<String>, List<String>> resultSet, AtomicBoolean isRun) {
-		String[] fullCommand = computeCommand(command);
-		executeDynamic(fullCommand, resultSet, isRun);
-	}
+    public static void executeDynamicCommand(String command,
+                                             CommandShellResultSet<List<String>, List<String>> resultSet,
+                                             AtomicBoolean isRun,
+                                             Runnable killOrphanedProcessesRunnable) {
+        String[] fullCommand = computeCommand(command);
+        executeDynamic(fullCommand, resultSet, isRun, killOrphanedProcessesRunnable);
+    }
 
-	private static CommandShellResultSet<List<String>, List<String>> execute( String[] fullCommand) {
-		CommandShellResultSet<List<String>, List<String>> resultSet = null;
-		try {
-			Process process = Runtime.getRuntime().exec(fullCommand);
-			List<String> value = readOutput(process, Process::getInputStream);
-			List<String> errors = readOutput(process, Process::getErrorStream);
-			resultSet = new CommandShellResultSet<>(value, errors);
-		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		}
-		return resultSet;
-	}
+    private static CommandShellResultSet<List<String>, List<String>> execute(String[] fullCommand) {
+        CommandShellResultSet<List<String>, List<String>> resultSet = null;
+        try {
+            Process process = Runtime.getRuntime().exec(fullCommand);
+            List<String> value = readOutput(process, Process::getInputStream);
+            List<String> errors = readOutput(process, Process::getErrorStream);
+            resultSet = new CommandShellResultSet<>(value, errors);
+        } catch (IOException e) {
+            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+        }
+        return resultSet;
+    }
 
-	private static void executeDynamic( String[] fullCommand, CommandShellResultSet<List<String>, List<String>> resultSet, AtomicBoolean isRun) {
-		try {
-			Process process = Runtime.getRuntime().exec(fullCommand);
+    private static void executeDynamic(String[] fullCommand,
+                                       CommandShellResultSet<List<String>, List<String>> resultSet,
+                                       AtomicBoolean isRun,
+                                       Runnable killOrphanedProcessesRunnable) {
+        try {
+            Process process = Runtime.getRuntime().exec(fullCommand);
 
-			Runnable readVal = () -> {
-				readOutputDynamic(process, Process::getInputStream, resultSet.getValue(), isRun);
-			};
-			new Thread(readVal).start();
+            Runnable readVal = () -> {
+                readOutputDynamic(process, Process::getInputStream, resultSet.getValue(), isRun, killOrphanedProcessesRunnable);
+            };
+            new Thread(readVal).start();
 
-			Runnable readErr = () -> {
-				readOutputDynamic(process, Process::getErrorStream, resultSet.getError(), isRun);
-			};
-			new Thread(readErr).start();
+            Runnable readErr = () -> {
+                readOutputDynamic(process, Process::getErrorStream, resultSet.getError(), isRun, killOrphanedProcessesRunnable);
+            };
+            new Thread(readErr).start();
 
-		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		}
-	}
+        } catch (IOException e) {
+            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+        }
+    }
 
 
-	public static <V, E> CommandShellResultSet<V, E> executeCommand(String command, Function<CommandShellResultSet<List<String>, List<String>>, CommandShellResultSet<V, E>> mapper) {
-		return executeCommand(command).map(mapper);
-	}
+    public static <V, E> CommandShellResultSet<V, E> executeCommand(String command, Function<CommandShellResultSet<List<String>, List<String>>, CommandShellResultSet<V, E>> mapper) {
+        return executeCommand(command).map(mapper);
+    }
 
-	private static String[] computeCommand(String command) {
-		return new String[]{
-				SystemUtils.IS_OS_WINDOWS ? CMD_WIN : CMD,
-				"-c",
-				command
-		};
-	}
+    private static String[] computeCommand(String command) {
+        return new String[]{
+            SystemUtils.IS_OS_WINDOWS ? CMD_WIN : CMD,
+            "-c",
+            command
+        };
+    }
 
-	private static String[] computeScript(String script, String... args) {
-		String[] command = {
-				SystemUtils.IS_OS_WINDOWS ? CMD_WIN : CMD,
-				script
-		};
+    private static String[] computeScript(String script, String... args) {
+        String[] command = {
+            SystemUtils.IS_OS_WINDOWS ? CMD_WIN : CMD,
+            script
+        };
 
-		Stream<String> s1 = Arrays.stream(command);
-		Stream<String> s2 = Arrays.stream(args);
-		return Stream.concat(s1, s2).toArray(String[]::new);
-	}
+        Stream<String> s1 = Arrays.stream(command);
+        Stream<String> s2 = Arrays.stream(args);
+        return Stream.concat(s1, s2).toArray(String[]::new);
+    }
 
-	private static List<String> readOutput(Process process, Function<Process, InputStream> streamExtractor) throws IOException {
-		List<String> result = new ArrayList<>();
-		String line;
-		try (BufferedReader stdInput = new BufferedReader(new
-				InputStreamReader(streamExtractor.apply(process), UTF_8))) {
-			while ((line = stdInput.readLine()) != null) {
-				result.add(line);
-			}
-		}
-		return result;
-	}
+    private static List<String> readOutput(Process process, Function<Process, InputStream> streamExtractor) throws IOException {
+        List<String> result = new ArrayList<>();
+        String line;
+        try (BufferedReader stdInput = new BufferedReader(new
+            InputStreamReader(streamExtractor.apply(process), UTF_8))) {
+            while ((line = stdInput.readLine()) != null) {
+                result.add(line);
+            }
+        }
+        return result;
+    }
 
-	private static void readOutputDynamic(Process process, Function<Process,
-	                                      InputStream> streamExtractor, List<String> result,
-	                                      AtomicBoolean isRun) {
-		String line;
-		if (result == null) {
-			return;
-		}
-		try (BufferedReader stdInput = new BufferedReader(new
-				InputStreamReader(streamExtractor.apply(process)))) {
+    private static void readOutputDynamic(Process process,
+                                          Function<Process, InputStream> streamExtractor,
+                                          List<String> result,
+                                          AtomicBoolean isRun,
+                                          Runnable killOrphanedProcessesRunnable) {
+        StringBuilder line = new StringBuilder();
+        if (result == null) {
+            return;
+        }
+        try (BufferedReader reader = new BufferedReader(new
+            InputStreamReader(streamExtractor.apply(process)))) {
 
-			while (isRun != null && isRun.get()) {
-				line = stdInput.readLine();
-				if (line != null) {
-					result.add(line);
-				} else {
-					Thread.sleep(3000);
-				}
-			}
-		} catch (InterruptedException | IOException e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
-		} finally {
-			process.destroy();
-		}
-	}
+            while (isRun != null && isRun.get()) {
+                if (reader.ready()) {
+                    int c = reader.read();
+                    if (c == -1) {
+                        break;
+                    }
+                    if (System.lineSeparator().contains(Character.toString((char)c)) && line.length() != 0) {
+                        result.add(line.toString());
+                        line.setLength(0);
+                    } else {
+                        line.append((char)c);
+                    }
+                } else {
+                    Thread.sleep(3000);
+                }
+            }
+        } catch (InterruptedException | IOException e) {
+            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+        } finally {
+            process.destroy();
+            if (killOrphanedProcessesRunnable != null) {
+                killOrphanedProcessesRunnable.run();
+            }
+        }
+    }
 }

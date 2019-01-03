@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.Microservice;
@@ -21,6 +22,8 @@ import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Optional;
+
+import static org.eclipse.iofog.microservice.Microservice.deleteLock;
 
 /**
  * provides methods to manage Docker containers
@@ -132,12 +135,12 @@ public class ContainerManager {
 	 * removes a {@link Container} by Microservice uuid
 	 */
 	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) {
-
-		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
-
-		if (containerOptional.isPresent()) {
-			Container container = containerOptional.get();
-			removeContainer(container.getId(), container.getImageId(), withCleanUp);
+		synchronized (deleteLock) {
+			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
+			if (containerOptional.isPresent()) {
+				Container container = containerOptional.get();
+				removeContainer(container.getId(), container.getImageId(), withCleanUp);
+			}
 		}
 	}
 
@@ -147,7 +150,12 @@ public class ContainerManager {
 			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
-				docker.removeImageById(imageId);
+				try {
+					docker.removeImageById(imageId);
+				} catch (ConflictException ex) {
+					LoggingService.logInfo(MODULE_NAME, String.format("Image for container \"%s\" hasn't been removed", containerId));
+					LoggingService.logInfo(MODULE_NAME, ex.getMessage().replace("\n", ""));
+				}
 			}
 
 			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
