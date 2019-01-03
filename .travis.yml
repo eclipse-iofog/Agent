@@ -40,7 +40,6 @@ jobs:
   - stage: prod_deploy
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
-    - sudo apt-get --only-upgrade install iofog-agent
     script:
     - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
       "service iofog-agent stop; sudo apt-get install --only-upgrade -y iofog-agent"
