@@ -241,7 +241,6 @@ public class ProcessManager implements IOFogModule {
 			.collect(Collectors.toList());
 		microserviceManager.setCurrentMicroservices(currentMicroservices);
 	}
-
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
