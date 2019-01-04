@@ -46,7 +46,9 @@ import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -110,7 +112,7 @@ public class FieldAgent implements IOFogModule {
      * @return Map
      */
     private JsonObject getFogStatus() {
-        JsonObject json = Json.createObjectBuilder()
+        return Json.createObjectBuilder()
                 .add("daemonStatus", StatusReporter.getSupervisorStatus().getDaemonStatus().toString())
                 .add("daemonOperatingDuration", StatusReporter.getSupervisorStatus().getOperationDuration())
                 .add("daemonLastStart", StatusReporter.getSupervisorStatus().getDaemonLastStart())
@@ -135,8 +137,6 @@ public class FieldAgent implements IOFogModule {
                 .add("isReadyToUpgrade", isReadyToUpgrade())
                 .add("isReadyToRollback", isReadyToRollback())
                 .build();
-
-        return json;
     }
 
     /**
@@ -933,18 +933,43 @@ public class FieldAgent implements IOFogModule {
         if (notProvisioned()) {
             return "\nFailure - not provisioned";
         }
-        //// TODO: 20.12.18 make deprovision request to controller in order to mark related microservices as not running
+
+        try {
+            orchestrator.request("deprovision", RequestType.POST, null, getDeprovisionBody());
+        } catch (CertificateException | SSLHandshakeException e) {
+            verificationFailed();
+        } catch (Exception e) {
+            logInfo("Unable to make deprovision request : " + e.getMessage());
+        }
+
         StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
         try {
             Configuration.setIofogUuid("");
             Configuration.setAccessToken("");
             Configuration.saveConfigUpdates();
         } catch (Exception e) {
-            logInfo("error saving config updates : " + e.getMessage());
+            logInfo("Error saving config updates : " + e.getMessage());
         }
         microserviceManager.clear();
         notifyModules();
         return "\nSuccess - tokens, identifiers and keys removed";
+    }
+
+    private JsonObject getDeprovisionBody() {
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+
+        Set<String> microserviceUuids = Stream.concat(
+            microserviceManager.getLatestMicroservices().stream(),
+            microserviceManager.getCurrentMicroservices().stream()
+        )
+            .map(Microservice::getMicroserviceUuid)
+            .collect(Collectors.toSet());
+
+        microserviceUuids.forEach(arrayBuilder::add);
+
+        return Json.createObjectBuilder()
+            .add("microserviceUuids", arrayBuilder)
+            .build();
     }
 
     /**

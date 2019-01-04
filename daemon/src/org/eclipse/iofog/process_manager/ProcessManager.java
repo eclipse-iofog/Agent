@@ -169,9 +169,11 @@ public class ProcessManager implements IOFogModule {
 
 	private void deleteRemainingMicroservices() {
 		Set<String> latestMicroserviceUuids = microserviceManager.getLatestMicroservices().stream()
-			.map(Microservice::getMicroserviceUuid).collect(Collectors.toSet());
+			.map(Microservice::getMicroserviceUuid)
+			.collect(Collectors.toSet());
 		Set<String> currentMicroserviceUuids = microserviceManager.getCurrentMicroservices().stream()
-			.map(Microservice::getMicroserviceUuid).collect(Collectors.toSet());
+			.map(Microservice::getMicroserviceUuid)
+			.collect(Collectors.toSet());
 		List<Container> runningContainers;
 		synchronized (deleteLock) {
 			runningContainers = docker.getRunningContainers();
