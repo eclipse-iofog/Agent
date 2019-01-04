@@ -42,7 +42,7 @@ jobs:
     - sudo apt-get install sshpass xml-twig-tools
     script:
     - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
-      "service iofog-agent stop"
+      "service iofog-agent stop; sudo apt-get install --only-upgrade -y iofog-agent"
     - sshpass -p $PROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-agent-daemon-jar-with-dependencies.jar
       $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP:/usr/bin/iofog-agentd.jar
     - sshpass -p $PROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar
