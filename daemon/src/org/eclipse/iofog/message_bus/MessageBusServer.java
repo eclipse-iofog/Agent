@@ -146,7 +146,7 @@ public class MessageBusServer {
 	 * @param name - ID of {@link Microservice}
 	 * @throws Exception
 	 */
-	void createCosumer(String name) throws Exception {
+	void createConsumer(String name) throws Exception {
 		if (consumers == null) {
 			consumers = new ConcurrentHashMap<>();
 		}
@@ -167,7 +167,7 @@ public class MessageBusServer {
 	ClientConsumer getConsumer(String receiver) {
 		if (consumers == null || !consumers.containsKey(receiver))
 			try {
-				createCosumer(receiver);
+				createConsumer(receiver);
 			} catch (Exception e) {
 				return null;
 			}
