@@ -21,6 +21,8 @@ import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEventType;
+import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -98,6 +100,7 @@ public class Supervisor implements IOFogModule {
 
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
         logInfo("started");
+        Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
 
         operationDuration();
     }

@@ -7,7 +7,10 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
 
 import javax.json.*;
 import javax.xml.bind.DatatypeConverter;
@@ -42,11 +45,15 @@ public class Tracker implements IOFogModule {
 
         loggerTimer = new Timer();
         TimeLoggerTask timeLoggerTask = new TimeLoggerTask();
-        loggerTimer.schedule(timeLoggerTask, timeLoggerTask.getTimeTrackingTimeoutMin() * 1000, timeLoggerTask.getTimeTrackingTimeoutMin() * 1000);
+        loggerTimer.schedule(timeLoggerTask,
+                timeLoggerTask.getTimeTrackingTimeoutMin() * 60 * 1000,
+                timeLoggerTask.getTimeTrackingTimeoutMin() * 60 * 1000);
 
         senderTimer = new Timer();
         SenderTask senderTask = new SenderTask();
-        senderTimer.schedule(senderTask, senderTask.getSendTimeoutMin() *10* 1000, senderTask.getSendTimeoutMin() * 1000);
+        senderTimer.schedule(senderTask,
+                senderTask.getSendTimeoutMin() * 60 * 1000,
+                senderTask.getSendTimeoutMin() * 60 * 1000);
     }
 
     @Override
@@ -123,7 +130,7 @@ public class Tracker implements IOFogModule {
                 eventVal = jsonObjectBuilder.add("deltaTime", value).build();
                 break;
             case START:
-                eventVal = jsonObjectBuilder.build();
+                eventVal = jsonObjectBuilder.add("startConfig", value).build();
                 break;
             case ERROR:
                 eventVal = jsonObjectBuilder.add("message", value).build();
@@ -132,6 +139,9 @@ public class Tracker implements IOFogModule {
                 eventVal = jsonObjectBuilder.add("updated_fields", value).build();
                 break;
             case PROVISION:
+                eventVal = jsonObjectBuilder.add("status", value).build();
+                break;
+            case DEPROVISION:
                 eventVal = jsonObjectBuilder.add("status", value).build();
                 break;
             case MICROSERVICE:
@@ -146,7 +156,7 @@ public class Tracker implements IOFogModule {
     }
 
     private class TimeLoggerTask extends TimerTask {
-        private final int timeTrackingTimeoutMin = 1;
+        private final int timeTrackingTimeoutMin = 5;
         private int iterations = 0;
 
         public int getTimeTrackingTimeoutMin() {
@@ -171,7 +181,7 @@ public class Tracker implements IOFogModule {
     }
 
     private class SenderTask extends TimerTask {
-        private final int sendTimeoutMin = 2;
+        private final int sendTimeoutMin = 5;
         HttpClient httpClient = HttpClients.createDefault();
 
         public int getSendTimeoutMin() {
@@ -199,7 +209,8 @@ public class Tracker implements IOFogModule {
                     });
 
             //TODO not tested
-            StringEntity requestEntity = new StringEntity(jsonArrayBuilder.build().toString(), ContentType.APPLICATION_JSON);
+            //TODO send here
+            /*StringEntity requestEntity = new StringEntity(jsonArrayBuilder.build().toString(), ContentType.APPLICATION_JSON);
 
 
             HttpPost postMethod = new HttpPost("http://example.com/action");
@@ -209,7 +220,7 @@ public class Tracker implements IOFogModule {
                 HttpResponse response = httpClient.execute(postMethod);
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            }*/
 
         }
     }

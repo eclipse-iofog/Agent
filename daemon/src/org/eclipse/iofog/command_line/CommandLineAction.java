@@ -14,6 +14,8 @@
 package org.eclipse.iofog.command_line;
 
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -114,6 +116,7 @@ public enum CommandLineAction {
 				status = "Error";
 				LoggingService.logInfo(MODULE_NAME, "error de-provisioning");
 			}
+			Tracker.getInstance().handleEvent(TrackingEventType.DEPROVISION, status);
 			return format(getDeprovisionMessage(), status);
 		}
 	},
@@ -170,6 +173,7 @@ public enum CommandLineAction {
 			} else {
 				result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errorMessage"));
 			}
+			Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
 			return format(getProvisionMessage(), provisionKey, result);
 		}
 	},

@@ -2,7 +2,8 @@ package org.eclipse.iofog.tracking;
 
 public enum TrackingEventType {
     START("application started"),
-    PROVISION("provision success"),
+    PROVISION("provision"),
+    DEPROVISION("deprovision"),
     CONFIG("config updated"),
     TIME("running time"),
     MICROSERVICE("microservices was updated"),

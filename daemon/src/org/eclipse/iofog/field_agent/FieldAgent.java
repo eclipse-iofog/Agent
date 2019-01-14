@@ -28,6 +28,9 @@ import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEventType;
+import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -301,6 +304,9 @@ public class FieldAgent implements IOFogModule {
                             processRoutes(microservices);
                             MessageBus.getInstance().update();
                         }
+
+                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
+                                loadMicroservicesJsonFile().toString());
                     }
                     if (changes.getBoolean("tunnel") && !initialization) {
                         sshProxyManager.update(getProxyConfig());
@@ -471,6 +477,12 @@ public class FieldAgent implements IOFogModule {
         }
 
         microserviceManager.setRoutes(routes);
+    }
+
+    private JsonArray loadMicroservicesJsonFile() {
+        String filename = "microservices.json";
+        JsonArray microservicesJson = readFile(filesPath + filename);
+        return  microservicesJson;
     }
 
     /**
