@@ -57,7 +57,7 @@ public final class StatusReporter {
 		try {
 			setStatusReporterStatus().setSystemTime(System.currentTimeMillis());
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 		}
 	};
 

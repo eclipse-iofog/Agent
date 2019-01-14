@@ -81,7 +81,7 @@ public class LocalApi implements Runnable {
 			server.start();
 		} catch (Exception e) {
 				stopServer();
-				LoggingService.logWarning(MODULE_NAME, "unable to start local api server: " + e.getMessage());
+				LoggingService.logError(MODULE_NAME, "Unable to start local api server: " + e.getMessage(), e);
 				StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
 		}
 
