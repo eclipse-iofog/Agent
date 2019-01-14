@@ -71,13 +71,13 @@ public final class LoggingService {
      * @param msg        - message
      */
     public static void logWarning(String moduleName, String msg) {
-        EventBuilder builder = new EventBuilder();
-        builder
-                .withLevel(Event.Level.WARNING)
-                .withMessage(msg)
-                .withTag("module", moduleName);
-        Event event = builder.build();
-        Sentry.capture(event);
+//        EventBuilder builder = new EventBuilder();
+//        builder
+//                .withLevel(Event.Level.WARNING)
+//                .withMessage(msg)
+//                .withTag("module", moduleName);
+//        Event event = builder.build();
+//        Sentry.capture(event);
 
         if (Configuration.debugging || logger == null) {
             System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
