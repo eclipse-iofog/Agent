@@ -82,7 +82,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 			Configuration.saveConfigUpdates();
 		} catch (Exception e) {
 			String errorMsg = " Error with setting GPS, " + e.getMessage();
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
+			LoggingService.logError(MODULE_NAME, errorMsg, e);
 			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}

@@ -135,6 +135,11 @@
 			<artifactId>httpmime</artifactId>
 			<version>4.4</version>
 		</dependency>
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry</artifactId>
+			<version>1.7.16</version>
+		</dependency>
 	</dependencies>
 
 </project>

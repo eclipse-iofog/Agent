@@ -54,7 +54,7 @@ public class ResourceManager implements IOFogModule {
             try {
                 Thread.sleep(Configuration.getDeviceScanFrequency() * 1000);
             } catch (InterruptedException e) {
-                LoggingService.logWarning(MODULE_NAME, e.getMessage());
+                LoggingService.logError(MODULE_NAME, e.getMessage(), e);
             }
         }
     };

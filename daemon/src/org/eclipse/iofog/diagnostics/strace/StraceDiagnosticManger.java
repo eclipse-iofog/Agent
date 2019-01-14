@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class StraceDiagnosticManger {
@@ -92,7 +93,7 @@ public class StraceDiagnosticManger {
 			this.monitoringMicroservices.add(newMicroserviceStraceData);
 			runStrace(newMicroserviceStraceData);
 		} catch (IllegalArgumentException e) {
-			logWarning(MODULE_NAME, "Can't get pid of process");
+			logError(MODULE_NAME, "Can't get pid of process", e);
 		}
     }
 

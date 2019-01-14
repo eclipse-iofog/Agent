@@ -74,7 +74,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 			validateMessage(jsonObject);
 		} catch (Exception e) {
 			String errorMsg = "Validation Error, " + e.getMessage();
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
+			LoggingService.logError(MODULE_NAME, errorMsg, e);
 			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}
@@ -84,8 +84,8 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		try {
 			message = new Message(jsonObject);
 		} catch (Exception e) {
-			String errorMsg = " Message Pasring Error, " + e.getMessage();
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
+			String errorMsg = " Message Parsing Error, " + e.getMessage();
+			LoggingService.logError(MODULE_NAME, errorMsg, e);
 			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}

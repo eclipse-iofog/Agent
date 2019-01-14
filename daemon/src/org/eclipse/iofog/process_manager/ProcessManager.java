@@ -107,7 +107,7 @@ public class ProcessManager implements IOFogModule {
 				deleteRemainingMicroservices();
 				updateRunningMicroservicesCount();
 			} catch (Exception ex) {
-				logWarning(ex.getMessage());
+				logError(ex.getMessage(), ex);
 			}
 			updateCurrentMicroservices();
 		}
@@ -140,7 +140,7 @@ public class ProcessManager implements IOFogModule {
 			microservice.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
 		} catch (Exception e) {
 			microservice.setContainerIpAddress("0.0.0.0");
-			logWarning("Can't get ip address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage());
+			logError("Can't get ip address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage(), e);
 		}
 		if (shouldContainerBeUpdated(microservice, container, docker.getMicroserviceStatus(container.getId()))) {
 			addTask(new ContainerTask(UPDATE, microservice.getMicroserviceUuid()));
@@ -300,7 +300,7 @@ public class ProcessManager implements IOFogModule {
 				task.incrementRetries();
 				addTask(task);
 			} else {
-				String msg = format("container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString());
+				String msg = format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString());
 				logWarning(msg);
 			}
 		}

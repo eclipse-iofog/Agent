@@ -65,7 +65,7 @@ public class CommandShellExecutor {
             List<String> errors = readOutput(process, Process::getErrorStream);
             resultSet = new CommandShellResultSet<>(value, errors);
         } catch (IOException e) {
-            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         }
         return resultSet;
     }
@@ -88,7 +88,7 @@ public class CommandShellExecutor {
             new Thread(readErr).start();
 
         } catch (IOException e) {
-            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         }
     }
 
@@ -157,7 +157,7 @@ public class CommandShellExecutor {
                 }
             }
         } catch (InterruptedException | IOException e) {
-            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         } finally {
             process.destroy();
             if (killOrphanedProcessesRunnable != null) {
