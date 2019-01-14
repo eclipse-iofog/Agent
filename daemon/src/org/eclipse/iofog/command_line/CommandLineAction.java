@@ -111,7 +111,7 @@ public enum CommandLineAction {
 		public String perform(String[] args) {
 			String status;
 			try {
-				status = FieldAgent.getInstance().deProvision();
+				status = FieldAgent.getInstance().deProvision(false);
 			} catch (Exception e) {
 				status = "Error";
 				LoggingService.logInfo(MODULE_NAME, "error de-provisioning");

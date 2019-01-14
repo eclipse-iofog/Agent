@@ -134,7 +134,7 @@ public class MessageBus implements IOFogModule {
 							.filter(item -> !receivers.containsKey(item))
 							.collect(Collectors.toMap(item -> item, item -> {
 								try {
-									messageBusServer.createCosumer(item);
+									messageBusServer.createConsumer(item);
 								} catch (Exception e) {
 									LoggingService.logWarning(MODULE_NAME + "(" + item + ")",
 											"unable to start receiver module --> " + e.getMessage());
@@ -215,7 +215,7 @@ public class MessageBus implements IOFogModule {
 						logWarning("consumer module for " + receiver + " stopped. restarting...");
 						value.close();
 						try {
-							messageBusServer.createCosumer(receiver);
+							messageBusServer.createConsumer(receiver);
 							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
 							logInfo("consumer module restarted");
 						} catch (Exception e) {

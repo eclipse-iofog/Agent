@@ -3,23 +3,15 @@
 provisionkey=$1
 timeout=${2:-60}
 
-cd /etc/iofog-agent
-
-iofoglibdir=$(grep disk_directory config.xml | awk -F"[<>]" '{print $3}' | sed -n 1p)
-iofoglogdir=$(grep disk_directory config.xml | awk -F"[<>]" '{print $3}' | sed -n 2p)
-
 cd /var/backups/iofog-agent
 
 iofog-agent deprovision
 service iofog-agent stop
 
-apt-get purge --auto-remove iofog-agent-dev -y
-rm -rf $iofoglibdir
-rm -rf $iofoglogdir
-rm -rf /etc/iofog-agent/
+apt-get purge --auto-remove iofog-agent -y
 
 iofogversion=$(grep ver prev_version_data | awk '{print $2}')
-apt-get install iofog-agent-dev=$iofogversion -y
+apt-get install iofog-agent=$iofogversion -y
 
 rm -rf /etc/iofog-agent/
 tar -xvzf config_backup.tar.gz -P -C /

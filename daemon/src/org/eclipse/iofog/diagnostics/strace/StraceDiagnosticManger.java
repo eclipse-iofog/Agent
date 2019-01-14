@@ -117,7 +117,21 @@ public class StraceDiagnosticManger {
 	private void runStrace(MicroserviceStraceData microserviceStraceData) {
 		String straceCommand = "strace -p " + microserviceStraceData.getPid();
 		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, microserviceStraceData.getResultBuffer());
-		CommandShellExecutor.executeDynamicCommand(straceCommand, resultSet, microserviceStraceData.getStraceRun());
+		CommandShellExecutor.executeDynamicCommand(
+			straceCommand,
+			resultSet,
+			microserviceStraceData.getStraceRun(),
+			killOrphanedStraceProcessesRunnable()
+		);
+	}
+
+	private Runnable killOrphanedStraceProcessesRunnable() {
+		return () -> {
+			CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("pgrep strace");
+			if (resultSet.getValue() != null) {
+				resultSet.getValue().forEach(value -> CommandShellExecutor.executeCommand(String.format("kill -9 %s", value)));
+			}
+		};
 	}
 
 }

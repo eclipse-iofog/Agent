@@ -169,9 +169,11 @@ public class ProcessManager implements IOFogModule {
 
 	private void deleteRemainingMicroservices() {
 		Set<String> latestMicroserviceUuids = microserviceManager.getLatestMicroservices().stream()
-			.map(Microservice::getMicroserviceUuid).collect(Collectors.toSet());
+			.map(Microservice::getMicroserviceUuid)
+			.collect(Collectors.toSet());
 		Set<String> currentMicroserviceUuids = microserviceManager.getCurrentMicroservices().stream()
-			.map(Microservice::getMicroserviceUuid).collect(Collectors.toSet());
+			.map(Microservice::getMicroserviceUuid)
+			.collect(Collectors.toSet());
 		List<Container> runningContainers;
 		synchronized (deleteLock) {
 			runningContainers = docker.getRunningContainers();
@@ -239,7 +241,6 @@ public class ProcessManager implements IOFogModule {
 			.collect(Collectors.toList());
 		microserviceManager.setCurrentMicroservices(currentMicroservices);
 	}
-
 	private boolean shouldContainerBeUpdated(Microservice microservice, Container container, MicroserviceStatus status) {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
