@@ -71,6 +71,7 @@ public final class LoggingService {
      * @param msg        - message
      */
     public static void logWarning(String moduleName, String msg) {
+        // TODO commented for now due to Sentry errors capacity
 //        EventBuilder builder = new EventBuilder();
 //        builder
 //                .withLevel(Event.Level.WARNING)
