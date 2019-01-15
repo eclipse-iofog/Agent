@@ -120,10 +120,10 @@ public class ContainerManager {
 	private void stopContainer(String microserviceUuid) {
 		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 		containerOptional.ifPresent(container -> {
-			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", container.getId()));
+			LoggingService.logInfo(MODULE_NAME, String.format("Stopping container \"%s\"", container.getId()));
 			try {
 				docker.stopContainer(container.getId());
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", container.getId()));
+				LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" stopped", container.getId()));
 			} catch (Exception e) {
 				LoggingService.logError(MODULE_NAME, String.format("Error stopping container \"%s\"", container.getId()), e);
 			}

@@ -88,7 +88,7 @@ public class DockerUtil {
 			DockerClientConfig config = configBuilder.build();
 			dockerClient = DockerClientBuilder.getInstance(config).build();
 		} catch (Exception e) {
-			logError(MODULE_NAME, "docker client initialization failed - " + e.getMessage(), e);
+			logError(MODULE_NAME, "Docker client initialization failed - " + e.getMessage(), e);
 			throw e;
 		}
 		addDockerEventHandler();
@@ -192,7 +192,7 @@ public class DockerUtil {
 			InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
 			return inspect.getNetworkSettings().getIpAddress();
 		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
+			logWarning(MODULE_NAME, exp.getMessage());
 			throw exp;
 		}
 	}
