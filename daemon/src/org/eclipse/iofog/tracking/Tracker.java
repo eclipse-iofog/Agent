@@ -208,20 +208,18 @@ public class Tracker implements IOFogModule {
                         jsonArrayBuilder.add(el.toJsonObject());
                     });
 
-            //TODO not tested
-            //TODO send here
-            /*StringEntity requestEntity = new StringEntity(jsonArrayBuilder.build().toString(), ContentType.APPLICATION_JSON);
+            //TODO not tested with server
+            StringEntity requestEntity = new StringEntity(jsonArrayBuilder.build().toString(), ContentType.APPLICATION_JSON);
 
 
-            HttpPost postMethod = new HttpPost("http://example.com/action");
+            HttpPost postMethod = new HttpPost("https://k71j0cv81j.execute-api.us-east-2.amazonaws.com/dev");
             postMethod.setEntity(requestEntity);
 
             try {
                 HttpResponse response = httpClient.execute(postMethod);
             } catch (IOException e) {
                 e.printStackTrace();
-            }*/
-
+            }
         }
     }
 }

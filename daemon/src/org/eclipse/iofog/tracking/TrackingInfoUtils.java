@@ -17,7 +17,7 @@ public class TrackingInfoUtils {
         String agentStatus = StatusReporter.getFieldAgentStatus().getControllerStatus().name().toLowerCase();
 
         JsonObject startInfo = Json.createObjectBuilder()
-                .add("gpsCoonrinates", gpsCoordinates)
+                .add("gpsCoordinates", gpsCoordinates)
                 .add("gpsMode", gpsMode)
                 .add("developerMode", developerMode)
                 .add("networkInterface", networkInterface)

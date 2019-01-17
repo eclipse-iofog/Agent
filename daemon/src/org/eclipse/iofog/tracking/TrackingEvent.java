@@ -5,6 +5,7 @@ import javax.json.JsonObject;
 
 public class TrackingEvent {
     private String uuid;
+    private String sourceType;
     private Long timestamp;
     private TrackingEventType type;
     private JsonObject value;
@@ -12,6 +13,7 @@ public class TrackingEvent {
     public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, JsonObject value) {
         this.uuid = uuid;
         this.timestamp = timestamp;
+        this.sourceType = "agent";
         this.type = type;
         this.value = value;
     }
@@ -57,8 +59,9 @@ public class TrackingEvent {
         return Json.createObjectBuilder()
                 .add("uuid", uuid)
                 .add("timestamp", timestamp)
+                .add("sourceType", sourceType)
                 .add("type", type.getName())
-                .add("value", value)
+                .add("value", value.toString())
                 .build();
     }
 }
