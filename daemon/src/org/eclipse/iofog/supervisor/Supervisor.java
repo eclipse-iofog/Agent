@@ -61,7 +61,7 @@ public class Supervisor implements IOFogModule {
 				localApiThread.start();
 			}
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 		}
 	};
 
@@ -119,7 +119,7 @@ public class Supervisor implements IOFogModule {
             try {
                 Thread.sleep(Configuration.getStatusReportFreqSeconds() * 1000);
             } catch (InterruptedException e) {
-                logWarning(e.getMessage());
+                logError(e.getMessage(), e);
                 System.exit(1);
             }
         }
@@ -135,7 +135,7 @@ public class Supervisor implements IOFogModule {
 			localApi.stopServer();
 			messageBus.stop();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 		}
 	};
 

@@ -14,7 +14,7 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.IOFogModule;
-import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManger;
+import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
@@ -100,14 +100,14 @@ public class ProcessManager implements IOFogModule {
 			} catch (InterruptedException e) {
 				logInfo("Error while sleeping thread : " + e.getMessage());
 			}
-			logInfo("monitoring containers");
+			logInfo("Monitoring containers");
 
 			try {
 				handleLatestMicroservices();
 				deleteRemainingMicroservices();
 				updateRunningMicroservicesCount();
 			} catch (Exception ex) {
-				logWarning(ex.getMessage());
+				logError(ex.getMessage(), ex);
 			}
 			updateCurrentMicroservices();
 		}
@@ -131,7 +131,7 @@ public class ProcessManager implements IOFogModule {
 	}
 
 	private void disableMicroserviceFeaturesBeforeRemoval(String microserviceUuid) {
-		StraceDiagnosticManger.getInstance().disableMicroserviceStraceDiagnostics(microserviceUuid);
+		StraceDiagnosticManager.getInstance().disableMicroserviceStraceDiagnostics(microserviceUuid);
 	}
 
 	private void updateMicroservice(Container container, Microservice microservice) {
@@ -140,7 +140,7 @@ public class ProcessManager implements IOFogModule {
 			microservice.setContainerIpAddress(docker.getContainerIpAddress(container.getId()));
 		} catch (Exception e) {
 			microservice.setContainerIpAddress("0.0.0.0");
-			logWarning("Can't get ip address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage());
+			logError("Can't get IP address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage(), e);
 		}
 		if (shouldContainerBeUpdated(microservice, container, docker.getMicroserviceStatus(container.getId()))) {
 			addTask(new ContainerTask(UPDATE, microservice.getMicroserviceUuid()));
@@ -300,7 +300,7 @@ public class ProcessManager implements IOFogModule {
 				task.incrementRetries();
 				addTask(task);
 			} else {
-				String msg = format("container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString());
+				String msg = format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString());
 				logWarning(msg);
 			}
 		}

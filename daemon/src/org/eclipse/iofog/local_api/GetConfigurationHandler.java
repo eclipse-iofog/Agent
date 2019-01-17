@@ -73,7 +73,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 			validateRequest(jsonObject);
 		} catch (Exception e) {
 			String errorMsg = "Incorrect content/data, " + e.getMessage();
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
+			LoggingService.logError(MODULE_NAME, errorMsg, e);
 			outputBuffer.writeBytes(errorMsg.getBytes());
 			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
 		}

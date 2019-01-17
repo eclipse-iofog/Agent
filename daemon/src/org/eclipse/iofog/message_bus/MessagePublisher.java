@@ -23,7 +23,7 @@ import java.util.List;
 
 import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
 import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
  * publisher {@link Microservice}
@@ -62,7 +62,7 @@ public class MessagePublisher implements AutoCloseable{
 		try {
 			archive.save(bytes, message.getTimestamp());
 		} catch (Exception e) {
-			LoggingService.logWarning("Message Publisher (" + this.name + ")", "unable to archive massage --> " + e.getMessage());
+			logError("Message Publisher (" + this.name + ")", "unable to archive massage --> " + e.getMessage(), e);
 		}
 		for (String receiver : route.getReceivers()) {
 			ClientMessage msg = session.createMessage(false);
@@ -82,7 +82,7 @@ public class MessagePublisher implements AutoCloseable{
 		try {
 			archive.close();
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
+			logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 	}
 

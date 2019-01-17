@@ -84,7 +84,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
         } catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, e.getMessage());
+			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         } finally {
             group.shutdownGracefully();
         }

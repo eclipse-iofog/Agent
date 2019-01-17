@@ -14,6 +14,7 @@ package org.eclipse.iofog.message_bus;
 
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.local_api.MessageCallback;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientMessage;
 
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
  * receiver {@link Microservice}
@@ -114,7 +115,7 @@ public class MessageReceiver implements AutoCloseable{
 			listener = null;
 			consumer.setMessageHandler(null);
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
+			logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 	}
 	
@@ -125,7 +126,7 @@ public class MessageReceiver implements AutoCloseable{
 		try {
 			consumer.close();
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
+			logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 	}
 }
