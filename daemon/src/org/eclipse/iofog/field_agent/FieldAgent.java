@@ -226,6 +226,14 @@ public class FieldAgent implements IOFogModule {
         }
     };
 
+    public final void postTracking(JsonObject events) {
+        try {
+            orchestrator.request("tracking", RequestType.POST, null, events);
+        } catch (Exception e) {
+            logError("Unable send tracking logs : " + e.getMessage(), e);
+        }
+    }
+
     /**
      * logs and sets appropriate status when controller
      * certificate is not verified

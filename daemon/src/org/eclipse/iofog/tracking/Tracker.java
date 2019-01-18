@@ -7,6 +7,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.Constants;
@@ -151,7 +152,7 @@ public class Tracker implements IOFogModule {
                 throw new IllegalArgumentException("unhandled event type");
 
         }
-        TrackingEvent event = new TrackingEvent(this.id, new Date().getTime(), type, eventVal);
+        TrackingEvent event = new TrackingEvent(this.id, new Date().getTime(), type, eventVal.toString());
         TrackingEventsStorage.getInstance().pushEvent(event);
     }
 
@@ -209,16 +210,26 @@ public class Tracker implements IOFogModule {
                     });
 
             //TODO not tested with server
-            StringEntity requestEntity = new StringEntity(jsonArrayBuilder.build().toString(), ContentType.APPLICATION_JSON);
+            JsonObject eventsListObject = Json.createObjectBuilder()
+                    .add("events", jsonArrayBuilder.build())
+                    .build();
 
+            HttpPost postMethod = null;
+            if (StatusReporter.getFieldAgentStatus().getControllerStatus().equals(Constants.ControllerStatus.OK)) {
+                //send to controller
+                FieldAgent.getInstance().postTracking(eventsListObject);
+            } else {
+                //send directly
+                //TODO add event that says about connection problem on controller
+                StringEntity requestEntity = new StringEntity(eventsListObject.toString(), ContentType.APPLICATION_JSON);
+                postMethod = new HttpPost("https://k71j0cv81j.execute-api.us-east-2.amazonaws.com/dev");
+                postMethod.setEntity(requestEntity);
 
-            HttpPost postMethod = new HttpPost("https://k71j0cv81j.execute-api.us-east-2.amazonaws.com/dev");
-            postMethod.setEntity(requestEntity);
-
-            try {
-                HttpResponse response = httpClient.execute(postMethod);
-            } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    HttpResponse response = httpClient.execute(postMethod);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

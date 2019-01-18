@@ -8,9 +8,9 @@ public class TrackingEvent {
     private String sourceType;
     private Long timestamp;
     private TrackingEventType type;
-    private JsonObject value;
+    private String value;
 
-    public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, JsonObject value) {
+    public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, String value) {
         this.uuid = uuid;
         this.timestamp = timestamp;
         this.sourceType = "agent";
@@ -42,11 +42,11 @@ public class TrackingEvent {
         this.type = type;
     }
 
-    public JsonObject getValue() {
+    public String getValue() {
         return value;
     }
 
-    public void setValue(JsonObject value) {
+    public void setValue(String value) {
         this.value = value;
     }
 
@@ -61,7 +61,7 @@ public class TrackingEvent {
                 .add("timestamp", timestamp)
                 .add("sourceType", sourceType)
                 .add("type", type.getName())
-                .add("value", value.toString())
+                .add("value", value)
                 .build();
     }
 }
