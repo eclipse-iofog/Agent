@@ -19,7 +19,7 @@ stages:
 - name: dev_deploy
   if: branch = develop AND type = push
 - name: pre_release
-  if: branch = /^release-.*$/ AND type = push
+  if: branch =~ /^release-.*$/ AND type = push
 - name: release
   if: branch = master and type = push
 jobs:
