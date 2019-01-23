@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-PUSH_YANK_LIST="$(bash pushyank.sh)"
+PUSH_YANK_LIST="pushyank.sh"
 
-VERSION=`xml_grep --cond='project/version' pom.xml --text_only`
+VERSION=exec "xml_grep --cond='project/version' pom.xml --text_only"
 if [ "$BRANCH" != "master"]; then export DEV=-dev; fi
 sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP \
       "rm -rf /iofog-agent-packaging-rpm/*; rm -rf /iofog-agent-packaging/*;"
@@ -19,4 +19,4 @@ sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-agent-client-jar-with
 sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-agent-daemon-jar-with-dependencies.jar \
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-agent-packaging-rpm/usr/bin/iofog-agentd.jar
 sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP \
-      "${PUSH_YANK_LIST}" 
+      "(exec "$PUSH_YANK_LIST")" 
