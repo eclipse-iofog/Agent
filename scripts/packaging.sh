@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-PUSH_YANK_LIST="$(bash ${DIR}/pushyank.sh)"
+#DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+PUSH_YANK_LIST="$(bash pushyank.sh)"
 
 VERSION=`xml_grep --cond='project/version' pom.xml --text_only`
 if [ "$BRANCH" != "master"]; then export DEV=-dev; fi
