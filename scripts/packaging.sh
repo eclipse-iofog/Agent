@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 PUSH_YANK_LIST="$(bash ${DIR}/pushyank.sh)"
 
-export VERSION=`xml_grep --cond='project/version' pom.xml --text_only`
+VERSION=`xml_grep --cond='project/version' pom.xml --text_only`
 if [ "$BRANCH" != "master"]; then export DEV=-dev; fi
 sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP \
       "rm -rf /iofog-agent-packaging-rpm/*; rm -rf /iofog-agent-packaging/*;"
