@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-#DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-PUSH_YANK_LIST="pushyank.sh"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+PUSH_YANK_LIST="$(bash ${DIR}/pushyank.sh)"
 
 VERSION=$1
 DEV=$2
@@ -20,4 +20,4 @@ sshpass -p $STAGE_MACHINE_PASSWORD scp client/target/iofog-agent-client-jar-with
 sshpass -p $STAGE_MACHINE_PASSWORD scp daemon/target/iofog-agent-daemon-jar-with-dependencies.jar \
       $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP:/iofog-agent-packaging-rpm/usr/bin/iofog-agentd.jar
 sshpass -p $STAGE_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $STAGE_MACHINE_USERNAME@$STAGE_MACHINE_IP \
-      "(exec "$PUSH_YANK_LIST")" 
+      "${PUSH_YANK_LIST}"  
