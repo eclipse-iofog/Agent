@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-BRANCH=$1
-PASSWORD=$2
-USER=$3
-IP=$4
-
-if [ "$BRANCH" != "master" && "$BRANCH" != "develop" ]; then export DEV=-dev; fi
+PASSWORD=$1
+USER=$2
+IP=$3
 
 sshpass -p ${PASSWORD} ssh -p StrictHostKeyChecking=no ${USER}@${IP}
     "service iofog-agent stop sudo apt-get install --only-upgrade -y iofog-agent${DEV}";
