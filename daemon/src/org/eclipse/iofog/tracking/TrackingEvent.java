@@ -2,20 +2,21 @@ package org.eclipse.iofog.tracking;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonStructure;
 
 public class TrackingEvent {
     private String uuid;
     private String sourceType;
     private Long timestamp;
     private TrackingEventType type;
-    private String value;
+    private JsonStructure data;
 
-    public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, String value) {
+    public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, JsonStructure data) {
         this.uuid = uuid;
         this.timestamp = timestamp;
         this.sourceType = "agent";
         this.type = type;
-        this.value = value;
+        this.data = data;
     }
 
     public String getUuid() {
@@ -42,12 +43,12 @@ public class TrackingEvent {
         this.type = type;
     }
 
-    public String getValue() {
-        return value;
+    public JsonStructure getData() {
+        return data;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setData(JsonStructure data) {
+        this.data = data;
     }
 
     @Override
@@ -61,7 +62,7 @@ public class TrackingEvent {
                 .add("timestamp", timestamp)
                 .add("sourceType", sourceType)
                 .add("type", type.getName())
-                .add("value", value)
+                .add("data", data)
                 .build();
     }
 }

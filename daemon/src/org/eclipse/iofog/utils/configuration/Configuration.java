@@ -566,6 +566,11 @@ public final class Configuration {
                 default:
                     throw new ConfigurationItemException("Invalid parameter -" + option);
             }
+
+            //to correct info in tracking event
+            if (cmdOption.equals(GPS_COORDINATES)) {
+                value = Configuration.getGpsCoordinates();
+            }
             Tracker.getInstance().handleEvent(TrackingEventType.CONFIG,
                     TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
         }

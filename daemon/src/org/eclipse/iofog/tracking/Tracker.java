@@ -123,36 +123,30 @@ public class Tracker implements IOFogModule {
     }
 
     public void handleEvent(TrackingEventType type, String value) {
-
         JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
-        JsonObject eventVal = null;
+        JsonObject valueObj = null;
         switch (type) {
             case TIME:
-                eventVal = jsonObjectBuilder.add("deltaTime", value).build();
-                break;
-            case START:
-                eventVal = jsonObjectBuilder.add("startConfig", value).build();
+                valueObj = jsonObjectBuilder.add("deltaTime", value + " min").build();
                 break;
             case ERROR:
-                eventVal = jsonObjectBuilder.add("message", value).build();
-                break;
-            case CONFIG:
-                eventVal = jsonObjectBuilder.add("updated_fields", value).build();
+                valueObj = jsonObjectBuilder.add("message", value).build();
                 break;
             case PROVISION:
-                eventVal = jsonObjectBuilder.add("status", value).build();
+                valueObj = jsonObjectBuilder.add("provisionStatus", value).build();
                 break;
             case DEPROVISION:
-                eventVal = jsonObjectBuilder.add("status", value).build();
-                break;
-            case MICROSERVICE:
-                eventVal = jsonObjectBuilder.add("new_microservices", value).build();
+                valueObj = jsonObjectBuilder.add("deprovisionStatus", value).build();
                 break;
             default:
+                //other events types not handled because should be used with handleEvent(TrackingEventType type, JsonStructure value) method
                 throw new IllegalArgumentException("unhandled event type");
-
         }
-        TrackingEvent event = new TrackingEvent(this.id, new Date().getTime(), type, eventVal.toString());
+        handleEvent(type, valueObj);
+    }
+
+    public void handleEvent(TrackingEventType type, JsonStructure value) {
+        TrackingEvent event = new TrackingEvent(this.id, new Date().getTime(), type, value);
         TrackingEventsStorage.getInstance().pushEvent(event);
     }
 
@@ -222,7 +216,7 @@ public class Tracker implements IOFogModule {
                 //send directly
                 //TODO add event that says about connection problem on controller
                 StringEntity requestEntity = new StringEntity(eventsListObject.toString(), ContentType.APPLICATION_JSON);
-                postMethod = new HttpPost("https://k71j0cv81j.execute-api.us-east-2.amazonaws.com/dev");
+                postMethod = new HttpPost("https://kf6v825xpc.execute-api.us-west-2.amazonaws.com/dev3/post");
                 postMethod.setEntity(requestEntity);
 
                 try {

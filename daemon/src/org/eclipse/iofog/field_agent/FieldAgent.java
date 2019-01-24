@@ -314,7 +314,7 @@ public class FieldAgent implements IOFogModule {
                         }
 
                         Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
-                                loadMicroservicesJsonFile().toString());
+                                loadMicroservicesJsonFile());
                     }
                     if (changes.getBoolean("tunnel") && !initialization) {
                         sshProxyManager.update(getProxyConfig());

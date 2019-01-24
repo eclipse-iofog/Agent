@@ -8,7 +8,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 public class TrackingInfoUtils {
-    public static String getStartTrackingInfo() {
+    public static JsonObject getStartTrackingInfo() {
         String gpsCoordinates = Configuration.getGpsCoordinates();
         String gpsMode = Configuration.getGpsMode().name();
         boolean developerMode = Configuration.isDeveloperMode();
@@ -24,14 +24,13 @@ public class TrackingInfoUtils {
                 .add("version", version)
                 .add("agentStatus", agentStatus)
                 .build();
-        return startInfo.toString();
+        return startInfo;
     }
 
-    public static String getConfigUpdateInfo(String option, String newValue) {
+    public static JsonObject getConfigUpdateInfo(String option, String newValue) {
         JsonObject info = Json.createObjectBuilder()
-                .add("field", option)
-                .add("value", newValue)
+                .add(option, newValue)
                 .build();
-        return info.toString();
+        return info;
     }
 }
