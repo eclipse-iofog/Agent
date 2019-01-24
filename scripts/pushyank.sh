@@ -31,14 +31,14 @@ rpm.sh etc usr;"
 
 for version in ${FEDORA_VERS}
 do
-    RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/fedora/${version} iofog-agent${DEV}_${VERSION}-1.noarch.rpm;"
-    RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/fedora/${version} iofog-agent${DEV}_${VERSION}-1.noarch.rpm;"
+    RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/fedora/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
+    RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/fedora/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
 done
 
 for version in ${REDHAT_VERS}
 do
-    RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/el/${version} iofog-agent${DEV}_${VERSION}-1.noarch.rpm;"
-    RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/el/${version} iofog-agent${DEV}_${VERSION}-1.noarch.rpm;"
+    RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/el/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
+    RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/el/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
 done
   
 echo $RETURN_STRING
