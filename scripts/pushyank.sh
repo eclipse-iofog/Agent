@@ -10,7 +10,7 @@ declare -a FEDORA_VERS=("22" "23" "24") #Supported Fedora Versions
 declare -a REDHAT_VERS=("6" "7") #Supported Redhat versions
 
 
-for version in ${UBUNTU_VERS}
+for version in ${UBUNTU_VERS[@]}
 do
     RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/ubuntu/${version} iofog-agent${DEV}_${VERSION}_all.deb;"
     RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/ubuntu/${version} iofog-agent${DEV}_${VERSION}_all.deb;"
@@ -29,13 +29,13 @@ fpm -s dir -t rpm -n \"iofog-agent${DEV}\" -v $VERSION -a all --rpm-os 'linux' -
 rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade
 rpm.sh etc usr;"
 
-for version in ${FEDORA_VERS}
+for version in ${FEDORA_VERS[@]}
 do
     RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/fedora/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
     RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/fedora/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
 done
 
-for version in ${REDHAT_VERS}
+for version in ${REDHAT_VERS[@]}
 do
     RETURN_STRING="${RETURN_STRING} package_cloud yank iofog/iofog-agent/el/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
     RETURN_STRING="${RETURN_STRING} package_cloud push iofog/iofog-agent/el/${version} iofog-agent${DEV}-${VERSION}-1.noarch.rpm;"
