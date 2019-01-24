@@ -150,7 +150,7 @@ public class Daemon {
     }
 
     public static void main(String[] args) throws ParseException {
-        Sentry.init("https://1638dde4849a4bebb923685b8f0beaf5@sentry.io/1370886");
+        Sentry.init("https://0c6c3531b8b5402287e2688281bbbf06@sentry.io/1378607");
 
         Sentry.getContext().addExtra("version", getVersion());
 
