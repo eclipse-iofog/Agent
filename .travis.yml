@@ -19,8 +19,7 @@ stages:
 - name: dev_deploy
   if: branch = develop AND type = push
 - name: pre_release
-  if: branch = dbusel-ENG-529 AND type = push
-  #if: branch = /^release-.*$/ AND type = push
+  if: branch =~ /^release-.*$/ AND type = push
 - name: release
   if: branch = master and type = push
 jobs:
@@ -30,7 +29,7 @@ jobs:
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
-    - ./scripts/deploy.sh $TRAVIS_BRANCH $DEV_MACHINE_PASSWORD $DEV_MACHINE_USERNAME $DEV_MACHINE_IP
+    - ./scripts/deploy.sh $DEV_MACHINE_PASSWORD $DEV_MACHINE_USERNAME $DEV_MACHINE_IP
   - stage: pre_release
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
@@ -38,7 +37,7 @@ jobs:
     - export VERSION=`xml_grep --cond='project/version' pom.xml --text_only`
     - export DEV=-dev
     - bash scripts/packaging.sh
-    #- ./scripts/deploy.sh $TRAVIS_BRANCH $PREPROD_MACHINE_PASSWORD $PREPROD_MACHINE_USERNAME $PREPROD_MACHINE_IP
+    - ./scripts/deploy.sh $PREPROD_MACHINE_PASSWORD $PREPROD_MACHINE_USERNAME $PREPROD_MACHINE_IP
   - stage: release
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
@@ -58,4 +57,4 @@ jobs:
       on:
         branch: master
     after_deploy:
-    - ./scripts/deploy.sh $TRAVIS_BRANCH $PROD_MACHINE_PASSWORD $PROD_MACHINE_USERNAME $PROD_MACHINE_IP
+    - ./scripts/deploy.sh $PROD_MACHINE_PASSWORD $PROD_MACHINE_USERNAME $PROD_MACHINE_IP
