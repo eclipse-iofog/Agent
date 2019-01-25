@@ -34,4 +34,8 @@ public interface IOFogModule {
     default void logWarning(String message) {
         LoggingService.logWarning(this.getModuleName(), message);
     }
+
+    default void logError(String message, Exception e) {
+        LoggingService.logError(this.getModuleName(), message, e);
+    }
 }

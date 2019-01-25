@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.Microservice;
@@ -21,6 +22,8 @@ import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Optional;
+
+import static org.eclipse.iofog.microservice.Microservice.deleteLock;
 
 /**
  * provides methods to manage Docker containers
@@ -105,7 +108,7 @@ public class ContainerManager {
 			microservice.setContainerIpAddress(docker.getContainerIpAddress(microservice.getContainerId()));
 		} catch (Exception ex) {
 			LoggingService.logWarning(MODULE_NAME,
-					String.format("container \"%s\" not found - %s", microservice.getImageName(), ex.getMessage()));
+					String.format("Container \"%s\" not found - %s", microservice.getImageName(), ex.getMessage()));
 		}
 	}
 
@@ -117,12 +120,12 @@ public class ContainerManager {
 	private void stopContainer(String microserviceUuid) {
 		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 		containerOptional.ifPresent(container -> {
-			LoggingService.logInfo(MODULE_NAME, String.format("stopping container \"%s\"", container.getId()));
+			LoggingService.logInfo(MODULE_NAME, String.format("Stopping container \"%s\"", container.getId()));
 			try {
 				docker.stopContainer(container.getId());
-				LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" stopped", container.getId()));
+				LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" stopped", container.getId()));
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, String.format("error stopping container \"%s\"", container.getId()));
+				LoggingService.logError(MODULE_NAME, String.format("Error stopping container \"%s\"", container.getId()), e);
 			}
 		});
 
@@ -132,12 +135,12 @@ public class ContainerManager {
 	 * removes a {@link Container} by Microservice uuid
 	 */
 	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) {
-
-		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
-
-		if (containerOptional.isPresent()) {
-			Container container = containerOptional.get();
-			removeContainer(container.getId(), container.getImageId(), withCleanUp);
+		synchronized (deleteLock) {
+			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
+			if (containerOptional.isPresent()) {
+				Container container = containerOptional.get();
+				removeContainer(container.getId(), container.getImageId(), withCleanUp);
+			}
 		}
 	}
 
@@ -147,12 +150,17 @@ public class ContainerManager {
 			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
-				docker.removeImageById(imageId);
+				try {
+					docker.removeImageById(imageId);
+				} catch (ConflictException ex) {
+					LoggingService.logInfo(MODULE_NAME, String.format("Image for container \"%s\" hasn't been removed", containerId));
+					LoggingService.logInfo(MODULE_NAME, ex.getMessage().replace("\n", ""));
+				}
 			}
 
-			LoggingService.logInfo(MODULE_NAME, String.format("container \"%s\" removed", containerId));
+			LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" removed", containerId));
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, String.format("error removing container \"%s\"", containerId));
+			LoggingService.logError(MODULE_NAME, String.format("Error removing container \"%s\"", containerId), e);
 			throw e;
 		}
 	}

@@ -106,7 +106,7 @@ public class SshProxyManager {
             connection.setKnownHost();
         } catch (JSchException jschX) {
             String errMsg = String.format("There was an issue with server RSA key setup:%n %s", jschX.getMessage());
-            LoggingService.logWarning(MODULE_NAME, errMsg);
+            LoggingService.logError(MODULE_NAME, errMsg, jschX);
         }
     }
 
@@ -134,7 +134,7 @@ public class SshProxyManager {
 
     private void onError(Throwable ex) {
         String errMsg = String.format("Unable to connect to the server:%n %s", ex.getMessage());
-        LoggingService.logWarning(MODULE_NAME, errMsg);
+        LoggingService.logError(MODULE_NAME, errMsg, ex);
         setSshProxyManagerStatus(FAILED, errMsg);
     }
 

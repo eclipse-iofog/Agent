@@ -136,7 +136,7 @@ public class MessageArchive implements AutoCloseable{
 				dataFile.close();
 			currentFileName = "";
 		} catch (Exception exp) {
-			LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+			LoggingService.logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 	}
 	
@@ -241,7 +241,7 @@ public class MessageArchive implements AutoCloseable{
 					result.add(message);
 				}
 			} catch (Exception e) {
-				LoggingService.logWarning("Message Archive", e.getMessage());
+				LoggingService.logError("Message Archive", e.getMessage(), e);
 			}
 		}
 		

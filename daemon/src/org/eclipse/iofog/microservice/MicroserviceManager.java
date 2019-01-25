@@ -118,16 +118,16 @@ public class MicroserviceManager {
 		}
 	}
 
-	public boolean microserviceExists(List<Microservice> microservices, String microserviceId) {
-		return findMicroserviceByUuid(microservices, microserviceId).isPresent();
+	public boolean microserviceExists(List<Microservice> microservices, String microserviceUuid) {
+		return findMicroserviceByUuid(microservices, microserviceUuid).isPresent();
 	}
 
 	/***
 	 * not thread safe for Microservice obj properties
 	 */
-	private Optional<Microservice> findMicroserviceByUuid(List<Microservice> microservices, String microserviceId) {
+	private Optional<Microservice> findMicroserviceByUuid(List<Microservice> microservices, String microserviceUuid) {
 		return microservices.stream()
-				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceId))
+				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
 				.findAny();
 	}
 

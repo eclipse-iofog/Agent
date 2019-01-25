@@ -15,33 +15,36 @@ package org.eclipse.iofog.diagnostics.strace;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.json.*;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
-public class StraceDiagnosticManger {
+public class StraceDiagnosticManager {
 
 	private static final String MODULE_NAME = "STrace Diagnostic Manager";
 
 	private final List<MicroserviceStraceData> monitoringMicroservices;
-	private static StraceDiagnosticManger instance = null;
+	private static StraceDiagnosticManager instance = null;
 
-	public static StraceDiagnosticManger getInstance() {
+	public static StraceDiagnosticManager getInstance() {
 		if (instance == null) {
-			synchronized (StraceDiagnosticManger.class) {
+			synchronized (StraceDiagnosticManager.class) {
 				if (instance == null)
-					instance = new StraceDiagnosticManger();
+					instance = new StraceDiagnosticManager();
 			}
 		}
 		return instance;
 	}
 
-	private StraceDiagnosticManger() {
+	private StraceDiagnosticManager() {
 		this.monitoringMicroservices = new CopyOnWriteArrayList<>();
 	}
 
@@ -50,15 +53,15 @@ public class StraceDiagnosticManger {
 	}
 
 	public void updateMonitoringMicroservices(JsonObject diagnosticData) {
-		LoggingService.logInfo(MODULE_NAME, "trying to update strace monitoring microservices");
+		LoggingService.logInfo(MODULE_NAME, "Trying to update strace monitoring microservices");
 
 		if (diagnosticData.containsKey("straceValues")) {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
 			for (JsonValue microserviceValue : straceMicroserviceChanges) {
 				JsonObject microservice = (JsonObject) microserviceValue;
-				if (microservice.containsKey("microserviceId")) {
-					String microserviceUuid = microservice.getString("microserviceId");
-					boolean strace = microservice.getInt("straceRun", 0) != 0;
+				if (microservice.containsKey("microserviceUuid")) {
+					String microserviceUuid = microservice.getString("microserviceUuid");
+					boolean strace = microservice.getBoolean("straceRun");
 					manageMicroservice(microserviceUuid, strace);
 				}
 			}
@@ -66,36 +69,39 @@ public class StraceDiagnosticManger {
 	}
 
 	private void manageMicroservice(String microserviceUuid, boolean strace) {
-		Optional<MicroserviceStraceData> microserviceOptional = getDataByMicroserviceUuid(microserviceUuid);
-		if (microserviceOptional.isPresent() && !strace) {
-			offDiagnosticMicroservice(microserviceOptional.get());
-		} else if (!microserviceOptional.isPresent() && strace) {
-			createAndRunDiagnosticMicroservice(microserviceUuid);
-		}
+        if (strace) {
+            enableMicroserviceStraceDiagnostics(microserviceUuid);
+        } else {
+            disableMicroserviceStraceDiagnostics(microserviceUuid);
+        }
 	}
 
-	private void createAndRunDiagnosticMicroservice(String microserviceUuid) {
-		try {
-			int pid = getPidByMicroserviceUuid(microserviceUuid);
-			MicroserviceStraceData microserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
-			this.monitoringMicroservices.add(microserviceStraceData);
-
-			runStrace(microserviceStraceData);
-		} catch (IllegalArgumentException e) {
-			logWarning(MODULE_NAME, "Can't get pid of process");
-		}
-	}
-
-	private void offDiagnosticMicroservice(MicroserviceStraceData microserviceStraceData) {
-		microserviceStraceData.getStraceRun().set(false);
-		this.monitoringMicroservices.remove(microserviceStraceData);
-	}
-
-	public Optional<MicroserviceStraceData> getDataByMicroserviceUuid(String microserviceUuid) {
+	private Optional<MicroserviceStraceData> getStraceDataByMicroserviceUuid(String microserviceUuid) {
 		return this.monitoringMicroservices.stream()
 				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
 				.findFirst();
 	}
+
+	public void enableMicroserviceStraceDiagnostics(String microserviceUuid) {
+		try {
+			int pid = getPidByMicroserviceUuid(DockerUtil.getContainerName(microserviceUuid));
+			MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
+			this.monitoringMicroservices.removeIf(
+				oldMicroserviceStraceData -> oldMicroserviceStraceData.getMicroserviceUuid().equals(microserviceUuid)
+			);
+			this.monitoringMicroservices.add(newMicroserviceStraceData);
+			runStrace(newMicroserviceStraceData);
+		} catch (IllegalArgumentException e) {
+			logError(MODULE_NAME, "Can't get pid of process", e);
+		}
+    }
+
+	public void disableMicroserviceStraceDiagnostics(String microserviceUuid) {
+        getStraceDataByMicroserviceUuid(microserviceUuid).ifPresent(microserviceStraceData -> {
+            microserviceStraceData.setStraceRun(false);
+            this.monitoringMicroservices.remove(microserviceStraceData);
+        });
+    }
 
 	private int getPidByMicroserviceUuid(String microserviceUuid) throws IllegalArgumentException {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + microserviceUuid);
@@ -111,7 +117,21 @@ public class StraceDiagnosticManger {
 	private void runStrace(MicroserviceStraceData microserviceStraceData) {
 		String straceCommand = "strace -p " + microserviceStraceData.getPid();
 		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, microserviceStraceData.getResultBuffer());
-		CommandShellExecutor.executeDynamicCommand(straceCommand, resultSet, microserviceStraceData.getStraceRun());
+		CommandShellExecutor.executeDynamicCommand(
+			straceCommand,
+			resultSet,
+			microserviceStraceData.getStraceRun(),
+			killOrphanedStraceProcessesRunnable()
+		);
+	}
+
+	private Runnable killOrphanedStraceProcessesRunnable() {
+		return () -> {
+			CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("pgrep strace");
+			if (resultSet.getValue() != null) {
+				resultSet.getValue().forEach(value -> CommandShellExecutor.executeCommand(String.format("kill -9 %s", value)));
+			}
+		};
 	}
 
 }

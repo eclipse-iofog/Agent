@@ -96,7 +96,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 						content.readBytes(this.baos, content.readableBytes());
 					} catch (IOException e) {
 						String errorMsg = "Out of memory";
-						LoggingService.logWarning(MODULE_NAME, errorMsg);
+						LoggingService.logError(MODULE_NAME, errorMsg, e);
 						ByteBuf	errorMsgBytes = ctx.alloc().buffer();
 						errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
 						sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
@@ -110,7 +110,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 				}
 			}
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "Failed to initialize channel for the request: " + e.getMessage());
+			LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request: " + e.getMessage(), e);
 		}
 	}
 

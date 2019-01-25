@@ -46,6 +46,10 @@ public class CmdProperties {
         return cmdProperties.getProperty("version_msg");
     }
 
+    public static String getVersion() {
+        return cmdProperties.getProperty("version");
+    }
+
     public static String getDeprovisionMessage() {
         return cmdProperties.getProperty("deprovision_msg");
     }

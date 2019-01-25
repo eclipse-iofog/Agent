@@ -31,7 +31,6 @@ import static org.eclipse.iofog.command_line.CommandLineConfigParam.CONTROLLER_C
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.existParam;
 import static org.eclipse.iofog.status_reporter.StatusReporter.getStatusReport;
 import static org.eclipse.iofog.utils.CmdProperties.*;
-import static org.eclipse.iofog.utils.Constants.VERSION;
 import static org.eclipse.iofog.utils.Constants.systemOut;
 import static org.eclipse.iofog.utils.configuration.Configuration.*;
 
@@ -86,7 +85,7 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
-			return format(getVersionMessage(), VERSION);
+			return format(getVersionMessage(), getVersion());
 		}
 	},
 	STATUS_ACTION {
@@ -110,7 +109,7 @@ public enum CommandLineAction {
 		public String perform(String[] args) {
 			String status;
 			try {
-				status = FieldAgent.getInstance().deProvision();
+				status = FieldAgent.getInstance().deProvision(false);
 			} catch (Exception e) {
 				status = "Error";
 				LoggingService.logInfo(MODULE_NAME, "error de-provisioning");
@@ -242,8 +241,8 @@ public enum CommandLineAction {
 					}
 				}
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "error updating new config.");
-				result.append("error updating new config : " + e.getMessage());
+				LoggingService.logError(MODULE_NAME, "Error updating new config.", e);
+				result.append("Error updating new config : " + e.getMessage());
 			}
 
 			return result.toString();
@@ -317,7 +316,7 @@ public enum CommandLineAction {
 			"                 -n <network adapter>    Set the name of the network adapter\\n" +
 			"                                         that holds the correct IP address of \\n" +
 			"                                         this machine\\n" +
-			"                 -l <#MB Limit>          Set the limit, in MiB, of disk space\\n" +
+			"                 -l <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
 			"                                         that the log files can consume\\n" +
 			"                 -ld <dir>               Set the directory to use for log file\\n" +
 			"                                         storage\\n" +

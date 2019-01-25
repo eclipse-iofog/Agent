@@ -16,6 +16,7 @@ import org.eclipse.iofog.local_api.MessageCallback;
 import org.hornetq.api.core.client.ClientMessage;
 import org.hornetq.api.core.client.MessageHandler;
 
+import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -36,10 +37,12 @@ public class MessageListener implements MessageHandler{
 	@Override
 	public void onMessage(ClientMessage msg) {
 		try {
-			msg.acknowledge();
+			synchronized (messageBusSessionLock) {
+				msg.acknowledge();
+			}
 		} catch (Exception exp) {
 			logWarning(MODULE_NAME, exp.getMessage());}
-		
+
 		Message message = new Message(msg.getBytesProperty("message"));
 		callback.sendRealtimeMessage(message);
 	}

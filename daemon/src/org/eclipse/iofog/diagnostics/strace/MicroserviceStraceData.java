@@ -55,6 +55,10 @@ public class MicroserviceStraceData {
 		return straceRun;
 	}
 
+	public void setStraceRun(boolean straceRun) {
+		this.straceRun.set(straceRun);
+	}
+
 	@Override
 	public String toString() {
 		return "MicroserviceStraceData{" +

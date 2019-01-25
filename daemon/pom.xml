@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>org.eclipse</groupId>
 		<artifactId>iofog-agent</artifactId>
-		<version>1.0.5</version>
+		<version>1.0.9</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -30,16 +30,6 @@
 			<resource>
 				<directory>src</directory>
 				<filtering>true</filtering>
-				<includes>
-					<include>**/version.txt</include>
-				</includes>
-			</resource>
-			<resource>
-				<directory>src</directory>
-				<filtering>false</filtering>
-				<excludes>
-					<exclude>**/version.txt</exclude>
-				</excludes>
 			</resource>
 		</resources>
 		<plugins>
@@ -144,6 +134,11 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
 			<version>4.4</version>
+		</dependency>
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry</artifactId>
+			<version>1.7.16</version>
 		</dependency>
 	</dependencies>
 

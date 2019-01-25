@@ -200,7 +200,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		        }
 		    }
 		} catch (IOException exp) {
-		    logWarning("Error getting CPU usage : " + exp.getMessage());
+		    logError("Error getting CPU usage : " + exp.getMessage(), exp);
 		}
 
 		return Pair.of(time, total);

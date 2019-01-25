@@ -29,7 +29,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHandler<Object>{
 
@@ -192,7 +192,7 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 			System.out.println("Send RealTime Message : done");
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
+			logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 	}
 

@@ -27,6 +27,7 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.microservice.MicroserviceState.RUNNING;
 import static org.eclipse.iofog.microservice.MicroserviceState.fromText;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -86,7 +88,7 @@ public class DockerUtil {
 			DockerClientConfig config = configBuilder.build();
 			dockerClient = DockerClientBuilder.getInstance(config).build();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "docker client initialization failed - " + e.getMessage());
+			logError(MODULE_NAME, "Docker client initialization failed - " + e.getMessage(), e);
 			throw e;
 		}
 		addDockerEventHandler();
@@ -101,7 +103,7 @@ public class DockerUtil {
 				dockerClient.close();
 			}
 		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, "docker client closing failed - " + e.getMessage());
+			logError(MODULE_NAME, "Docker client closing failed - " + e.getMessage(), e);
 		}
 		initDockerClient();
 	}
@@ -200,6 +202,24 @@ public class DockerUtil {
 	}
 
 	/**
+	 * gets microsreviceUuid (basically just gets substring of container name)
+	 * @param container Container object
+	 * @return microsreviceUuid
+	 */
+	public String getContainerMicroserviceUuid(Container container) {
+		return getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length());
+	}
+
+	/**
+	 * gets container name by microserviceUuid
+	 * @param microserviceUuid
+	 * @return container name
+	 */
+	public static String getContainerName(String microserviceUuid) {
+		return Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microserviceUuid;
+	}
+
+	/**
 	 * returns a {@link Container} if exists
 	 *
 	 * @param microserviceUuid - name of {@link Container} (id of {@link Microservice})
@@ -208,7 +228,7 @@ public class DockerUtil {
 	public Optional<Container> getContainer(String microserviceUuid) {
 		List<Container> containers = getContainers();
 		return containers.stream()
-				.filter(c -> getContainerName(c).equals(microserviceUuid))
+				.filter(c -> getContainerMicroserviceUuid(c).equals(microserviceUuid))
 				.findAny();
 	}
 
@@ -255,6 +275,24 @@ public class DockerUtil {
 			result.setUsage(containerId);
 		}
 		return result;
+	}
+
+	public List<Container> getRunningContainers() {
+		return getContainers().stream()
+			.filter(container -> {
+                InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
+                ContainerState containerState = inspectInfo.getState();
+                return containerState != null
+                    && containerState.getStatus() != null
+                    && MicroserviceState.fromText(containerState.getStatus()) == MicroserviceState.RUNNING;
+            })
+			.collect(Collectors.toList());
+	}
+
+	public List<Container> getRunningIofogContainers() {
+		return getRunningContainers().stream()
+			.filter(container -> getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
+			.collect(Collectors.toList());
 	}
 
 	public Optional<Statistics> getContainerStats(String containerId) {
@@ -451,7 +489,7 @@ public class DockerUtil {
 				.withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
 				.withPortBindings(portBindings)
 				.withEnv("SELFNAME=" + microservice.getMicroserviceUuid())
-				.withName(microservice.getMicroserviceUuid())
+				.withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
 				.withRestartPolicy(restartPolicy);
 		if (microservice.getVolumeMappings() != null) {
 			cmd = cmd
