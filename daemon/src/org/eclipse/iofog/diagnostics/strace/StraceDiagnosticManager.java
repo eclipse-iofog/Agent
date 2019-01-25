@@ -25,26 +25,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
-public class StraceDiagnosticManger {
+public class StraceDiagnosticManager {
 
 	private static final String MODULE_NAME = "STrace Diagnostic Manager";
 
 	private final List<MicroserviceStraceData> monitoringMicroservices;
-	private static StraceDiagnosticManger instance = null;
+	private static StraceDiagnosticManager instance = null;
 
-	public static StraceDiagnosticManger getInstance() {
+	public static StraceDiagnosticManager getInstance() {
 		if (instance == null) {
-			synchronized (StraceDiagnosticManger.class) {
+			synchronized (StraceDiagnosticManager.class) {
 				if (instance == null)
-					instance = new StraceDiagnosticManger();
+					instance = new StraceDiagnosticManager();
 			}
 		}
 		return instance;
 	}
 
-	private StraceDiagnosticManger() {
+	private StraceDiagnosticManager() {
 		this.monitoringMicroservices = new CopyOnWriteArrayList<>();
 	}
 
@@ -53,7 +53,7 @@ public class StraceDiagnosticManger {
 	}
 
 	public void updateMonitoringMicroservices(JsonObject diagnosticData) {
-		LoggingService.logInfo(MODULE_NAME, "trying to update strace monitoring microservices");
+		LoggingService.logInfo(MODULE_NAME, "Trying to update strace monitoring microservices");
 
 		if (diagnosticData.containsKey("straceValues")) {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
@@ -92,7 +92,7 @@ public class StraceDiagnosticManger {
 			this.monitoringMicroservices.add(newMicroserviceStraceData);
 			runStrace(newMicroserviceStraceData);
 		} catch (IllegalArgumentException e) {
-			logWarning(MODULE_NAME, "Can't get pid of process");
+			logError(MODULE_NAME, "Can't get pid of process", e);
 		}
     }
 

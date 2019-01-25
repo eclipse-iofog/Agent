@@ -124,8 +124,8 @@ public class MessageBus implements IOFogModule {
 					try {
 						messageBusServer.createProducer(publisher);
 					} catch (Exception e) {
-						LoggingService.logWarning(MODULE_NAME + "(" + publisher + ")",
-								"unable to start publisher module --> " + e.getMessage());
+						LoggingService.logError(MODULE_NAME + "(" + publisher + ")",
+								"unable to start publisher module --> " + e.getMessage(), e);
 					}
 					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
 
@@ -134,10 +134,10 @@ public class MessageBus implements IOFogModule {
 							.filter(item -> !receivers.containsKey(item))
 							.collect(Collectors.toMap(item -> item, item -> {
 								try {
-									messageBusServer.createCosumer(item);
+									messageBusServer.createConsumer(item);
 								} catch (Exception e) {
-									LoggingService.logWarning(MODULE_NAME + "(" + item + ")",
-											"unable to start receiver module --> " + e.getMessage());
+									LoggingService.logError(MODULE_NAME + "(" + item + ")",
+											"unable to start receiver module --> " + e.getMessage(), e);
 								}
 								return new MessageReceiver(item, messageBusServer.getConsumer(item));
 							})));
@@ -164,7 +164,7 @@ public class MessageBus implements IOFogModule {
 				lastSpeedMessageCount = msgs;
 				lastSpeedTime = now;
 			} catch (Exception exp) {
-				logWarning(exp.getMessage());
+				logError(exp.getMessage(), exp);
 			}
 		}
 	};
@@ -178,22 +178,22 @@ public class MessageBus implements IOFogModule {
 			try {
 				Thread.sleep(5000);
 
-				logInfo("check message bus server status");
+				logInfo("Check message bus server status");
 				if (!messageBusServer.isServerActive()) {
-					logWarning("server is not active. restarting...");
+					logWarning("Server is not active. restarting...");
 					stop();
 					try {
 						messageBusServer.startServer();
-						logInfo("server restarted");
+						logInfo("Server restarted");
 						init();
 					} catch (Exception e) {
-						logWarning("server restart failed --> " + e.getMessage());
+						logError("Server restart failed --> " + e.getMessage(), e);
 					}
 				}
 
 				publishers.forEach((publisher, value) -> {
 					if (messageBusServer.isProducerClosed(publisher)) {
-						logWarning("producer module for " + publisher + " stopped. restarting...");
+						logWarning("Producer module for " + publisher + " stopped. restarting...");
 						value.close();
 						Route route = routes.get(publisher);
 						if (route == null || route.getReceivers() == null || route.getReceivers().size() == 0) {
@@ -202,9 +202,9 @@ public class MessageBus implements IOFogModule {
 							try {
 								messageBusServer.createProducer(publisher);
 								publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
-								logInfo("producer module restarted");
+								logInfo("Producer module restarted");
 							} catch (Exception e) {
-								logWarning("unable to restart producer module for " + publisher + " --> " + e.getMessage());
+								logError("Unable to restart producer module for " + publisher + " --> " + e.getMessage(), e);
 							}
 						}
 					}
@@ -212,14 +212,14 @@ public class MessageBus implements IOFogModule {
 
 				receivers.forEach((receiver, value) -> {
 					if (messageBusServer.isConsumerClosed(receiver)) {
-						logWarning("consumer module for " + receiver + " stopped. restarting...");
+						logWarning("Consumer module for " + receiver + " stopped. restarting...");
 						value.close();
 						try {
-							messageBusServer.createCosumer(receiver);
+							messageBusServer.createConsumer(receiver);
 							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
-							logInfo("consumer module restarted");
+							logInfo("Consumer module restarted");
 						} catch (Exception e) {
-							logWarning("unable to restart consumer module for " + receiver + " --> " + e.getMessage());
+							logWarning("Unable to restart consumer module for " + receiver + " --> " + e.getMessage());
 						}
 					}
 				});
@@ -317,9 +317,9 @@ public class MessageBus implements IOFogModule {
 			try {
 				messageBusServer.stopServer();
 			} catch (Exception exp) {
-				logWarning(exp.getMessage());
+				logError(exp.getMessage(), exp);
 			}
-			logWarning("unable to start message bus server --> " + e.getMessage());
+			logError("Unable to start message bus server --> " + e.getMessage(), e);
 			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
 		
@@ -343,7 +343,7 @@ public class MessageBus implements IOFogModule {
 		try {
 			messageBusServer.stopServer();
 		} catch (Exception exp) {
-			logWarning(exp.getMessage());
+			logError(exp.getMessage(), exp);
 		}
 	}
 

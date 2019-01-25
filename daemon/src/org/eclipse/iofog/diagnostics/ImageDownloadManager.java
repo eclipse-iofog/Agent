@@ -27,6 +27,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
+import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class ImageDownloadManager {
@@ -40,7 +42,7 @@ public class ImageDownloadManager {
             Container container = containerOptional.get();
             image = container.getImage();
         } else {
-            logWarning(MODULE_NAME, "image snapshot: container not running.");
+            logWarning(MODULE_NAME, "Image snapshot: container not running.");
             return;
         }
 
@@ -59,9 +61,9 @@ public class ImageDownloadManager {
                 File imageFile = getFileByImagePath(path);
                 orchestrator.sendFileToController("image-snapshot", imageFile);
                 imageFile.delete();
-                logWarning(MODULE_NAME, "image snapshot " + imageFile.getName() + " deleted");
+                logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
             } catch (Exception e) {
-                logWarning(MODULE_NAME, "unable send image snapshot path : " + e.getMessage());
+                logError(MODULE_NAME, "Unable send image snapshot path : " + e.getMessage(), e);
             }
         }
     }

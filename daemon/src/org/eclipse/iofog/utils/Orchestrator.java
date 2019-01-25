@@ -48,6 +48,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Map;
 
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -139,7 +140,7 @@ public class Orchestrator {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             result = certificateFactory.generateCertificate(is);
         } catch (CertificateException exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
+            logError(MODULE_NAME, exp.getMessage(), exp);
         }
         return result;
     }
@@ -271,7 +272,7 @@ public class Orchestrator {
                     throw new BadRequestException(errorMessage);
                 case 401:
                     logWarning(MODULE_NAME, "Invalid authentication ioFog token, switching controller status to Not provisioned");
-                    FieldAgent.getInstance().deProvision();
+                    FieldAgent.getInstance().deProvision(true);
                     throw new AuthenticationException(errorMessage);
                 case 403:
                     throw new ForbiddenException(errorMessage);
@@ -282,7 +283,7 @@ public class Orchestrator {
             }
 
         } catch (UnsupportedEncodingException exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
+            logError(MODULE_NAME, exp.getMessage(), exp);
             throw exp;
         }
 
@@ -330,7 +331,7 @@ public class Orchestrator {
         try {
             initialize(secure);
         } catch (Exception exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
+            logError(MODULE_NAME, exp.getMessage(), exp);
         }
     }
 }

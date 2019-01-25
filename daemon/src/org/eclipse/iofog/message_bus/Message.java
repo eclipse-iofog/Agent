@@ -22,6 +22,7 @@ import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -646,7 +647,7 @@ public class Message {
 			dataBaos.writeTo(result);
 			return result.toByteArray();
 		} catch (IOException exc) {
-			LoggingService.logWarning(MODULE_NAME, exc.getMessage());
+			logError(MODULE_NAME, exc.getMessage(), exc);
 		}
 
 		return new byte[] {};
@@ -682,7 +683,7 @@ public class Message {
 			contextData = result.contextData;
 			contentData = result.contentData;
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
+			logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 	}
 
@@ -715,7 +716,7 @@ public class Message {
 		try {
 			return Base64.getEncoder().encode(this.getBytes());
 		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
+			logError(MODULE_NAME, exp.getMessage(), exp);
 			return new byte[] {};
 		}
 	}

@@ -28,6 +28,7 @@ import java.util.List;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.field_agent.enums.VersionCommand.parseJson;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 public class VersionHandler {
@@ -132,7 +133,7 @@ public class VersionHandler {
 			}
 
 		} catch (UnknownVersionCommandException e) {
-			logWarning(MODULE_NAME, e.getMessage());
+			logError(MODULE_NAME, e.getMessage(), e);
 		}
 	}
 
@@ -149,7 +150,7 @@ public class VersionHandler {
 		try {
 			Runtime.getRuntime().exec("java -jar /usr/bin/iofog-agentvc.jar " + shToExecute + " " + provisionKey + " " + MAX_RESTARTING_TIMEOUT);
 		} catch (IOException e) {
-			logWarning(MODULE_NAME, e.getMessage());
+			logError(MODULE_NAME, e.getMessage(), e);
 		}
 	}
 

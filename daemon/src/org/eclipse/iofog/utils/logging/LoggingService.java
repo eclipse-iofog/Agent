@@ -12,6 +12,9 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.logging;
 
+import io.sentry.Sentry;
+import io.sentry.event.Event;
+import io.sentry.event.EventBuilder;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -39,191 +42,216 @@ import java.util.logging.Logger;
  */
 public final class LoggingService {
 
-	private static final String MODULE_NAME = "LoggingService";
+    private static final String MODULE_NAME = "LoggingService";
 
-	private static Logger logger = null;
-	private static final Map<String, Logger> microserviceLogger = new HashMap<>();
+    private static Logger logger = null;
+    private static final Map<String, Logger> microserviceLogger = new HashMap<>();
 
-	private LoggingService() {
+    private LoggingService() {
 
-	}
+    }
 
-	/**
-	 * logs Level.INFO message
-	 * 
-	 * @param moduleName - name of module
-	 * @param msg - message
-	 */
-	public static void logInfo(String moduleName, String msg) {
-		if (Configuration.debugging)
-			System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
-		else
-			logger.log(Level.INFO, String.format("[%s] : %s", moduleName, msg));
-	}
+    /**
+     * logs Level.INFO message
+     *
+     * @param moduleName - name of module
+     * @param msg        - message
+     */
+    public static void logInfo(String moduleName, String msg) {
+        if (Configuration.debugging)
+            System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
+        else
+            logger.log(Level.INFO, String.format("[%s] : %s", moduleName, msg));
+    }
 
-	/**
-	 * logs Level.WARNING message
-	 * 
-	 * @param moduleName - name of module
-	 * @param msg - message
-	 */
-	public static void logWarning(String moduleName, String msg) {
-		if (Configuration.debugging || logger == null) {
-			System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
-		} else {
-			logger.log(Level.WARNING, String.format("[%s] : %s", moduleName, msg));
-		}
-	}
+    /**
+     * logs Level.WARNING message
+     *
+     * @param moduleName - name of module
+     * @param msg        - message
+     */
+    public static void logWarning(String moduleName, String msg) {
+        // TODO commented for now due to Sentry errors capacity
+//        EventBuilder builder = new EventBuilder();
+//        builder
+//                .withLevel(Event.Level.WARNING)
+//                .withMessage(msg)
+//                .withTag("module", moduleName);
+//        Event event = builder.build();
+//        Sentry.capture(event);
 
-	/**
-	 * sets up logging
-	 * 
-	 * @throws IOException
-	 */
-	public static void setupLogger() throws IOException {
-		int maxFileSize = (int) (Configuration.getLogDiskLimit() * Constants.MiB); 
-		int logFileCount = Configuration.getLogFileCount();
-		final File logDirectory = new File(Configuration.getLogDiskDirectory());
+        if (Configuration.debugging || logger == null) {
+            System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
+        } else {
+            logger.log(Level.WARNING, String.format("[%s] : %s", moduleName, msg));
+        }
+    }
 
-		logDirectory.mkdirs();
+    /**
+     * logs Level.Error message
+     *
+     * @param moduleName - name of module
+     * @param msg        - message
+     * @param e          - exception
+     */
+    public static void logError(String moduleName, String msg, Throwable e) {
+        Sentry.capture(e);
 
-		final String logFilePattern = logDirectory.getPath() + "/iofog-agent.%g.log";
-		
-		if (logger != null) {
-			for (Handler f : logger.getHandlers())
-				f.close();
-		}
+        if (Configuration.debugging || logger == null) {
+            System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
+        } else {
+            logger.log(Level.SEVERE, String.format("[%s] : %s", moduleName, msg));
+        }
+    }
 
-		if (maxFileSize < Constants.MiB) {
-			System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit>" +
-					" config parameter's value is negative, using default 1 Mb limit");
-			maxFileSize = Constants.MiB;
-		}
+    /**
+     * sets up logging
+     *
+     * @throws IOException
+     */
+    public static void setupLogger() throws IOException {
+        int maxFileSize = (int) (Configuration.getLogDiskLimit() * Constants.MiB);
+        int logFileCount = Configuration.getLogFileCount();
+        final File logDirectory = new File(Configuration.getLogDiskDirectory());
 
-		if (logFileCount < 1) {
-			System.out.println("[" + MODULE_NAME + "] Warning: current <log_file_count> config parameter's" +
-					" value is below l, using default 1 log file value");
-			logFileCount = 1;
-		}
+        logDirectory.mkdirs();
 
-		long limit = (maxFileSize / logFileCount) * 1_000L;
-		if(limit > Integer.MAX_VALUE) {
-			System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit> config parameter's" +
-					" value is above 2GB, using max 2GB value");
-			limit = 2L * Constants.MiB * 1_000L;
-		}
+        final String logFilePattern = logDirectory.getPath() + "/iofog-agent.%g.log";
 
-		int intLimit = (int) limit;
+        if (logger != null) {
+            for (Handler f : logger.getHandlers())
+                f.close();
+        }
 
-		Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
-	
-		logFileHandler.setFormatter(new LogFormatter());
-	
-		logger = Logger.getLogger("org.eclipse.iofog");
-		logger.addHandler(logFileHandler);
+        if (maxFileSize < Constants.MiB) {
+            System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit>" +
+                    " config parameter's value is negative, using default 1 Mb limit");
+            maxFileSize = Constants.MiB;
+        }
 
-		logger.setUseParentHandlers(false);
+        if (logFileCount < 1) {
+            System.out.println("[" + MODULE_NAME + "] Warning: current <log_file_count> config parameter's" +
+                    " value is below l, using default 1 log file value");
+            logFileCount = 1;
+        }
 
-		logger.info("logger started.");
-	}
-	
-	/**
-	 * sets up microservice logging
-	 * 
-	 * @throws IOException
-	 */
-	public static void setupMicroserviceLogger(String microserviceUuid, long logSize) throws IOException {
-		int maxFileSize = (int) (logSize * 1_000_000); 
-		int logFileCount = Math.round(logSize);
-		final File logDirectory = new File(Configuration.getLogDiskDirectory());
+        long limit = (maxFileSize / logFileCount) * 1_000L;
+        if (limit > Integer.MAX_VALUE) {
+            System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit> config parameter's" +
+                    " value is above 2GB, using max 2GB value");
+            limit = 2L * Constants.MiB * 1_000L;
+        }
 
-		logDirectory.mkdirs();
+        int intLimit = (int) limit;
 
-		UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
-		final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName(Constants.OS_GROUP);
-		if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
-			PosixFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
-					LinkOption.NOFOLLOW_LINKS);
-			fileAttributeView.setGroup(group);
+        Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
 
-			Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-			Files.setPosixFilePermissions(logDirectory.toPath(), perms);
+        logFileHandler.setFormatter(new LogFormatter());
 
-		} else if (SystemUtils.IS_OS_WINDOWS) {
-			DosFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), DosFileAttributeView.class,
-					LinkOption.NOFOLLOW_LINKS);
-			fileAttributeView.setReadOnly(false);
+        logger = Logger.getLogger("org.eclipse.iofog");
+        logger.addHandler(logFileHandler);
 
-			File dir = logDirectory.toPath().toFile();
-			dir.setReadable(true, false);
-			dir.setExecutable(true, false);
-			dir.setWritable(true, false);
-		}
+        logger.setUseParentHandlers(false);
+
+        logger.info("logger started.");
+    }
+
+    /**
+     * sets up microservice logging
+     *
+     * @throws IOException
+     */
+    public static void setupMicroserviceLogger(String microserviceUuid, long logSize) throws IOException {
+        int maxFileSize = (int) (logSize * 1_000_000);
+        int logFileCount = Math.round(logSize);
+        final File logDirectory = new File(Configuration.getLogDiskDirectory());
+
+        logDirectory.mkdirs();
+
+        UserPrincipalLookupService lookupservice = FileSystems.getDefault().getUserPrincipalLookupService();
+        final GroupPrincipal group = lookupservice.lookupPrincipalByGroupName(Constants.OS_GROUP);
+        if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
+            PosixFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), PosixFileAttributeView.class,
+                    LinkOption.NOFOLLOW_LINKS);
+            fileAttributeView.setGroup(group);
+
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
+            Files.setPosixFilePermissions(logDirectory.toPath(), perms);
+
+        } else if (SystemUtils.IS_OS_WINDOWS) {
+            DosFileAttributeView fileAttributeView = Files.getFileAttributeView(logDirectory.toPath(), DosFileAttributeView.class,
+                    LinkOption.NOFOLLOW_LINKS);
+            fileAttributeView.setReadOnly(false);
+
+            File dir = logDirectory.toPath().toFile();
+            dir.setReadable(true, false);
+            dir.setExecutable(true, false);
+            dir.setWritable(true, false);
+        }
 
 
-		final String logFilePattern = logDirectory.getPath() + "/" + microserviceUuid + ".%g.log";
-		Logger logger = microserviceLogger.get(microserviceUuid);
+        final String logFilePattern = logDirectory.getPath() + "/" + microserviceUuid + ".%g.log";
+        Logger logger = microserviceLogger.get(microserviceUuid);
 
-		if (logger != null) {
-			for (Handler f : logger.getHandlers())
-				f.close();
-		} 
+        if (logger != null) {
+            for (Handler f : logger.getHandlers())
+                f.close();
+        }
 
-		if (logFileCount == 0) {
-			logFileCount = 1;
-		}
+        if (logFileCount == 0) {
+            logFileCount = 1;
+        }
 
-		Handler logFileHandler = new FileHandler(logFilePattern, maxFileSize / logFileCount, logFileCount);
-	
-		logFileHandler.setFormatter(new LogFormatter());
-	
-		logger = Logger.getLogger(microserviceUuid);
-		logger.addHandler(logFileHandler);
+        Handler logFileHandler = new FileHandler(logFilePattern, maxFileSize / logFileCount, logFileCount);
 
-		logger.setUseParentHandlers(false);
+        logFileHandler.setFormatter(new LogFormatter());
 
-		microserviceLogger.put(microserviceUuid, logger);
-	}
-	
-	public static boolean microserviceLogInfo(String microserviceUuid, String msg) {
-		Logger logger = microserviceLogger.get(microserviceUuid);
-		if (logger == null) {
-			logNullLogger();
-			return false;
-		}
-		
-		logger.info(msg);
-		return true;
-	}
-	
-	public static boolean microserviceLogWarning(String microserviceUuid, String msg) {
-		Logger logger = microserviceLogger.get(microserviceUuid);
-		if (logger == null) {
-			logNullLogger();
-			return false;
-		}
-		
-		logger.warning(msg);
-		return true;
-	}
+        logger = Logger.getLogger(microserviceUuid);
+        logger.addHandler(logFileHandler);
 
-	private static void logNullLogger(){
-		String errorMsg = " Log message parsing error, Logger initialized null";
-		LoggingService.logWarning(MODULE_NAME, errorMsg);
+        logger.setUseParentHandlers(false);
 
-	}
-	
-	/**
-	 * resets logging with new configurations
-	 * this method called by {@link Configuration}
-	 * 
-	 */
-	public static void instanceConfigUpdated() {
-		try {
-			setupLogger();
-		} catch (Exception exp) {
-			logWarning(MODULE_NAME, exp.getMessage());
-		}
-	}
-	
+        microserviceLogger.put(microserviceUuid, logger);
+    }
+
+    public static boolean microserviceLogInfo(String microserviceUuid, String msg) {
+        Logger logger = microserviceLogger.get(microserviceUuid);
+        if (logger == null) {
+            logNullLogger();
+            return false;
+        }
+
+        logger.info(msg);
+        return true;
+    }
+
+    public static boolean microserviceLogWarning(String microserviceUuid, String msg) {
+        Logger logger = microserviceLogger.get(microserviceUuid);
+        if (logger == null) {
+            logNullLogger();
+            return false;
+        }
+
+        logger.warning(msg);
+        return true;
+    }
+
+    private static void logNullLogger() {
+        String errorMsg = " Log message parsing error, Logger initialized null";
+        LoggingService.logWarning(MODULE_NAME, errorMsg);
+
+    }
+
+    /**
+     * resets logging with new configurations
+     * this method called by {@link Configuration}
+     */
+    public static void instanceConfigUpdated() {
+        try {
+            setupLogger();
+        } catch (Exception exp) {
+            logError(MODULE_NAME, exp.getMessage(), exp);
+        }
+    }
+
 }

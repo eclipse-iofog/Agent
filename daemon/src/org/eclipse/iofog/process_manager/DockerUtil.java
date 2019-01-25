@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.microservice.MicroserviceState.RUNNING;
 import static org.eclipse.iofog.microservice.MicroserviceState.fromText;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
@@ -87,7 +88,7 @@ public class DockerUtil {
 			DockerClientConfig config = configBuilder.build();
 			dockerClient = DockerClientBuilder.getInstance(config).build();
 		} catch (Exception e) {
-			LoggingService.logWarning(MODULE_NAME, "docker client initialization failed - " + e.getMessage());
+			logError(MODULE_NAME, "Docker client initialization failed - " + e.getMessage(), e);
 			throw e;
 		}
 		addDockerEventHandler();
@@ -102,7 +103,7 @@ public class DockerUtil {
 				dockerClient.close();
 			}
 		} catch (IOException e) {
-			LoggingService.logWarning(MODULE_NAME, "docker client closing failed - " + e.getMessage());
+			logError(MODULE_NAME, "Docker client closing failed - " + e.getMessage(), e);
 		}
 		initDockerClient();
 	}

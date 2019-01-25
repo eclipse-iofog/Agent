@@ -18,8 +18,8 @@ stages:
   if: type = pull_request
 - name: dev_deploy
   if: branch = develop AND type = push
-- name: prod_deploy
-  if: branch = release AND type = push
+- name: pre_release
+  if: branch =~ /^release-.*$/ AND type = push
 - name: release
   if: branch = master and type = push
 jobs:
@@ -37,17 +37,17 @@ jobs:
       $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP:/usr/bin/iofog-agent.jar
     - sshpass -p $DEV_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $DEV_MACHINE_USERNAME@$DEV_MACHINE_IP
       "service iofog-agent start"
-  - stage: prod_deploy
+  - stage: pre_release
     before_install:
     - sudo apt-get install sshpass xml-twig-tools
     script:
-    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
+    - sshpass -p $PREPROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PREPROD_MACHINE_USERNAME@$PREPROD_MACHINE_IP
       "service iofog-agent stop; sudo apt-get install --only-upgrade -y iofog-agent"
-    - sshpass -p $PROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-agent-daemon-jar-with-dependencies.jar
-      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP:/usr/bin/iofog-agentd.jar
-    - sshpass -p $PROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar
-      $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP:/usr/bin/iofog-agent.jar
-    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
+    - sshpass -p $PREPROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no daemon/target/iofog-agent-daemon-jar-with-dependencies.jar
+      $PREPROD_MACHINE_USERNAME@$PREPROD_MACHINE_IP:/usr/bin/iofog-agentd.jar
+    - sshpass -p $PREPROD_MACHINE_PASSWORD scp -o StrictHostKeyChecking=no client/target/iofog-agent-client-jar-with-dependencies.jar
+      $PREPROD_MACHINE_USERNAME@$PREPROD_MACHINE_IP:/usr/bin/iofog-agent.jar
+    - sshpass -p $PREPROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PREPROD_MACHINE_USERNAME@$PREPROD_MACHINE_IP
       "service iofog-agent start"
   - stage: release
     before_install:
@@ -134,3 +134,6 @@ jobs:
       skip_cleanup: true
       on:
         branch: master
+    after_deploy:
+    - sshpass -p $PROD_MACHINE_PASSWORD ssh -o StrictHostKeyChecking=no $PROD_MACHINE_USERNAME@$PROD_MACHINE_IP
+      "service iofog-agent stop; sudo apt-get install --only-upgrade -y iofog-agent; service iofog-agent start"

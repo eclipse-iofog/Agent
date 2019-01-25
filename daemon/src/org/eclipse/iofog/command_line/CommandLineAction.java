@@ -109,7 +109,7 @@ public enum CommandLineAction {
 		public String perform(String[] args) {
 			String status;
 			try {
-				status = FieldAgent.getInstance().deProvision();
+				status = FieldAgent.getInstance().deProvision(false);
 			} catch (Exception e) {
 				status = "Error";
 				LoggingService.logInfo(MODULE_NAME, "error de-provisioning");
@@ -241,7 +241,7 @@ public enum CommandLineAction {
 					}
 				}
 			} catch (Exception e) {
-				LoggingService.logWarning(MODULE_NAME, "Error updating new config.");
+				LoggingService.logError(MODULE_NAME, "Error updating new config.", e);
 				result.append("Error updating new config : " + e.getMessage());
 			}
 
