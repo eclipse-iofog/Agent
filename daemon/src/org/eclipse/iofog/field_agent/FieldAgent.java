@@ -213,12 +213,12 @@ public class FieldAgent implements IOFogModule {
                 } catch (Exception e) {
                     logError("Unable send strace logs : " + e.getMessage(), e);
                 }
+            }
 
-                try {
-                    Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
-                } catch (InterruptedException e) {
-                    logWarning(e.getMessage());
-                }
+            try {
+                Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
+            } catch (InterruptedException e) {
+                logWarning(e.getMessage());
             }
         }
     };
