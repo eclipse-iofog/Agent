@@ -216,7 +216,7 @@ public class Tracker implements IOFogModule {
                 //send directly
                 //TODO add event that says about connection problem on controller
                 StringEntity requestEntity = new StringEntity(eventsListObject.toString(), ContentType.APPLICATION_JSON);
-                postMethod = new HttpPost("https://kf6v825xpc.execute-api.us-west-2.amazonaws.com/dev3/post");
+                postMethod = new HttpPost("https://analytics.iofog.org/post");
                 postMethod.setEntity(requestEntity);
 
                 try {
