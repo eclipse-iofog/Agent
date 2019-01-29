@@ -7,4 +7,4 @@ rm -rf /var/run/iofog-agent
 #rm -rf /var/backups/iofog-agent
 rm -rf /usr/share/iofog-agent
 
-docker stop $(docker ps -f name=iofog_)
+docker stop $(docker ps -f name=iofog_ -aq)
