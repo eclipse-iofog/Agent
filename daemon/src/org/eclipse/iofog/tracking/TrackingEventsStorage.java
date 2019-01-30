@@ -23,9 +23,8 @@ public class TrackingEventsStorage {
     }
 
     protected synchronized List<TrackingEvent> popAllEvents() {
-        List<TrackingEvent> subList = events.subList(0, events.size());
-        List<TrackingEvent> res = new ArrayList<>(subList);
-        events.removeAll(subList);
+        List<TrackingEvent> res = new ArrayList<>(events);
+        events.clear();
         return res;
     }
 }

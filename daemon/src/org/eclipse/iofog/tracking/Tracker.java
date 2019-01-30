@@ -9,20 +9,16 @@ import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
 
 import javax.json.*;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Tracker implements IOFogModule {
     private final String MODULE_NAME = "Tracker";
@@ -37,12 +33,12 @@ public class Tracker implements IOFogModule {
         return instance;
     }
 
-    private String id;
-    Timer loggerTimer = null;
-    Timer senderTimer = null;
+    private String uuid;
+    private Timer loggerTimer = null;
+    private Timer senderTimer = null;
     @Override
     public void start() throws Exception {
-        this.id = getUniqueTrackingId();
+        this.uuid = getUniqueTrackingUuid();
 
         loggerTimer = new Timer();
         TimeLoggerTask timeLoggerTask = new TimeLoggerTask();
@@ -67,7 +63,7 @@ public class Tracker implements IOFogModule {
         return MODULE_NAME;
     }
 
-    private String getUniqueTrackingId() throws NoSuchAlgorithmException {
+    private String getUniqueTrackingUuid() throws NoSuchAlgorithmException {
         String id;
         try {
             List<String> macs = getAllMacs();
@@ -105,18 +101,17 @@ public class Tracker implements IOFogModule {
         NetworkInterface inter;
         while (networks.hasMoreElements()) {
             inter = networks.nextElement();
-            if (inter.isVirtual()) {
-                continue;
-            }
-            byte[] mac = inter.getHardwareAddress();
-            if (mac != null) {
-                StringBuffer macStr = new StringBuffer();
-                for (byte b : mac) {
-                    String s = String.format("%02X", b);
-                    macStr.append(s);
-                }
+            if (!inter.isVirtual()) {
+                byte[] mac = inter.getHardwareAddress();
+                if (mac != null) {
+                    StringBuffer macStr = new StringBuffer();
+                    for (byte b : mac) {
+                        String s = String.format("%02X", b);
+                        macStr.append(s);
+                    }
 
-                macs.add(macStr.toString());
+                    macs.add(macStr.toString());
+                }
             }
         }
         return macs;
@@ -146,7 +141,7 @@ public class Tracker implements IOFogModule {
     }
 
     public void handleEvent(TrackingEventType type, JsonStructure value) {
-        TrackingEvent event = new TrackingEvent(this.id, new Date().getTime(), type, value);
+        TrackingEvent event = new TrackingEvent(this.uuid, new Date().getTime(), type, value);
         TrackingEventsStorage.getInstance().pushEvent(event);
     }
 
@@ -203,7 +198,6 @@ public class Tracker implements IOFogModule {
                         jsonArrayBuilder.add(el.toJsonObject());
                     });
 
-            //TODO not tested with server
             JsonObject eventsListObject = Json.createObjectBuilder()
                     .add("events", jsonArrayBuilder.build())
                     .build();
@@ -214,7 +208,6 @@ public class Tracker implements IOFogModule {
                 FieldAgent.getInstance().postTracking(eventsListObject);
             } else {
                 //send directly
-                //TODO add event that says about connection problem on controller
                 StringEntity requestEntity = new StringEntity(eventsListObject.toString(), ContentType.APPLICATION_JSON);
                 postMethod = new HttpPost("https://analytics.iofog.org/post");
                 postMethod.setEntity(requestEntity);
@@ -222,7 +215,7 @@ public class Tracker implements IOFogModule {
                 try {
                     HttpResponse response = httpClient.execute(postMethod);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logWarning(e.getMessage());
                 }
             }
         }

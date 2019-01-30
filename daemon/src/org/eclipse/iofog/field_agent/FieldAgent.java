@@ -31,6 +31,7 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -230,7 +231,7 @@ public class FieldAgent implements IOFogModule {
         try {
             orchestrator.request("tracking", RequestType.POST, null, events);
         } catch (Exception e) {
-            logError("Unable send tracking logs : " + e.getMessage(), e);
+            logError("Unable to send tracking logs : " + e.getMessage(), e);
         }
     }
 
@@ -488,7 +489,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private JsonArray loadMicroservicesJsonFile() {
-        String filename = "microservices.json";
+        String filename = MICROSERVICE_FILE;
         JsonArray microservicesJson = readFile(filesPath + filename);
         return  microservicesJson;
     }
@@ -504,7 +505,7 @@ public class FieldAgent implements IOFogModule {
             return new ArrayList<>();
         }
 
-        String filename = "microservices.json";
+        String filename = MICROSERVICE_FILE;
         JsonArray microservicesJson;
         try {
             if (fromFile) {

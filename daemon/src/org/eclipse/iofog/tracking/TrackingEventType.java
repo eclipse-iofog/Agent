@@ -6,7 +6,7 @@ public enum TrackingEventType {
     DEPROVISION("deprovision"),
     CONFIG("config updated"),
     TIME("running time"),
-    MICROSERVICE("microservices was updated"),
+    MICROSERVICE("microservices were updated"),
     ERROR("error");
 
     private String name;

@@ -9,21 +9,29 @@ import javax.json.JsonObject;
 
 public class TrackingInfoUtils {
     public static JsonObject getStartTrackingInfo() {
-        String gpsCoordinates = Configuration.getGpsCoordinates();
-        String gpsMode = Configuration.getGpsMode().name();
-        boolean developerMode = Configuration.isDeveloperMode();
-        String networkInterface = Configuration.getNetworkInterfaceInfo();
-        String version = CmdProperties.getVersion();
-        String agentStatus = StatusReporter.getFieldAgentStatus().getControllerStatus().name().toLowerCase();
+        JsonObject startInfo = null;
+        try {
+            String gpsCoordinates = Configuration.getGpsCoordinates();
+            String gpsMode = Configuration.getGpsMode().name();
+            boolean developerMode = Configuration.isDeveloperMode();
+            String networkInterface = Configuration.getNetworkInterfaceInfo();
+            String version = CmdProperties.getVersion();
+            String agentStatus = StatusReporter.getFieldAgentStatus().getControllerStatus().name().toLowerCase();
 
-        JsonObject startInfo = Json.createObjectBuilder()
-                .add("gpsCoordinates", gpsCoordinates)
-                .add("gpsMode", gpsMode)
-                .add("developerMode", developerMode)
-                .add("networkInterface", networkInterface)
-                .add("version", version)
-                .add("agentStatus", agentStatus)
-                .build();
+            startInfo = Json.createObjectBuilder()
+                    .add("gpsCoordinates", gpsCoordinates)
+                    .add("gpsMode", gpsMode)
+                    .add("developerMode", developerMode)
+                    .add("networkInterface", networkInterface)
+                    .add("version", version)
+                    .add("agentStatus", agentStatus)
+                    .build();
+
+        } catch(Exception e) {
+            startInfo = Json.createObjectBuilder()
+                    .add("error", "can't parse start config")
+                    .build();
+        }
         return startInfo;
     }
 
