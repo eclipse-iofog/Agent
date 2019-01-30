@@ -36,6 +36,7 @@ public class Tracker implements IOFogModule {
     private String uuid;
     private Timer loggerTimer = null;
     private Timer senderTimer = null;
+    private TrackingEventsStorage eventsStorage = new TrackingEventsStorage();
     @Override
     public void start() throws Exception {
         this.uuid = getUniqueTrackingUuid();
@@ -142,7 +143,7 @@ public class Tracker implements IOFogModule {
 
     public void handleEvent(TrackingEventType type, JsonStructure value) {
         TrackingEvent event = new TrackingEvent(this.uuid, new Date().getTime(), type, value);
-        TrackingEventsStorage.getInstance().pushEvent(event);
+        eventsStorage.pushEvent(event);
     }
 
     private class TimeLoggerTask extends TimerTask {
@@ -190,7 +191,7 @@ public class Tracker implements IOFogModule {
 
         @Override
         public void run() {
-            List<TrackingEvent> events = TrackingEventsStorage.getInstance().popAllEvents();
+            List<TrackingEvent> events = eventsStorage.popAllEvents();
             JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
 
             events

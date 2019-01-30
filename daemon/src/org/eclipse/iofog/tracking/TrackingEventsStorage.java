@@ -5,16 +5,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TrackingEventsStorage {
-    private static TrackingEventsStorage instance = null;
-    public static TrackingEventsStorage getInstance() {
-        if (instance == null) {
-            synchronized (TrackingEventsStorage.class) {
-                if (instance == null)
-                    instance = new TrackingEventsStorage();
-            }
-        }
-        return instance;
-    }
 
     private List<TrackingEvent> events = new ArrayList<>();
 
