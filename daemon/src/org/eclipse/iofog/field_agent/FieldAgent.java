@@ -231,7 +231,7 @@ public class FieldAgent implements IOFogModule {
         try {
             orchestrator.request("tracking", RequestType.POST, null, events);
         } catch (Exception e) {
-            logError("Unable to send tracking logs : " + e.getMessage(), e);
+            logWarning("Unable to send tracking logs : " + e.getMessage());
         }
     }
 
