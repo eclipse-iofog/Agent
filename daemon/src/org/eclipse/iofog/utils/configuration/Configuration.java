@@ -22,6 +22,9 @@ import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.supervisor.Supervisor;
+import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEventType;
+import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -563,6 +566,13 @@ public final class Configuration {
                 default:
                     throw new ConfigurationItemException("Invalid parameter -" + option);
             }
+
+            //to correct info in tracking event
+            if (cmdOption.equals(GPS_COORDINATES)) {
+                value = Configuration.getGpsCoordinates();
+            }
+            Tracker.getInstance().handleEvent(TrackingEventType.CONFIG,
+                    TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
         }
         saveConfigUpdates();
 
@@ -981,7 +991,7 @@ public final class Configuration {
         return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
     }
 
-    private static String getNetworkInterfaceInfo() {
+    public static String getNetworkInterfaceInfo() {
         return NETWORK_INTERFACE.getDefaultValue().equals(networkInterface) ?
                 IOFogNetworkInterface.getNetworkInterface() + "(" + NETWORK_INTERFACE.getDefaultValue() + ")" :
                 networkInterface;
