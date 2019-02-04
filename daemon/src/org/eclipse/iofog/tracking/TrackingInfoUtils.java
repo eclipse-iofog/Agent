@@ -5,6 +5,7 @@ import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 
 public class TrackingInfoUtils {
@@ -38,6 +39,13 @@ public class TrackingInfoUtils {
     public static JsonObject getConfigUpdateInfo(String option, String newValue) {
         JsonObject info = Json.createObjectBuilder()
                 .add(option, newValue)
+                .build();
+        return info;
+    }
+
+    public static JsonObject getMicroservicesInfo(JsonArray microservices) {
+        JsonObject info = Json.createObjectBuilder()
+                .add("microservices", microservices)
                 .build();
         return info;
     }
