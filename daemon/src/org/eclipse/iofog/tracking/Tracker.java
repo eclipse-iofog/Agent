@@ -147,7 +147,7 @@ public class Tracker implements IOFogModule {
     }
 
     private class TimeLoggerTask extends TimerTask {
-        private final int timeTrackingTimeoutMin = 5;
+        private final int timeTrackingTimeoutMin = 1;
         private int iterations = 0;
 
         public int getTimeTrackingTimeoutMin() {
@@ -172,7 +172,7 @@ public class Tracker implements IOFogModule {
     }
 
     private class SenderTask extends TimerTask {
-        private final int sendTimeoutMin = 5;
+        private final int sendTimeoutMin = 1;
         HttpClient httpClient = HttpClients.createDefault();
 
         public int getSendTimeoutMin() {
