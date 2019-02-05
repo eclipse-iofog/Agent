@@ -8,16 +8,17 @@ cd /var/backups/iofog-agent
 iofog-agent deprovision
 service iofog-agent stop
 
-apt-get purge --auto-remove iofog-agent -y
+iofogpackage=$(grep ver prev_version_data | awk '{print $3}')
+apt-get purge --auto-remove iofog-agent$iofogpackage -y
 
 iofogversion=$(grep ver prev_version_data | awk '{print $2}')
-apt-get install iofog-agent=$iofogversion -y
+apt-get install iofog-agent$iofogpackage=$iofogversion -y
 
 rm -rf /etc/iofog-agent/
-tar -xvzf config_backup.tar.gz -P -C /
+tar -xvzf config_backup$iofogpackage.tar.gz -P -C /
 
 rm -rf /var/backups/iofog-agent/prev_version_data
-rm -rf /var/backups/iofog-agent/config_backup.tar.gz
+rm -rf /var/backups/iofog-agent/config_backup$iofogpackage.tar.gz
 
 starttimestamp=$(date +%s)
 service iofog-agent start
