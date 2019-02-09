@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  */
 public class CommandShellExecutor {
 	private static final String MODULE_NAME = "CommandShellExecutor";
-	private static final String CMD = "/bin/sh";
+	private static final String CMD = "/bin/bash";
 	private static final String CMD_WIN = "powershell";
 
 	public static CommandShellResultSet<List<String>, List<String>> executeScript(String... args) {

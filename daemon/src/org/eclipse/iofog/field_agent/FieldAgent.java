@@ -28,6 +28,10 @@ import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEventType;
+import org.eclipse.iofog.tracking.TrackingInfoUtils;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -213,15 +217,23 @@ public class FieldAgent implements IOFogModule {
                 } catch (Exception e) {
                     logError("Unable send strace logs : " + e.getMessage(), e);
                 }
+            }
 
-                try {
-                    Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
-                } catch (InterruptedException e) {
-                    logWarning(e.getMessage());
-                }
+            try {
+                Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
+            } catch (InterruptedException e) {
+                logWarning(e.getMessage());
             }
         }
     };
+
+    public final void postTracking(JsonObject events) {
+        try {
+            orchestrator.request("tracking", RequestType.POST, null, events);
+        } catch (Exception e) {
+            logWarning("Unable to send tracking logs : " + e.getMessage());
+        }
+    }
 
     /**
      * logs and sets appropriate status when controller
@@ -301,6 +313,9 @@ public class FieldAgent implements IOFogModule {
                             processRoutes(microservices);
                             MessageBus.getInstance().update();
                         }
+
+                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
+                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
                     }
                     if (changes.getBoolean("tunnel") && !initialization) {
                         sshProxyManager.update(getProxyConfig());
@@ -473,6 +488,12 @@ public class FieldAgent implements IOFogModule {
         microserviceManager.setRoutes(routes);
     }
 
+    private JsonArray loadMicroservicesJsonFile() {
+        String filename = MICROSERVICE_FILE;
+        JsonArray microservicesJson = readFile(filesPath + filename);
+        return  microservicesJson;
+    }
+
     /**
      * gets list of Microservices from file or IOFog controller
      *
@@ -484,7 +505,7 @@ public class FieldAgent implements IOFogModule {
             return new ArrayList<>();
         }
 
-        String filename = "microservices.json";
+        String filename = MICROSERVICE_FILE;
         JsonArray microservicesJson;
         try {
             if (fromFile) {

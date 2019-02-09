@@ -3,18 +3,19 @@
 provisionkey=$1
 timeout=${2:-60}
 
+iofogpackage=$(apt-cache policy iofog-agent iofog-agent-dev | grep -A1 ^iofog | awk '$2 ~ /^[0-9]/ {print a}{a=$0}' | sed -e 's/iofog-agent\(.*\):/\1/')
+iofogversion=$(apt-cache policy iofog-agent$iofogpackage | grep Installed | awk --posix '{ if ($2 ~ /^[0-9]/) print $2}')
+
 cd /var/backups/iofog-agent
-tar -cvzf config_backup.tar.gz -P /etc/iofog-agent
+tar -cvzf config_backup$iofogpackage.tar.gz -P /etc/iofog-agent
 
-iofogversion=$(apt-cache policy iofog-agent | grep Installed | awk '{print $2}')
-
-printf 'ver: '$iofogversion > prev_version_data
+printf 'ver: %s %s' $iofogversion $iofogpackage > prev_version_data
 
 iofog-agent deprovision
 service iofog-agent stop
 
 apt-get update
-apt-get install --only-upgrade iofog-agent -y
+apt-get install --only-upgrade iofog-agent$iofogpackage -y
 
 starttimestamp=$(date +%s)
 service iofog-agent start

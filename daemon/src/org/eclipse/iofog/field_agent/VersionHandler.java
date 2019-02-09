@@ -41,9 +41,11 @@ public class VersionHandler {
 
 	private final static String GET_LINUX_DISTRIBUTION_NAME = "grep = /etc/os-release | awk -F\"[=]\" '{print $2}' | sed -n 1p";
 	private static String GET_IOFOG_PACKAGE_INSTALLED_VERSION;
+	private static String GET_IOFOG_PACKAGE_DEV_VERSION;
 	private static String GET_IOFOG_PACKAGE_CANDIDATE_VERSION;
 	private static String UPDATE_PACKAGE_REPOSITORY;
 	private static String GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT;
+	private static String DEV;
 
 	static {
 		if (SystemUtils.IS_OS_LINUX) {
@@ -51,24 +53,26 @@ public class VersionHandler {
 			if (distrName.contains("ubuntu")
 					|| distrName.contains("debian")
 					|| distrName.contains("raspbian")) {
-				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Installed | awk '{print $2}'";
-				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + " | grep Candidate | awk '{print $2}'";
+				GET_IOFOG_PACKAGE_DEV_VERSION = "(apt-cache policy " + PACKAGE_NAME + "-dev && apt-cache policy " + PACKAGE_NAME + ") | grep -A1 ^iofog | awk '$2 ~ /^[0-9]/ {print a}{a=$0}' | sed -e 's/iofog-agent\\(.*\\):/\\1/'";
+				DEV = getIofogPackageDevVersion();
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + DEV + " | grep Installed | awk '{print $2}'";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + DEV + " | grep Candidate | awk '{print $2}'";
 				UPDATE_PACKAGE_REPOSITORY = "apt-get update";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/lib/apt/lists/lock /var/cache/apt/archives/lock";
 			} else if (distrName.contains("fedora")) {
-				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
-				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+				GET_IOFOG_PACKAGE_DEV_VERSION = "(dnf --showduplicates list installed " + PACKAGE_NAME + "-dev && dnf --showduplicates list installed " + PACKAGE_NAME + ") | grep iofog | awk '{print $1}' | sed -e 's/iofog-agent\\(.*\\).noarch/\\1/')";
+				DEV = getIofogPackageDevVersion();
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list installed " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}'";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}' | sed -n \\$p\\";
 				UPDATE_PACKAGE_REPOSITORY = "dnf update";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/cache/dnf/metadata_lock.pid";
 			} else if (distrName.contains("red hat")
-					|| distrName.contains("centos")) {
-				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n 1p";
-				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list " + PACKAGE_NAME + " | grep iofog | awk '{print $2}' | sed -n \"$p\"";
-				UPDATE_PACKAGE_REPOSITORY = "yum update";
-				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/run/yum.pid";
-			} else if (distrName.contains("amazon")) {
-				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n 1p";
-				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep iofog | awk '{print $2}' | sed -n \"$p\"";
+					|| distrName.contains("centos")
+					|| distrName.contains("amazon")) {
+				GET_IOFOG_PACKAGE_DEV_VERSION = "(yum --showduplicates list installed " + PACKAGE_NAME + "-dev && yum --showduplicates list installed " + PACKAGE_NAME + ") | grep iofog | awk '{print $1}' | sed -e 's/iofog-agent\\(.*\\).noarch/\\1/')";
+				DEV = getIofogPackageDevVersion();
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list installed | grep " + PACKAGE_NAME + DEV + " | awk '{print $2}'";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep " + PACKAGE_NAME + DEV + "| awk '{print $2}' | sed -n \\$p\\";
 				UPDATE_PACKAGE_REPOSITORY = "yum update";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/run/yum.pid";
 			} else {
@@ -84,6 +88,11 @@ public class VersionHandler {
 
 	private static String getFogInstalledVersion() {
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_IOFOG_PACKAGE_INSTALLED_VERSION);
+		return parseVersionResult(resultSet);
+	}
+
+	private static String getIofogPackageDevVersion(){
+		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_IOFOG_PACKAGE_DEV_VERSION);
 		return parseVersionResult(resultSet);
 	}
 
@@ -117,8 +126,6 @@ public class VersionHandler {
 	 *
 	 */
 	static void changeVersion(JsonObject actionData) {
-		LoggingService.logInfo(MODULE_NAME, "trying to change version action");
-
 		if (SystemUtils.IS_OS_WINDOWS) {
 			return; // TODO implement
 		}
