@@ -46,6 +46,7 @@ public class TrackingInfoUtils {
     public static JsonObject getMicroservicesInfo(JsonArray microservices) {
         JsonObject info = Json.createObjectBuilder()
                 .add("microservices", microservices)
+                .add("microservicesCount", microservices == null ? 0 : microservices.size())
                 .build();
         return info;
     }
