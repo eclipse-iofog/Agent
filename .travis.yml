@@ -30,7 +30,7 @@ jobs:
     - sudo apt-get install sshpass xml-twig-tools
     script:
     - export VERSION=`xml_grep --cond='project/version' pom.xml --text_only`
-    - export ID=-prerelease
+    - export ID=-dev
     - bash scripts/packaging.sh
     - bash scripts/deploy.sh $DEV_MACHINE_PASSWORD $DEV_MACHINE_USERNAME $DEV_MACHINE_IP
   - stage: pre_release
