@@ -99,7 +99,7 @@ public class Supervisor implements IOFogModule {
         scheduler.scheduleAtFixedRate(checkLocalApiStatus, 0, 10, SECONDS);
 
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
-        logInfo("started");
+		logInfo("Started");
         Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
 
         operationDuration();
