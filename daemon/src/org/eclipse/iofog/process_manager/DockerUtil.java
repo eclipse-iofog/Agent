@@ -472,7 +472,7 @@ public class DockerUtil {
 				volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
 			});
 		}
-		String[] extraHosts = {"iofabric:" + host, "iofog:" + host};
+		String[] extraHosts = {"iofog:" + host};
 
 		Map<String, String> containerLogConfig = new HashMap<>();
 		int logFiles = 1;
