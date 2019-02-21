@@ -97,6 +97,7 @@ public class Constants {
             SNAP_COMMON + "./var/run/iofog-agent" : SNAP_COMMON + "/var/run/iofog-agent";
     private static final String CONFIG_DIR = SystemUtils.IS_OS_WINDOWS ?
             WINDOWS_IOFOG_PATH : SNAP_COMMON + "/etc/iofog-agent/";
+    public static final String LOCAL_API_TOKEN_PATH = CONFIG_DIR + "local-api";
     public static final String DEFAULT_CONFIG_PATH = CONFIG_DIR + "config.xml";
     public static final String DEVELOPMENT_CONFIG_PATH = CONFIG_DIR + "config-development.xml";
     public static final String PRODUCTION_CONFIG_PATH = CONFIG_DIR + "config-production.xml";
