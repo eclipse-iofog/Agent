@@ -116,11 +116,8 @@ public class Client {
 
 	private static String fetchAccessToken() {
 		String line = "";
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader(new FileReader(LOCAL_API_TOKEN_PATH));
+		try (BufferedReader reader = new BufferedReader(new FileReader(LOCAL_API_TOKEN_PATH))) {
 			line = reader.readLine();
-			reader.close();
 		} catch (IOException e) {
 			System.out.println("Local API access token is missing, try to re-install Agent.");
 		}
