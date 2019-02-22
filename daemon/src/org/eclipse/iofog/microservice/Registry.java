@@ -21,6 +21,7 @@ import java.util.Objects;
  *
  */
 public class Registry {
+	private final int id;
 	private final String url;
 	private final boolean isPublic;
 	private final boolean secure;
@@ -30,8 +31,9 @@ public class Registry {
 	private final String password;
 	private final String userEmail;
 
-	private Registry(final String url, final boolean isPublic, final boolean secure, final String certificate, final boolean requiresCertificate,
+	private Registry(final int id, final String url, final boolean isPublic, final boolean secure, final String certificate, final boolean requiresCertificate,
 	                 final String userName, final String password, final String userEmail) {
+		this.id = id;
 		this.url = url;
 		this.isPublic = isPublic;
 		this.secure = secure;
@@ -40,6 +42,10 @@ public class Registry {
 		this.userName = userName;
 		this.password = password;
 		this.userEmail = userEmail;
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public String getUrl() {
@@ -82,7 +88,7 @@ public class Registry {
 		Registry registry = (Registry) o;
 
 		if (isPublic != registry.isPublic) return false;
-		return url.equals(registry.url);
+		return id == registry.id;
 	}
 
 	@Override
@@ -91,6 +97,7 @@ public class Registry {
 	}
 
 	public static class RegistryBuilder {
+		private int id;
 		private String url;
 		private boolean isPublic;
 		private boolean secure;
@@ -99,6 +106,11 @@ public class Registry {
 		private String userName;
 		private String password;
 		private String userEmail;
+
+		public RegistryBuilder setId(int id) {
+			this.id = id;
+			return this;
+		}
 
 		public RegistryBuilder setUrl(String url) {
 			this.url = url;
@@ -141,7 +153,7 @@ public class Registry {
 		}
 
 		public Registry build() {
-			return new Registry(url, isPublic, secure, certificate, requiresCertificate, userName, password, userEmail);
+			return new Registry(id, url, isPublic, secure, certificate, requiresCertificate, userName, password, userEmail);
 		}
 	}
 }

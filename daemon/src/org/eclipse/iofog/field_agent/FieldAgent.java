@@ -31,7 +31,6 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -434,6 +433,7 @@ public class FieldAgent implements IOFogModule {
             for (int i = 0; i < registriesList.size(); i++) {
                 JsonObject registry = registriesList.getJsonObject(i);
                 Registry.RegistryBuilder registryBuilder = new Registry.RegistryBuilder()
+                        .setId(registry.getInt("id"))
                         .setUrl(registry.getString("url"))
                         .setIsPublic(registry.getBoolean("isPublic", false));
                 if (!registry.getBoolean("isPublic", false)) {
@@ -547,7 +547,7 @@ public class FieldAgent implements IOFogModule {
             microservice.setConfig(jsonObj.getString("config"));
             microservice.setRebuild(jsonObj.getBoolean("rebuild"));
             microservice.setRootHostAccess(jsonObj.getBoolean("rootHostAccess"));
-            microservice.setRegistry(jsonObj.getString("registryUrl"));
+            microservice.setRegistryId(jsonObj.getInt("registryId"));
             microservice.setLogSize(jsonObj.getJsonNumber("logSize").longValue());
             microservice.setDelete(jsonObj.getBoolean("delete"));
             microservice.setDeleteWithCleanup(jsonObj.getBoolean("deleteWithCleanup"));
