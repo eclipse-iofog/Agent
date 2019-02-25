@@ -28,7 +28,7 @@ public class Microservice {
     private String config;
     private List<String> routes;
     private String containerId;
-    private String registry;
+    private int registryId;
     private String containerIpAddress;
     private boolean rebuild;
     private boolean rootHostAccess;
@@ -61,12 +61,12 @@ public class Microservice {
         this.containerIpAddress = containerIpAddress;
     }
 
-    public String getRegistry() {
-        return registry;
+    public int getRegistryId() {
+        return registryId;
     }
 
-    public void setRegistry(String registry) {
-        this.registry = registry;
+    public void setRegistryId(int registryId) {
+        this.registryId = registryId;
     }
 
     public String getContainerId() {
@@ -125,13 +125,13 @@ public class Microservice {
         this.volumeMappings = volumeMappings;
     }
 
-	public synchronized boolean isUpdating() {
-		return isUpdating;
-	}
+    public synchronized boolean isUpdating() {
+        return isUpdating;
+    }
 
-	public synchronized void setUpdating(boolean updating) {
-		isUpdating = updating;
-	}
+    public synchronized void setUpdating(boolean updating) {
+        isUpdating = updating;
+    }
 
     public boolean isDelete() {
         return delete;
@@ -150,17 +150,17 @@ public class Microservice {
     }
 
     @Override
-	public boolean equals(Object e) {
+    public boolean equals(Object e) {
         if (this == e) return true;
         if (e == null || getClass() != e.getClass()) return false;
-		Microservice microservice = (Microservice) e;
-		return this.microserviceUuid.equals(microservice.getMicroserviceUuid());
-	}
+        Microservice microservice = (Microservice) e;
+        return this.microserviceUuid.equals(microservice.getMicroserviceUuid());
+    }
 
-	@Override
-	public int hashCode() {
-		return microserviceUuid.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return microserviceUuid.hashCode();
+    }
 
     public List<String> getRoutes() {
         return routes;

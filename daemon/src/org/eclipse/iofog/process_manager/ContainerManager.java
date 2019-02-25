@@ -56,9 +56,9 @@ public class ContainerManager {
 
 	private Registry getRegistry(Microservice microservice) throws Exception {
 		Registry registry;
-		registry = microserviceManager.getRegistry(microservice.getRegistry());
+		registry = microserviceManager.getRegistry(microservice.getRegistryId());
 		if (registry == null) {
-			throw new Exception(String.format("registry is not valid \"%s\"", microservice.getRegistry()));
+			throw new Exception(String.format("registry is not valid \"%d\"", microservice.getRegistryId()));
 		}
 		return registry;
 	}
@@ -77,8 +77,8 @@ public class ContainerManager {
 	}
 
 	private void createContainer(Microservice microservice) throws Exception {
-		if (!microservice.getRegistry().equals("from_cache")){
-			Registry registry = getRegistry(microservice);
+		Registry registry = getRegistry(microservice);
+		if (registry.getUrl().equals("from_cache")){
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
 			docker.pullImage(microservice.getImageName(), registry);
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", microservice.getImageName()));

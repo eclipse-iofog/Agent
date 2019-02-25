@@ -50,6 +50,8 @@ else
 fi
 echo "Check for cert.crt"
 
+</dev/urandom tr -dc A-Za-z0-9 | head -c32 > /etc/iofog-agent/local-api
+
 mkdir -p /var/backups/iofog-agent
 mkdir -p /var/log/iofog-agent
 mkdir -p /var/lib/iofog-agent

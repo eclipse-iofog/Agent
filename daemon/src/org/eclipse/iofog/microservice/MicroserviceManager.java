@@ -69,10 +69,10 @@ public class MicroserviceManager {
 		}
 	}
 
-	public Registry getRegistry(String name) {
+	public Registry getRegistry(int id) {
 		synchronized (MicroserviceManager.class) {
 			for (Registry registry : registries) {
-				if (registry.getUrl().equalsIgnoreCase(name))
+				if (registry.getId() == id)
 					return registry;
 			}
 			return null;
