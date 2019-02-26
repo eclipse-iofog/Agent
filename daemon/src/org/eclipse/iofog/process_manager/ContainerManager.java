@@ -78,7 +78,7 @@ public class ContainerManager {
 
 	private void createContainer(Microservice microservice) throws Exception {
 		Registry registry = getRegistry(microservice);
-		if (registry.getUrl().equals("from_cache")){
+		if (!registry.getUrl().equals("from_cache")){
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
 			docker.pullImage(microservice.getImageName(), registry);
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", microservice.getImageName()));
