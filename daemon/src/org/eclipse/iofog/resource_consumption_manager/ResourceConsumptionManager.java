@@ -188,6 +188,7 @@ public class ResourceConsumptionManager implements IOFogModule {
         if (SystemUtils.IS_OS_WINDOWS) {
             return 0;
         }
+        // @see https://github.com/Leo-G/DevopsWiki/wiki/How-Linux-CPU-Usage-Time-and-Percentage-is-calculated
 		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {print usage}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
 		return Float.parseFloat(parseOneLineResult(resultSet));
