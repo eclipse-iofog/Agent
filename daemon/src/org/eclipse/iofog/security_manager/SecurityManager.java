@@ -93,7 +93,7 @@ public class SecurityManager implements IOFogModule {
                             logWarning(latestStatus);
                             logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + PluginStatus.QUARANTINE);
                             handleQuarantine();
-                            break;
+                            continue;
                         }
 
                         PluginStatus pluginStatus = PluginStatus.parse(latestStatus);
