@@ -1,6 +1,7 @@
 package org.eclipse.iofog.security_manager;
 
 
+import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -114,8 +115,12 @@ public class SecurityManager implements IOFogModule {
         }
 
         private void launchJar(PluginProcessData pluginProcessData) {
-            String command = "\"java -Xmx512m -jar '" +
-                    pluginProcessData.getJarPath() + "' \"";
+            String command;
+            if (SystemUtils.IS_OS_WINDOWS) {
+                command = "\"java -Xmx512m -jar '" + pluginProcessData.getJarPath() + "' \"";
+            } else {
+                command = "java -Xmx512m -jar '" + pluginProcessData.getJarPath() + "' ";
+            }
 
             CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(pluginProcessData.getResultBuffer(), null);
             CommandShellExecutor.executeDynamicCommand(
