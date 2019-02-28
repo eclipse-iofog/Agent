@@ -89,10 +89,18 @@ public class SecurityManager implements IOFogModule {
                     List<String> results = pluginProcessData.getResultBuffer();
                     if (results != null && results.size() > 0) {
                         String latestStatus = results.get(results.size() - 1).replace("\n", "");
+                        if (latestStatus.contains("Quarantine caused by")) {
+                            logWarning(latestStatus);
+                            logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + PluginStatus.QUARANTINE);
+                            handleQuarantine();
+                            break;
+                        }
+
                         PluginStatus pluginStatus = PluginStatus.parse(latestStatus);
                         if (pluginStatus == PluginStatus.QUARANTINE) {
                             handleQuarantine();
                         }
+
                         logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + pluginStatus);
 
                         pluginProcessData.getResultBuffer().clear();
@@ -109,7 +117,7 @@ public class SecurityManager implements IOFogModule {
             String command = "\"java -Xmx512m -jar '" +
                     pluginProcessData.getJarPath() + "' \"";
 
-            CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, pluginProcessData.getResultBuffer());
+            CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(pluginProcessData.getResultBuffer(), null);
             CommandShellExecutor.executeDynamicCommand(
                     command,
                     resultSet,
