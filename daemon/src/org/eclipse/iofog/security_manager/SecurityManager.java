@@ -41,6 +41,10 @@ public class SecurityManager implements IOFogModule {
 
     @Override
     public void start() throws Exception {
+        if (!SystemUtils.IS_OS_WINDOWS) { // increase number of inotify watches
+            CommandShellExecutor.executeCommand("echo 1000000 > /proc/sys/fs/inotify/max_user_watches");
+        }
+
         List<String> jars = detectAllAvailableJars();
         launchJars(jars);
     }
