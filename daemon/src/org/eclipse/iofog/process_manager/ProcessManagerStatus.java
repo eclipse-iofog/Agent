@@ -31,7 +31,7 @@ import java.util.Map;
 public class ProcessManagerStatus {
     private int runningMicroservicesCount;
     private final Map<String, MicroserviceStatus> microservicesStatus;
-    private final Map<String, LinkStatus> registriesStatus;
+    private final Map<Integer, LinkStatus> registriesStatus;
 
     public ProcessManagerStatus() {
         microservicesStatus = new HashMap<>();
@@ -75,7 +75,7 @@ public class ProcessManagerStatus {
         JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         registriesStatus.forEach((key, value) -> {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-                .add("url", key)
+                .add("id", key)
                 .add("linkStatus", value.toString());
             arrayBuilder.add(objectBuilder);
 
@@ -117,7 +117,7 @@ public class ProcessManagerStatus {
         return MicroserviceManager.getInstance().getRegistries().size();
     }
 
-    public Map<String, LinkStatus> getRegistriesStatus() {
+    public Map<Integer, LinkStatus> getRegistriesStatus() {
         return registriesStatus;
     }
 

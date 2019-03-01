@@ -75,7 +75,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 			try {
 				Thread.sleep(Configuration.getGetUsageDataFreqSeconds() * 1000);
 
-				logInfo("get usage data");
+				logInfo("Get usage data");
 
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();

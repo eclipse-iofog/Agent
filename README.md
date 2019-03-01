@@ -8,6 +8,24 @@ ioFog is a service that runs constantly in the background on a Linux machine. It
 
 There should be an ioFog code base for every processing platform that becomes part of the I/O compute fog. Network connectivity, process invocation, thread management, and other details of an ioFog will vary from platform to platform. The same ioFog principles apply to every version, but the implementation of the principles should match the native languages and structures best suited for the platform.
 
+### Status
+
+![](https://img.shields.io/github/release/iofog/agent.svg?style=flat)
+[![Build Status](https://travis-ci.org/ioFog/Agent.svg)](https://travis-ci.org/ioFog/Agent)
+
+![](https://img.shields.io/github/repo-size/iofog/agent.svg?style=flat)
+![](https://img.shields.io/github/last-commit/iofog/agent.svg?style=flat)
+![](https://img.shields.io/github/contributors/iofog/agent.svg?style=flat)
+![](https://img.shields.io/github/issues/iofog/agent.svg?style=flat)
+
+![Supports amd64 Architecture][amd64-shield]
+![Supports aarch64 Architecture][arm64-shield]
+![Supports armhf Architecture][arm-shield]
+
+[arm64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
+[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
+[arm-shield]: https://img.shields.io/badge/armhf-yes-green.svg
+
 ### Principles of an ioFog Agent:
 
 * Never go down
