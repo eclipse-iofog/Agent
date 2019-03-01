@@ -104,7 +104,7 @@ See the docs folder in this repository for architecture, project microculture, e
 - 16.04 - Xenial Xerus
 
 
-&ensp;- IOFog Agent Update:
+&ensp;- ioFog Agent Update:
 
         sudo service iofog-agent stop       
         sudo apt-get install --only-upgrade iofog-agent
