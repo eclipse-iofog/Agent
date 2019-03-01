@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018 Edgeworx, Inc.
+ *  * Copyright (c) 2019 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -27,10 +27,10 @@ public class PluginProcessData {
     private final AtomicBoolean pluginRun = new AtomicBoolean();
     private List<String> resultBuffer = new CopyOnWriteArrayList<>();
 
-    public PluginProcessData(String jarPath, boolean pluginRun) {
+    public PluginProcessData(String jarPath) {
         this.jarPath = jarPath;
         this.pluginName = FilenameUtils.getName(jarPath).replace(".jar", "");
-        this.pluginRun.set(pluginRun);
+        this.pluginRun.set(true);
     }
 
     public String getJarPath() {
