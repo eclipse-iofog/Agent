@@ -84,11 +84,11 @@ public final class StatusReporter {
 		String connectionStatus = fieldAgentStatus.getControllerStatus() == ControllerStatus.OK ? "ok" :
 				(fieldAgentStatus.getControllerStatus() == ControllerStatus.BROKEN_CERTIFICATE ? "broken" : "not provisioned");
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
-		result.append("\\nMemory Usage                : about ").append(String.format("%.2f MB", resourceConsumptionManagerStatus.getMemoryUsage()));
+		result.append("\\nMemory Usage                : about ").append(String.format("%.2f MiB", resourceConsumptionManagerStatus.getMemoryUsage()));
 		if (diskUsage < 1)
-			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f MB", diskUsage * 1024));
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f MiB", diskUsage * 1024));
 		else
-			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f GB", diskUsage));
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f GiB", diskUsage));
 		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f %%", resourceConsumptionManagerStatus.getCpuUsage()));
 		result.append("\\nRunning Microservices       : ").append(processManagerStatus.getRunningMicroservicesCount());
 		result.append("\\nConnection to Controller    : ").append(connectionStatus);
