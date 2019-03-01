@@ -24,6 +24,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCommand;
 import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 
@@ -81,13 +82,20 @@ public class ResourceConsumptionManager implements IOFogModule {
 				float cpuUsage = getCpuUsage();
 				float diskUsage = directorySize(Configuration.getDiskDirectory() + "messages/archive/");
 
+				long availableMemory = getSystemAvailableMemory();
+				float totalCpu = getTotalCpu();
+				long availableDisk = getAvailableDisk();
+
 				StatusReporter.setResourceConsumptionManagerStatus()
 						.setMemoryUsage(memoryUsage / 1_000_000)
 						.setCpuUsage(cpuUsage)
 						.setDiskUsage(diskUsage / 1_000_000_000)
 						.setMemoryViolation(memoryUsage > memoryLimit)
 						.setDiskViolation(diskUsage > diskLimit)
-						.setCpuViolation(cpuUsage > cpuLimit);
+						.setCpuViolation(cpuUsage > cpuLimit)
+						.setAvailableMemory(availableMemory)
+						.setAvailableDisk(availableDisk)
+						.setTotalCpu(totalCpu);
 
 				if (diskUsage > diskLimit) {
 					float amount = diskUsage - (diskLimit * 0.75f);
@@ -164,6 +172,39 @@ public class ResourceConsumptionManager implements IOFogModule {
 		} else {
 			return 0f;
 		}
+	}
+
+	private long getSystemAvailableMemory() {
+	    if (SystemUtils.IS_OS_WINDOWS) {
+	        return 0;
+        }
+		final String MEM_AVAILABLE = "grep 'MemAvailable' /proc/meminfo | awk '{print $2}'";
+		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(MEM_AVAILABLE);
+		long memInKB = Long.parseLong(parseOneLineResult(resultSet));
+		return memInKB * 1024;
+	}
+
+	private float getTotalCpu() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return 0;
+        }
+        // @see https://github.com/Leo-G/DevopsWiki/wiki/How-Linux-CPU-Usage-Time-and-Percentage-is-calculated
+		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {print usage}'";
+		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
+		return Float.parseFloat(parseOneLineResult(resultSet));
+	}
+
+	private static String parseOneLineResult(CommandShellResultSet<List<String>, List<String>> resultSet) {
+		return resultSet.getError().size() == 0 && resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : EMPTY;
+	}
+
+	private long getAvailableDisk() {
+		File[] roots = File.listRoots();
+		long freeSpace = 0;
+		for (File f : roots) {
+			freeSpace += f.getUsableSpace();
+		}
+		return freeSpace;
 	}
 
 	private void waitForSecond() {
