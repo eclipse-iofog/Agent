@@ -77,12 +77,28 @@ public final class StatusReporter {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
 
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
+   
 		double availableDisk = resourceConsumptionManagerStatus.getAvailableDisk() / 1024. / 1024.;
 		double availableMemory = resourceConsumptionManagerStatus.getAvailableMemory() / 1024. / 1024.;
 		float totalCpu = resourceConsumptionManagerStatus.getTotalCpu();
+     
+		String connectionStatus = "";
 
-		String connectionStatus = fieldAgentStatus.getControllerStatus() == ControllerStatus.OK ? "ok" :
-				(fieldAgentStatus.getControllerStatus() == ControllerStatus.BROKEN_CERTIFICATE ? "broken" : "not provisioned");
+		switch (fieldAgentStatus.getControllerStatus()) {
+			case NOT_PROVISIONED:
+				connectionStatus = "not provisioned";
+				break;
+			case BROKEN_CERTIFICATE:
+				connectionStatus = "broken certificate";
+				break;
+			case OK:
+				connectionStatus = "ok";
+				break;
+			case QUARANTINE:
+				connectionStatus = "quarantine";
+				break;
+		}
+
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
 		result.append("\\nMemory Usage                : about ").append(String.format("%.2f MiB", resourceConsumptionManagerStatus.getMemoryUsage()));
 		if (diskUsage < 1)

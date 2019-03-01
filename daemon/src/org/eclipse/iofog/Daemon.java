@@ -69,12 +69,15 @@ public class Daemon {
             params = new StringBuilder(params.toString().trim() + "\"}");
             byte[] postData = params.toString().trim().getBytes(UTF_8);
 
+            String accessToken = fetchAccessToken();
+
             URL url = new URL(LOCAL_API_ENDPOINT);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setRequestProperty("Accept", "text/plain");
             conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
+            conn.setRequestProperty("Authorization", accessToken);
             conn.setDoOutput(true);
             try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
                 wr.write(postData);
@@ -182,6 +185,17 @@ public class Daemon {
         } catch (Exception e) {
             Sentry.capture(e);
         }
+    }
+
+    private static String fetchAccessToken() {
+        String line = "";
+        try (BufferedReader reader = new BufferedReader(new FileReader(Constants.LOCAL_API_TOKEN_PATH))) {
+            line = reader.readLine();
+        } catch (IOException e) {
+            System.out.println("Local API access token is missing, try to re-install Agent.");
+        }
+
+        return line;
     }
 
 }
