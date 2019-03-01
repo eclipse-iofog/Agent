@@ -73,6 +73,15 @@ chmod 774 -R /var/backups/iofog-agent
 chmod 754 -R /usr/share/iofog-agent
 #echo "Changed permissions of directories"
 
+MACHINE_TYPE="uname -m"
+if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+  mv /usr/lib/x64/libjnotify.so /usr/lib/libjnotify.so
+  rm /usr/lib/x86/libjnotify.so
+else
+  mv /usr/lib/x86/libjnotify.so /usr/lib/libjnotify.so
+  rm /usr/lib/x64/libjnotify.so
+fi
+
 mv /dev/random /dev/random.real
 ln -s /dev/urandom /dev/random
 #echo "Moved dev pipes for netty"
