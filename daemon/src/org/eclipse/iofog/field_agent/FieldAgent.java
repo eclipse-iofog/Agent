@@ -31,6 +31,7 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -65,6 +66,7 @@ import static org.eclipse.iofog.utils.CmdProperties.getVersion;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
+import static org.eclipse.iofog.utils.Constants.ControllerStatus.QUARANTINE;
 
 /**
  * Field Agent module
@@ -1165,6 +1167,14 @@ public class FieldAgent implements IOFogModule {
         if (microserviceUuid != null) {
             ImageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         }
+    }
+
+    public void startQuarantine() {
+        logInfo("Quarantine");
+
+        StatusReporter.setFieldAgentStatus().setControllerStatus(QUARANTINE);
+        microserviceManager.clear();
+        notifyModules();
     }
 
 }

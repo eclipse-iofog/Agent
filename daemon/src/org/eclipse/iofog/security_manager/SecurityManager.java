@@ -5,6 +5,9 @@ import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.microservice.MicroserviceManager;
+import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 
 import java.io.IOException;
@@ -134,6 +137,6 @@ public class SecurityManager implements IOFogModule {
 
 
     private void handleQuarantine() {
-        // TODO close connections, etc.
+        FieldAgent.getInstance().startQuarantine();
     }
 }
