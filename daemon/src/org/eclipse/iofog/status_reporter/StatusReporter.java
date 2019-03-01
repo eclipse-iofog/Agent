@@ -77,6 +77,11 @@ public final class StatusReporter {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
 
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
+   
+		double availableDisk = resourceConsumptionManagerStatus.getAvailableDisk() / 1024. / 1024.;
+		double availableMemory = resourceConsumptionManagerStatus.getAvailableMemory() / 1024. / 1024.;
+		float totalCpu = resourceConsumptionManagerStatus.getTotalCpu();
+     
 		String connectionStatus = "";
 
 		switch (fieldAgentStatus.getControllerStatus()) {
@@ -95,16 +100,21 @@ public final class StatusReporter {
 		}
 
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
-		result.append("\\nMemory Usage                : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage())).append(" MiB");
+		result.append("\\nMemory Usage                : about ").append(String.format("%.2f MiB", resourceConsumptionManagerStatus.getMemoryUsage()));
 		if (diskUsage < 1)
-			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage * 1024)).append(" MiB");
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f MiB", diskUsage * 1024));
 		else
-			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage)).append(" GiB");
-		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage())).append("%");
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f GiB", diskUsage));
+		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f %%", resourceConsumptionManagerStatus.getCpuUsage()));
 		result.append("\\nRunning Microservices       : ").append(processManagerStatus.getRunningMicroservicesCount());
 		result.append("\\nConnection to Controller    : ").append(connectionStatus);
 		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
+
+		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB", availableDisk));
+		result.append("\\nSystem Available Memory     : ").append(String.format("%.2f MB", availableMemory));
+		result.append("\\nSystem Total CPU            : ").append(String.format("%.2f %%", totalCpu));
+
 
 		return result.toString();
 	}
