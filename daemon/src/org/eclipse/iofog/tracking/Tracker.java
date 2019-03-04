@@ -66,21 +66,34 @@ public class Tracker implements IOFogModule {
         return MODULE_NAME;
     }
 
-    private String initTrackingUuid() throws NoSuchAlgorithmException {
+    private String initTrackingUuid() {
         String uuid;
         Path path = Paths.get(TRACKING_UUID_PATH);
         try {
-            if (Files.exists(path)) {
-                List<String> lines = Files.readAllLines(path);
-                uuid = lines.get(0);
-            } else {
-                uuid = generateRandomString(32);
-                Files.write(path, uuid.getBytes(), StandardOpenOption.CREATE);
+            if (Files.notExists(path)) {
+                return createTrackingUuidFile(path);
+            }
+
+            List<String> lines = Files.readAllLines(path);
+            if (lines.size() == 0) {
+                return createTrackingUuidFile(path);
+            }
+
+            uuid = lines.get(0);
+            if (uuid.length() < 32) {
+                return createTrackingUuidFile(path);
             }
         } catch (IOException e) {
             logError("Error while getting tracking UUID", e);
             uuid = "temp_" + generateRandomString(32);
         }
+        return uuid;
+    }
+
+    private String createTrackingUuidFile(Path path) throws IOException {
+        String uuid;
+        uuid = generateRandomString(32);
+        Files.write(path, uuid.getBytes(), StandardOpenOption.CREATE);
 
         return uuid;
     }
