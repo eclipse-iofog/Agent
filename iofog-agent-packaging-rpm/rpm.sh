@@ -77,7 +77,7 @@ chmod 754 -R /usr/share/iofog-agent
 #echo "Changed permissions of directories"
 
 MACHINE_TYPE=$(uname -m)
-if [ $MACHINE_TYPE == 'x86_64' ]; then
+if [ $MACHINE_TYPE = 'x86_64' ]; then
   mv /usr/lib/x64/libjnotify.so /usr/lib/libjnotify.so
   rm /usr/lib/x86/libjnotify.so
 else
