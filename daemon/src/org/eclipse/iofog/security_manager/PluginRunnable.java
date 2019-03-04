@@ -29,7 +29,7 @@ public class PluginRunnable implements Runnable {
                         securityManager.logWarning(latestStatus);
                         securityManager.logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + PluginStatus.QUARANTINE);
                         securityManager.handleQuarantine();
-                        continue;
+                        break;
                     }
 
                     PluginStatus pluginStatus = PluginStatus.parse(latestStatus);
