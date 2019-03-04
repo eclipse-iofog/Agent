@@ -111,5 +111,7 @@ public class Constants {
 
     public static final String MICROSERVICE_FILE = "microservices.json";
 
+    public static final String TRACKING_UUID_PATH = CONFIG_DIR + "tracking-uuid";
+
     public static final String PLUGINS_PATH = CONFIG_DIR + "plugins";
 }
