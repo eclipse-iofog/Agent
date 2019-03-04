@@ -11,12 +11,14 @@ import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 
+import static org.eclipse.iofog.utils.Constants.TRACKING_UUID_PATH;
+
 import javax.json.*;
-import javax.xml.bind.DatatypeConverter;
-import java.io.IOException;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.security.MessageDigest;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
@@ -39,7 +41,7 @@ public class Tracker implements IOFogModule {
     private TrackingEventsStorage eventsStorage = new TrackingEventsStorage();
     @Override
     public void start() throws Exception {
-        this.uuid = getUniqueTrackingUuid();
+        this.uuid = initTrackingUuid();
 
         loggerTimer = new Timer();
         TimeLoggerTask timeLoggerTask = new TimeLoggerTask();
@@ -64,23 +66,36 @@ public class Tracker implements IOFogModule {
         return MODULE_NAME;
     }
 
-    private String getUniqueTrackingUuid() throws NoSuchAlgorithmException {
-        String id;
+    private String initTrackingUuid() {
+        String uuid;
+        Path path = Paths.get(TRACKING_UUID_PATH);
         try {
-            List<String> macs = getAllMacs();
-            StringBuffer stringBuffer = new StringBuffer();
-            macs.forEach(s -> stringBuffer.append(s + '-'));
+            if (Files.notExists(path)) {
+                return createTrackingUuidFile(path);
+            }
 
-            id = stringBuffer.toString();
-        } catch (SocketException e) {
-            id = "random_" + generateRandomString(32);
+            List<String> lines = Files.readAllLines(path);
+            if (lines.size() == 0) {
+                return createTrackingUuidFile(path);
+            }
+
+            uuid = lines.get(0);
+            if (uuid.length() < 32) {
+                return createTrackingUuidFile(path);
+            }
+        } catch (IOException e) {
+            logError("Error while getting tracking UUID", e);
+            uuid = "temp_" + generateRandomString(32);
         }
+        return uuid;
+    }
 
-        MessageDigest md5 = MessageDigest.getInstance("md5");
-        byte[] digest = md5.digest(id.getBytes());
-        id = DatatypeConverter.printHexBinary(digest);
+    private String createTrackingUuidFile(Path path) throws IOException {
+        String uuid;
+        uuid = generateRandomString(32);
+        Files.write(path, uuid.getBytes(), StandardOpenOption.CREATE);
 
-        return id;
+        return uuid;
     }
 
     private String generateRandomString(final int size) {
@@ -94,28 +109,6 @@ public class Tracker implements IOFogModule {
         }
 
         return randString.toString();
-    }
-
-    private List<String> getAllMacs() throws SocketException {
-        List<String> macs = new ArrayList<>();
-        Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
-        NetworkInterface inter;
-        while (networks.hasMoreElements()) {
-            inter = networks.nextElement();
-            if (!inter.isVirtual()) {
-                byte[] mac = inter.getHardwareAddress();
-                if (mac != null) {
-                    StringBuffer macStr = new StringBuffer();
-                    for (byte b : mac) {
-                        String s = String.format("%02X", b);
-                        macStr.append(s);
-                    }
-
-                    macs.add(macStr.toString());
-                }
-            }
-        }
-        return macs;
     }
 
     public void handleEvent(TrackingEventType type, String value) {
