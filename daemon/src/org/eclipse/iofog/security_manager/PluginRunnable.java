@@ -28,13 +28,21 @@ public class PluginRunnable implements Runnable {
                     if (latestStatus.contains("Quarantine caused by")) {
                         securityManager.logWarning(latestStatus);
                         securityManager.logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + PluginStatus.QUARANTINE);
-                        securityManager.handleQuarantine();
+                        String infoMessage;
+                        if (results.size() > 1) {
+                            infoMessage = results.get(results.size() - 2).replace("\n", "");
+                        } else {
+                            infoMessage = latestStatus;
+                        }
+
+                        securityManager.handleQuarantine(infoMessage);
+
                         break;
                     }
 
                     PluginStatus pluginStatus = PluginStatus.parse(latestStatus);
                     if (pluginStatus == PluginStatus.QUARANTINE) {
-                        securityManager.handleQuarantine();
+                        securityManager.handleQuarantine("");
                     }
 
                     securityManager.logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + pluginStatus);

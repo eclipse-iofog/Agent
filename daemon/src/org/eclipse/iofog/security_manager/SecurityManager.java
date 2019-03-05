@@ -6,6 +6,7 @@ import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 
 import java.io.IOException;
@@ -77,7 +78,9 @@ public class SecurityManager implements IOFogModule {
     }
 
 
-    public void handleQuarantine() {
-        FieldAgent.getInstance().startQuarantine();
+    public void handleQuarantine(String quarantineInfoMessage) {
+        if (!StatusReporter.getSecurityStatus().getStatus().equals(SecurityStatus.Status.QUARANTINE)) {
+            FieldAgent.getInstance().startQuarantine(quarantineInfoMessage);
+        }
     }
 }
