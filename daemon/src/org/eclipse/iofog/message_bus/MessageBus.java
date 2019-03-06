@@ -179,11 +179,12 @@ public class MessageBus implements IOFogModule {
 				Thread.sleep(5000);
 
 				logInfo("Check message bus server status");
-				if (!messageBusServer.isServerActive()) {
+				if (!messageBusServer.isServerActive() || messageBusServer.isMessageBusSessionClosed()) {
 					logWarning("Server is not active. restarting...");
 					stop();
 					try {
 						messageBusServer.startServer();
+						messageBusServer.initialize();
 						logInfo("Server restarted");
 						init();
 					} catch (Exception e) {
