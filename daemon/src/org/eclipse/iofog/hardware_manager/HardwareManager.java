@@ -12,6 +12,10 @@ import oshi.software.os.linux.LinuxOSVersionInfoEx;
 import oshi.software.os.linux.LinuxUserGroupInfo;
 import oshi.util.FormatUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 
 public class HardwareManager implements IOFogModule {
     private final String MODULE_NAME = "HardwareManager";
@@ -58,20 +62,41 @@ public class HardwareManager implements IOFogModule {
                                       SoundCard[] soundCards, UsbDevice[] usbDevices) {
         LinuxCentralProcessor linuxCentralProcessor = (LinuxCentralProcessor) processor;
         ComputerSystem linuxComputerSystem = computerSystem; // TODO
+        // hwDiskStores[]
+        // networkInterfaces
         LinuxDisks linuxDisksObj = new LinuxDisks();
         HWDiskStore[] linuxDisks = linuxDisksObj.getDisks();
-        LinuxDisplay[] linuxDisplays = (LinuxDisplay[]) displays;
-        LinuxGlobalMemory linuxGlobalMemory = (LinuxGlobalMemory) globalMemory;
-        LinuxNetworks linuxNetworks = new LinuxNetworks(); // TODO
-        LinuxPowerSource[] linuxPowerSources = (LinuxPowerSource[]) powerSources;
-        LinuxSensors linuxSensors = (LinuxSensors) sensors;
-        LinuxSoundCard[] linuxSoundCards = (LinuxSoundCard[]) soundCards;
-        LinuxUsbDevice[] linuxUsbDevices = (LinuxUsbDevice[]) usbDevices;
-
         LinuxFileSystem linuxFileSystem = new LinuxFileSystem();
-        LinuxUserGroupInfo linuxUserGroupInfo = new LinuxUserGroupInfo();
         LinuxOSVersionInfoEx linuxOSVersionInfoEx = new LinuxOSVersionInfoEx();
-        
+
+
+
+
+        List<LinuxDisplay> linuxDisplays =  new ArrayList<>();
+        for (Display display : displays) {
+            linuxDisplays.add((LinuxDisplay) display);
+        }
+
+        LinuxGlobalMemory linuxGlobalMemory = (LinuxGlobalMemory) globalMemory; // not working
+        LinuxNetworks linuxNetworks = new LinuxNetworks();
+        List<LinuxPowerSource> linuxPowerSources = new ArrayList<>();
+        for (PowerSource powerSource : powerSources) {
+            linuxPowerSources.add((LinuxPowerSource) powerSource);
+        }
+
+        LinuxSensors linuxSensors = (LinuxSensors) sensors;
+        List<LinuxSoundCard> linuxSoundCards = new ArrayList<>();
+        for (SoundCard soundCard : soundCards) {
+            linuxSoundCards.add((LinuxSoundCard) soundCard);
+        }
+
+        List<LinuxUsbDevice> linuxUsbDevices = new ArrayList<>();
+        for (UsbDevice usbDevice : usbDevices) {
+            linuxUsbDevices.add((LinuxUsbDevice) usbDevice);
+        }
+
+        LinuxUserGroupInfo linuxUserGroupInfo = new LinuxUserGroupInfo(); // not working
+
         logInfo("showLinuxHardware");
     }
 
