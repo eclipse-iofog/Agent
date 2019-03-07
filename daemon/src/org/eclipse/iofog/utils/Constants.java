@@ -66,7 +66,7 @@ public class Constants {
         }
     }
 
-    public static final int NUMBER_OF_MODULES = 9;
+    public static final int NUMBER_OF_MODULES = 10;
 
     public static final int RESOURCE_CONSUMPTION_MANAGER = 0;
     public static final int PROCESS_MANAGER = 1;
@@ -77,6 +77,8 @@ public class Constants {
     public static final int RESOURCE_MANAGER = 6;
     public static final int TRACKER = 7;
     public static final int SECURITY_MANAGER = 8;
+    public static final int HARDWARE_MANAGER = 9;
+
 
     public static PrintStream systemOut;
 
