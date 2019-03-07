@@ -71,6 +71,8 @@ public class HardwareManager implements IOFogModule {
         LinuxFileSystem linuxFileSystem = new LinuxFileSystem();
         LinuxUserGroupInfo linuxUserGroupInfo = new LinuxUserGroupInfo();
         LinuxOSVersionInfoEx linuxOSVersionInfoEx = new LinuxOSVersionInfoEx();
+        
+        logInfo("showLinuxHardware");
     }
 
     @Override
