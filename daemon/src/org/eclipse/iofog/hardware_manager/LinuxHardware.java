@@ -1,5 +1,6 @@
 package org.eclipse.iofog.hardware_manager;
 
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import oshi.hardware.ComputerSystem;
 import oshi.hardware.HWDiskStore;
@@ -20,7 +21,6 @@ import static org.eclipse.iofog.hardware_manager.HardwareJsonConverter.*;
 public class LinuxHardware {
     private LinuxCentralProcessor linuxCentralProcessor;
     private ComputerSystem linuxComputerSystem;
-    private List<HWDiskStore> linuxHwDiskStores;
     private List<NetworkIF> linuxNetworkInterfaces;
     private List<HWDiskStore> linuxDisks;
     private LinuxOSVersionInfoEx linuxOSVersionInfoEx;
@@ -32,7 +32,6 @@ public class LinuxHardware {
 
     public LinuxHardware(LinuxCentralProcessor linuxCentralProcessor,
                          ComputerSystem linuxComputerSystem,
-                         List<HWDiskStore> linuxHwDiskStores,
                          List<NetworkIF> linuxNetworkInterfaces,
                          List<HWDiskStore> linuxDisks,
                          LinuxOSVersionInfoEx linuxOSVersionInfoEx,
@@ -42,7 +41,6 @@ public class LinuxHardware {
                          List<LinuxUsbDevice> linuxUsbDevices) {
         this.linuxCentralProcessor = linuxCentralProcessor;
         this.linuxComputerSystem = linuxComputerSystem;
-        this.linuxHwDiskStores = linuxHwDiskStores;
         this.linuxNetworkInterfaces = linuxNetworkInterfaces;
         this.linuxDisks = linuxDisks;
         this.linuxOSVersionInfoEx = linuxOSVersionInfoEx;
@@ -56,7 +54,6 @@ public class LinuxHardware {
         JsonObjectBuilder rootBuilder = Json.createObjectBuilder();
         rootBuilder.add("cpu", processorToJson(linuxCentralProcessor));
         rootBuilder.add("computerSystem", computerSystemToJson(linuxComputerSystem));
-        rootBuilder.add("hwDiskStores", hardwareDisksListToJson(linuxHwDiskStores));
         rootBuilder.add("networkInterfaces", networkInterfacesToJson(linuxNetworkInterfaces));
         rootBuilder.add("disks", hardwareDisksListToJson(linuxDisks));
         rootBuilder.add("osVersion", linuxOsVersionToJson(linuxOSVersionInfoEx));
@@ -68,7 +65,7 @@ public class LinuxHardware {
         JsonObject jsonRoot = rootBuilder.build();
 
         try {
-            JsonWriter writer = Json.createWriter(new FileOutputStream("/etc/iofog-agent/hardware-snapshot.json"));
+            JsonWriter writer = Json.createWriter(new FileOutputStream(Constants.HARDWARE_SNAPSHOT_PATH));
             writer.writeObject(jsonRoot);
             writer.close();
         } catch (FileNotFoundException e) {

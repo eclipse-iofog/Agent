@@ -7,9 +7,7 @@ import oshi.SystemInfo;
 import oshi.hardware.*;
 import oshi.hardware.platform.linux.*;
 import oshi.software.os.OperatingSystem;
-import oshi.software.os.linux.LinuxFileSystem;
 import oshi.software.os.linux.LinuxOSVersionInfoEx;
-import oshi.util.FormatUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,42 +32,30 @@ public class HardwareManager implements IOFogModule {
     @Override
     public void start() throws Exception {
         SystemInfo si = new SystemInfo();
-        OperatingSystem os = si.getOperatingSystem();
-        System.out.println(os);
+        OperatingSystem os = si.getOperatingSystem(); // may be helpful for process handling
         HardwareAbstractionLayer hal = si.getHardware();
-        logInfo(hal.getProcessor() + " CPU:");
-        CentralProcessor processor = hal.getProcessor();
-        ComputerSystem computerSystem = hal.getComputerSystem();
-        HWDiskStore[] hwDiskStores = hal.getDiskStores();
-        Display[] displays = hal.getDisplays();
-        GlobalMemory globalMemory = hal.getMemory();
-        NetworkIF[] networkInterfaces = hal.getNetworkIFs();
-        PowerSource[] powerSources = hal.getPowerSources();
-        Sensors sensors = hal.getSensors();
-        SoundCard[] soundCards = hal.getSoundCards();
-        UsbDevice[] usbDevices = hal.getUsbDevices(true); // boolean = "tree"
+
         if (SystemUtils.IS_OS_LINUX) {
-            showLinuxInformation(processor, computerSystem, hwDiskStores, displays, networkInterfaces, powerSources, sensors, soundCards, usbDevices);
+            CentralProcessor processor = hal.getProcessor();
+            ComputerSystem computerSystem = hal.getComputerSystem();
+            HWDiskStore[] hwDiskStores = hal.getDiskStores();
+            Display[] displays = hal.getDisplays();
+            NetworkIF[] networkInterfaces = hal.getNetworkIFs();
+            PowerSource[] powerSources = hal.getPowerSources();
+            SoundCard[] soundCards = hal.getSoundCards();
+            UsbDevice[] usbDevices = hal.getUsbDevices(true); // boolean = "tree"
+
+            initializeLinuxHardware(processor, computerSystem, hwDiskStores, displays, networkInterfaces, powerSources, soundCards, usbDevices);
         }
-        logInfo("Memory: " +
-                FormatUtil.formatBytes(hal.getMemory().getAvailable()) + "/" +
-                FormatUtil.formatBytes(hal.getMemory().getTotal()));
     }
 
-    private void showLinuxInformation(CentralProcessor processor, ComputerSystem computerSystem, HWDiskStore[] linuxHwDiskStoresArray, Display[] displays,
-                                      NetworkIF[] linuxNetworkInterfacesArray, PowerSource[] powerSources, Sensors sensors,
-                                      SoundCard[] soundCards, UsbDevice[] usbDevices) {
+    private void initializeLinuxHardware(CentralProcessor processor, ComputerSystem computerSystem, HWDiskStore[] linuxHwDiskStoresArray, Display[] displays,
+                                         NetworkIF[] linuxNetworkInterfacesArray, PowerSource[] powerSources,
+                                         SoundCard[] soundCards, UsbDevice[] usbDevices) {
+
         LinuxCentralProcessor linuxCentralProcessor = (LinuxCentralProcessor) processor;
-        // hwDiskStores[]
-        // networkInterfaces
-        LinuxDisks linuxDisksObj = new LinuxDisks();
-        HWDiskStore[] linuxDisksArray = linuxDisksObj.getDisks();
-        List<HWDiskStore> linuxDisks = Arrays.asList(linuxDisksArray); // TODO different?
-        List<HWDiskStore> linuxHwDiskStores = Arrays.asList(linuxHwDiskStoresArray);
-
+        List<HWDiskStore> linuxDisks = Arrays.asList(linuxHwDiskStoresArray);
         List<NetworkIF> linuxNetworkInterfaces = Arrays.asList(linuxNetworkInterfacesArray);
-
-        LinuxFileSystem linuxFileSystem = new LinuxFileSystem(); // not required
         LinuxOSVersionInfoEx linuxOSVersionInfoEx = new LinuxOSVersionInfoEx();
 
         List<LinuxDisplay> linuxDisplays = new ArrayList<>();
@@ -82,7 +68,6 @@ public class HardwareManager implements IOFogModule {
             linuxPowerSources.add((LinuxPowerSource) powerSource);
         }
 
-        LinuxSensors linuxSensors = (LinuxSensors) sensors; // not required
         List<LinuxSoundCard> linuxSoundCards = new ArrayList<>();
         for (SoundCard soundCard : soundCards) {
             linuxSoundCards.add((LinuxSoundCard) soundCard);
@@ -93,7 +78,7 @@ public class HardwareManager implements IOFogModule {
             linuxUsbDevices.add((LinuxUsbDevice) usbDevice);
         }
 
-        LinuxHardware linuxHardware = new LinuxHardware(linuxCentralProcessor, computerSystem, linuxHwDiskStores,
+        LinuxHardware linuxHardware = new LinuxHardware(linuxCentralProcessor, computerSystem,
                 linuxNetworkInterfaces, linuxDisks, linuxOSVersionInfoEx, linuxDisplays, linuxPowerSources,
                 linuxSoundCards, linuxUsbDevices);
 

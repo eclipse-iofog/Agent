@@ -376,7 +376,7 @@ public class HardwareJsonConverter {
             LinuxUsbDevice usbDevice = new LinuxUsbDevice(obj.getString("name"),
                     obj.getString("vendor"), obj.getString("vendorId"),
                     obj.getString("productId"), obj.getString("serialNumber"),
-                    new UsbDevice[0]);
+                    connectedUsbDevicesArrayFromJson(obj.getJsonArray("connectedDevices")));
             usbDevices.add(usbDevice);
         }
 
@@ -395,7 +395,7 @@ public class HardwareJsonConverter {
             objBuilder.add("vendorId", usbDevice.getVendorId());
             objBuilder.add("productId", usbDevice.getProductId());
             objBuilder.add("serialNumber", usbDevice.getSerialNumber());
-            objBuilder.add("connectedDevices", Json.createArrayBuilder().build());
+            objBuilder.add("connectedDevices", connectedUsbDevicesArrayToJson(usbDevice.getConnectedDevices()));
             builder.add(objBuilder);
         }
 
