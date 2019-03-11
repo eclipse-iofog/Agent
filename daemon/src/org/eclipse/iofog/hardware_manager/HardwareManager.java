@@ -9,7 +9,6 @@ import oshi.hardware.platform.linux.*;
 import oshi.software.os.OperatingSystem;
 import oshi.software.os.linux.LinuxFileSystem;
 import oshi.software.os.linux.LinuxOSVersionInfoEx;
-import oshi.software.os.linux.LinuxUserGroupInfo;
 import oshi.util.FormatUtil;
 
 import java.util.ArrayList;
@@ -50,27 +49,30 @@ public class HardwareManager implements IOFogModule {
         SoundCard[] soundCards = hal.getSoundCards();
         UsbDevice[] usbDevices = hal.getUsbDevices(true); // boolean = "tree"
         if (SystemUtils.IS_OS_LINUX) {
-            showLinuxInformation(processor, computerSystem, hwDiskStores, displays, globalMemory, networkInterfaces, powerSources, sensors, soundCards, usbDevices);
+            showLinuxInformation(processor, computerSystem, hwDiskStores, displays, networkInterfaces, powerSources, sensors, soundCards, usbDevices);
         }
         logInfo("Memory: " +
                 FormatUtil.formatBytes(hal.getMemory().getAvailable()) + "/" +
                 FormatUtil.formatBytes(hal.getMemory().getTotal()));
     }
 
-    private void showLinuxInformation(CentralProcessor processor, ComputerSystem computerSystem, HWDiskStore[] linuxHwDiskStores, Display[] displays,
-                                      GlobalMemory globalMemory, NetworkIF[] linuxNetworkInterfaces, PowerSource[] powerSources, Sensors sensors,
+    private void showLinuxInformation(CentralProcessor processor, ComputerSystem computerSystem, HWDiskStore[] linuxHwDiskStoresArray, Display[] displays,
+                                      NetworkIF[] linuxNetworkInterfacesArray, PowerSource[] powerSources, Sensors sensors,
                                       SoundCard[] soundCards, UsbDevice[] usbDevices) {
         LinuxCentralProcessor linuxCentralProcessor = (LinuxCentralProcessor) processor;
-        ComputerSystem linuxComputerSystem = computerSystem; // TODO
         // hwDiskStores[]
         // networkInterfaces
         LinuxDisks linuxDisksObj = new LinuxDisks();
-        HWDiskStore[] linuxDisks = linuxDisksObj.getDisks();
-        LinuxFileSystem linuxFileSystem = new LinuxFileSystem();
+        HWDiskStore[] linuxDisksArray = linuxDisksObj.getDisks();
+        List<HWDiskStore> linuxDisks = Arrays.asList(linuxDisksArray); // TODO different?
+        List<HWDiskStore> linuxHwDiskStores = Arrays.asList(linuxHwDiskStoresArray);
+
+        List<NetworkIF> linuxNetworkInterfaces = Arrays.asList(linuxNetworkInterfacesArray);
+
+        LinuxFileSystem linuxFileSystem = new LinuxFileSystem(); // not required
         LinuxOSVersionInfoEx linuxOSVersionInfoEx = new LinuxOSVersionInfoEx();
 
-
-        List<LinuxDisplay> linuxDisplays =  new ArrayList<>();
+        List<LinuxDisplay> linuxDisplays = new ArrayList<>();
         for (Display display : displays) {
             linuxDisplays.add((LinuxDisplay) display);
         }
@@ -80,7 +82,7 @@ public class HardwareManager implements IOFogModule {
             linuxPowerSources.add((LinuxPowerSource) powerSource);
         }
 
-        LinuxSensors linuxSensors = (LinuxSensors) sensors;
+        LinuxSensors linuxSensors = (LinuxSensors) sensors; // not required
         List<LinuxSoundCard> linuxSoundCards = new ArrayList<>();
         for (SoundCard soundCard : soundCards) {
             linuxSoundCards.add((LinuxSoundCard) soundCard);
@@ -91,16 +93,15 @@ public class HardwareManager implements IOFogModule {
             linuxUsbDevices.add((LinuxUsbDevice) usbDevice);
         }
 
-        saveLinuxHardwareInformation(linuxCentralProcessor, linuxComputerSystem, linuxHwDiskStores,
-                linuxNetworkInterfaces, linuxDisks, linuxFileSystem, linuxOSVersionInfoEx, linuxDisplays,
-                linuxPowerSources, linuxSensors, linuxSoundCards, linuxUsbDevices);
+        LinuxHardware linuxHardware = new LinuxHardware(linuxCentralProcessor, computerSystem, linuxHwDiskStores,
+                linuxNetworkInterfaces, linuxDisks, linuxOSVersionInfoEx, linuxDisplays, linuxPowerSources,
+                linuxSoundCards, linuxUsbDevices);
 
-        logInfo("showLinuxHardware");
+        linuxHardware.createJsonSnapshot();
+
+        logInfo("Hardware snapshot created");
     }
 
-    private void saveLinuxHardwareInformation(LinuxCentralProcessor linuxCentralProcessor, ComputerSystem linuxComputerSystem, HWDiskStore[] linuxHwDiskStores, NetworkIF[] linuxNetworkInterfaces, HWDiskStore[] linuxDisks, LinuxFileSystem linuxFileSystem, LinuxOSVersionInfoEx linuxOSVersionInfoEx, List<LinuxDisplay> linuxDisplays, List<LinuxPowerSource> linuxPowerSources, LinuxSensors linuxSensors, List<LinuxSoundCard> linuxSoundCards, List<LinuxUsbDevice> linuxUsbDevices) {
-        // TODO
-    }
 
     @Override
     public int getModuleIndex() {
