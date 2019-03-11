@@ -14,6 +14,7 @@ package org.eclipse.iofog.supervisor;
 
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.hardware_manager.HardwareManager;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -91,6 +92,7 @@ public class Supervisor implements IOFogModule {
 		startModule(new ResourceManager());
 		startModule(Tracker.getInstance());
 		startModule(SecurityManager.getInstance());
+		startModule(HardwareManager.getInstance());
 
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
