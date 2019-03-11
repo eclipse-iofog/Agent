@@ -78,13 +78,17 @@ public class HardwareManager implements IOFogModule {
             linuxUsbDevices.add((LinuxUsbDevice) usbDevice);
         }
 
-        LinuxHardware linuxHardware = new LinuxHardware(linuxCentralProcessor, computerSystem,
-                linuxNetworkInterfaces, linuxDisks, linuxOSVersionInfoEx, linuxDisplays, linuxPowerSources,
-                linuxSoundCards, linuxUsbDevices);
+        try {
+            LinuxHardware linuxHardware = new LinuxHardware(linuxCentralProcessor, computerSystem,
+                    linuxNetworkInterfaces, linuxDisks, linuxOSVersionInfoEx, linuxDisplays, linuxPowerSources,
+                    linuxSoundCards, linuxUsbDevices);
 
-        linuxHardware.createJsonSnapshot();
+            linuxHardware.createJsonSnapshot();
 
-        logInfo("Hardware snapshot created");
+            logInfo("Hardware snapshot created");
+        } catch (Exception e) {
+            logWarning("Error while creating hardware snapshot: " + e.getMessage());
+        }
     }
 
     @Override
