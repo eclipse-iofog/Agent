@@ -4,7 +4,6 @@ package org.eclipse.iofog.security_manager;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
-import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
@@ -24,6 +23,9 @@ import static org.eclipse.iofog.utils.Constants.PLUGINS_PATH;
 public class SecurityManager implements IOFogModule {
     private final String MODULE_NAME = "SecurityManager";
 
+    private final static String BASH_INCREASE_INOTIFY_WATCHES_COUNT =
+            "echo 1000000 > /proc/sys/fs/inotify/max_user_watches";
+
     private static SecurityManager instance = null;
 
     public static SecurityManager getInstance() {
@@ -39,7 +41,7 @@ public class SecurityManager implements IOFogModule {
     @Override
     public void start() throws Exception {
         if (!SystemUtils.IS_OS_WINDOWS) { // increase number of inotify watches
-            CommandShellExecutor.executeCommand("echo 1000000 > /proc/sys/fs/inotify/max_user_watches");
+            CommandShellExecutor.executeCommand(BASH_INCREASE_INOTIFY_WATCHES_COUNT);
         }
 
         List<String> jars = detectAllAvailableJars();
@@ -58,6 +60,7 @@ public class SecurityManager implements IOFogModule {
         try (Stream<Path> paths = Files.walk(Paths.get(PLUGINS_PATH))) {
             return paths
                     .filter(Files::isRegularFile)
+                    .filter(path -> path.endsWith(".jar"))
                     .map(Path::toString)
                     .collect(Collectors.toList());
         } catch (IOException e) {

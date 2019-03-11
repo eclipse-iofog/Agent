@@ -76,8 +76,8 @@ public class Constants {
     public static final int FIELD_AGENT = 5;
     public static final int RESOURCE_MANAGER = 6;
     public static final int TRACKER = 7;
-    public static final int SECURITY_MANAGER = 8;
-    public static final int HARDWARE_MANAGER = 9;
+    public static final int HARDWARE_MANAGER = 8;
+    public static final int SECURITY_MANAGER = 9;
 
 
     public static PrintStream systemOut;

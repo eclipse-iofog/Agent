@@ -29,7 +29,6 @@ public class LinuxHardware {
     private List<LinuxSoundCard> linuxSoundCards;
     private List<LinuxUsbDevice> linuxUsbDevices;
 
-
     public LinuxHardware(LinuxCentralProcessor linuxCentralProcessor,
                          ComputerSystem linuxComputerSystem,
                          List<NetworkIF> linuxNetworkInterfaces,

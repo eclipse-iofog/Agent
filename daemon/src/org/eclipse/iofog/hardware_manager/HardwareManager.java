@@ -87,7 +87,6 @@ public class HardwareManager implements IOFogModule {
         logInfo("Hardware snapshot created");
     }
 
-
     @Override
     public int getModuleIndex() {
         return Constants.HARDWARE_MANAGER;
