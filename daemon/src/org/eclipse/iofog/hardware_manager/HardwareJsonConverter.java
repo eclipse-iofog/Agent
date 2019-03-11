@@ -31,7 +31,7 @@ public class HardwareJsonConverter {
         linuxCentralProcessor.setModel(obj.getString("model"));
         linuxCentralProcessor.setProcessorID(obj.getString("processorId"));
         linuxCentralProcessor.setVendor(obj.getString("vendor"));
-        linuxCentralProcessor.setStepping(obj.getString("stepping")); // TODO ?
+        linuxCentralProcessor.setStepping(obj.getString("stepping"));
         return linuxCentralProcessor;
     }
 
