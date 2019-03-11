@@ -57,8 +57,8 @@ public class HardwareManager implements IOFogModule {
                 FormatUtil.formatBytes(hal.getMemory().getTotal()));
     }
 
-    private void showLinuxInformation(CentralProcessor processor, ComputerSystem computerSystem, HWDiskStore[] hwDiskStores, Display[] displays,
-                                      GlobalMemory globalMemory, NetworkIF[] networkInterfaces, PowerSource[] powerSources, Sensors sensors,
+    private void showLinuxInformation(CentralProcessor processor, ComputerSystem computerSystem, HWDiskStore[] linuxHwDiskStores, Display[] displays,
+                                      GlobalMemory globalMemory, NetworkIF[] linuxNetworkInterfaces, PowerSource[] powerSources, Sensors sensors,
                                       SoundCard[] soundCards, UsbDevice[] usbDevices) {
         LinuxCentralProcessor linuxCentralProcessor = (LinuxCentralProcessor) processor;
         ComputerSystem linuxComputerSystem = computerSystem; // TODO
@@ -70,15 +70,11 @@ public class HardwareManager implements IOFogModule {
         LinuxOSVersionInfoEx linuxOSVersionInfoEx = new LinuxOSVersionInfoEx();
 
 
-
-
         List<LinuxDisplay> linuxDisplays =  new ArrayList<>();
         for (Display display : displays) {
             linuxDisplays.add((LinuxDisplay) display);
         }
 
-        LinuxGlobalMemory linuxGlobalMemory = (LinuxGlobalMemory) globalMemory; // not working
-        LinuxNetworks linuxNetworks = new LinuxNetworks();
         List<LinuxPowerSource> linuxPowerSources = new ArrayList<>();
         for (PowerSource powerSource : powerSources) {
             linuxPowerSources.add((LinuxPowerSource) powerSource);
@@ -95,9 +91,15 @@ public class HardwareManager implements IOFogModule {
             linuxUsbDevices.add((LinuxUsbDevice) usbDevice);
         }
 
-        LinuxUserGroupInfo linuxUserGroupInfo = new LinuxUserGroupInfo(); // not working
+        saveLinuxHardwareInformation(linuxCentralProcessor, linuxComputerSystem, linuxHwDiskStores,
+                linuxNetworkInterfaces, linuxDisks, linuxFileSystem, linuxOSVersionInfoEx, linuxDisplays,
+                linuxPowerSources, linuxSensors, linuxSoundCards, linuxUsbDevices);
 
         logInfo("showLinuxHardware");
+    }
+
+    private void saveLinuxHardwareInformation(LinuxCentralProcessor linuxCentralProcessor, ComputerSystem linuxComputerSystem, HWDiskStore[] linuxHwDiskStores, NetworkIF[] linuxNetworkInterfaces, HWDiskStore[] linuxDisks, LinuxFileSystem linuxFileSystem, LinuxOSVersionInfoEx linuxOSVersionInfoEx, List<LinuxDisplay> linuxDisplays, List<LinuxPowerSource> linuxPowerSources, LinuxSensors linuxSensors, List<LinuxSoundCard> linuxSoundCards, List<LinuxUsbDevice> linuxUsbDevices) {
+        // TODO
     }
 
     @Override
