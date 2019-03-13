@@ -244,7 +244,7 @@ public class HardwareJsonConverter {
     public static JsonObject linuxOsVersionToJson(LinuxOSVersionInfoEx linuxOSVersionInfoEx) {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("buildNumber", linuxOSVersionInfoEx.getBuildNumber());
-        builder.add("codeName", linuxOSVersionInfoEx.getBuildNumber());
+        builder.add("codeName", linuxOSVersionInfoEx.getCodeName());
         builder.add("version", linuxOSVersionInfoEx.getVersion());
         return builder.build();
     }
