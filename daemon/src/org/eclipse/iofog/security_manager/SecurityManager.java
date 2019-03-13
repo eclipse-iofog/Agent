@@ -60,7 +60,7 @@ public class SecurityManager implements IOFogModule {
         try (Stream<Path> paths = Files.walk(Paths.get(PLUGINS_PATH))) {
             return paths
                     .filter(Files::isRegularFile)
-                    .filter(path -> path.endsWith(".jar"))
+                    .filter(path -> path.toString().endsWith(".jar"))
                     .map(Path::toString)
                     .collect(Collectors.toList());
         } catch (IOException e) {
