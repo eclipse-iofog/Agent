@@ -76,7 +76,7 @@ public class PluginRunnable implements Runnable {
     }
 
     private void destroyPluginProcess() {
-        securityManager.logInfo(String.format("stopping plugin %s", pluginProcessData.getPluginName()));
+        securityManager.logInfo(String.format("stopping plugin %s...", pluginProcessData.getPluginName()));
         int parentPid = getPid(pluginProcess);
         List<String> childPids = getChildPids(parentPid);
         if (pluginProcess != null) {
