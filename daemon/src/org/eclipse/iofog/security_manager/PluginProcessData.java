@@ -26,6 +26,7 @@ public class PluginProcessData {
     private final String pluginName;
     private final AtomicBoolean pluginRun = new AtomicBoolean();
     private List<String> resultBuffer = new CopyOnWriteArrayList<>();
+    private List<String> errorBuffer = new CopyOnWriteArrayList<>();
 
     public PluginProcessData(String jarPath) {
         this.jarPath = jarPath;
@@ -45,16 +46,12 @@ public class PluginProcessData {
         return resultBuffer;
     }
 
-    public void setResultBuffer(List<String> resultBuffer) {
-        this.resultBuffer = resultBuffer;
+    public List<String> getErrorBuffer() {
+        return errorBuffer;
     }
 
     public AtomicBoolean getPluginRun() {
         return pluginRun;
-    }
-
-    public void setPluginRun(boolean pluginRun) {
-        this.pluginRun.set(pluginRun);
     }
 
     @Override

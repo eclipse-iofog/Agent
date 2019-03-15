@@ -49,12 +49,12 @@ public class CommandShellExecutor {
         return execute(fullCommand);
     }
 
-    public static void executeDynamicCommand(String command,
-                                             CommandShellResultSet<List<String>, List<String>> resultSet,
-                                             AtomicBoolean isRun,
-                                             Runnable killOrphanedProcessesRunnable) {
+    public static Process executeDynamicCommand(String command,
+                                                CommandShellResultSet<List<String>, List<String>> resultSet,
+                                                AtomicBoolean isRun,
+                                                Runnable killOrphanedProcessesRunnable) {
         String[] fullCommand = computeCommand(command);
-        executeDynamic(fullCommand, resultSet, isRun, killOrphanedProcessesRunnable);
+        return executeDynamic(fullCommand, resultSet, isRun, killOrphanedProcessesRunnable);
     }
 
     private static CommandShellResultSet<List<String>, List<String>> execute(String[] fullCommand) {
@@ -70,10 +70,10 @@ public class CommandShellExecutor {
         return resultSet;
     }
 
-    private static void executeDynamic(String[] fullCommand,
-                                       CommandShellResultSet<List<String>, List<String>> resultSet,
-                                       AtomicBoolean isRun,
-                                       Runnable killOrphanedProcessesRunnable) {
+    private static Process executeDynamic(String[] fullCommand,
+                                          CommandShellResultSet<List<String>, List<String>> resultSet,
+                                          AtomicBoolean isRun,
+                                          Runnable killOrphanedProcessesRunnable) {
         try {
             Process process = Runtime.getRuntime().exec(fullCommand);
 
@@ -86,9 +86,10 @@ public class CommandShellExecutor {
                 readOutputDynamic(process, Process::getErrorStream, resultSet.getError(), isRun, killOrphanedProcessesRunnable);
             };
             new Thread(readErr).start();
-
+            return process;
         } catch (IOException e) {
             LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+            return null;
         }
     }
 

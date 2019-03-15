@@ -51,6 +51,7 @@ public class Supervisor implements IOFogModule {
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
+	private SecurityManager securityManager;
 
 	/**
 	 * monitors {@link LocalApi} module status
@@ -91,7 +92,8 @@ public class Supervisor implements IOFogModule {
 		startModule(ProcessManager.getInstance());
 		startModule(new ResourceManager());
 		startModule(Tracker.getInstance());
-		startModule(SecurityManager.getInstance());
+		securityManager = SecurityManager.getInstance();
+		startModule(securityManager);
 		startModule(HardwareManager.getInstance());
 
         messageBus = MessageBus.getInstance();
@@ -138,6 +140,7 @@ public class Supervisor implements IOFogModule {
 			scheduler.shutdownNow();
 			localApi.stopServer();
 			messageBus.stop();
+			securityManager.stop();
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 		}
