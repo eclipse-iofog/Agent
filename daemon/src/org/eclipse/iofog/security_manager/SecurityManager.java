@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,6 +23,7 @@ import static org.eclipse.iofog.utils.Constants.PLUGINS_PATH;
 
 public class SecurityManager implements IOFogModule {
     private final String MODULE_NAME = "SecurityManager";
+    private List<Thread> pluginThreads = Collections.synchronizedList(new ArrayList<>());
 
     private final static String BASH_INCREASE_INOTIFY_WATCHES_COUNT =
             "echo 1000000 > /proc/sys/fs/inotify/max_user_watches";
@@ -48,11 +50,24 @@ public class SecurityManager implements IOFogModule {
         launchJars(jars);
     }
 
+    public void stop() {
+        for (Thread thread : pluginThreads) {
+            thread.interrupt();
+            try {
+                thread.join(100);
+            } catch (InterruptedException e) {
+                logWarning(e.getMessage());
+            }
+        }
+    }
+
     private void launchJars(List<String> pathsToJar) {
         for (String pathToJar : pathsToJar) {
             PluginProcessData pluginProcessData = new PluginProcessData(pathToJar);
             PluginRunnable pluginRunnable = new PluginRunnable(pluginProcessData, this);
-            new Thread(pluginRunnable, "SecurityManager : LaunchPlugin " + pathToJar).start();
+            Thread thread = new Thread(pluginRunnable, "SecurityManager : LaunchPlugin " + pathToJar);
+            thread.start();
+            pluginThreads.add(thread);
         }
     }
 

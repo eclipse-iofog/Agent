@@ -4,11 +4,13 @@ import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 public class PluginRunnable implements Runnable {
     private final PluginProcessData pluginProcessData;
     private final SecurityManager securityManager;
+    private Process pluginProcess;
 
     PluginRunnable(PluginProcessData pluginProcessData, SecurityManager securityManager) {
         this.pluginProcessData = pluginProcessData;
@@ -19,7 +21,7 @@ public class PluginRunnable implements Runnable {
         securityManager.logInfo("Launched plugin '" + pluginProcessData.getJarPath() + "'");
         launchJar(pluginProcessData);
 
-        while (true) {
+        while (!Thread.interrupted()) {
             try {
                 Thread.sleep(5000);
                 List<String> results = pluginProcessData.getResultBuffer();
@@ -48,11 +50,10 @@ public class PluginRunnable implements Runnable {
                     securityManager.logInfo("Plugin " + pluginProcessData.getPluginName() + " status: " + pluginStatus);
 
                     pluginProcessData.getResultBuffer().clear();
+                    pluginProcessData.getErrorBuffer().clear();
                 }
             } catch (InterruptedException e) {
-                securityManager.logWarning(e.getMessage());
-            } catch (Exception e) {
-                securityManager.logWarning(e.getMessage());
+                destroyPluginProcess();
             }
         }
     }
@@ -65,12 +66,53 @@ public class PluginRunnable implements Runnable {
             command = "java -Xmx512m -jar '" + pluginProcessData.getJarPath() + "' ";
         }
 
-        CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(pluginProcessData.getResultBuffer(), null);
-        CommandShellExecutor.executeDynamicCommand(
-                command,
-                resultSet,
-                pluginProcessData.getPluginRun(),
-                null
+        CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(pluginProcessData.getResultBuffer(), pluginProcessData.getErrorBuffer());
+        pluginProcess = CommandShellExecutor.executeDynamicCommand(
+            command,
+            resultSet,
+            pluginProcessData.getPluginRun(),
+            null
         );
+    }
+
+    private void destroyPluginProcess() {
+        securityManager.logInfo(String.format("stopping plugin %s...", pluginProcessData.getPluginName()));
+        int parentPid = getPid(pluginProcess);
+        List<String> childPids = getChildPids(parentPid);
+        if (pluginProcess != null) {
+            pluginProcess.destroy();
+            if (parentPid != -1 && childPids != null) {
+                killHaltChildProcesses(childPids);
+            }
+            securityManager.logInfo((String.format("plugin %s has been stopped", pluginProcessData.getPluginName())));
+        }
+    }
+
+    /**
+     * get the PID on unix/linux systems
+     * @param process process
+     * @return pid
+     */
+    private int getPid(Process process) {
+        int pid = -1;
+        if(process.getClass().getName().equals("java.lang.UNIXProcess")) {
+            try {
+                Field f = process.getClass().getDeclaredField("pid");
+                f.setAccessible(true);
+                pid = f.getInt(process);
+                System.out.println(pid);
+            } catch (Exception e) {
+                securityManager.logWarning("unable to get pid of the process");
+            }
+        }
+        return pid;
+    }
+
+    private List<String> getChildPids(int parentPid) {
+        return CommandShellExecutor.executeCommand(String.format("pgrep -P %d", parentPid)).getValue();
+    }
+
+    private void killHaltChildProcesses(List<String> childPids) {
+        childPids.forEach(value -> CommandShellExecutor.executeCommand(String.format("kill -9 %s", value)));
     }
 }
