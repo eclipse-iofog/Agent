@@ -9,19 +9,15 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.io.IOException;
 
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
