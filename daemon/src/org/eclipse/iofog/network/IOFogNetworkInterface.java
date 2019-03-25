@@ -53,7 +53,7 @@ public class IOFogNetworkInterface {
         Optional<InetAddress> inetAddress = getLocalIp();
         return inetAddress.map(InetAddress::getHostAddress).orElse("");
     }
-
+    // Test Test Test
     private static Optional<InetAddress> getLocalIp() {
         Optional<InetAddress> inetAddress = Optional.empty();
         try {
