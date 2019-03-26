@@ -100,7 +100,6 @@ public class PluginRunnable implements Runnable {
                 Field f = process.getClass().getDeclaredField("pid");
                 f.setAccessible(true);
                 pid = f.getInt(process);
-                System.out.println(pid);
             } catch (Exception e) {
                 securityManager.logWarning("unable to get pid of the process");
             }
