@@ -133,12 +133,10 @@ public final class LoggingService {
 
             sentryExceptionCache.add(newException);
 
-            try {
-                JsonWriter writer = Json.createWriter(new FileOutputStream(Constants.SENTRY_CACHE_PATH));
+            try(JsonWriter writer = Json.createWriter(new FileOutputStream(Constants.SENTRY_CACHE_PATH))) {
                 writer.writeArray(builder.build());
-                writer.close();
                 return true;
-            } catch (FileNotFoundException e) {
+            } catch (Exception e) {
                 logWarning(MODULE_NAME, "Exception while saving sentry-cache.json file: " + e.getMessage());
                 return false;
             }
@@ -210,14 +208,12 @@ public final class LoggingService {
             return;
         }
 
-        try {
-            JsonReader reader = Json.createReader(new FileInputStream(Constants.SENTRY_CACHE_PATH));
+        try(JsonReader reader = Json.createReader(new FileInputStream(Constants.SENTRY_CACHE_PATH))) {
             JsonArray array = reader.readArray();
             for (JsonValue jsonValue : array) {
                 JsonString jsonString = (JsonString) jsonValue;
                 sentryExceptionCache.add(jsonString.getString());
             }
-            reader.close();
         } catch (Exception e) {
             logWarning(MODULE_NAME, "Exception while loading sentry-cache.json file: " + e.getMessage());
         }
