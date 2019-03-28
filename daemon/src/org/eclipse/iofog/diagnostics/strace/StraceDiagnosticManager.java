@@ -84,7 +84,7 @@ public class StraceDiagnosticManager {
 
 	public void enableMicroserviceStraceDiagnostics(String microserviceUuid) {
 		try {
-			int pid = getPidByMicroserviceUuid(DockerUtil.getContainerName(microserviceUuid));
+			int pid = getPidByContainerName(DockerUtil.getIoFogContainerName(microserviceUuid));
 			MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
 			this.monitoringMicroservices.removeIf(
 				oldMicroserviceStraceData -> oldMicroserviceStraceData.getMicroserviceUuid().equals(microserviceUuid)
@@ -103,8 +103,8 @@ public class StraceDiagnosticManager {
         });
     }
 
-	private int getPidByMicroserviceUuid(String microserviceUuid) throws IllegalArgumentException {
-		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + microserviceUuid);
+	private int getPidByContainerName(String containerName) throws IllegalArgumentException {
+		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + containerName);
 
 		if (resultSet.getValue() != null && resultSet.getValue().size() > 1 && resultSet.getValue().get(1) != null) {
 			String pid = resultSet.getValue().get(1).split("\\s+")[1];
