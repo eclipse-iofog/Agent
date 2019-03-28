@@ -118,4 +118,6 @@ public class Constants {
     public static final String PLUGINS_PATH = CONFIG_DIR + "plugins";
 
     public static final String HARDWARE_SNAPSHOT_PATH = CONFIG_DIR + "hardware-snapshot.json";
+
+    public static final String SENTRY_CACHE_PATH = CONFIG_DIR + "sentry-cache.json";
 }
