@@ -203,7 +203,7 @@ public class ProcessManager implements IOFogModule {
 				oldAgentMicroserviceUuids.add(uuid);
 			} else if (!isCurrentMicroserviceUuid
 				&& !isLatestMicroserviceUuid
-				&& runningContainerNames.contains(DockerUtil.getContainerName(uuid))) {
+				&& runningContainerNames.contains(DockerUtil.getIoFogContainerName(uuid))) {
 				unknownMicroserviceUuids.add(uuid);
 			} else if (!isCurrentMicroserviceUuid
 				&& !isLatestMicroserviceUuid
