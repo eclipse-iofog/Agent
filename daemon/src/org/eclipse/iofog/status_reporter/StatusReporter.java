@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.status_reporter;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.iofog.field_agent.FieldAgentStatus;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBusStatus;
@@ -19,11 +20,13 @@ import org.eclipse.iofog.process_manager.ProcessManagerStatus;
 import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
 import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
+import org.eclipse.iofog.security_manager.SecurityStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants.ControllerStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import java.security.Security;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -47,6 +50,7 @@ public final class StatusReporter {
 	private static final LocalApiStatus localApiStatus = new LocalApiStatus();
 	private static final MessageBusStatus messageBusStatus = new MessageBusStatus();
 	private static final SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
+	private static final SecurityStatus securityStatus = new SecurityStatus();
 
 	private final static String MODULE_NAME = "Status Reporter";
 
@@ -77,19 +81,41 @@ public final class StatusReporter {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
 
 		float diskUsage = resourceConsumptionManagerStatus.getDiskUsage();
-		String connectionStatus = fieldAgentStatus.getControllerStatus() == ControllerStatus.OK ? "ok" :
-				(fieldAgentStatus.getControllerStatus() == ControllerStatus.BROKEN_CERTIFICATE ? "broken" : "not provisioned");
+   
+		double availableDisk = resourceConsumptionManagerStatus.getAvailableDisk() / 1024. / 1024.;
+		double availableMemory = resourceConsumptionManagerStatus.getAvailableMemory() / 1024. / 1024.;
+		float totalCpu = resourceConsumptionManagerStatus.getTotalCpu();
+     
+		String connectionStatus = "";
+
+		switch (fieldAgentStatus.getControllerStatus()) {
+			case NOT_PROVISIONED:
+				connectionStatus = "not provisioned";
+				break;
+			case BROKEN_CERTIFICATE:
+				connectionStatus = "broken certificate";
+				break;
+			case OK:
+				connectionStatus = "ok";
+				break;
+		}
+
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
-		result.append("\\nMemory Usage                : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getMemoryUsage())).append(" MiB");
+		result.append("\\nMemory Usage                : about ").append(String.format("%.2f MiB", resourceConsumptionManagerStatus.getMemoryUsage()));
 		if (diskUsage < 1)
-			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage * 1024)).append(" MiB");
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f MiB", diskUsage * 1024));
 		else
-			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f", diskUsage)).append(" GiB");
-		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f", resourceConsumptionManagerStatus.getCpuUsage())).append("%");
+			result.append("\\nDisk Usage                  : about ").append(String.format("%.2f GiB", diskUsage));
+		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f %%", resourceConsumptionManagerStatus.getCpuUsage()));
 		result.append("\\nRunning Microservices       : ").append(processManagerStatus.getRunningMicroservicesCount());
 		result.append("\\nConnection to Controller    : ").append(connectionStatus);
 		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
+
+		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB", availableDisk));
+		result.append("\\nSystem Available Memory     : ").append(String.format("%.2f MB", availableMemory));
+		result.append("\\nSystem Total CPU            : ").append(String.format("%.2f %%", totalCpu));
+		result.append("\\nSecurity Status             : ").append(securityStatus.getStatus().toString());
 
 		return result.toString();
 	}
@@ -134,6 +160,15 @@ public final class StatusReporter {
 		return sshManagerStatus;
 	}
 
+	public static SecurityStatus setSecurityStatus(SecurityStatus.Status newStatus, String quarantineInfoMessage) {
+	    securityStatus.setStatus(newStatus);
+	    if (!StringUtils.isEmpty(quarantineInfoMessage)) {
+            securityStatus.setSecurityViolationInfo(quarantineInfoMessage);
+        }
+
+	    return securityStatus;
+    }
+
 	public static ProcessManagerStatus getProcessManagerStatus() {
 		return processManagerStatus;
 	}
@@ -174,6 +209,10 @@ public final class StatusReporter {
 	public static SshProxyManagerStatus getSshManagerStatus() {
 		return sshManagerStatus;
 	}
+
+	public static SecurityStatus getSecurityStatus() {
+	    return securityStatus;
+    }
 
 	/**
 	 * starts Status Reporter module

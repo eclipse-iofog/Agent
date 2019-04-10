@@ -24,7 +24,17 @@ public class Client {
 
 	private static final String PROPERTIES_FILE_PATH = "cmd_messages.properties";
 
+	private static final String LOCAL_API_ENDPOINT = "http://localhost:54321/v2/commandline";
+	private static final String WINDOWS_IOFOG_PATH = System.getenv("IOFOG_PATH") != null ?
+			System.getenv("IOFOG_PATH") : "./";
+	private static final String SNAP_COMMON = System.getenv("SNAP_COMMON") != null ?
+			System.getenv("SNAP_COMMON") : "";
+	private static final String CONFIG_DIR = isWindows() ?
+			WINDOWS_IOFOG_PATH : SNAP_COMMON + "/etc/iofog-agent/";
+	private static final String LOCAL_API_TOKEN_PATH = CONFIG_DIR + "local-api";
+
 	private static final Properties cmdProperties;
+
 
 	static {
 		cmdProperties = new Properties();
@@ -46,7 +56,7 @@ public class Client {
 	 */
 	private static boolean isAnotherInstanceRunning() {
 		try {
-			URL url = new URL("http://localhost:54321/v2/commandline");
+			URL url = new URL(LOCAL_API_ENDPOINT);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("POST");
 			conn.getResponseCode();
@@ -59,7 +69,7 @@ public class Client {
 
 	/**
 	 * send command-line parameters to ioFog daemon
-	 * 
+	 *
 	 * @param args - parameters
 	 *
 	 */
@@ -71,20 +81,19 @@ public class Client {
 			}
 			params = new StringBuilder(params.toString().trim() + "\"}");
 			byte[] postData = params.toString().trim().getBytes(StandardCharsets.UTF_8);
-			
-			URL url = new URL("http://localhost:54321/v2/commandline");
+
+			String accessToken = fetchAccessToken();
+
+			URL url = new URL(LOCAL_API_ENDPOINT);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("POST");
-			conn.setRequestProperty("Content-Type", "application/json"); 
+			conn.setRequestProperty("Content-Type", "application/json");
 			conn.setRequestProperty("Accept", "text/plain");
 			conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
+			conn.setRequestProperty("Authorization", accessToken);
 			conn.setDoOutput(true);
 			try(DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
 				wr.write(postData);
-			}
-			
-			if (conn.getResponseCode() != 200) {
-				return false;
 			}
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
@@ -96,17 +105,29 @@ public class Client {
 			}
 
 			conn.disconnect();
-			
+
 			System.out.println(result.toString().replace("\\n", "\n"));
-			return true;
+
+			return conn.getResponseCode() == 200;
 		} catch (Exception e) {
 			return false;
 		}
 	}
 
+	private static String fetchAccessToken() {
+		String line = "";
+		try (BufferedReader reader = new BufferedReader(new FileReader(LOCAL_API_TOKEN_PATH))) {
+			line = reader.readLine();
+		} catch (IOException e) {
+			System.out.println("Local API access token is missing, try to re-install Agent.");
+		}
+
+		return line;
+	}
+
 	/**
 	 * returns help
-	 * 
+	 *
 	 * @return String
 	 */
 	private static String showHelp() {
@@ -205,7 +226,7 @@ public class Client {
 					System.out.println("Enter \"service iofog-agent stop\"");
 					break;
 				case "start":
-					System.out.println("iofog is already running.");
+					System.out.println("ioFog Agent is already running.");
 					break;
 				default:
 					sendCommandlineParameters(args);
@@ -228,9 +249,14 @@ public class Client {
 				System.out.println("Enter \"service iofog-agent start\"");
 				break;
 			default:
-				System.out.println("iofog is not running.");
+				System.out.println("ioFog Agent is not running.");
 			}
 		}
+	}
+
+	private static boolean isWindows() {
+		String osName = System.getProperty("os.name");
+		return osName != null && osName.startsWith("Windows");
 	}
 
 }

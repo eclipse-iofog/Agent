@@ -124,8 +124,8 @@ public class MessageBus implements IOFogModule {
 					try {
 						messageBusServer.createProducer(publisher);
 					} catch (Exception e) {
-						LoggingService.logError(MODULE_NAME + "(" + publisher + ")",
-								"unable to start publisher module --> " + e.getMessage(), e);
+						LoggingService.logWarning(MODULE_NAME + "(" + publisher + ")",
+								"unable to start publisher module --> " + e.getMessage());
 					}
 					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
 
@@ -179,11 +179,12 @@ public class MessageBus implements IOFogModule {
 				Thread.sleep(5000);
 
 				logInfo("Check message bus server status");
-				if (!messageBusServer.isServerActive()) {
+				if (!messageBusServer.isServerActive() || messageBusServer.isMessageBusSessionClosed()) {
 					logWarning("Server is not active. restarting...");
 					stop();
 					try {
 						messageBusServer.startServer();
+						messageBusServer.initialize();
 						logInfo("Server restarted");
 						init();
 					} catch (Exception e) {
@@ -204,7 +205,7 @@ public class MessageBus implements IOFogModule {
 								publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
 								logInfo("Producer module restarted");
 							} catch (Exception e) {
-								logError("Unable to restart producer module for " + publisher + " --> " + e.getMessage(), e);
+								logWarning("Unable to restart producer module for " + publisher + " --> " + e.getMessage());
 							}
 						}
 					}
@@ -317,9 +318,9 @@ public class MessageBus implements IOFogModule {
 			try {
 				messageBusServer.stopServer();
 			} catch (Exception exp) {
-				logError(exp.getMessage(), exp);
+				logWarning(exp.getMessage());
 			}
-			logError("Unable to start message bus server --> " + e.getMessage(), e);
+			logWarning("Unable to start message bus server --> " + e.getMessage());
 			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
 		

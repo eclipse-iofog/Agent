@@ -1088,7 +1088,8 @@ public final class Configuration {
             Supervisor supervisor = new Supervisor();
             supervisor.start();
         } catch (Exception exp) {
-            LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+            LoggingService.logWarning(MODULE_NAME, "Error while starting supervisor: " +
+                    exp.getMessage());
         }
     }
 }

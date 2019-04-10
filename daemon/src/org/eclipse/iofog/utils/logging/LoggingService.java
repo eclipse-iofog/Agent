@@ -13,22 +13,17 @@
 package org.eclipse.iofog.utils.logging;
 
 import io.sentry.Sentry;
-import io.sentry.event.Event;
-import io.sentry.event.EventBuilder;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
-import java.io.File;
-import java.io.IOException;
+import javax.json.*;
+import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.attribute.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -46,6 +41,8 @@ public final class LoggingService {
 
     private static Logger logger = null;
     private static final Map<String, Logger> microserviceLogger = new HashMap<>();
+
+    private static List<String> sentryExceptionCache;
 
     private LoggingService() {
 
@@ -95,13 +92,58 @@ public final class LoggingService {
      * @param e          - exception
      */
     public static void logError(String moduleName, String msg, Throwable e) {
-        Sentry.capture(e);
+        if (newSentryException(e)) {
+            Sentry.capture(e);
+        }
 
         if (Configuration.debugging || logger == null) {
             System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
         } else {
             logger.log(Level.SEVERE, String.format("[%s] : %s", moduleName, msg));
         }
+    }
+
+    private static boolean newSentryException(Throwable exc) {
+        StackTraceElement[] stackTraceElements = exc.getStackTrace();
+        if (stackTraceElements != null && stackTraceElements.length > 0) {
+            // default, looking for trace element from our code
+            StackTraceElement iofogElement = stackTraceElements[0];
+            for (StackTraceElement stackTraceElement : stackTraceElements) {
+                if (stackTraceElement.getClassName().contains("org.eclipse.iofog")) {
+                    iofogElement = stackTraceElement;
+                    break;
+                }
+            }
+
+            // building exception line format
+            String newException = iofogElement.getFileName() + "|" + iofogElement.getClassName()
+                    + "|" + iofogElement.getMethodName() + "|" + iofogElement.getLineNumber();
+            for (String existingException : sentryExceptionCache) {
+                if (existingException.equalsIgnoreCase(newException)) {
+                    return false;
+                }
+            }
+
+            // new exception
+            JsonArrayBuilder builder = Json.createArrayBuilder();
+            for (String existingException : sentryExceptionCache) {
+                builder.add(existingException);
+            }
+            builder.add(newException);
+
+            sentryExceptionCache.add(newException);
+
+            try(JsonWriter writer = Json.createWriter(new FileOutputStream(Constants.SENTRY_CACHE_PATH))) {
+                writer.writeArray(builder.build());
+                return true;
+            } catch (Exception e) {
+                logWarning(MODULE_NAME, "Exception while saving sentry-cache.json file: " + e.getMessage());
+                return false;
+            }
+
+        }
+
+        return false;
     }
 
     /**
@@ -154,6 +196,27 @@ public final class LoggingService {
         logger.setUseParentHandlers(false);
 
         logger.info("logger started.");
+
+        loadSentryCache();
+    }
+
+    private static void loadSentryCache() {
+        sentryExceptionCache = new ArrayList<>();
+
+        File f = new File(Constants.SENTRY_CACHE_PATH);
+        if (!f.exists()) {
+            return;
+        }
+
+        try(JsonReader reader = Json.createReader(new FileInputStream(Constants.SENTRY_CACHE_PATH))) {
+            JsonArray array = reader.readArray();
+            for (JsonValue jsonValue : array) {
+                JsonString jsonString = (JsonString) jsonValue;
+                sentryExceptionCache.add(jsonString.getString());
+            }
+        } catch (Exception e) {
+            logWarning(MODULE_NAME, "Exception while loading sentry-cache.json file: " + e.getMessage());
+        }
     }
 
     /**

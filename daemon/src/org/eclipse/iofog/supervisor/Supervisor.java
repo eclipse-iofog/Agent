@@ -14,6 +14,7 @@ package org.eclipse.iofog.supervisor;
 
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.hardware_manager.HardwareManager;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -25,6 +26,7 @@ import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.security_manager.SecurityManager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,6 +51,7 @@ public class Supervisor implements IOFogModule {
 	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
+	private SecurityManager securityManager;
 
 	/**
 	 * monitors {@link LocalApi} module status
@@ -89,6 +92,9 @@ public class Supervisor implements IOFogModule {
 		startModule(ProcessManager.getInstance());
 		startModule(new ResourceManager());
 		startModule(Tracker.getInstance());
+		securityManager = SecurityManager.getInstance();
+		startModule(securityManager);
+		startModule(HardwareManager.getInstance());
 
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
@@ -99,7 +105,7 @@ public class Supervisor implements IOFogModule {
         scheduler.scheduleAtFixedRate(checkLocalApiStatus, 0, 10, SECONDS);
 
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
-        logInfo("started");
+		logInfo("Started");
         Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
 
         operationDuration();
@@ -134,6 +140,7 @@ public class Supervisor implements IOFogModule {
 			scheduler.shutdownNow();
 			localApi.stopServer();
 			messageBus.stop();
+			securityManager.stop();
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 		}

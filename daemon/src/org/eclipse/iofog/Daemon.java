@@ -29,6 +29,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Daemon {
     private static final String MODULE_NAME = "MAIN_DAEMON";
 
+    private static final String LOCAL_API_ENDPOINT = "http://localhost:54321/v2/commandline";
+
     /**
      * check if another instance of iofog is running
      *
@@ -37,7 +39,7 @@ public class Daemon {
     private static boolean isAnotherInstanceRunning() {
 
         try {
-            URL url = new URL("http://localhost:54321/v2/commandline");
+            URL url = new URL(LOCAL_API_ENDPOINT);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.getResponseCode();
@@ -67,12 +69,15 @@ public class Daemon {
             params = new StringBuilder(params.toString().trim() + "\"}");
             byte[] postData = params.toString().trim().getBytes(UTF_8);
 
-            URL url = new URL("http://localhost:54321/v2/commandline");
+            String accessToken = fetchAccessToken();
+
+            URL url = new URL(LOCAL_API_ENDPOINT);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setRequestProperty("Accept", "text/plain");
             conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
+            conn.setRequestProperty("Authorization", accessToken);
             conn.setDoOutput(true);
             try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
                 wr.write(postData);
@@ -164,7 +169,7 @@ public class Daemon {
 
             if (isAnotherInstanceRunning()) {
                 if (args[0].equals("start")) {
-                    System.out.println("iofog is already running.");
+                    System.out.println("ioFog Agent is already running.");
                 } else if (args[0].equals("stop")) {
                     sendCommandlineParameters(args);
                 }
@@ -180,6 +185,17 @@ public class Daemon {
         } catch (Exception e) {
             Sentry.capture(e);
         }
+    }
+
+    private static String fetchAccessToken() {
+        String line = "";
+        try (BufferedReader reader = new BufferedReader(new FileReader(Constants.LOCAL_API_TOKEN_PATH))) {
+            line = reader.readLine();
+        } catch (IOException e) {
+            System.out.println("Local API access token is missing, try to re-install Agent.");
+        }
+
+        return line;
     }
 
 }

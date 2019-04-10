@@ -50,10 +50,13 @@ else
 fi
 echo "Check for cert.crt"
 
+</dev/urandom tr -dc A-Za-z0-9 | head -c32 > /etc/iofog-agent/local-api
+
 mkdir -p /var/backups/iofog-agent
 mkdir -p /var/log/iofog-agent
 mkdir -p /var/lib/iofog-agent
 mkdir -p /var/run/iofog-agent
+mkdir -p /etc/iofog-agent/plugins
 
 chown -R :iofog-agent /etc/iofog-agent
 chown -R :iofog-agent /var/log/iofog-agent
@@ -70,6 +73,15 @@ chmod 774 -R /var/run/iofog-agent
 chmod 774 -R /var/backups/iofog-agent
 chmod 754 -R /usr/share/iofog-agent
 #echo "Changed permissions of directories"
+
+MACHINE_TYPE=$(uname -m)
+if [ $MACHINE_TYPE = 'x86_64' ]; then
+  mv /usr/lib/x64/libjnotify.so /usr/lib/libjnotify.so
+  rm /usr/lib/x86/libjnotify.so
+else
+  mv /usr/lib/x86/libjnotify.so /usr/lib/libjnotify.so
+  rm /usr/lib/x64/libjnotify.so
+fi
 
 mv /dev/random /dev/random.real
 ln -s /dev/urandom /dev/random
