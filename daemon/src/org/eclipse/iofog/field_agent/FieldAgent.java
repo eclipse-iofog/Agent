@@ -519,25 +519,32 @@ public class FieldAgent implements IOFogModule {
                 microservicesJson = readFile(filesPath + filename);
                 if (microservicesJson == null) {
                     return loadMicroservices(false);
-                } else {
+                }
+                try {
                     return IntStream.range(0, microservicesJson.size())
                             .boxed()
                             .map(microservicesJson::getJsonObject)
                             .map(containerJsonObjectToMicroserviceFunction())
                             .collect(toList());
+                } catch (Exception e) {
+                    logError("Unable to parse microservices: " + e.getMessage(), e);
                 }
             } else {
                 JsonObject result = orchestrator.request("microservices", RequestType.GET, null, null);
                 microservicesJson = result.getJsonArray("microservices");
                 saveFile(microservicesJson, filesPath + filename);
 
-                List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
-                        .boxed()
-                        .map(microservicesJson::getJsonObject)
-                        .map(containerJsonObjectToMicroserviceFunction())
-                        .collect(toList());
-                microserviceManager.setLatestMicroservices(microservices);
-                return microservices;
+                try {
+                    List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
+                            .boxed()
+                            .map(microservicesJson::getJsonObject)
+                            .map(containerJsonObjectToMicroserviceFunction())
+                            .collect(toList());
+                    microserviceManager.setLatestMicroservices(microservices);
+                    return microservices;
+                } catch (Exception e) {
+                    logError("Unable to parse microservices: " + e.getMessage(), e);
+                }
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
@@ -546,6 +553,20 @@ public class FieldAgent implements IOFogModule {
         }
 
         return new ArrayList<>();
+    }
+
+    private List<String> getStringList(JsonValue jsonValue) {
+        if (!jsonValue.getValueType().equals(JsonValue.ValueType.NULL)) {
+            JsonArray valueObj = (JsonArray) jsonValue;
+            return valueObj.size() > 0
+                    ? IntStream.range(0, valueObj.size())
+                    .boxed()
+                    .map(valueObj::getString)
+                    .collect(toList())
+                    : null;
+        }
+
+        return null;
     }
 
     private Function<JsonObject, Microservice> containerJsonObjectToMicroserviceFunction() {
@@ -560,17 +581,7 @@ public class FieldAgent implements IOFogModule {
             microservice.setDeleteWithCleanup(jsonObj.getBoolean("deleteWithCleanup"));
 
             JsonValue routesValue = jsonObj.get("routes");
-            if (!routesValue.getValueType().equals(JsonValue.ValueType.NULL)) {
-                JsonArray routesObj = (JsonArray) routesValue;
-                List<String> routes = routesObj.size() > 0
-                        ? IntStream.range(0, routesObj.size())
-                        .boxed()
-                        .map(routesObj::getString)
-                        .collect(toList())
-                        : null;
-
-                microservice.setRoutes(routes);
-            }
+            microservice.setRoutes(getStringList(routesValue));
 
             JsonValue portMappingValue = jsonObj.get("portMappings");
             if (!portMappingValue.getValueType().equals(JsonValue.ValueType.NULL)) {
@@ -602,6 +613,24 @@ public class FieldAgent implements IOFogModule {
 
                 microservice.setVolumeMappings(vms);
             }
+
+            JsonValue envVarsValue = jsonObj.get("env");
+            if (envVarsValue != null && !envVarsValue.getValueType().equals(JsonValue.ValueType.NULL)) {
+                JsonArray envVarsObjs = (JsonArray) envVarsValue;
+                List<EnvVar> envs = envVarsObjs.size() > 0
+                        ? IntStream.range(0, envVarsObjs.size())
+                        .boxed()
+                        .map(envVarsObjs::getJsonObject)
+                        .map(env -> new EnvVar(env.getString("key"),
+                                env.getString("value")))
+                        .collect(toList())
+                        : null;
+
+                microservice.setEnvVars(envs);
+            }
+
+            JsonValue argsValue = jsonObj.get("cmd");
+            microservice.setArgs(getStringList(argsValue));
 
             try {
                 LoggingService.setupMicroserviceLogger(microservice.getMicroserviceUuid(), microservice.getLogSize());
