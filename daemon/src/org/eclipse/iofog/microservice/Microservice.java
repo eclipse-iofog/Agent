@@ -35,6 +35,8 @@ public class Microservice {
     private long logSize;
     private List<VolumeMapping> volumeMappings;
     private boolean isUpdating;
+    private List<EnvVar> envVars;
+    private List<String> args;
 
     private boolean delete;
     private boolean deleteWithCleanup;
@@ -148,6 +150,14 @@ public class Microservice {
     public void setDeleteWithCleanup(boolean deleteWithCleanUp) {
         this.deleteWithCleanup = deleteWithCleanUp;
     }
+
+    public List<EnvVar> getEnvVars() { return envVars; }
+
+    public void setEnvVars(List<EnvVar> envVars) { this.envVars = envVars; }
+
+    public List<String> getArgs() { return args; }
+
+    public void setArgs(List<String> args) { this.args = args; }
 
     @Override
     public boolean equals(Object e) {

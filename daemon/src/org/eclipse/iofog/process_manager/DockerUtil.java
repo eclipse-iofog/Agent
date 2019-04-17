@@ -488,12 +488,21 @@ public class DockerUtil {
         containerLogConfig.put("max-size", "2m");
         LogConfig containerLog = new LogConfig(LogConfig.LoggingType.DEFAULT, containerLogConfig);
 
+        List<String> envVars = new ArrayList<>(Arrays.asList("SELFNAME=" + microservice.getMicroserviceUuid()));
+        if (microservice.getEnvVars() != null) {
+            envVars.addAll(microservice
+                    .getEnvVars()
+                    .stream()
+                    .map(env -> env.getKey() + "=" + env.getValue())
+                    .collect(Collectors.toList()));
+        }
+
         CreateContainerCmd cmd = dockerClient.createContainerCmd(microservice.getImageName())
             .withLogConfig(containerLog)
             .withCpusetCpus("0")
             .withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
             .withPortBindings(portBindings)
-            .withEnv("SELFNAME=" + microservice.getMicroserviceUuid())
+            .withEnv(envVars)
             .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
             .withRestartPolicy(restartPolicy);
         if (microservice.getVolumeMappings() != null) {
@@ -510,6 +519,10 @@ public class DockerUtil {
             cmd = microservice.isRootHostAccess()
                 ? cmd.withNetworkMode("host").withPrivileged(true)
                 : cmd.withExtraHosts(extraHosts).withPrivileged(true);
+        }
+
+        if (microservice.getArgs() != null && microservice.getArgs().size() > 0) {
+            cmd = cmd.withCmd(microservice.getArgs());
         }
 
         CreateContainerResponse resp = cmd.exec();
