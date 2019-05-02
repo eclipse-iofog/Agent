@@ -1,19 +1,68 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- master
+  tags:
+    include:
+      - v.*
+  branches:
+    include:
+      - develop
+      - master
+  paths:
+    exclude:
+      - README.md
+
+pr:
+  - master
 
 pool:
   vmImage: 'Ubuntu-16.04'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  repository: 'focal-freedom-236620/agent'
+  type: $(Build.SourceBranchName)
+  commit: $(Build.SourceVersion)
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+steps:
+  - task: Gradle@2
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.8'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
+      tasks: 'build'
+
+  - script: |
+      echo " test"
+    displayName: 'tests'
+
+  - task: Docker@2
+    displayName: 'build and push docker image'
+    inputs:
+      containerRegistry: 'Edgeworx GCP'
+      repository: $(repository)
+      command: 'buildAndPush'
+      Dockerfile: 'Dockerfile'
+      tags: |
+        $(commit)
+        $(type)
+        latest
+
+  - script: |
+      echo "api test"
+    displayName: 'api tests'
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: $(System.DefaultWorkingDirectory)
+      TargetFolder: $(Build.ArtifactStagingDirectory)
+      Contents: |
+        **/*.jar
+      OverWrite: true
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'agent'

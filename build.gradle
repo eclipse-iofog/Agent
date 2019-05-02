@@ -1,0 +1,29 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.3'
+    }
+}
+
+allprojects {
+    group = 'org.eclipse'
+    version = '1.0.13'
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    build.dependsOn(shadowJar);
+}
