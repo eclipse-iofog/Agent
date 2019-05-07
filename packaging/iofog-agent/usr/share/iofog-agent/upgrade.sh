@@ -14,8 +14,34 @@ printf 'ver: %s %s' $iofogversion $iofogpackage > prev_version_data
 iofog-agent deprovision
 service iofog-agent stop
 
-apt-get update
-apt-get install --only-upgrade iofog-agent$iofogpackage -y
+
+get_distribution() {
+	lsb_dist=""
+	# Every system that we officially support has /etc/os-release
+	if [ -r /etc/os-release ]; then
+		lsb_dist="$(. /etc/os-release && echo "$ID")"
+	fi
+	# Returning an empty string here should be alright since the
+	# case statements don't act unless you provide an actual value
+	echo "$lsb_dist"
+}
+
+lsb_dist=$( get_distribution )
+lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
+
+case "$lsb_dist" in
+
+    ubuntu|debian|raspbian)
+        apt-get update
+        apt-get install --only-upgrade iofog-agent$iofogpackage -y
+    ;;
+
+    centos|rhel|ol|sles)
+        yum check-update
+        yum update iofog-agent$iofogpackage -y
+    ;;
+
+esac
 
 starttimestamp=$(date +%s)
 service iofog-agent start

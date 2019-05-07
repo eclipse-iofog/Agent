@@ -6,6 +6,7 @@ trigger:
     include:
       - develop
       - master
+      - release
   paths:
     exclude:
       - README.md
@@ -35,8 +36,15 @@ steps:
       tasks: 'build'
 
   - script: |
-      echo " test"
-    displayName: 'tests'
+      ./gradlew copyJar
+    displayName: 'copy jars'
+
+  - script: |
+      echo $(type)
+      if($(type)== 'release'); then
+          echo "##vso[task.setvariable variable=type]rc"
+      fi
+    displayName: 'check for release, update type'
 
   - task: Docker@2
     displayName: 'build and push docker image'
@@ -54,12 +62,67 @@ steps:
       echo "api test"
     displayName: 'api tests'
 
+  - script: |
+      sudo apt-get update && apt-get upgrade
+      sudo apt-get install ruby ruby-dev rubygems build-essential
+      sudo gem install --no-ri --no-rdoc fpm
+    displayName: 'install fpm'
+
+  - script: |
+      version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
+      echo $version
+      cd packaging/iofog-agent
+      fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+      echo "pkg maybe created"
+      package=$(ls | grep *.deb)
+      echo $package
+      echo "##vso[task.setvariable variable=deb_package]$package"
+      echo "##vso[task.setvariable variable=package_version]$version"
+    displayName: 'create deb package'
+
+  - task: UniversalPackages@0
+    inputs:
+      command: 'publish'
+      feedsToUse: 'internal'
+      publishDirectory: '$(Build.ArtifactStagingDirectory)'
+      feedsToUsePublish: 'internal'
+      vstsFeedPublish: 'dev'
+      vstsFeedPackagePublish: '$(DEB_PACKAGE)'
+      versionOption: 'custom'
+      versionPublish: '$(PACKAGE_VERSION)-$(Build.BuildId)'
+      packagePublishDescription: 'Dev debian package'
+      verbosity: 'Information'
+
+  - script: |
+      cd packaging/iofog-agent
+      fpm -s dir -t rpm -n iofog-agent -v $PACKAGE_VERSION -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+      echo "pkg maybe created"
+      package=$(ls | grep *.rpm)
+      echo $package
+      echo "##vso[task.setvariable variable=rpm_package]$package"
+    displayName: 'create rpm package'
+
+  - task: UniversalPackages@0
+    inputs:
+      command: 'publish'
+      feedsToUse: 'internal'
+      publishDirectory: '$(Build.ArtifactStagingDirectory)'
+      feedsToUsePublish: 'internal'
+      vstsFeedPublish: 'dev'
+      vstsFeedPackagePublish: '$(RPM_PACKAGE)'
+      versionOption: 'custom'
+      versionPublish: '$(PACKAGE_VERSION)-$(Build.BuildId)'
+      packagePublishDescription: 'Dev package'
+      verbosity: 'Information'
+
   - task: CopyFiles@2
     inputs:
       SourceFolder: $(System.DefaultWorkingDirectory)
       TargetFolder: $(Build.ArtifactStagingDirectory)
       Contents: |
         **/*.jar
+        **/*.deb
+        **/*.rpm
       OverWrite: true
 
   - task: PublishBuildArtifacts@1

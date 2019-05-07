@@ -2,16 +2,11 @@ FROM jpetazzo/dind
 
 RUN cd /opt && \
   curl -SL http://www.edgeworx.io/downloads/jdk/jdk-8u211-64.tar.gz \
-  | tar -xjC /opt && \
-  cd /opt/jdk1.8.0_211/ && \
-  update-alternatives --install /usr/bin/java java /opt/jdk1.8.0_211/bin/java 1100 && \
-  rm -R /opt/jdk-8u211-64.tar.gz
+  | tar -xzC /opt && \
+  update-alternatives --install /usr/bin/java java /opt/jdk1.8.0_211/bin/java 1100
 
-COPY packaging/iofog-agent-packaging/etc /etc
-COPY packaging/iofog-agent-packaging/usr /usr
-COPY iofog-agent-daemon/build/libs/iofog-agent-daemon-*.jar /usr/bin/iofog-agentd.jar
-COPY iofog-agent-client/build/libs/iofog-agent-client-*.jar /usr/bin/iofog-agent.jar
-COPY iofog-version-controller/build/libs/iofog-version-controller-*.jar /usr/bin/iofog-agentvc.jar
+COPY packaging/iofog-agent/etc /etc
+COPY packaging/iofog-agent/usr /usr
 
 RUN apt-get update && \
     apt-get install -y sudo && \

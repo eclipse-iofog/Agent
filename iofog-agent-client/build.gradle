@@ -5,5 +5,5 @@ task copyJar(type: Copy) {
         include "*.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')
-    rename('.*?(jar$)', 'iofog-agentc.jar')
+    rename('.*?(jar$)', 'iofog-agent.jar')
 }
