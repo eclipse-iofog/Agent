@@ -12,11 +12,10 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
+import org.apache.activemq.artemis.api.core.client.ClientConsumer;
+import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.local_api.MessageCallback;
-import org.eclipse.iofog.utils.logging.LoggingService;
-import org.hornetq.api.core.client.ClientConsumer;
-import org.hornetq.api.core.client.ClientMessage;
 
 import java.util.ArrayList;
 import java.util.List;

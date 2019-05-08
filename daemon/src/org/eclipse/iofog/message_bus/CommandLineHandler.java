@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.client.ClientMessage;
+import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.eclipse.iofog.command_line.CommandLineParser;
-import org.hornetq.api.core.HornetQException;
-import org.hornetq.api.core.client.ClientMessage;
-import org.hornetq.api.core.client.MessageHandler;
 
 import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
@@ -33,7 +33,7 @@ public class CommandLineHandler implements MessageHandler {
 	public void onMessage(ClientMessage message) {
 		try {
 			message.acknowledge();
-		} catch (HornetQException exp) {
+		} catch (ActiveMQException exp) {
 			logError(MODULE_NAME, exp.getMessage(), exp);
 		}
 		String command = message.getStringProperty("command");
