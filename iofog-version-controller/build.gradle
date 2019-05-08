@@ -7,3 +7,8 @@ task copyJar(type: Copy) {
     into file('../packaging/iofog-agent/usr/bin/')
     rename('.*?(jar$)', 'iofog-agentvc.jar')
 }
+
+jar {
+    manifest.attributes["Main-Class"] = 'org.eclipse.iofog_version_controller.Main'
+    manifest.attributes["Implementation-Version"] = rootProject.property('version')
+}

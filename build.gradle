@@ -1,10 +1,5 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.3'
-    }
+plugins {
+    id "com.github.johnrengelman.shadow" version "5.0.0" apply false
 }
 
 allprojects {
@@ -15,7 +10,6 @@ allprojects {
 subprojects {
 
     apply plugin: 'java'
-    apply plugin: 'com.github.johnrengelman.shadow'
 
     repositories {
         mavenCentral()
@@ -25,5 +19,8 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    build.dependsOn(shadowJar);
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allJava
+        archiveClassifier = 'sources'
+    }
 }

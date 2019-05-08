@@ -1,4 +1,9 @@
+plugins {
+    id "com.github.johnrengelman.shadow"
+}
+
 description = 'iofog-agent-daemon'
+
 dependencies {
     compile 'com.github.docker-java:docker-java:3.0.7'
     compile 'io.netty:netty-all:4.1.33.Final'
@@ -17,10 +22,17 @@ dependencies {
     testCompile 'org.powermock:powermock-core:1.7.0RC2'
 }
 
+build.dependsOn(shadowJar);
+
 task copyJar(type: Copy) {
     from ("$buildDir/libs/") {
-        include "*.jar"
+        include "*-all.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')
     rename('.*?(jar$)', 'iofog-agentd.jar')
+}
+
+jar {
+    manifest.attributes["Main-Class"] = 'org.eclipse.iofog.Daemon'
+    manifest.attributes["Implementation-Version"] = rootProject.property('version')
 }
