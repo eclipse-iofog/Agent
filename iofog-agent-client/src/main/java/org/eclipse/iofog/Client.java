@@ -96,13 +96,7 @@ public class Client {
 				wr.write(postData);
 			}
 
-			int statusCode = conn.getResponseCode();
-			BufferedReader br = null;
-			if (statusCode >= 200 && statusCode < 400) {
-				br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-			} else {
-				br = new BufferedReader(new InputStreamReader((conn.getErrorStream())));
-			}
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
 			StringBuilder result = new StringBuilder();
 			String output;
