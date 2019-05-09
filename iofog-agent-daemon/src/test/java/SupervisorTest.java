@@ -4,7 +4,6 @@ import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
-import org.eclipse.iofog.security_manager.SecurityManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
@@ -51,7 +50,6 @@ public class SupervisorTest {
             PowerMockito.when(FieldAgent.getInstance()).thenReturn(null);
             PowerMockito.when(ProcessManager.getInstance()).thenReturn(null);
             PowerMockito.when(Tracker.getInstance()).thenReturn(new Tracker());
-            PowerMockito.when(SecurityManager.getInstance()).thenReturn(null);
             PowerMockito.when(MessageBus.getInstance()).thenReturn(null);
             PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
         } catch (Exception e) {

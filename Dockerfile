@@ -22,7 +22,6 @@ RUN apt-get update && \
     mkdir -p /var/log/iofog-agent && \
     mkdir -p /var/lib/iofog-agent && \
     mkdir -p /var/run/iofog-agent && \
-    mkdir -p /etc/iofog-agent/plugins && \
     chown -R :iofog-agent /etc/iofog-agent && \
     chown -R :iofog-agent /var/log/iofog-agent && \
     chown -R :iofog-agent /var/lib/iofog-agent && \
@@ -35,8 +34,6 @@ RUN apt-get update && \
     chmod 774 -R /var/run/iofog-agent && \
     chmod 774 -R /var/backups/iofog-agent && \
     chmod 754 -R /usr/share/iofog-agent && \
-    mv /usr/lib/x64/libjnotify.so /usr/lib/libjnotify.so && \
-    rm /usr/lib/x86/libjnotify.so && \
     mv /dev/random /dev/random.real && \
     ln -s /dev/urandom /dev/random && \
     chmod 774 /etc/init.d/iofog-agent && \

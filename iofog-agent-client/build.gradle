@@ -1,5 +1,9 @@
 description = 'iofog-agent-client'
 
+dependencies {
+    compile 'org.slf4j:slf4j-nop:1.7.25'
+}
+
 task copyJar(type: Copy) {
     from ("$buildDir/libs/") {
         include "*.jar"

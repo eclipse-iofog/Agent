@@ -22,7 +22,7 @@ import java.util.Properties;
 
 public class Client {
 
-	private static final String PROPERTIES_FILE_PATH = "/cmd_messages.properties";
+	private static final String PROPERTIES_FILE_PATH = "/gradle.properties";
 
 	private static final String LOCAL_API_ENDPOINT = "http://localhost:54321/v2/commandline";
 	private static final String WINDOWS_IOFOG_PATH = System.getenv("IOFOG_PATH") != null ?
