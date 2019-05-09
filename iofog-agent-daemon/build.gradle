@@ -1,0 +1,38 @@
+plugins {
+    id "com.github.johnrengelman.shadow"
+}
+
+description = 'iofog-agent-daemon'
+
+dependencies {
+    compile 'com.github.docker-java:docker-java:3.0.7'
+    compile 'io.netty:netty-all:4.1.33.Final'
+    compile 'org.hornetq:hornetq-core-client:2.3.0.Final'
+    compile 'org.hornetq:hornetq-server:2.3.0.Final'
+    compile 'org.glassfish:javax.json:1.0.4'
+    compile 'com.jcraft:jsch:0.1.55'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    compile 'org.apache.httpcomponents:httpmime:4.5.7'
+    compile 'io.sentry:sentry:1.7.21'
+    compile 'junit:junit:4.12'
+    compile 'com.github.oshi:oshi-core:3.13.0'
+    testCompile 'org.mockito:mockito-core:2.9.0'
+    testCompile 'org.powermock:powermock-module-junit4:1.7.0RC2'
+    testCompile 'org.powermock:powermock-api-mockito2:1.7.0RC2'
+    testCompile 'org.powermock:powermock-core:1.7.0RC2'
+}
+
+build.dependsOn(shadowJar);
+
+task copyJar(type: Copy) {
+    from ("$buildDir/libs/") {
+        include "*-all.jar"
+    }
+    into file('../packaging/iofog-agent/usr/bin/')
+    rename('.*?(jar$)', 'iofog-agentd.jar')
+}
+
+jar {
+    manifest.attributes["Main-Class"] = 'org.eclipse.iofog.Daemon'
+    manifest.attributes["Implementation-Version"] = rootProject.property('version')
+}
