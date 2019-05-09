@@ -1,0 +1,162 @@
+trigger:
+  tags:
+    include:
+      - v.*
+  branches:
+    include:
+      - develop
+      - release
+  paths:
+    exclude:
+      - README.md
+
+pr:
+  - master
+
+variables:
+  repository: 'focal-freedom-236620/agent'
+  primaryTag: $(Build.SourceBranchName)
+
+jobs:
+  - job: Platform
+    dependsOn: Agent
+    pool: server
+    variables:
+      commit: $[dependencies.Agent.outputs['setvarStep.commit']]
+
+    steps:
+      - task: InvokeRESTAPI@1
+        displayName: 'trigger platform job'
+        inputs:
+          connectionType: 'connectedServiceName'
+          serviceConnection: 'Pipelines'
+          method: 'POST'
+          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
+          body: "{\"Parameters\":\"{\\\"images.controller\\\": \\\"gcr.io/$(repository):$(commit)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
+          waitForCompletion: 'false'
+
+  - job: Agent
+    pool:
+      vmImage: 'Ubuntu-16.04'
+
+    steps:
+      - task: Gradle@2
+        inputs:
+          workingDirectory: ''
+          gradleWrapperFile: 'gradlew'
+          gradleOptions: '-Xmx3072m'
+          javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.8'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/TEST-*.xml'
+          tasks: 'build'
+
+      - script: |
+          ./gradlew copyJar
+        displayName: 'copy jars'
+
+      - script: |
+          echo 'setting commit tag'
+          commit=$(git rev-parse --short=5 HEAD)
+          echo "##vso[task.setvariable variable=commit]$commit"
+          echo "##vso[task.setvariable variable=commit;isOutput=true]$commit"
+
+          echo 'setting primary tag'
+          echo $(Build.SourceBranch)
+          if [[ $(Build.SourceBranchName) == 'develop' ]]; then
+            echo "##vso[task.setvariable variable=primaryTag;isOutput=true]dev-latest"
+          elif [[ $(Build.SourceBranchName) == 'release' ]]; then
+            echo "##vso[task.setvariable variable=primaryTag;isOutput=true]rc-latest"
+          #If branch starts with ref/tags, apply latest and version tag
+          elif [[ $(Build.SourceBranch) == refs/tags* ]]; then
+            echo "##vso[task.setvariable variable=commit]latest"
+            echo "##vso[task.setvariable variable=commit;isOutput=true]latest"
+          fi
+          echo 'commit tag: '$commit
+          echo 'primary tag: '$primaryTag
+        displayName: 'configure tagging variables'
+        name: setvarStep
+
+      - task: Docker@2
+        displayName: 'build and push docker image'
+        inputs:
+          containerRegistry: 'Edgeworx GCP'
+          repository: $(repository)
+          command: 'buildAndPush'
+          Dockerfile: 'Dockerfile'
+          tags: |
+            $(commit)
+            $(primaryTag)
+
+      - script: |
+          echo "api test"
+        displayName: 'api tests'
+
+      - script: |
+          sudo apt-get update && apt-get upgrade
+          sudo apt-get install ruby ruby-dev rubygems build-essential
+          sudo gem install --no-ri --no-rdoc fpm
+        displayName: 'install fpm'
+
+      - script: |
+          version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
+          echo $version
+          cd packaging/iofog-agent
+          fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          echo "pkg maybe created"
+          package=$(ls | grep *.deb)
+          echo $package
+          echo "##vso[task.setvariable variable=deb_package]$package"
+          echo "##vso[task.setvariable variable=package_version]$version"
+        displayName: 'create deb package'
+
+      - task: UniversalPackages@0
+        inputs:
+          command: 'publish'
+          feedsToUse: 'internal'
+          publishDirectory: '$(Build.ArtifactStagingDirectory)'
+          feedsToUsePublish: 'internal'
+          vstsFeedPublish: 'dev'
+          vstsFeedPackagePublish: '$(DEB_PACKAGE)'
+          versionOption: 'custom'
+          versionPublish: '$(PACKAGE_VERSION)-$(Build.BuildId)'
+          packagePublishDescription: 'Dev debian package'
+          verbosity: 'Information'
+
+      - script: |
+          cd packaging/iofog-agent
+          fpm -s dir -t rpm -n iofog-agent -v $PACKAGE_VERSION -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+          echo "pkg maybe created"
+          package=$(ls | grep *.rpm)
+          echo $package
+          echo "##vso[task.setvariable variable=rpm_package]$package"
+        displayName: 'create rpm package'
+
+      - task: UniversalPackages@0
+        inputs:
+          command: 'publish'
+          feedsToUse: 'internal'
+          publishDirectory: '$(Build.ArtifactStagingDirectory)'
+          feedsToUsePublish: 'internal'
+          vstsFeedPublish: 'dev'
+          vstsFeedPackagePublish: '$(RPM_PACKAGE)'
+          versionOption: 'custom'
+          versionPublish: '$(PACKAGE_VERSION)-$(Build.BuildId)'
+          packagePublishDescription: 'Dev package'
+          verbosity: 'Information'
+
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: $(System.DefaultWorkingDirectory)
+          TargetFolder: $(Build.ArtifactStagingDirectory)
+          Contents: |
+            **/*.jar
+            **/*.deb
+            **/*.rpm
+          OverWrite: true
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'agent'
