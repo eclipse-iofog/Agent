@@ -24,7 +24,24 @@ dependencies {
     testCompile 'org.powermock:powermock-core:2.0.2'
 }
 
-build.dependsOn(shadowJar);
+task createProperties(dependsOn: processResources) {
+    doLast {
+        mkdir("$buildDir/resources/main")
+        new File("$buildDir/resources/main/version.properties").withWriter { w ->
+            Properties p = new Properties()
+            p['version'] = project.version.toString()
+            p.store w, null
+        }
+    }
+}
+
+classes {
+    dependsOn createProperties
+}
+
+build {
+    dependsOn shadowJar
+}
 
 task copyJar(type: Copy) {
     from ("$buildDir/libs/") {

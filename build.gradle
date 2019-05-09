@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = 'org.eclipse'
-    version = version
+    version = '1.0.14'
 }
 
 subprojects {

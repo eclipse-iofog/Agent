@@ -22,7 +22,7 @@ import java.util.Properties;
 
 public class Client {
 
-	private static final String PROPERTIES_FILE_PATH = "/gradle.properties";
+	private static final String PROPERTIES_FILE_PATH = "/version.properties";
 
 	private static final String LOCAL_API_ENDPOINT = "http://localhost:54321/v2/commandline";
 	private static final String WINDOWS_IOFOG_PATH = System.getenv("IOFOG_PATH") != null ?
@@ -96,7 +96,13 @@ public class Client {
 				wr.write(postData);
 			}
 
-			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+			int statusCode = conn.getResponseCode();
+			BufferedReader br = null;
+			if (statusCode >= 200 && statusCode < 400) {
+				br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+			} else {
+				br = new BufferedReader(new InputStreamReader((conn.getErrorStream())));
+			}
 
 			StringBuilder result = new StringBuilder();
 			String output;
