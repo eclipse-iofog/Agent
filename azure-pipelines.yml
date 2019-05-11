@@ -32,7 +32,7 @@ jobs:
           serviceConnection: 'Pipelines'
           method: 'POST'
           urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"Parameters\":\"{\\\"images.controller\\\": \\\"gcr.io/$(repository):$(commit)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
+          body: "{\"Parameters\":\"{\\\"images.agent\\\": \\\"gcr.io/$(repository):$(commit)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
           waitForCompletion: 'false'
 
   - job: Agent

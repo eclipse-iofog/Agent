@@ -1,3 +1,7 @@
+plugins {
+    id "com.github.johnrengelman.shadow"
+}
+
 description = 'iofog-agent-client'
 
 dependencies {
@@ -19,9 +23,13 @@ classes {
     dependsOn createProperties
 }
 
+build {
+    dependsOn shadowJar
+}
+
 task copyJar(type: Copy) {
     from ("$buildDir/libs/") {
-        include "*.jar"
+        include "*-all.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')
     rename('.*?(jar$)', 'iofog-agent.jar')
