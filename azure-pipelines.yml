@@ -22,7 +22,7 @@ jobs:
     dependsOn: Agent
     pool: server
     variables:
-      commit: $[dependencies.Agent.outputs['setvarStep.commit']]
+      commit: $[dependencies.Agent.outputs['setvarStep.secondaryTag']]
 
     steps:
       - task: InvokeRESTAPI@1
@@ -57,10 +57,10 @@ jobs:
         displayName: 'copy jars'
 
       - script: |
-          echo 'setting commit tag'
+          echo 'setting seconadry tag'
           commit=$(git rev-parse --short=5 HEAD)
-          echo "##vso[task.setvariable variable=commit]$commit"
-          echo "##vso[task.setvariable variable=commit;isOutput=true]$commit"
+          echo "##vso[task.setvariable variable=secondaryTag]$commit"
+          echo "##vso[task.setvariable variable=secondaryTag;isOutput=true]$commit"
 
           echo 'setting primary tag'
           echo $(Build.SourceBranch)
@@ -70,8 +70,8 @@ jobs:
             echo "##vso[task.setvariable variable=primaryTag;isOutput=true]rc-latest"
           #If branch starts with ref/tags, apply latest and version tag
           elif [[ $(Build.SourceBranch) == refs/tags* ]]; then
-            echo "##vso[task.setvariable variable=commit]latest"
-            echo "##vso[task.setvariable variable=commit;isOutput=true]latest"
+            echo "##vso[task.setvariable variable=secondaryTag]latest"
+            echo "##vso[task.setvariable variable=secondaryTag;isOutput=true]latest"
           fi
           echo 'commit tag: '$commit
           echo 'primary tag: '$primaryTag
@@ -86,7 +86,7 @@ jobs:
           command: 'buildAndPush'
           Dockerfile: 'Dockerfile'
           tags: |
-            $(commit)
+            $(secondaryTag)
             $(primaryTag)
 
       - script: |
@@ -146,14 +146,19 @@ jobs:
           packagePublishDescription: 'Dev package'
           verbosity: 'Information'
 
+      - script: |
+          docker save -o agent.tar repository:secondaryTag repository:primaryTag
+        displayName: 'docker artefact'
+
       - task: CopyFiles@2
         inputs:
           SourceFolder: $(System.DefaultWorkingDirectory)
           TargetFolder: $(Build.ArtifactStagingDirectory)
           Contents: |
-            **/*.jar
+            iofog-*/*.jar
             **/*.deb
             **/*.rpm
+            agent.tar
           OverWrite: true
 
       - task: PublishBuildArtifacts@1
