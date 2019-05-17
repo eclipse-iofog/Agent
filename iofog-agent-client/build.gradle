@@ -5,7 +5,7 @@ plugins {
 description = 'iofog-agent-client'
 
 dependencies {
-    compile 'org.slf4j:slf4j-nop:1.7.25'
+    compile 'org.slf4j:slf4j-nop:1.7.13'
 }
 
 task createProperties(dependsOn: processResources) {
