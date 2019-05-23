@@ -552,7 +552,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private List<String> getStringList(JsonValue jsonValue) {
-        if (!jsonValue.getValueType().equals(JsonValue.ValueType.NULL)) {
+        if (jsonValue != null && !jsonValue.getValueType().equals(JsonValue.ValueType.NULL)) {
             JsonArray valueObj = (JsonArray) jsonValue;
             return valueObj.size() > 0
                     ? IntStream.range(0, valueObj.size())
