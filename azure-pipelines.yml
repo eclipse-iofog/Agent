@@ -52,9 +52,22 @@ jobs:
           testResultsFiles: '**/TEST-*.xml'
           tasks: 'build'
 
+      # We need nodejs for Snyk
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '8.x'
+        displayName: 'Install Node.js'
+      
       - script: |
           ./gradlew copyJar
         displayName: 'copy jars'
+
+      - script: |
+          npm i -g snyk
+          snyk monitor
+        env:
+          SNYK_TOKEN: $(snykToken)
+        displayName: 'Snyk monitor'
 
       - script: |
           echo 'setting commit tag'
