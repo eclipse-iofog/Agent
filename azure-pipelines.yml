@@ -64,7 +64,7 @@ jobs:
 
       - script: |
           npm i -g snyk
-          snyk monitor
+          snyk monitor --project-name=AgentCI
         env:
           SNYK_TOKEN: $(snykToken)
         displayName: 'Snyk monitor'
