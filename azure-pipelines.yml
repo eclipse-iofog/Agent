@@ -57,6 +57,13 @@ jobs:
         displayName: 'copy jars'
 
       - script: |
+          npm i -g snyk
+          snyk monitor
+        env:
+          SNYK_TOKEN: $(snykToken)
+        displayName: 'Snyk monitor'
+
+      - script: |
           echo 'setting commit tag'
           commit=$(git rev-parse --short=5 HEAD)
           echo "##vso[task.setvariable variable=commit]$commit"
