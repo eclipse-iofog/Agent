@@ -58,7 +58,7 @@ jobs:
         inputs:
           versionSpec: '8.x'
         displayName: 'Install Node.js'
-      
+
       - script: |
           ./gradlew copyJar
         displayName: 'copy jars'
@@ -71,24 +71,22 @@ jobs:
         displayName: 'Snyk monitor'
 
       - script: |
-          echo 'setting commit tag'
+          echo 'setting secondary tag'
           commit=$(git rev-parse --short=5 HEAD)
-          echo "##vso[task.setvariable variable=commit]$commit"
-          echo "##vso[task.setvariable variable=commit;isOutput=true]$commit"
+          echo "##vso[task.setvariable variable=secondaryTag]$commit"
+          echo "##vso[task.setvariable variable=secondaryTag;isOutput=true]$commit"
 
-          echo 'setting primary tag'
-          echo $(Build.SourceBranch)
-          if [[ $(Build.SourceBranchName) == 'develop' ]]; then
-            echo "##vso[task.setvariable variable=primaryTag;isOutput=true]dev-latest"
-          elif [[ $(Build.SourceBranchName) == 'release' ]]; then
-            echo "##vso[task.setvariable variable=primaryTag;isOutput=true]rc-latest"
+          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+            echo "##vso[task.setvariable variable=primaryTag]rc-$(Build.SourceBranchName)"
+            echo "##vso[task.setvariable variable=primaryTag;isOutput=true]rc-$(Build.SourceBranchName)"
           #If branch starts with ref/tags, apply latest and version tag
           elif [[ $(Build.SourceBranch) == refs/tags* ]]; then
-            echo "##vso[task.setvariable variable=commit]latest"
-            echo "##vso[task.setvariable variable=commit;isOutput=true]latest"
+            primaryTag= echo $(primaryTag) | awk '{print substr($1,2);}'
+            echo $primaryTag
+            echo "##vso[task.setvariable variable=primaryTag]$primaryTag"
+            echo "##vso[task.setvariable variable=secondaryTag]latest"
+            echo "##vso[task.setvariable variable=secondaryTag;isOutput=true]latest"
           fi
-          echo 'commit tag: '$commit
-          echo 'primary tag: '$primaryTag
         displayName: 'configure tagging variables'
         name: setvarStep
 
