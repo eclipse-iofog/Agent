@@ -92,8 +92,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
         if (response == null) {
     		String responseString = "{\"error\":\"unable to reach RESTblue container!\"}";
     		outputBuffer.writeBytes(responseString.getBytes(UTF_8));
-    		response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, outputBuffer);
-			HttpUtil.setContentLength(response, outputBuffer.readableBytes());
+    		response = ApiHandlerHelpers.notFoundResponse(outputBuffer, responseString);
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         }
 

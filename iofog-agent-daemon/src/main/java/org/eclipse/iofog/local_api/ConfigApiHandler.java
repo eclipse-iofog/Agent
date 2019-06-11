@@ -12,15 +12,15 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonValue;
+import javax.json.*;
 import java.io.StringReader;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -29,6 +29,8 @@ import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.iofog.utils.configuration.Configuration.getOldNodeValuesForParameters;
+import static org.eclipse.iofog.utils.configuration.Configuration.setConfig;
 
 public class ConfigApiHandler implements Callable<FullHttpResponse> {
     private static final String MODULE_NAME = "Local API";
@@ -66,25 +68,21 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-        HttpHeaders headers = req.headers();
-
-        if (ApiHandlerHelpers.validateMethod(this.req, POST)) {
+        if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
             LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
-            return ApiHandlerHelpers.METHOD_NOT_ALLOWED;
+            return ApiHandlerHelpers.methodNotAllowedResponse();
         }
-
 
         final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
         if (contentTypeError != null) {
             LoggingService.logWarning(MODULE_NAME, contentTypeError);
-            outputBuffer.writeBytes(contentTypeError.getBytes(UTF_8));
-            return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+            return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
         }
 
         if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-            return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.UNAUTHORIZED, outputBuffer);
+            return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }
 
         try {
@@ -99,30 +97,34 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
                     continue;
                 }
 
-                String value;
-                if (config.getJsonObject(propertyName).getValueType() == JsonValue.ValueType.NUMBER) {
-                    value = config.getJsonNumber(propertyName).toString();
-                } else {
-                    value = config.getString(propertyName);
-                }
-
+                String value = config.getString(propertyName);
                 configMap.put(key, value);
             }
 
-            String result = "";
+            try {
+                HashMap<String, String> errorMap = setConfig(configMap, false);
+                HashMap<String, String> errorMessages = new HashMap<>();
+                for (Map.Entry<String, String> error : errorMap.entrySet()) {
+                    String configName = CONFIG_MAP.get(error.getKey());
+                    String errorMessage = error.getValue().replaceAll(" \\-[a-z] ", " ");
 
-            outputBuffer.writeBytes(result.getBytes(UTF_8));
-            FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-            HttpUtil.setContentLength(res, outputBuffer.readableBytes());
-            return res;
+                    errorMessages.put(configName, errorMessage);
+                }
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                String result = objectMapper.writeValueAsString(errorMessages);
+                FullHttpResponse res = ApiHandlerHelpers.successResponse(outputBuffer, result);
+                res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+                return res;
+            } catch (Exception e) {
+                String errMsg = "Error updating new config ";
+                LoggingService.logError(MODULE_NAME, errMsg, e);
+                return ApiHandlerHelpers.badRequestResponse(outputBuffer, errMsg + e.toString());
+            }
         } catch (Exception e) {
             String errorMsg = "Log message parsing error, " + e.getMessage();
             LoggingService.logError(MODULE_NAME, errorMsg, e);
-            outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-            return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+            return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
         }
-    }
-
-    private void validateConfig(JsonObject config) throws Exception {
     }
 }
