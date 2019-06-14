@@ -55,18 +55,15 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleMessageRecievedRequest() {
-		HttpHeaders headers = req.headers();
-
-		if (req.method() != POST) {
+		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
+			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
-		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
-			String errorMsg = " Incorrect content type ";
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
+		if (contentTypeError != null) {
+			LoggingService.logWarning(MODULE_NAME, contentTypeError);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
 		String requestBody = new String(content, UTF_8);
@@ -78,8 +75,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = "Incorrect content/data" + e.getMessage();
 			LoggingService.logError(MODULE_NAME, errorMsg, e);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
 		String receiverId = jsonObject.getString("id");
@@ -100,11 +96,8 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-		outputBuffer.writeBytes(result.getBytes(UTF_8));
-		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		LoggingService.logInfo(MODULE_NAME, "Request completed successfully");
-		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
-		return res;
+
+		return ApiHandlerHelpers.successResponse(outputBuffer, result);
 	}
 
 	/**

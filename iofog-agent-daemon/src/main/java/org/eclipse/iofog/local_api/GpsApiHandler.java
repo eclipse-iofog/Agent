@@ -46,13 +46,10 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() {
-		if (!(req.headers().get(HttpHeaderNames.CONTENT_TYPE).trim()
-				.split(";")[0].equalsIgnoreCase("application/json"))) {
-
-			String errorMsg = " Incorrect content type ";
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
+		if (contentTypeError != null) {
+			LoggingService.logWarning(MODULE_NAME, contentTypeError);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
 		if (req.method() == POST) {
@@ -83,8 +80,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		} catch (Exception e) {
 			String errorMsg = " Error with setting GPS, " + e.getMessage();
 			LoggingService.logError(MODULE_NAME, errorMsg, e);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
 		JsonBuilderFactory factory = Json.createBuilderFactory(null);
@@ -92,10 +88,8 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		builder.add("status", "okay");
 
 		String sendMessageResult = builder.build().toString();
-		outputBuffer.writeBytes(sendMessageResult.getBytes(UTF_8));
-		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
-		return res;
+
+		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 
 	private FullHttpResponse getAgentGpsCoordinates() {
@@ -114,9 +108,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		builder.add("lon", lon);
 
 		String sendMessageResult = builder.build().toString();
-		outputBuffer.writeBytes(sendMessageResult.getBytes(UTF_8));
-		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
-		return res;
+
+		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 }
