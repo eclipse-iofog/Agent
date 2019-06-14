@@ -27,12 +27,10 @@ import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
-import org.eclipse.iofog.security_manager.SecurityStatus;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -142,8 +140,6 @@ public class FieldAgent implements IOFogModule {
                 .add("lastCommandTime", StatusReporter.getFieldAgentStatus().getLastCommandTime())
                 .add("tunnelStatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus())
                 .add("version", getVersion())
-                .add("securityStatus", StatusReporter.getSecurityStatus().getStatus().toString())
-                .add("securityViolationInfo", StatusReporter.getSecurityStatus().getSecurityViolationInfo())
                 .add("isReadyToUpgrade", isReadyToUpgrade())
                 .add("isReadyToRollback", isReadyToRollback())
                 .build();
@@ -556,7 +552,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private List<String> getStringList(JsonValue jsonValue) {
-        if (!jsonValue.getValueType().equals(JsonValue.ValueType.NULL)) {
+        if (jsonValue != null && !jsonValue.getValueType().equals(JsonValue.ValueType.NULL)) {
             JsonArray valueObj = (JsonArray) jsonValue;
             return valueObj.size() > 0
                     ? IntStream.range(0, valueObj.size())
@@ -1201,14 +1197,6 @@ public class FieldAgent implements IOFogModule {
         if (microserviceUuid != null) {
             ImageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         }
-    }
-
-    public void startQuarantine(String quarantineInfoMessage) {
-        logInfo("Quarantine");
-
-        StatusReporter.setSecurityStatus(SecurityStatus.Status.QUARANTINE, quarantineInfoMessage);
-        microserviceManager.clear();
-        notifyModules();
     }
 
 }

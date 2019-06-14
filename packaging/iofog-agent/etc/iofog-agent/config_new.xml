@@ -52,4 +52,6 @@
 	<scan_devices_freq>60</scan_devices_freq>
 
 	<gps>auto</gps>
+
+	<isolated_docker_container>off</isolated_docker_container>
 </config>

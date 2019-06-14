@@ -19,6 +19,7 @@ import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.Registry;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.Optional;
@@ -181,7 +182,8 @@ public class ContainerManager {
 				}
 			case UPDATE:
 				if (microserviceOptional.isPresent()) {
-					updateContainer(microserviceOptional.get(), microserviceOptional.get().isRebuild());
+					Microservice microservice = microserviceOptional.get();
+					updateContainer(microserviceOptional.get(), microservice.isRebuild() && microservice.getRegistryId() != Constants.CACHE_REGISTRY_ID);
 					break;
 				}
 			case REMOVE:

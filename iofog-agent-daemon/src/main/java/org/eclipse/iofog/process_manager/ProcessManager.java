@@ -178,9 +178,10 @@ public class ProcessManager implements IOFogModule {
 		synchronized (deleteLock) {
 			runningContainers = docker.getRunningContainers();
 		}
-		Set<String> runningContainerNames = runningContainers.stream()
-			.map(docker::getContainerName)
-			.collect(Collectors.toSet());
+
+		Map<String, Map<String, String>> runningContainersLabels = runningContainers
+            .stream()
+			.collect(Collectors.toMap(docker::getContainerName, c -> c.getLabels()));
 
 		Set<String> allMicroserviceUuids = Stream.concat(
 			Stream.concat(
@@ -201,14 +202,12 @@ public class ProcessManager implements IOFogModule {
 
 			if (isCurrentMicroserviceUuid && !isLatestMicroserviceUuid) {
 				oldAgentMicroserviceUuids.add(uuid);
-			} else if (!isCurrentMicroserviceUuid
-				&& !isLatestMicroserviceUuid
-				&& runningContainerNames.contains(DockerUtil.getIoFogContainerName(uuid))) {
-				unknownMicroserviceUuids.add(uuid);
-			} else if (!isCurrentMicroserviceUuid
-				&& !isLatestMicroserviceUuid
-				&& Configuration.isWatchdogEnabled()) {
-				unknownMicroserviceUuids.add(uuid);
+			} else if (!isCurrentMicroserviceUuid && !isLatestMicroserviceUuid) {
+				String containerName = DockerUtil.getIoFogContainerName(uuid);
+				Map<String, String> labels = runningContainersLabels.get(containerName);
+				if ((labels != null && labels.get("iofog-uuid") == Configuration.getIofogUuid()) || Configuration.isWatchdogEnabled()) {
+					unknownMicroserviceUuids.add(uuid);
+				}
 			}
 		}
 

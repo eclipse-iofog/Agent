@@ -42,7 +42,7 @@ public final class LoggingService {
     private static Logger logger = null;
     private static final Map<String, Logger> microserviceLogger = new HashMap<>();
 
-    private static List<String> sentryExceptionCache;
+    private static List<String> sentryExceptionCache = new ArrayList<>();
 
     private LoggingService() {
 
@@ -201,8 +201,6 @@ public final class LoggingService {
     }
 
     private static void loadSentryCache() {
-        sentryExceptionCache = new ArrayList<>();
-
         File f = new File(Constants.SENTRY_CACHE_PATH);
         if (!f.exists()) {
             return;

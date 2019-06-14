@@ -30,13 +30,22 @@ public class CmdProperties {
 
     private static final String MODULE_NAME = "CmdProperties";
     private static final String FILE_PATH = "/cmd_messages.properties";
+    private static final String VERSION_FILE_PATH = "/version.properties";
 
     private static final Properties cmdProperties;
+    private static final Properties versionProperties;
 
     static {
         cmdProperties = new Properties();
         try (InputStream in = CmdProperties.class.getResourceAsStream(FILE_PATH)) {
             cmdProperties.load(in);
+        } catch (IOException e) {
+            LoggingService.logInfo(MODULE_NAME, e.getMessage());
+        }
+
+        versionProperties = new Properties();
+        try (InputStream in = CmdProperties.class.getResourceAsStream(VERSION_FILE_PATH)) {
+            versionProperties.load(in);
         } catch (IOException e) {
             LoggingService.logInfo(MODULE_NAME, e.getMessage());
         }
@@ -47,7 +56,7 @@ public class CmdProperties {
     }
 
     public static String getVersion() {
-        return cmdProperties.getProperty("version");
+        return versionProperties.getProperty("version");
     }
 
     public static String getDeprovisionMessage() {

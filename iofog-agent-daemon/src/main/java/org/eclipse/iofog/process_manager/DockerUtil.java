@@ -497,6 +497,9 @@ public class DockerUtil {
                     .collect(Collectors.toList()));
         }
 
+        Map<String, String> labels = new HashMap<>();
+        labels.put("iofog-uuid", Configuration.getIofogUuid());
+
         CreateContainerCmd cmd = dockerClient.createContainerCmd(microservice.getImageName())
             .withLogConfig(containerLog)
             .withCpusetCpus("0")
@@ -504,7 +507,9 @@ public class DockerUtil {
             .withPortBindings(portBindings)
             .withEnv(envVars)
             .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
-            .withRestartPolicy(restartPolicy);
+            .withRestartPolicy(restartPolicy)
+            .withLabels(labels);
+
         if (microservice.getVolumeMappings() != null) {
             cmd = cmd
                 .withVolumes(volumes.toArray(new Volume[volumes.size()]))
