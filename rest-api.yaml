@@ -124,7 +124,7 @@ paths:
           required: true
           type: string
         - in: body
-          name: ProvisioningKey
+          name: ConfigRequest
           required: false
           schema:
             $ref: '#/definitions/ConfigRequest'
