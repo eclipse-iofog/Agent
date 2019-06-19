@@ -16,25 +16,9 @@ pr:
 variables:
   repository: 'focal-freedom-236620/agent'
   primaryTag: $(Build.SourceBranchName)
+  releaseCandidate: 'rc1'
 
 jobs:
-  - job: Platform
-    dependsOn: Agent
-    pool: server
-    variables:
-      commit: $[dependencies.Agent.outputs['setvarStep.secondaryTag']]
-
-    steps:
-      - task: InvokeRESTAPI@1
-        displayName: 'trigger platform job'
-        inputs:
-          connectionType: 'connectedServiceName'
-          serviceConnection: 'Pipelines'
-          method: 'POST'
-          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"Parameters\":\"{\\\"images.agent\\\": \\\"gcr.io/$(repository):$(commit)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
-          waitForCompletion: 'false'
-
   - job: Agent
     pool:
       vmImage: 'Ubuntu-16.04'
@@ -125,19 +109,17 @@ jobs:
         displayName: 'install package_cloud cli and fpm'
 
       - script: |
-          version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
           if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
-            name=rc-iofog-agent
+            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-$(releaseCandidate)-b$(Build.BuildId)
           else
-            name=iofog-agent
+            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
           fi
           echo $version
           cd packaging/iofog-agent
-          fpm -s dir -t deb -n $name -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
           echo "pkg maybe created"
           echo $(ls | grep *.deb)
           echo "##vso[task.setvariable variable=pkg_version]$version"
-          echo "##vso[task.setvariable variable=pkg_name]$name"
         displayName: 'create deb package'
 
       - script: |
@@ -163,9 +145,8 @@ jobs:
 
       - script: |
           cd packaging/iofog-agent
-          echo $(pkg_name)
           echo $(pkg_version)
-          fpm -s dir -t rpm -n $(pkg_name) -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+          fpm -s dir -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
           echo "pkg maybe created"
           echo $(ls | grep *.rpm)
         displayName: 'create rpm package'
