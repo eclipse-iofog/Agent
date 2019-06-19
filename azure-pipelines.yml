@@ -111,12 +111,12 @@ jobs:
 
       - task: UseRubyVersion@0
         inputs:
-          versionSpec: '= 2.5.5'
+          versionSpec: '>= 2.5.1'
           addToPath: true
         displayName: 'install rubygem to be used to install package_cloud cli'
 
       - script: |
-          gem install --no-ri --no-rdoc fpm
+          gem install --no-document fpm
           fpm -h
           gem install package_cloud
           package_cloud -h
@@ -126,12 +126,18 @@ jobs:
 
       - script: |
           version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
+          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+            name=rc-iofog-agent
+          else
+            name=iofog-agent
+          fi
           echo $version
           cd packaging/iofog-agent
-          fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          fpm -s dir -t deb -n $name -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
           echo "pkg maybe created"
           echo $(ls | grep *.deb)
           echo "##vso[task.setvariable variable=pkg_version]$version"
+          echo "##vso[task.setvariable variable=pkg_name]$name"
         displayName: 'create deb package'
 
       - script: |
@@ -157,8 +163,9 @@ jobs:
 
       - script: |
           cd packaging/iofog-agent
+          echo $(pkg_name)
           echo $(pkg_version)
-          fpm -s dir -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+          fpm -s dir -t rpm -n $(pkg_name) -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
           echo "pkg maybe created"
           echo $(ls | grep *.rpm)
         displayName: 'create rpm package'
