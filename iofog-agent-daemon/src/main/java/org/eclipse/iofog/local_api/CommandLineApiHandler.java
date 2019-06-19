@@ -48,32 +48,20 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
-		HttpHeaders headers = req.headers();
-
-		if (req.method() != POST) {
+		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
+			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
-		final String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE, "");
-		final boolean emptyContentType = TextUtils.isEmpty(contentType);
-		if (emptyContentType || !(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
-			String errorMsg = " Incorrect content type ";
-			if (!emptyContentType)
-                LoggingService.logWarning(MODULE_NAME, errorMsg);
-            outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
+		if (contentTypeError != null) {
+			LoggingService.logWarning(MODULE_NAME, contentTypeError);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
-		final String validAccessToken = fetchAccessToken();
-		final String accessToken = headers.get(HttpHeaderNames.AUTHORIZATION, "");
-		final boolean emptyAccessToken = TextUtils.isEmpty(accessToken);
-		if (emptyAccessToken || !(headers.get(HttpHeaderNames.AUTHORIZATION).equalsIgnoreCase(validAccessToken))) {
-			String errorMsg = " Incorrect access token ";
-			if (!emptyAccessToken)
-				LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.UNAUTHORIZED, outputBuffer);
+		if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
+			String errorMsg = "Incorrect access token";
+			return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
 		}
 
 		try {
@@ -84,27 +72,11 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 			String command = jsonObject.getString("command");
 			String result = CommandLineParser.parse(command);
 
-			outputBuffer.writeBytes(result.getBytes(UTF_8));
-			FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-			HttpUtil.setContentLength(res, outputBuffer.readableBytes());
-			return res;
+			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} catch (Exception e) {
 			String errorMsg = " Log message parsing error, " + e.getMessage();
 			LoggingService.logError(MODULE_NAME, errorMsg, e);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 	}
-
-	private String fetchAccessToken() {
-		String line = "";
-		try (BufferedReader reader = new BufferedReader(new FileReader(LOCAL_API_TOKEN_PATH))) {
-			line = reader.readLine();
-		} catch (IOException e) {
-			System.out.println("Local API access token is missing, try to re-install Agent.");
-		}
-
-		return line;
-	}
-
 }

@@ -1,0 +1,268 @@
+swagger: '2.0'
+info:
+  version: 2.0.0
+  title: iofog-agent
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  '/status':
+    get:
+      tags:
+        - Agent
+      description: Returns service status
+      parameters:
+        - in: header
+          name: Authorization
+          description: Agent Token
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Service status
+          schema:
+            $ref: '#/definitions/ServiceStatusResponse'
+        '401':
+          description: Not Authorized
+        '405':
+          description: Method Not Allowed
+  '/info':
+    get:
+      tags:
+        - Agent
+      description: Returns service info
+      parameters:
+        - in: header
+          name: Authorization
+          description: Agent Token
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Service info
+          schema:
+            $ref: '#/definitions/ServiceInfoResponse'
+        '401':
+          description: Not Authorized
+        '405':
+          description: Method Not Allowed
+  '/version':
+    get:
+      tags:
+        - Agent
+      description: Returns service info
+      parameters:
+        - in: header
+          name: Authorization
+          description: Agent Token
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Service info
+          schema:
+            $ref: '#/definitions/ServiceVersionResponse'
+        '401':
+          description: Not Authorized
+        '405':
+          description: Method Not Allowed
+  '/provision':
+    post:
+      tags:
+        - Agent
+      description: Provision Agent
+      parameters:
+        - in: header
+          name: Authorization
+          description: User token
+          required: true
+          type: string
+        - in: body
+          name: ProvisioningKey
+          required: false
+          schema:
+            $ref: '#/definitions/ProvisioningRequest'
+      responses:
+        '200':
+          description: Provisionined
+        '400':
+          description: Bad Request
+        '401':
+          description: Not Authorized
+        '500':
+          description: Internal Server Error
+  '/deprovision':
+    delete:
+      tags:
+        - Agent
+      description: Deprovision Agent
+      parameters:
+        - in: header
+          name: Authorization
+          description: User token
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Deprovisioned
+        '400':
+          description: Bad Request
+        '401':
+          description: Not Authorized
+        '500':
+          description: Internal Server Error
+  '/config':
+    post:
+      tags:
+        - Agent
+      description: Provision Agent
+      parameters:
+        - in: header
+          name: Authorization
+          description: User token
+          required: true
+          type: string
+        - in: body
+          name: ConfigRequest
+          required: false
+          schema:
+            $ref: '#/definitions/ConfigRequest'
+      responses:
+        '200':
+          description: Provisionined
+        '400':
+          description: Bad Request
+        '401':
+          description: Not Authorized
+        '500':
+          description: Internal Server Error
+
+definitions:
+  ServiceStatusResponse:
+    type: object
+    properties:
+      running-microservices:
+        type: string
+      system-total-cpu:
+        type: string
+      memory-usage:
+        type: string
+      system-available-memory:
+        type: string
+      system-time:
+        type: string
+      disk-usage:
+        type: string
+      connection-to-controller:
+        type: string
+      cpu-usage:
+        type: string
+      messages-processed:
+        type: string
+      system-available-disk:
+        type: string
+      iofog-daemon:
+        type: string
+  ServiceInfoResponse:
+    type: object
+    properties:
+      log-file-directory:
+        type: string
+      iofog-controller:
+        type: string
+      cpu-usage-limit:
+        type: string
+      developer-mode:
+        type: string
+      post-diagnostics-frequency:
+        type: string
+      docker-url:
+        type: string
+      status-update-frequency:
+        type: string
+      memory-ram-limit:
+        type: string
+      log-disk-limit:
+        type: string
+      isolated-docker-containers-mode:
+        type: string
+      iofog-certificate:
+        type: string
+      ip-address:
+        type: string
+      network-interface:
+        type: string
+      fog-type:
+        type: string
+      disk-usage-limit:
+        type: string
+      iofog-uuid:
+        type: string
+      gps-mode:
+        type: string
+      message-storage-directory:
+        type: string
+      get-changes-frequency:
+        type: string
+      gps-coordinates:
+        type: string
+      log-rolling-file-count:
+        type: string
+      scan-devices-frequency:
+        type: string
+  ServiceVersionResponse:
+    type: object
+    properties:
+      version:
+        type: string
+  ProvisioningRequest:
+    type: object
+    properties:
+      provisioning-key:
+        type: string
+  ConfigRequest:
+    type: object
+    properties:
+      disk-limit:
+        type: string
+      disk-directory:
+        type: string
+      memory-limit:
+        type: string
+      cpu-limit:
+        type: string
+      controller-url:
+        type: string
+      cert-directory:
+        type: string
+      docker-url:
+        type: string
+      network-adapter:
+        type: string
+      logs-limit:
+        type: string
+      logs-directory:
+        type: string
+      logs-count:
+        type: string
+      status-frequency:
+        type: string
+      changes-frequency:
+        type: string
+      diagnostics-frequency:
+        type: string
+      device-scan-frequency:
+        type: string
+      isolated:
+        type: string
+      gps:
+        type: string
+      fog-type:
+        type: string
+      developer-mode:
+        type: string
+schemes:
+  - http
+host: 'localhost:54321'
+basePath: /v2

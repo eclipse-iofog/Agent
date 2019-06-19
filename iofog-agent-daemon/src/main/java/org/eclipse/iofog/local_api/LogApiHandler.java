@@ -40,18 +40,15 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
-		HttpHeaders headers = req.headers();
-
-		if (req.method() != POST) {
+		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
+			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
-		if (!(headers.get(HttpHeaderNames.CONTENT_TYPE).trim().split(";")[0].equalsIgnoreCase("application/json"))) {
-			String errorMsg = " Incorrect content type ";
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
+		if (contentTypeError != null) {
+			LoggingService.logWarning(MODULE_NAME, contentTypeError);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
 		String msgString = new String(content, UTF_8);
@@ -73,8 +70,7 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 		}
 		if (!result) {
 			String errorMsg = "Log message parsing error, " + "Logger initialized null";
-			outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
 		JsonBuilderFactory factory = Json.createBuilderFactory(null);
@@ -82,10 +78,8 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 		builder.add("status", "okay");
 
 		String sendMessageResult = builder.build().toString();
-		outputBuffer.writeBytes(sendMessageResult.getBytes(UTF_8));
-		FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, outputBuffer);
-		HttpUtil.setContentLength(res, outputBuffer.readableBytes());
-		return res;
+
+		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 
 

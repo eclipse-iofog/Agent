@@ -180,6 +180,42 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 			return;
 		}
 
+		if (request.uri().startsWith("/v2/config")) {
+			Callable<FullHttpResponse> callable = new ConfigApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		if (request.uri().startsWith("/v2/provision")) {
+			Callable<FullHttpResponse> callable = new ProvisionApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		if (request.uri().startsWith("/v2/deprovision")) {
+			Callable<FullHttpResponse> callable = new DeprovisionApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		if (request.uri().startsWith("/v2/info")) {
+			Callable<FullHttpResponse> callable = new InfoApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		if (request.uri().startsWith("/v2/status")) {
+			Callable<FullHttpResponse> callable = new StatusApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
+		if (request.uri().startsWith("/v2/version")) {
+			Callable<FullHttpResponse> callable = new VersionApiHandler(request, ctx.alloc().buffer(), content);
+			runTask(callable, ctx, request);
+			return;
+		}
+
 		LoggingService.logWarning(MODULE_NAME, "Error: Request not found");
 		ByteBuf	errorMsgBytes = ctx.alloc().buffer();
 		String errorMsg = " Request not found ";
