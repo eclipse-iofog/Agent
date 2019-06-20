@@ -16,25 +16,9 @@ pr:
 variables:
   repository: 'focal-freedom-236620/agent'
   primaryTag: $(Build.SourceBranchName)
+  releaseCandidate: 'rc1'
 
 jobs:
-  - job: Platform
-    dependsOn: Agent
-    pool: server
-    variables:
-      commit: $[dependencies.Agent.outputs['setvarStep.secondaryTag']]
-
-    steps:
-      - task: InvokeRESTAPI@1
-        displayName: 'trigger platform job'
-        inputs:
-          connectionType: 'connectedServiceName'
-          serviceConnection: 'Pipelines'
-          method: 'POST'
-          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"Parameters\":\"{\\\"images.agent\\\": \\\"gcr.io/$(repository):$(commit)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
-          waitForCompletion: 'false'
-
   - job: Agent
     pool:
       vmImage: 'Ubuntu-16.04'
@@ -111,12 +95,12 @@ jobs:
 
       - task: UseRubyVersion@0
         inputs:
-          versionSpec: '= 2.5.5'
+          versionSpec: '>= 2.5.1'
           addToPath: true
         displayName: 'install rubygem to be used to install package_cloud cli'
 
       - script: |
-          gem install --no-ri --no-rdoc fpm
+          gem install --no-document fpm
           fpm -h
           gem install package_cloud
           package_cloud -h
@@ -125,7 +109,11 @@ jobs:
         displayName: 'install package_cloud cli and fpm'
 
       - script: |
-          version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
+          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-$(releaseCandidate)-b$(Build.BuildId)
+          else
+            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
+          fi
           echo $version
           cd packaging/iofog-agent
           fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
