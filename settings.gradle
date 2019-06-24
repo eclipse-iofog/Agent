@@ -1,0 +1,4 @@
+rootProject.name = 'iofog-agent'
+include(':iofog-agent-daemon')
+include(':iofog-agent-client')
+include(':iofog-version-controller')

@@ -1,0 +1,185 @@
+trigger:
+  tags:
+    include:
+      - v.*
+  branches:
+    include:
+      - develop
+      - release*
+  paths:
+    exclude:
+      - README.md
+
+pr:
+  - master
+
+variables:
+  repository: 'focal-freedom-236620/agent'
+  primaryTag: $(Build.SourceBranchName)
+  releaseCandidate: 'rc1'
+
+jobs:
+  - job: Agent
+    pool:
+      vmImage: 'Ubuntu-16.04'
+
+    steps:
+      - task: Gradle@2
+        inputs:
+          workingDirectory: ''
+          gradleWrapperFile: 'gradlew'
+          gradleOptions: '-Xmx3072m'
+          javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.8'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/TEST-*.xml'
+          tasks: 'build'
+
+      # We need nodejs for Snyk
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '8.x'
+        displayName: 'Install Node.js'
+
+      - script: |
+          ./gradlew copyJar
+        displayName: 'copy jars'
+
+      - script: |
+          npm i -g snyk
+          snyk monitor --project-name=AgentCI
+        env:
+          SNYK_TOKEN: $(snykToken)
+        displayName: 'Snyk monitor'
+
+      - script: |
+          echo 'setting secondary tag'
+          echo "##vso[task.setvariable variable=secondaryTag]b-$(Build.BuildId)"
+
+          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+            echo "##vso[task.setvariable variable=primaryTag]rc-$(Build.SourceBranchName)"
+          #If branch starts with ref/tags, apply latest and version tag
+          elif [[ $(Build.SourceBranch) == refs/tags* ]]; then
+            primaryTag= echo $(primaryTag) | awk '{print substr($1,2);}'
+            echo $primaryTag
+            echo "##vso[task.setvariable variable=primaryTag]$primaryTag"
+            echo "##vso[task.setvariable variable=secondaryTag]latest"
+          fi
+        displayName: 'configure tagging variables'
+        name: setvarStep
+
+      - task: Docker@2
+        displayName: 'build and push docker image'
+        inputs:
+          containerRegistry: 'Edgeworx GCP'
+          repository: $(repository)
+          command: 'buildAndPush'
+          Dockerfile: 'Dockerfile'
+          tags: |
+            $(secondaryTag)
+            $(primaryTag)
+
+      - script: |
+          echo "api test"
+        displayName: 'api tests'
+
+      - task: DownloadSecureFile@1
+        inputs:
+          secureFile: 'package_cloud'
+        displayName: 'download package cloud token file'
+
+      - task: UseRubyVersion@0
+        inputs:
+          versionSpec: '>= 2.5.1'
+          addToPath: true
+        displayName: 'install rubygem to be used to install package_cloud cli'
+
+      - script: |
+          gem install --no-document fpm
+          fpm -h
+          gem install package_cloud
+          package_cloud -h
+          echo "config file..."
+          echo $DOWNLOADSECUREFILE_SECUREFILEPATH
+        displayName: 'install package_cloud cli and fpm'
+
+      - script: |
+          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-$(releaseCandidate)-b$(Build.BuildId)
+          else
+            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
+          fi
+          echo $version
+          cd packaging/iofog-agent
+          fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          echo "pkg maybe created"
+          echo $(ls | grep *.deb)
+          echo "##vso[task.setvariable variable=pkg_version]$version"
+        displayName: 'create deb package'
+
+      - script: |
+          cd packaging/iofog-agent
+          package=$(ls | grep *.deb)
+          echo "package..."
+          echo $package
+
+          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic") #Support ubuntu versions
+          declare -a DEBIAN_VERS=("wheezy" "jessie" "stretch" "buster") #Also appplies to Raspbian, See related for loop
+
+          for version in "${UBUNTU_VERS[@]}"
+          do
+              package_cloud push iofog/iofog-agent-snapshots/ubuntu/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          done
+
+          for version in "${DEBIAN_VERS[@]}"
+          do
+              package_cloud push iofog/iofog-agent-snapshots/debian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+              package_cloud push iofog/iofog-agent-snapshots/raspbian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          done
+        displayName: 'publish deb to package-cloud'
+
+      - script: |
+          cd packaging/iofog-agent
+          echo $(pkg_version)
+          fpm -s dir -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+          echo "pkg maybe created"
+          echo $(ls | grep *.rpm)
+        displayName: 'create rpm package'
+
+      - script: |
+          cd packaging/iofog-agent
+          package=$(ls | grep *.rpm)
+          echo "package..."
+          echo $package
+
+          declare -a FEDORA_VERS=("22" "23" "24") #Supported Fedora Versions
+          declare -a REDHAT_VERS=("6" "7") #Supported Redhat versions
+
+          for version in ${FEDORA_VERS[@]}
+          do
+              package_cloud push iofog/iofog-agent-snapshots/fedora/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          done
+
+          for version in ${REDHAT_VERS[@]}
+          do
+              package_cloud push iofog/iofog-agent-snapshots/el/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          done
+        displayName: 'publish rpm to package-cloud'
+
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: $(System.DefaultWorkingDirectory)
+          TargetFolder: $(Build.ArtifactStagingDirectory)
+          Contents: |
+            **/libs/**
+            packaging/**/*
+            Dockerfile
+          OverWrite: true
+        displayName: 'copy all artefacts'
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'agent'
+        displayName: 'publish artefacts'

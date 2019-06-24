@@ -1,0 +1,56 @@
+plugins {
+    id "com.github.johnrengelman.shadow"
+}
+
+description = 'iofog-agent-daemon'
+
+dependencies {
+    compile 'com.github.docker-java:docker-java:3.0.7'
+    compile 'io.netty:netty-all:4.1.34.Final'
+    compile 'org.apache.activemq:artemis-core-client:2.6.4'
+    compile 'org.apache.activemq:artemis-server:2.6.4'
+    compile 'org.jboss.logmanager:jboss-logmanager:2.0.3.Final'
+    compile 'com.jcraft:jsch:0.1.55'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.7'
+    compile 'org.apache.httpcomponents:httpmime:4.5.7'
+    compile 'io.sentry:sentry:1.7.21'
+    compile 'junit:junit:4.12'
+    compile 'com.github.oshi:oshi-core:3.13.0'
+    compile 'org.slf4j:slf4j-nop:1.7.13'
+    testCompile 'org.mockito:mockito-core:2.9.0'
+    testCompile 'org.powermock:powermock-module-junit4:2.0.2'
+    testCompile 'org.powermock:powermock-api-mockito2:2.0.2'
+    testCompile 'org.powermock:powermock-core:2.0.2'
+}
+
+task createProperties(dependsOn: processResources) {
+    doLast {
+        mkdir("$buildDir/resources/main")
+        new File("$buildDir/resources/main/version.properties").withWriter { w ->
+            Properties p = new Properties()
+            p['version'] = project.version.toString()
+            p.store w, null
+        }
+    }
+}
+
+classes {
+    dependsOn createProperties
+}
+
+build {
+    dependsOn shadowJar
+}
+
+task copyJar(type: Copy) {
+    from ("$buildDir/libs/") {
+        include "*-all.jar"
+    }
+    into file('../packaging/iofog-agent/usr/bin/')
+    rename('.*?(jar$)', 'iofog-agentd.jar')
+}
+
+jar {
+    manifest.attributes["Main-Class"] = 'org.eclipse.iofog.Daemon'
+    manifest.attributes["Implementation-Version"] = rootProject.property('version')
+}

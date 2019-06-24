@@ -1,4 +1,8 @@
 .idea
 target
-iofog.iml
-
+iofog-agent.iml
+.project
+**/build
+**/out
+.gradle
+packaging/iofog-agent/usr/bin/*.jar
