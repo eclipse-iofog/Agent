@@ -106,7 +106,7 @@ jobs:
           version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
           if [[ $(Build.SourceBranch) == refs/tags* ]]; then
             pkg_version=$version
-          elseif [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+          elif [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
             pkg_version=$version-$(releaseCandidate)-b$(Build.BuildId)
           else
             pkg_version=$version-b$(Build.BuildId)
