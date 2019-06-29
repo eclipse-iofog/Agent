@@ -6,12 +6,10 @@ trigger:
     include:
       - develop
       - release*
+
   paths:
     exclude:
       - README.md
-
-pr:
-  - master
 
 variables:
   repository: 'focal-freedom-236620/agent'
@@ -105,17 +103,20 @@ jobs:
         displayName: 'install package_cloud cli and fpm'
 
       - script: |
-          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
-            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-$(releaseCandidate)-b$(Build.BuildId)
+          version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
+          if [[ $(Build.SourceBranch) == refs/tags* ]]; then
+            pkg_version=$version
+          elseif [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
+            pkg_version=$version-$(releaseCandidate)-b$(Build.BuildId)
           else
-            version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')-b$(Build.BuildId)
+            pkg_version=$version-b$(Build.BuildId)
           fi
           echo $version
           cd packaging/iofog-agent
-          fpm -s dir -t deb -n iofog-agent -v $version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          fpm -s dir -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
           echo "pkg maybe created"
           echo $(ls | grep *.deb)
-          echo "##vso[task.setvariable variable=pkg_version]$version"
+          echo "##vso[task.setvariable variable=pkg_version]$pkg_version"
         displayName: 'create deb package'
 
       - script: |
