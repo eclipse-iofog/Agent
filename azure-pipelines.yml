@@ -1,7 +1,7 @@
 trigger:
   tags:
     include:
-      - v.*
+      - v*
   branches:
     include:
       - develop
@@ -111,7 +111,7 @@ jobs:
           else
             pkg_version=$version-b$(Build.BuildId)
           fi
-          echo $version
+          echo $pkg_version
           cd packaging/iofog-agent
           fpm -s dir -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
           echo "pkg maybe created"
@@ -174,7 +174,8 @@ jobs:
           TargetFolder: $(Build.ArtifactStagingDirectory)
           Contents: |
             **/libs/**
-            packaging/**/*
+            packaging/**/*.deb
+            packaging/**/*.rpm
             Dockerfile
           OverWrite: true
         displayName: 'copy all artefacts'
