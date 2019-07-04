@@ -20,6 +20,7 @@ import org.eclipse.iofog.diagnostics.ImageDownloadManager;
 import org.eclipse.iofog.diagnostics.strace.MicroserviceStraceData;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
 import org.eclipse.iofog.field_agent.enums.RequestType;
+import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.microservice.*;
@@ -134,6 +135,7 @@ public class FieldAgent implements IOFogModule {
                 .add("systemTime", StatusReporter.getStatusReporterStatus().getSystemTime())
                 .add("lastStatusTime", StatusReporter.getStatusReporterStatus().getLastUpdate())
                 .add("ipAddress", IOFogNetworkInterface.getCurrentIpAddress())
+                .add("ipAddressExternal", GpsWebHandler.getExternalIp())
                 .add("processedMessages", StatusReporter.getMessageBusStatus().getProcessedMessages())
                 .add("microserviceMessageCounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerMicroservice())
                 .add("messageSpeed", StatusReporter.getMessageBusStatus().getAverageSpeed())
