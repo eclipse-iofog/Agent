@@ -20,6 +20,7 @@ import org.eclipse.iofog.diagnostics.ImageDownloadManager;
 import org.eclipse.iofog.diagnostics.strace.MicroserviceStraceData;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
 import org.eclipse.iofog.field_agent.enums.RequestType;
+import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.microservice.*;
