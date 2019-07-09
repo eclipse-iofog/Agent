@@ -34,6 +34,7 @@ import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.functional.Pair;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
@@ -41,9 +42,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -64,8 +63,7 @@ import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
 import static org.eclipse.iofog.utils.CmdProperties.getVersion;
 import static org.eclipse.iofog.utils.Constants.*;
-import static org.eclipse.iofog.utils.Constants.ControllerStatus.NOT_PROVISIONED;
-import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
+import static org.eclipse.iofog.utils.Constants.ControllerStatus.*;
 
 /**
  * Field Agent module
@@ -189,7 +187,7 @@ public class FieldAgent implements IOFogModule {
                 logInfo("Sending ioFog status...");
                 orchestrator.request("status", RequestType.PUT, null, status);
                 onPostStatusSuccess();
-            } catch (CertificateException | SSLHandshakeException e) {
+            } catch (CertificateException | SSLHandshakeException | ConnectException e) {
                 verificationFailed(e);
             } catch (ForbiddenException e) {
                 deProvision(true);
@@ -246,8 +244,14 @@ public class FieldAgent implements IOFogModule {
     private void verificationFailed(Exception e) {
         connected = false;
         if (!notProvisioned()) {
-            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN_CERTIFICATE);
-            logWarning("controller certificate verification failed");
+            ControllerStatus controllerStatus;
+            if (e instanceof CertificateException || e instanceof SSLHandshakeException) {
+                controllerStatus = BROKEN_CERTIFICATE;
+            } else {
+                controllerStatus = NOT_CONNECTED;
+            }
+            StatusReporter.setFieldAgentStatus().setControllerStatus(controllerStatus);
+            logWarning("controller verification failed: " + controllerStatus.name());
         }
         StatusReporter.setFieldAgentStatus().setControllerVerified(false);
     }
@@ -656,7 +660,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            StatusReporter.setFieldAgentStatus().setControllerStatus(ControllerStatus.BROKEN_CERTIFICATE);
+            verificationFailed(e);
             logWarning("Error pinging for controller: " + e.getMessage());
         }
         return false;
@@ -868,8 +872,9 @@ public class FieldAgent implements IOFogModule {
             logError("Error while parsing GPS coordinates", e);
         }
 
+        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
         JsonObject json = Json.createObjectBuilder()
-                .add(NETWORK_INTERFACE.getJsonProperty(), IOFogNetworkInterface.getNetworkInterface())
+                .add(NETWORK_INTERFACE.getJsonProperty(), connectedAddress == null ? "not found" : connectedAddress._1().getName())
                 .add(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl())
                 .add(DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getDiskLimit())
                 .add(DISK_DIRECTORY.getJsonProperty(), Configuration.getDiskDirectory())

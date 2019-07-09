@@ -27,6 +27,7 @@ import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
+import org.eclipse.iofog.utils.functional.Pair;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -41,6 +42,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.*;
 import java.util.function.Supplier;
@@ -993,9 +995,13 @@ public final class Configuration {
     }
 
     public static String getNetworkInterfaceInfo() {
-        return NETWORK_INTERFACE.getDefaultValue().equals(networkInterface) ?
-                IOFogNetworkInterface.getNetworkInterface() + "(" + NETWORK_INTERFACE.getDefaultValue() + ")" :
-                networkInterface;
+        if (!NETWORK_INTERFACE.getDefaultValue().equals(networkInterface)) {
+            return networkInterface;
+        }
+
+        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
+        String networkInterfaceName = connectedAddress == null ? "not found" : connectedAddress._1().getName();
+        return networkInterfaceName + "(" + NETWORK_INTERFACE.getDefaultValue() + ")";
     }
 
     public static Document getCurrentConfig() {

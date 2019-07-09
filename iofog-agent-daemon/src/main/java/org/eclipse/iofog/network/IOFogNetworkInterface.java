@@ -13,18 +13,16 @@
 
 package org.eclipse.iofog.network;
 
-import org.apache.commons.lang.SystemUtils;
-import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.functional.Pair;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.net.*;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Optional;
 
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.NETWORK_INTERFACE;
-import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCommand;
 
 /**
  * Created by ekrylovich
@@ -32,16 +30,7 @@ import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCo
  */
 public class IOFogNetworkInterface {
 	private static final String MODULE_NAME = "IOFogNetworkInterface";
-
-    private static final String NETWORK_BASH_COMMAND = "route | grep '^default' | grep -o '[^ ]*$'";
-
-    private static final String NETWORK_POWERSHELL_COMMAND = "Get-NetAdapter -physical | where status -eq 'up' | select -ExpandProperty Name";
-    private static final String POWERSHELL_GET_IP_BY_INTERFACE_NAME = "Get-NetIPConfiguration | select IPv4Address, InterfaceAlias | where InterfaceAlias -eq '%s' | select -ExpandProperty IPv4Address | select -ExpandProperty IPAddress";
-    private static final String POWERSHELL_GET_ACTIVE_IP = "(Get-WmiObject -Class Win32_NetworkAdapterConfiguration | where {$_.DefaultIPGateway -ne $null}).IPAddress | select-object -first 1";
-
-    private static final String NETWORK_MACOS_COMMAND = "netstat -rn | grep '^default' | grep -o '[^ ]*$'";
     private static final String UNABLE_TO_GET_IP_ADDRESS = "Unable to get ip address. Please check network connection";
-	private static final String LOOPBACK = "127.0.0.1";
 
 	/**
      * returns IPv4 host address of IOFog network interface
@@ -71,77 +60,70 @@ public class IOFogNetworkInterface {
      * @throws Exception
      */
     public static InetAddress getInetAddress() throws SocketException {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            try {
-            // TODO too slow, replace later   InetAddress addr = InetAddress.getByName(getWindowsIpByInterfaceName(getNetworkInterface()));
-                InetAddress addr = InetAddress.getByName(getWindowsActiveIp());
-
-                final NetworkInterface interfaceByIp = NetworkInterface.getByInetAddress(addr);
-                return getInetAddressByInterface(interfaceByIp);
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-        } else {
-            final NetworkInterface interfaceByName = NetworkInterface.getByName(getNetworkInterface());
-            if (interfaceByName != null) {
-               return getInetAddressByInterface(interfaceByName);
-            }
+        final Pair<NetworkInterface, InetAddress> connectedAddress = getNetworkInterface();
+        if (connectedAddress != null) {
+           return connectedAddress._2();
         }
 
         throw new ConnectException(UNABLE_TO_GET_IP_ADDRESS);
     }
 
-    private static InetAddress getInetAddressByInterface(NetworkInterface networkInterface) throws SocketException {
-        final Enumeration<InetAddress> ipAddresses = networkInterface
-                .getInetAddresses();
-        while (ipAddresses.hasMoreElements()) {
-            InetAddress address = ipAddresses.nextElement();
-            if (address instanceof Inet4Address) {
-                return address;
-            }
-        }
-
-        throw new ConnectException(UNABLE_TO_GET_IP_ADDRESS);
-    }
-
-
-    public static String getNetworkInterface() {
+    public static Pair<NetworkInterface, InetAddress> getNetworkInterface() {
         final String configNetworkInterface = Configuration.getNetworkInterface();
-        return configNetworkInterface.equals(NETWORK_INTERFACE.getDefaultValue())
-				? getOSNetworkInterface()
-				: configNetworkInterface;
-    }
-
-
-    private static String getOSNetworkInterface() {
-        String command = NETWORK_BASH_COMMAND;
-        if (SystemUtils.IS_OS_WINDOWS) {
-            command = NETWORK_POWERSHELL_COMMAND;
-        } else if (SystemUtils.IS_OS_LINUX) {
-            command = NETWORK_BASH_COMMAND;
-        } else if (SystemUtils.IS_OS_MAC) {
-            command = NETWORK_MACOS_COMMAND;
+        if (NETWORK_INTERFACE.getDefaultValue().equals(configNetworkInterface)) {
+            return getOSNetworkInterface();
         }
 
-        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(command);
-        return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
-                "not found" :
-                interfaces.getValue().get(0);
+        try {
+            URL controllerUrl = new URL(Configuration.getControllerUrl());
+            NetworkInterface networkInterface = NetworkInterface.getByName(configNetworkInterface);
+            return getConnectedAddress(controllerUrl, networkInterface);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    private static String getWindowsIpByInterfaceName(String interfaceName) {
-        String cmd = String.format(POWERSHELL_GET_IP_BY_INTERFACE_NAME, interfaceName);
+    private static Pair<NetworkInterface, InetAddress> getOSNetworkInterface() {
+        try {
+            URL controllerUrl = new URL(Configuration.getControllerUrl());
 
-        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(cmd);
-        return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
-				LOOPBACK :
-                interfaces.getValue().get(0);
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            for (NetworkInterface networkInterface: Collections.list(networkInterfaces)) {
+                if (networkInterface.isLoopback() || networkInterface.isVirtual() || !networkInterface.isUp()) {
+                    continue;
+                }
+
+                Pair<NetworkInterface, InetAddress> connectedAddress = getConnectedAddress(controllerUrl, networkInterface);
+                if (connectedAddress != null) {
+                    return connectedAddress;
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    private static String getWindowsActiveIp() {
-        final CommandShellResultSet<List<String>, List<String>> interfaces = executeCommand(POWERSHELL_GET_ACTIVE_IP);
-        return !interfaces.getError().isEmpty() || interfaces.getValue().isEmpty() ?
-                LOOPBACK :
-                interfaces.getValue().get(0);
+    private static Pair<NetworkInterface, InetAddress> getConnectedAddress(URL controllerUrl, NetworkInterface networkInterface) {
+        int controllerPort = controllerUrl.getPort();
+        String controllerHost = controllerUrl.getHost();
+
+        Enumeration<InetAddress> nifAddresses = networkInterface.getInetAddresses();
+        for (InetAddress nifAddress: Collections.list(nifAddresses)) {
+            if (!(nifAddress instanceof Inet4Address)) {
+                continue;
+            }
+
+            try {
+                Socket soc = new java.net.Socket();
+                soc.bind(new InetSocketAddress(nifAddress, 0));
+                soc.connect(new InetSocketAddress(controllerHost, controllerPort), 1000);
+                soc.close();
+                return Pair.of(networkInterface, nifAddress);
+            } catch (Exception e) { }
+        }
+
+        return null;
     }
 }
