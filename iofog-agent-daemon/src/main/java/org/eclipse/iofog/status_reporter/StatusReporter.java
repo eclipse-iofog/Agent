@@ -93,6 +93,9 @@ public final class StatusReporter {
 			case OK:
 				connectionStatus = "ok";
 				break;
+			default:
+				connectionStatus = "not connected";
+				break;
 		}
 
 		result.append("ioFog daemon                : ").append(supervisorStatus.getDaemonStatus().name());
