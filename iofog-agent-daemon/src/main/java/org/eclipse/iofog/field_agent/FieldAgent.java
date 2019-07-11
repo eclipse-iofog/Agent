@@ -522,31 +522,21 @@ public class FieldAgent implements IOFogModule {
                 if (microservicesJson == null) {
                     return loadMicroservices(false);
                 }
-                try {
-                    return IntStream.range(0, microservicesJson.size())
-                            .boxed()
-                            .map(microservicesJson::getJsonObject)
-                            .map(containerJsonObjectToMicroserviceFunction())
-                            .collect(toList());
-                } catch (Exception e) {
-                    logError("Unable to parse microservices: " + e.getMessage(), e);
-                }
             } else {
                 JsonObject result = orchestrator.request("microservices", RequestType.GET, null, null);
                 microservicesJson = result.getJsonArray("microservices");
                 saveFile(microservicesJson, filesPath + filename);
-
-                try {
-                    List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
-                            .boxed()
-                            .map(microservicesJson::getJsonObject)
-                            .map(containerJsonObjectToMicroserviceFunction())
-                            .collect(toList());
-                    microserviceManager.setLatestMicroservices(microservices);
-                    return microservices;
-                } catch (Exception e) {
-                    logError("Unable to parse microservices: " + e.getMessage(), e);
-                }
+            }
+            try {
+                List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
+                        .boxed()
+                        .map(microservicesJson::getJsonObject)
+                        .map(containerJsonObjectToMicroserviceFunction())
+                        .collect(toList());
+                microserviceManager.setLatestMicroservices(microservices);
+                return microservices;
+            } catch (Exception e) {
+                logError("Unable to parse microservices: " + e.getMessage(), e);
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
