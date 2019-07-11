@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.network;
 
+import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Pair;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -30,7 +31,9 @@ import static org.eclipse.iofog.command_line.CommandLineConfigParam.NETWORK_INTE
  */
 public class IOFogNetworkInterface {
 	private static final String MODULE_NAME = "IOFogNetworkInterface";
+
     private static final String UNABLE_TO_GET_IP_ADDRESS = "Unable to get ip address. Please check network connection";
+    private static String dockerBridgeInterfaceName = DockerUtil.getInstance().getDockerBridgeName();
 
 	/**
      * returns IPv4 host address of IOFog network interface
@@ -86,9 +89,15 @@ public class IOFogNetworkInterface {
     private static Pair<NetworkInterface, InetAddress> getOSNetworkInterface() {
         try {
             URL controllerUrl = new URL(Configuration.getControllerUrl());
+            NetworkInterface dockerBridgeNetworkInterface = null;
 
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             for (NetworkInterface networkInterface: Collections.list(networkInterfaces)) {
+                if (dockerBridgeInterfaceName != null && networkInterface.getName().equals(dockerBridgeInterfaceName)) {
+                    dockerBridgeNetworkInterface = networkInterface;
+                    continue;
+                }
+
                 if (networkInterface.isLoopback() || networkInterface.isVirtual() || !networkInterface.isUp()) {
                     continue;
                 }
@@ -99,6 +108,10 @@ public class IOFogNetworkInterface {
                 }
             }
 
+            if (dockerBridgeNetworkInterface != null) {
+                return getConnectedAddress(controllerUrl, dockerBridgeNetworkInterface, false);
+            }
+
             return null;
         } catch (Exception e) {
             return null;
@@ -106,6 +119,10 @@ public class IOFogNetworkInterface {
     }
 
     private static Pair<NetworkInterface, InetAddress> getConnectedAddress(URL controllerUrl, NetworkInterface networkInterface) {
+        return getConnectedAddress(controllerUrl, networkInterface, true);
+    }
+
+    private static Pair<NetworkInterface, InetAddress> getConnectedAddress(URL controllerUrl, NetworkInterface networkInterface, boolean checkConnection) {
         int controllerPort = controllerUrl.getPort();
         String controllerHost = controllerUrl.getHost();
 
@@ -113,6 +130,10 @@ public class IOFogNetworkInterface {
         for (InetAddress nifAddress: Collections.list(nifAddresses)) {
             if (!(nifAddress instanceof Inet4Address)) {
                 continue;
+            }
+
+            if (!checkConnection) {
+                return Pair.of(networkInterface, nifAddress);
             }
 
             try {

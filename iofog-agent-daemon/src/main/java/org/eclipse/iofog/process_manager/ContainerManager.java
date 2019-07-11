@@ -78,18 +78,29 @@ public class ContainerManager {
 	}
 
 	private void createContainer(Microservice microservice) throws Exception {
+		createContainer(microservice, true);
+	}
+
+	private void createContainer(Microservice microservice, boolean pullImage) throws Exception {
 		Registry registry = getRegistry(microservice);
-		if (!registry.getUrl().equals("from_cache")){
+		if (!registry.getUrl().equals("from_cache") && pullImage){
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
-			docker.pullImage(microservice.getImageName(), registry);
+			try {
+				docker.pullImage(microservice.getImageName(), registry);
+			} catch (Exception e) {
+				LoggingService.logInfo(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache");
+				createContainer(microservice, false);
+				LoggingService.logInfo(MODULE_NAME, "created \"" + microservice.getImageName() + "\" from local cache");
+				return;
+			}
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", microservice.getImageName()));
 		}
-		LoggingService.logInfo(MODULE_NAME, "creating container");
+		LoggingService.logInfo(MODULE_NAME, "creating container \"" + microservice.getImageName() + "\"");
 		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
-		LoggingService.logInfo(MODULE_NAME, "container is created");
+		LoggingService.logInfo(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
 		startContainer(microservice);
 		microservice.setRebuild(false);
 	}

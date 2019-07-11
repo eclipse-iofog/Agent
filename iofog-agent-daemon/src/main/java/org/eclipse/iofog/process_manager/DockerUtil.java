@@ -145,6 +145,26 @@ public class DockerUtil {
     }
 
     /**
+     * returns docker's default bridge name
+     *
+     * @return String default bridge name
+     */
+    public String getDockerBridgeName() {
+        List<Network> networks = dockerClient.listNetworksCmd().exec();
+
+        Network dockerBridge = networks
+                .stream()
+                .filter(network -> network.getOptions().getOrDefault("com.docker.network.bridge.default_bridge", "false").equals("true"))
+                .findFirst()
+                .orElse(null);
+
+        if (dockerBridge == null) {
+            return null;
+        }
+        return dockerBridge.getOptions().get("com.docker.network.bridge.name");
+    }
+
+    /**
      * starts a {@link Container}
      *
      * @param microservice {@link Microservice}
