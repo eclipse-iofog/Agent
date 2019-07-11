@@ -96,6 +96,7 @@ public final class Configuration {
     private static ArchitectureType fogType;
     private static final Map<String, Object> defaultConfig;
     private static boolean developerMode;
+    private static String ipAddressExternal;
 
     public static boolean debugging = false;
 
@@ -763,7 +764,7 @@ public final class Configuration {
         setWatchdogEnabled(!getNode(WATCHDOG_ENABLED, configFile).equals("off"));
         configureFogType(getNode(FOG_TYPE, configFile));
         setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
-
+        setIpAddressExternal(GpsWebHandler.getExternalIp());
     }
 
     /**
@@ -1097,5 +1098,13 @@ public final class Configuration {
             LoggingService.logWarning(MODULE_NAME, "Error while starting supervisor: " +
                     exp.getMessage());
         }
+    }
+
+    public static String getIpAddressExternal() {
+        return ipAddressExternal;
+    }
+
+    public static void setIpAddressExternal(String ipAddressExternal) {
+        Configuration.ipAddressExternal = ipAddressExternal;
     }
 }

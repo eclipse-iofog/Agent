@@ -133,7 +133,7 @@ public class FieldAgent implements IOFogModule {
                 .add("systemTime", StatusReporter.getStatusReporterStatus().getSystemTime())
                 .add("lastStatusTime", StatusReporter.getStatusReporterStatus().getLastUpdate())
                 .add("ipAddress", IOFogNetworkInterface.getCurrentIpAddress())
-                .add("ipAddressExternal", GpsWebHandler.getExternalIp())
+                .add("ipAddressExternal", Configuration.getIpAddressExternal())
                 .add("processedMessages", StatusReporter.getMessageBusStatus().getProcessedMessages())
                 .add("microserviceMessageCounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerMicroservice())
                 .add("messageSpeed", StatusReporter.getMessageBusStatus().getAverageSpeed())
