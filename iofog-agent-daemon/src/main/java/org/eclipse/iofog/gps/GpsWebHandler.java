@@ -17,13 +17,11 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
-//TODO 3.27.18: move to gps microservice
 public class GpsWebHandler {
 
 	private static final String MODULE_NAME = "GPS Web Handler";
@@ -34,24 +32,48 @@ public class GpsWebHandler {
 	 * @return "lat,lon" string. lat and lon in DD GPS format
 	 */
 	public static String getGpsCoordinatesByExternalIp() {
-		String gpsCoord = null;
-		try (BufferedReader ipReader = new BufferedReader(new InputStreamReader(
-				new URL("http://ip-api.com/json").openStream()))) {
-			JsonReader jsonReader = Json.createReader(ipReader);
-			JsonObject response = jsonReader.readObject();
+		String gpsCoord = "";
+		try {
+			JsonObject response = getGeolocationData();
 
 			double lat = response.getJsonNumber("lat").doubleValue();
 			double lon = response.getJsonNumber("lon").doubleValue();
 
 			gpsCoord = lat + "," + lon;
-
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logError( MODULE_NAME,"Unable to set gps coordinates by external API http://ip-api.com/json. " +
 					"Setting empty gps coordinates.", e);
-			gpsCoord = "";
 		}
 
 		return gpsCoord;
+	}
+
+	/**
+	 * gets external ip from  http://ip-api.com/
+	 *
+	 * @return string. external ip address
+	 */
+	public static String getExternalIp() {
+		try {
+			JsonObject response = getGeolocationData();
+
+			String externalIp = response.getString("query");
+			return externalIp;
+		} catch (Exception e) {
+			return "";
+		}
+	}
+
+	/**
+	 * gets geolocation info from  http://ip-api.com/
+	 *
+	 * @return JsonObject
+	 */
+	private static JsonObject getGeolocationData() throws Exception {
+		BufferedReader ipReader = new BufferedReader(
+				new InputStreamReader(new URL("http://ip-api.com/json").openStream()));
+		JsonReader jsonReader = Json.createReader(ipReader);
+		return jsonReader.readObject();
 	}
 
 }
