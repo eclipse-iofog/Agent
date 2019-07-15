@@ -174,8 +174,7 @@ jobs:
           TargetFolder: $(Build.ArtifactStagingDirectory)
           Contents: |
             **/libs/**
-            packaging/**/*.deb
-            packaging/**/*.rpm
+            packaging/**/*
             Dockerfile
           OverWrite: true
         displayName: 'copy all artefacts'
