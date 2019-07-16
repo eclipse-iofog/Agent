@@ -53,6 +53,7 @@ jobs:
         displayName: 'Snyk monitor'
 
       - script: |
+          echo "##vso[task.setvariable variable=supplementaryTag]latest"
           if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
             echo "##vso[task.setvariable variable=supplementaryTag]rc-$(Build.SourceBranchName)"
           #If branch starts with ref/tags, apply version tag
