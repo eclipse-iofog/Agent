@@ -110,7 +110,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 				}
 			}
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request: " + e.getMessage(), e);
+			LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request", e);
 		}
 	}
 

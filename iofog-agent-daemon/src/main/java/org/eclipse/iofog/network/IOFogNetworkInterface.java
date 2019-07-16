@@ -51,7 +51,7 @@ public class IOFogNetworkInterface {
         try {
             inetAddress = Optional.of(getInetAddress());
         } catch (SocketException exp) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + exp.getMessage());
+            LoggingService.logError(MODULE_NAME, "Unable to find the IP address of the machine running ioFog", exp);
         }
         return inetAddress;
     }

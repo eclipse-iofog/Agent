@@ -61,7 +61,7 @@ public class MessagePublisher implements AutoCloseable{
 		try {
 			archive.save(bytes, message.getTimestamp());
 		} catch (Exception e) {
-			logError("Message Publisher (" + this.name + ")", "unable to archive massage --> " + e.getMessage(), e);
+			logError("Message Publisher (" + this.name + ")", "unable to archive massage", e);
 		}
 		for (String receiver : route.getReceivers()) {
 			ClientMessage msg = session.createMessage(false);

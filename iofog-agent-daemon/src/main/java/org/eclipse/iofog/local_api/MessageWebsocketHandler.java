@@ -161,8 +161,7 @@ public class MessageWebsocketHandler {
 							buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
 							ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 						} catch (Exception e) {
-							LoggingService.logInfo(MODULE_NAME, "wrong message format  " + e.getMessage());
-							LoggingService.logInfo(MODULE_NAME, "Validation fail");
+							LoggingService.logError(MODULE_NAME, "wrong message format, validation failed", e);
 						}
 					}
 					return;

@@ -3,6 +3,7 @@ package org.eclipse.iofog.local_api;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import org.apache.http.util.TextUtils;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -73,6 +74,7 @@ public class ApiHandlerHelpers {
         try (BufferedReader reader = new BufferedReader(new FileReader(LOCAL_API_TOKEN_PATH))) {
             line = reader.readLine();
         } catch (IOException e) {
+            LoggingService.logError("Local API", "unable to load api token", e);
             System.out.println("Local API access token is missing, try to re-install Agent.");
         }
 
