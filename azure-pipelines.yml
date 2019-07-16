@@ -13,7 +13,7 @@ trigger:
 
 variables:
   repository: 'focal-freedom-236620/agent'
-  buildTag: $(Build.BuildId)
+  buildTag: b-$(Build.BuildId)
   branchTag: $(Build.SourceBranchName)
   releaseCandidate: 'rc1'
 
