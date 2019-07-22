@@ -299,8 +299,8 @@ public class ProcessManager implements IOFogModule {
 				task.incrementRetries();
 				addTask(task);
 			} else {
-				String msg = format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString());
-				logWarning(msg);
+				Exception err = new Exception(format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString()));
+				logError(err.getMessage(), err);
 			}
 		}
 	}

@@ -52,13 +52,13 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
     @Override
     public FullHttpResponse call() throws Exception {
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-            LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
+            LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
         final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
         if (contentTypeError != null) {
-            LoggingService.logWarning(MODULE_NAME, contentTypeError);
+            LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
         }
 

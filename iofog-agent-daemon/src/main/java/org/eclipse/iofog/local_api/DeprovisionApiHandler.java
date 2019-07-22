@@ -52,7 +52,7 @@ public class DeprovisionApiHandler implements Callable<FullHttpResponse> {
     @Override
     public FullHttpResponse call() throws Exception {
         if (!ApiHandlerHelpers.validateMethod(this.req, DELETE)) {
-            LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
+            LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 

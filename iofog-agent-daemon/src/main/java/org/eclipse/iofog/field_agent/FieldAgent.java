@@ -956,7 +956,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private JsonObject buildProvisionFailResponse(String message, Exception e) {
-        logWarning("Provisioning failed - " + e.getMessage());
+        logError("Provisioning failed", e);
         return Json.createObjectBuilder()
                 .add("status", "failed")
                 .add("errorMessage", message)

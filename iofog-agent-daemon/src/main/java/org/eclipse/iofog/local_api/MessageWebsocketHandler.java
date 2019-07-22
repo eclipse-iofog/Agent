@@ -66,7 +66,7 @@ public class MessageWebsocketHandler {
 		String publisherId;
 
 		if (tokens.length < 5) {
-			LoggingService.logWarning(MODULE_NAME, " Missing ID or ID value in URL ");
+			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ", new Exception());
 			return;
 		} else {
 			publisherId = tokens[4].trim().split("\\?")[0];
@@ -212,7 +212,7 @@ public class MessageWebsocketHandler {
 			buffer1.writeBytes(bytesMsg);
 			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 		} else {
-			LoggingService.logWarning(MODULE_NAME, "No active real-time websocket found for " + receiverId);
+			LoggingService.logError(MODULE_NAME, "No active real-time websocket found for " + receiverId, new Exception());
 		}
 
 	}
