@@ -52,13 +52,13 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 */
 	private FullHttpResponse handleGetConfigurationRequest() {
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logWarning(MODULE_NAME, contentTypeError);
+			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -88,7 +88,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} else {
 			String errorMsg = "No configuration found for the id " + receiverId;
-			LoggingService.logWarning(MODULE_NAME, errorMsg);
+			LoggingService.logError(MODULE_NAME, errorMsg, new Exception());
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 	}

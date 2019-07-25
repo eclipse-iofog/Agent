@@ -19,9 +19,8 @@ import org.eclipse.iofog.utils.functional.Pair;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.net.*;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.NETWORK_INTERFACE;
 
@@ -33,9 +32,9 @@ public class IOFogNetworkInterface {
 	private static final String MODULE_NAME = "IOFogNetworkInterface";
 
     private static final String UNABLE_TO_GET_IP_ADDRESS = "Unable to get ip address. Please check network connection";
-    private static String dockerBridgeInterfaceName = DockerUtil.getInstance().getDockerBridgeName();
+    private static String dockerBridgeInterfaceName = "bridge";
 
-	/**
+    /**
      * returns IPv4 host address of IOFog network interface
      *
      * @return {@link Inet4Address}
@@ -51,7 +50,7 @@ public class IOFogNetworkInterface {
         try {
             inetAddress = Optional.of(getInetAddress());
         } catch (SocketException exp) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to find the IP address of the machine running ioFog: " + exp.getMessage());
+            LoggingService.logError(MODULE_NAME, "Unable to find the IP address of the machine running ioFog", exp);
         }
         return inetAddress;
     }
@@ -86,8 +85,28 @@ public class IOFogNetworkInterface {
         }
     }
 
+    private static void setDockerBridgeInterfaceName() throws Exception {
+        // Docker-Java#listNetworksCmd() stucks forever on ARM when docker url is set to unix domain
+        // Adding a timeout
+        Runnable getDockerBridgeInterfaceName = new Thread(() -> {
+            dockerBridgeInterfaceName = DockerUtil.getInstance().getDockerBridgeName();
+        });
+
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Future future = executor.submit(getDockerBridgeInterfaceName);
+        executor.shutdown();
+
+        try {
+            future.get(1, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            dockerBridgeInterfaceName = null;
+        }
+    }
+
     private static Pair<NetworkInterface, InetAddress> getOSNetworkInterface() {
         try {
+            setDockerBridgeInterfaceName();
+
             URL controllerUrl = new URL(Configuration.getControllerUrl());
             NetworkInterface dockerBridgeNetworkInterface = null;
 

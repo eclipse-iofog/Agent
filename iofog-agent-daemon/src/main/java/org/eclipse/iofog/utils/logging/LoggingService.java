@@ -14,6 +14,7 @@ package org.eclipse.iofog.utils.logging;
 
 import io.sentry.Sentry;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
@@ -97,9 +98,9 @@ public final class LoggingService {
         }
 
         if (Configuration.debugging || logger == null) {
-            System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
+            System.out.println(String.format("%s : %s (%s) - Exception: %s - Stack trace: %s", moduleName, msg, new Date(System.currentTimeMillis()), e.getMessage(), ExceptionUtils.getStackTrace(e)));
         } else {
-            logger.log(Level.SEVERE, String.format("[%s] : %s", moduleName, msg));
+            logger.log(Level.SEVERE, String.format("[%s] : %s - Exception: %s - Stack trace: %s", moduleName, msg, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
         }
     }
 
@@ -137,7 +138,7 @@ public final class LoggingService {
                 writer.writeArray(builder.build());
                 return true;
             } catch (Exception e) {
-                logWarning(MODULE_NAME, "Exception while saving sentry-cache.json file: " + e.getMessage());
+                logError(MODULE_NAME, "Exception while saving sentry-cache.json file", e);
                 return false;
             }
 
@@ -213,7 +214,7 @@ public final class LoggingService {
                 sentryExceptionCache.add(jsonString.getString());
             }
         } catch (Exception e) {
-            logWarning(MODULE_NAME, "Exception while loading sentry-cache.json file: " + e.getMessage());
+            logError(MODULE_NAME, "Exception while loading sentry-cache.json file", e);
         }
     }
 

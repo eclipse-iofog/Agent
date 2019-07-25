@@ -98,7 +98,7 @@ public class ProcessManager implements IOFogModule {
 			try {
 				Thread.sleep(Configuration.getMonitorContainersStatusFreqSeconds() * 1000);
 			} catch (InterruptedException e) {
-				logInfo("Error while sleeping thread : " + e.getMessage());
+				logError("Error while sleeping thread", e);
 			}
 			logInfo("Monitoring containers");
 
@@ -276,7 +276,7 @@ public class ProcessManager implements IOFogModule {
 					try {
 						tasks.wait();
 					} catch (InterruptedException e) {
-						logWarning(e.getMessage());
+						logError(e.getMessage(), e);
 					}
 					logInfo("NEW TASK RECEIVED");
 					newTask = tasks.poll();
@@ -286,7 +286,7 @@ public class ProcessManager implements IOFogModule {
 				containerManager.execute(newTask);
 				logInfo(newTask.getAction() + " action completed for container " + newTask.getMicroserviceUuid());
 			} catch (Exception e) {
-				logWarning(newTask.getAction() + " unsuccessfully container with name " + newTask.getMicroserviceUuid() + " , error: " + e.getMessage());
+				logError(newTask.getAction() + " was not successful. container name: " + newTask.getMicroserviceUuid(), e);
 
 				retryTask(newTask);
 			}
@@ -299,8 +299,8 @@ public class ProcessManager implements IOFogModule {
 				task.incrementRetries();
 				addTask(task);
 			} else {
-				String msg = format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString());
-				logWarning(msg);
+				Exception err = new Exception(format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString()));
+				logError(err.getMessage(), err);
 			}
 		}
 	}

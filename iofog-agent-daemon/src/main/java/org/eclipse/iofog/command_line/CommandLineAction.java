@@ -114,7 +114,7 @@ public enum CommandLineAction {
 				status = FieldAgent.getInstance().deProvision(false);
 			} catch (Exception e) {
 				status = "Error";
-				LoggingService.logInfo(MODULE_NAME, "error de-provisioning");
+				LoggingService.logError(MODULE_NAME, "error de-provisioning", e);
 			}
 			Tracker.getInstance().handleEvent(TrackingEventType.DEPROVISION, status);
 			return format(getDeprovisionMessage(), status);
@@ -195,6 +195,7 @@ public enum CommandLineAction {
 					try {
 						resetToDefault();
 					} catch (Exception e) {
+						LoggingService.logError(MODULE_NAME, "Error resetting configurtion", e);
 						return "Error resetting configuration.";
 					}
 					return "Configuration has been reset to its defaults.";
