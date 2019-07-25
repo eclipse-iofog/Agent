@@ -60,6 +60,7 @@ public class GpsWebHandler {
 			String externalIp = response.getString("query");
 			return externalIp;
 		} catch (Exception e) {
+			logError(MODULE_NAME, "Unable to get external ip", e);
 			return "";
 		}
 	}

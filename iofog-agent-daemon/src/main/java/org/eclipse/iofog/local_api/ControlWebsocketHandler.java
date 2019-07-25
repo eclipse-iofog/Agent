@@ -57,7 +57,7 @@ public class ControlWebsocketHandler {
 		String id;
 
 		if (tokens.length < 5) {
-			LoggingService.logWarning(MODULE_NAME, " Missing ID or ID value in URL ");
+			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ", new Exception());
 			return;
 		} else {
 			id = tokens[4].trim();

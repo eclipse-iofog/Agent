@@ -209,7 +209,7 @@ public class Tracker implements IOFogModule {
                 try {
                     HttpResponse response = httpClient.execute(postMethod);
                 } catch (IOException e) {
-                    logWarning(e.getMessage());
+                    logError(e.getMessage(), e);
                 }
             }
         }

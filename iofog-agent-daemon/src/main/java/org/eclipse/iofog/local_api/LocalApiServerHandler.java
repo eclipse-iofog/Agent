@@ -86,7 +86,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 					MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
 					messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
 				} else {
-					LoggingService.logWarning(MODULE_NAME, "Cannot initiate real-time service: Context not found");
+					LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", new Exception());
 				}
 			} else if (msg instanceof HttpContent) {
 				HttpContent httpContent = (HttpContent) msg;
@@ -110,7 +110,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 				}
 			}
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request: " + e.getMessage(), e);
+			LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request", e);
 		}
 	}
 
@@ -216,7 +216,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 			return;
 		}
 
-		LoggingService.logWarning(MODULE_NAME, "Error: Request not found");
+		LoggingService.logError(MODULE_NAME, "Error: Request not found", new Exception());
 		ByteBuf	errorMsgBytes = ctx.alloc().buffer();
 		String errorMsg = " Request not found ";
 		errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
