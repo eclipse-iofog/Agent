@@ -81,7 +81,7 @@ public class Orchestrator {
             JsonObject result = getJSON(controllerUrl + "status");
             return !result.isNull("status");
         } catch (Exception exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
+            logError(MODULE_NAME, exp.getMessage(), exp);
             throw exp;
         }
     }

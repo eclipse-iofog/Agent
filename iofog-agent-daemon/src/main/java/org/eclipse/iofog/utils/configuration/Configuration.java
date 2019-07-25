@@ -13,6 +13,7 @@
 package org.eclipse.iofog.utils.configuration;
 
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
@@ -56,6 +57,7 @@ import static org.apache.commons.lang.StringUtils.*;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.*;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 
 /**
@@ -269,6 +271,7 @@ public final class Configuration {
             try {
                 res = getFirstNodeByTagName(param.getXmlTag(), document).getTextContent();
             } catch (Exception e) {
+                LoggingService.logError("Configuration", "Error getting node", e);
                 System.out.println("[" + MODULE_NAME + "] <" + param.getXmlTag() + "> "
                         + " item not found or defined more than once. Default value - " + param.getDefaultValue() + " will be used");
             }
@@ -710,7 +713,7 @@ public final class Configuration {
                     return true;
             }
         } catch (Exception e) {
-            logInfo(MODULE_NAME, "Error validating network interface : " + e.getMessage());
+            logError(MODULE_NAME, "Error validating network interface", e);
         }
         return false;
     }
@@ -1035,7 +1038,9 @@ public final class Configuration {
         try {
             Configuration.loadConfigSwitcher();
         } catch (Exception e) {
-            System.out.println("Error while parsing " + Constants.CONFIG_SWITCHER_PATH + ". " + e.getMessage());
+            System.out.println("Error while parsing " + Constants.CONFIG_SWITCHER_PATH);
+            System.out.println(e.getMessage());
+            System.out.println(ExceptionUtils.getFullStackTrace(e));
             System.exit(1);
         }
 
@@ -1044,9 +1049,12 @@ public final class Configuration {
         } catch (ConfigurationItemException e) {
             System.out.println("invalid configuration item(s).");
             System.out.println(e.getMessage());
+            System.out.println(ExceptionUtils.getFullStackTrace(e));
             System.exit(1);
         } catch (Exception e) {
-            System.out.println("Error while parsing " + Configuration.getCurrentConfigPath() + ". " + e.getMessage());
+            System.out.println("Error while parsing " + Configuration.getCurrentConfigPath());
+            System.out.println(e.getMessage());
+            System.out.println(ExceptionUtils.getFullStackTrace(e));
             System.exit(1);
         }
 
@@ -1095,8 +1103,7 @@ public final class Configuration {
             Supervisor supervisor = new Supervisor();
             supervisor.start();
         } catch (Exception exp) {
-            LoggingService.logWarning(MODULE_NAME, "Error while starting supervisor: " +
-                    exp.getMessage());
+            LoggingService.logError(MODULE_NAME, "Error while starting supervisor", exp);
         }
     }
 

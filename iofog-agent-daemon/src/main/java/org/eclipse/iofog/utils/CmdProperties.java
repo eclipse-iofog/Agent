@@ -40,14 +40,14 @@ public class CmdProperties {
         try (InputStream in = CmdProperties.class.getResourceAsStream(FILE_PATH)) {
             cmdProperties.load(in);
         } catch (IOException e) {
-            LoggingService.logInfo(MODULE_NAME, e.getMessage());
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         }
 
         versionProperties = new Properties();
         try (InputStream in = CmdProperties.class.getResourceAsStream(VERSION_FILE_PATH)) {
             versionProperties.load(in);
         } catch (IOException e) {
-            LoggingService.logInfo(MODULE_NAME, e.getMessage());
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         }
     }
 

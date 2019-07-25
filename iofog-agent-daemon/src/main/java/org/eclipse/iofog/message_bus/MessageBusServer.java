@@ -260,7 +260,7 @@ public class MessageBusServer {
 				try {
 					value.close();
 				} catch (ActiveMQException e) {
-					LoggingService.logInfo(MODULE_NAME, e.getMessage());
+					LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 				}
 			});
 		if (commandlineConsumer != null)
@@ -270,7 +270,7 @@ public class MessageBusServer {
 				try {
 					value.close();
 				} catch (ActiveMQException e) {
-					LoggingService.logInfo(MODULE_NAME, e.getMessage());
+					LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 				}
 			});
 		if (serverLocator != null)

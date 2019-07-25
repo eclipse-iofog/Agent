@@ -63,7 +63,7 @@ public class ImageDownloadManager {
                 imageFile.delete();
                 logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
             } catch (Exception e) {
-                logError(MODULE_NAME, "Unable send image snapshot path : " + e.getMessage(), e);
+                logError(MODULE_NAME, "Unable send image snapshot path", e);
             }
         }
     }
@@ -74,7 +74,7 @@ public class ImageDownloadManager {
         try {
             url = new URL("file://" + path);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            logError(MODULE_NAME, "Unable to load image", e);
         }
         File file = null;
         if ((url != null ? url.getPath() : null) != null) {

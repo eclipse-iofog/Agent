@@ -56,13 +56,13 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	 */
 	private FullHttpResponse handleQueryMessageRequest() {
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logWarning(MODULE_NAME, contentTypeError);
+			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -127,24 +127,29 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	 */
 	private void validateMessageQueryInput(JsonObject message) throws Exception{
 		if (!message.containsKey("id")) {
-			LoggingService.logWarning(MODULE_NAME, "id not found");
-			throw new Exception("Error: Missing input field id");
+			Exception err = new Exception("Error: Missing input field id");
+			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
+			throw err;
 		}
 
 		if (!(message.containsKey("timeframestart") && message.containsKey("timeframeend"))) {
-			LoggingService.logWarning(MODULE_NAME, "timeframestart or timeframeend not found");
-			throw new Exception("Error: Missing input field timeframe start or end");
+			Exception err = new Exception("Error: Missing input field timeframe start or end");
+			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
+			throw err;
 		}
 
 		if (!message.containsKey("publishers")) {
-			LoggingService.logWarning(MODULE_NAME, "Publisher not found");
-			throw new Exception("Error: Missing input field publishers");
+			Exception err = new Exception("Error: Missing input field publishers");
+			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
+			throw err;
 		}
 
 		try {
 			Long.parseLong(message.get("timeframestart").toString());
 		} catch (Exception e) {
-			throw new Exception("Error: Invalid value of timeframestart");
+			Exception err = new Exception("Error: Invalid value of timeframestart");
+			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
+			throw err;
 		}
 
 		try {

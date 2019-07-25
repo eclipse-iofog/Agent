@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 import static org.eclipse.iofog.utils.functional.Unit.UNIT;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 
 /**
@@ -145,7 +146,7 @@ public class SshProxyManager {
                 try {
                     Thread.sleep(Configuration.getMonitorSshTunnelStatusFreqSeconds() * 1000);
                 } catch (InterruptedException e) {
-                    logInfo(MODULE_NAME, "Error while sleeping thread : " + e.getMessage());
+                    logError(MODULE_NAME, "Error while sleeping thread", e);
                 }
             }
             if (!connection.isCloseFlag()) {

@@ -88,7 +88,7 @@ public class ContainerManager {
 			try {
 				docker.pullImage(microservice.getImageName(), registry);
 			} catch (Exception e) {
-				LoggingService.logInfo(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache");
+				LoggingService.logError(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache", e);
 				createContainer(microservice, false);
 				LoggingService.logInfo(MODULE_NAME, "created \"" + microservice.getImageName() + "\" from local cache");
 				return;
@@ -119,8 +119,8 @@ public class ContainerManager {
 			LoggingService.logInfo(MODULE_NAME, String.format("starting %s, status: %s", microservice.getImageName(), status));
 			microservice.setContainerIpAddress(docker.getContainerIpAddress(microservice.getContainerId()));
 		} catch (Exception ex) {
-			LoggingService.logWarning(MODULE_NAME,
-					String.format("Container \"%s\" not found - %s", microservice.getImageName(), ex.getMessage()));
+			LoggingService.logError(MODULE_NAME,
+					String.format("Container \"%s\" not found", microservice.getImageName()), ex);
 		}
 	}
 
@@ -165,8 +165,7 @@ public class ContainerManager {
 				try {
 					docker.removeImageById(imageId);
 				} catch (ConflictException ex) {
-					LoggingService.logInfo(MODULE_NAME, String.format("Image for container \"%s\" hasn't been removed", containerId));
-					LoggingService.logInfo(MODULE_NAME, ex.getMessage().replace("\n", ""));
+					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId), ex);
 				}
 			}
 

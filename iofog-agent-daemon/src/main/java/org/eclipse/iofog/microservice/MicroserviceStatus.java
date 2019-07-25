@@ -102,7 +102,7 @@ public class MicroserviceStatus {
 			try {
 				Thread.sleep(200);
 			} catch (InterruptedException exp) {
-				LoggingService.logWarning(MODULE_NAME, exp.getMessage());
+				LoggingService.logError(MODULE_NAME, exp.getMessage(), exp);
 			}
 
 			Optional<Statistics> statisticsAfter = docker.getContainerStats(containerId);

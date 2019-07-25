@@ -33,6 +33,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 public class MessageWebsocketReceiverClient implements Runnable{
 
@@ -100,7 +101,7 @@ public class MessageWebsocketReceiverClient implements Runnable{
 			Channel ch = b.connect(uri.getHost(), port).sync().channel();
 			handler.handshakeFuture().sync();
 		} catch (SSLException | InterruptedException | URISyntaxException e) {
-			// TODO Auto-generated catch block
+			LoggingService.logError("Message Socket Receiver", e.getMessage(), e);
 			e.printStackTrace();
 		}
 
