@@ -13,6 +13,7 @@
 package org.eclipse.iofog;
 
 import io.sentry.Sentry;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -121,7 +122,9 @@ public class Daemon {
         try {
             LoggingService.setupLogger();
         } catch (IOException e) {
-            System.out.println("Error starting logging service\n" + e.getMessage());
+            System.out.println("Error starting logging service");
+            System.out.println(e.getMessage());
+            System.out.println(ExceptionUtils.getFullStackTrace(e));
             System.exit(1);
         }
         LoggingService.logInfo(MODULE_NAME, "Configuration loaded.");
@@ -183,6 +186,8 @@ public class Daemon {
                 System.setOut(Constants.systemOut);
             }
         } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println(ExceptionUtils.getFullStackTrace(e));
             Sentry.capture(e);
         }
     }

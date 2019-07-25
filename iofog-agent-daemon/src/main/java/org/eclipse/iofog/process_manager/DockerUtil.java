@@ -88,7 +88,7 @@ public class DockerUtil {
             DockerClientConfig config = configBuilder.build();
             dockerClient = DockerClientBuilder.getInstance(config).build();
         } catch (Exception e) {
-            logError(MODULE_NAME, "Docker client initialization failed - " + e.getMessage(), e);
+            logError(MODULE_NAME, "Docker client initialization failed", e);
             throw e;
         }
         addDockerEventHandler();
@@ -103,7 +103,7 @@ public class DockerUtil {
                 dockerClient.close();
             }
         } catch (IOException e) {
-            logError(MODULE_NAME, "Docker client closing failed - " + e.getMessage(), e);
+            logError(MODULE_NAME, "Docker client closing failed", e);
         }
         initDockerClient();
     }
@@ -212,7 +212,7 @@ public class DockerUtil {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
             return inspect.getNetworkSettings().getIpAddress();
         } catch (Exception exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
+            logError(MODULE_NAME, exp.getMessage(), exp);
             throw exp;
         }
     }
@@ -327,7 +327,7 @@ public class DockerUtil {
         try (StatsCallback statscallback = statsCmd.exec(stats)) {
             countDownLatch.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException | IOException e) {
-            LoggingService.logWarning(MODULE_NAME, e.getMessage());
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         }
         return Optional.ofNullable(stats.getStats());
     }
@@ -407,7 +407,7 @@ public class DockerUtil {
             ContainerState status = inspectInfo.getState();
             result = Optional.ofNullable(status.getStatus());
         } catch (Exception exp) {
-            logWarning(MODULE_NAME, exp.getMessage());
+            logError(MODULE_NAME, exp.getMessage(), exp);
         }
         return result;
     }

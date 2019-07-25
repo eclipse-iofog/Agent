@@ -192,7 +192,7 @@ public class FieldAgent implements IOFogModule {
             } catch (ForbiddenException e) {
                 deProvision(true);
             } catch (Exception e) {
-                logError("Unable to send status : " + e.getMessage(), e);
+                logError("Unable to send status ", e);
             }
         }
     };
@@ -217,14 +217,14 @@ public class FieldAgent implements IOFogModule {
                 try {
                     orchestrator.request("strace", RequestType.PUT, null, json);
                 } catch (Exception e) {
-                    logError("Unable send strace logs : " + e.getMessage(), e);
+                    logError("Unable send strace logs ", e);
                 }
             }
 
             try {
                 Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
             } catch (InterruptedException e) {
-                logWarning(e.getMessage());
+                logError(e.getMessage(), e);
             }
         }
     };
@@ -233,7 +233,7 @@ public class FieldAgent implements IOFogModule {
         try {
             orchestrator.request("tracking", RequestType.POST, null, events);
         } catch (Exception e) {
-            logWarning("Unable to send tracking logs : " + e.getMessage());
+            logError("Unable to send tracking logs", e);
         }
     }
 
@@ -278,7 +278,7 @@ public class FieldAgent implements IOFogModule {
                     verificationFailed(e);
                     continue;
                 } catch (Exception e) {
-                    logError("Unable to get changes : " + e.getMessage(), e);
+                    logError("Unable to get changes ", e);
                     continue;
                 }
 
@@ -335,7 +335,7 @@ public class FieldAgent implements IOFogModule {
 
                 initialization = false;
             } catch (Exception e) {
-                logInfo("Error getting changes list : " + e.getMessage());
+                logError("Error getting changes list", e);
             }
         }
     };
@@ -348,7 +348,7 @@ public class FieldAgent implements IOFogModule {
         try {
             orchestrator.request("delete-node", RequestType.DELETE, null, null);
         } catch (Exception e) {
-            logInfo("Can't send delete node command");
+            logError("Can't send delete node command", e);
         }
         deProvision(false);
     }
@@ -385,7 +385,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, "Unable to get version command : " + e.getMessage(), e);
+            LoggingService.logError(MODULE_NAME, "Unable to get version command", e);
         }
     }
 
@@ -407,7 +407,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, "Unable to get diagnostics updates : " + e.getMessage(), e);
+            LoggingService.logError(MODULE_NAME, "Unable to get diagnostics updates", e);
         }
     }
 
@@ -457,7 +457,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            logError("Unable to get registries : " + e.getMessage(), e);
+            logError("Unable to get registries", e);
         }
     }
 
@@ -536,12 +536,12 @@ public class FieldAgent implements IOFogModule {
                 microserviceManager.setLatestMicroservices(microservices);
                 return microservices;
             } catch (Exception e) {
-                logError("Unable to parse microservices: " + e.getMessage(), e);
+                logError("Unable to parse microservices", e);
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            logError("Unable to get microservices: " + e.getMessage(), e);
+            logError("Unable to get microservices", e);
         }
 
         return new ArrayList<>();
@@ -651,7 +651,7 @@ public class FieldAgent implements IOFogModule {
             verificationFailed(e);
         } catch (Exception e) {
             verificationFailed(e);
-            logWarning("Error pinging for controller: " + e.getMessage());
+            logError("Error pinging for controller", e);
         }
         return false;
     }
@@ -666,7 +666,7 @@ public class FieldAgent implements IOFogModule {
                 logInfo("Ping controller");
                 ping();
             } catch (Exception e) {
-                logWarning("Exception pinging controller : " + e.getMessage());
+                logError("Exception pinging controller", e);
             }
         }
     };
@@ -689,7 +689,7 @@ public class FieldAgent implements IOFogModule {
             }
             return sb.toString();
         } catch (Exception e) {
-            logError("Error computing checksum : " + e.getMessage(), e);
+            logError("Error computing checksum", e);
             return "";
         }
     }
@@ -744,7 +744,7 @@ public class FieldAgent implements IOFogModule {
         try (JsonWriter writer = Json.createWriter(new OutputStreamWriter(new FileOutputStream(filename), UTF_8))) {
             writer.writeObject(object);
         } catch (IOException e) {
-            logWarning("Error saving data to file '" + filename + "': " + e.getMessage());
+            logError("Error saving data to file '" + filename + "'", e);
         }
     }
 
@@ -834,7 +834,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            logError("Unable to get ioFog config : " + e.getMessage(), e);
+            logError("Unable to get ioFog config ", e);
         }
     }
 
@@ -887,7 +887,7 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
         } catch (Exception e) {
-            logError("Unable to post ioFog config : " + e.getMessage(), e);
+            logError("Unable to post ioFog config ", e);
         }
     }
 
@@ -903,7 +903,7 @@ public class FieldAgent implements IOFogModule {
                 JsonObject response = orchestrator.request("tunnel", RequestType.GET, null, null);
                 result = response.getJsonObject("proxy");
             } catch (Exception e) {
-                LoggingService.logError(MODULE_NAME, "Unable to get proxy config : " + e.getMessage(), e);
+                LoggingService.logError(MODULE_NAME, "Unable to get proxy config ", e);
             }
         }
 
@@ -956,7 +956,7 @@ public class FieldAgent implements IOFogModule {
     }
 
     private JsonObject buildProvisionFailResponse(String message, Exception e) {
-        logWarning("Provisioning failed - " + e.getMessage());
+        logError("Provisioning failed", e);
         return Json.createObjectBuilder()
                 .add("status", "failed")
                 .add("errorMessage", message)
@@ -990,7 +990,7 @@ public class FieldAgent implements IOFogModule {
             } catch (CertificateException | SSLHandshakeException e) {
                 verificationFailed(e);
             } catch (Exception e) {
-                logError("Unable to make deprovision request : " + e.getMessage(), e);
+                logError("Unable to make deprovision request ", e);
             }
         }
 
@@ -1000,7 +1000,7 @@ public class FieldAgent implements IOFogModule {
             Configuration.setAccessToken("");
             Configuration.saveConfigUpdates();
         } catch (Exception e) {
-            logInfo("Error saving config updates : " + e.getMessage());
+            logError("Error saving config updates", e);
         }
         microserviceManager.clear();
         notifyModules();
@@ -1031,7 +1031,7 @@ public class FieldAgent implements IOFogModule {
         try {
             postFogConfig();
         } catch (Exception e) {
-            logError("Error posting updated for config : " + e.getMessage(), e);
+            logError("Error posting updated for config ", e);
         }
         orchestrator.update();
     }
@@ -1150,7 +1150,7 @@ public class FieldAgent implements IOFogModule {
                     content.append(inputLine);
                 }
             } catch (IOException exc) {
-                // HAL is not enabled for this Iofog Agent at the moment
+                logWarning("HAL is not enabled for this Iofog Agent at the moment");
             }
             connection.get().disconnect();
         }
@@ -1166,7 +1166,7 @@ public class FieldAgent implements IOFogModule {
             connection.getResponseCode();
         } catch (IOException exc) {
             connection = null;
-            // HAL is not enabled for this Iofog Agent at the moment
+            logWarning("HAL is not enabled for this Iofog Agent at the moment");
         }
         return Optional.ofNullable(connection);
     }
@@ -1184,7 +1184,7 @@ public class FieldAgent implements IOFogModule {
             JsonObject jsonObject = orchestrator.request("image-snapshot", RequestType.GET, null, null);
             microserviceUuid = jsonObject.getString("uuid");
         } catch (Exception e) {
-            logError("Unable get name of image snapshot : " + e.getMessage(), e);
+            logError("Unable get name of image snapshot ", e);
         }
 
         if (SystemUtils.IS_OS_WINDOWS) {

@@ -49,7 +49,7 @@ public class InfoApiHandler implements Callable<FullHttpResponse> {
     @Override
     public FullHttpResponse call() throws Exception {
         if (!ApiHandlerHelpers.validateMethod(this.req, GET)) {
-            LoggingService.logWarning(MODULE_NAME, "Request method not allowed");
+            LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 

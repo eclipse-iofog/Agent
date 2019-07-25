@@ -102,7 +102,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 					removeArchives(amount);
 				}
 			} catch (Exception e) {
-			    logInfo("Error getting usage data : " + e.getMessage());
+			    logError("Error getting usage data", e);
             }
 		}
 	};
@@ -211,7 +211,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException exp) {
-			logWarning("Thread was interrupted : " + exp.getMessage());
+			logError("Thread was interrupted", exp);
 		}
 
 	}

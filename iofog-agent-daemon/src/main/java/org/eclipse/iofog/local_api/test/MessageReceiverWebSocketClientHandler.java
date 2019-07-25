@@ -26,6 +26,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundHandler<Object>{
 	
@@ -99,6 +100,7 @@ public class MessageReceiverWebSocketClientHandler extends SimpleChannelInboundH
 					message = new Message(Arrays.copyOfRange(byteArray, 5, totalMsgLength));
 					System.out.println(message.toString());
 				} catch (Exception e) {
+					LoggingService.logError("Message Socket Handler", "Wrong message format", e);
 					System.out.println("wrong message format  " + e.getMessage());
 				}
 
