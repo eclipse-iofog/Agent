@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.configuration;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
@@ -646,7 +647,9 @@ public final class Configuration {
                     + "Correct format is <DDD.DDDDD(lat),DDD.DDDDD(lon)> (GPS DD format)");
         }
 
-        setGpsCoordinates(gpsCoordinates.trim());
+        if (gpsCoordinates != null && !StringUtils.isBlank(gpsCoordinates) && !gpsCoordinates.isEmpty()) {
+            setGpsCoordinates(gpsCoordinates.trim());
+        }
         setGpsMode(mode);
     }
 
