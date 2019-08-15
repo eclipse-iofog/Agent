@@ -53,5 +53,7 @@
 
 	<gps>auto</gps>
 
+	<gps_coordinates>0,0</gps_coordinates>
+
 	<isolated_docker_container>off</isolated_docker_container>
 </config>

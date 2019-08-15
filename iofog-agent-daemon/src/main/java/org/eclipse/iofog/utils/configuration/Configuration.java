@@ -35,6 +35,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import sun.security.krb5.Config;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -219,6 +220,13 @@ public final class Configuration {
     }
 
     public static void setGpsCoordinates(String gpsCoordinates) {
+        if (Configuration.gpsCoordinates == null || StringUtils.isEmpty(Configuration.gpsCoordinates)) {
+            try {
+                Configuration.writeGpsToConfigFile();
+            } catch (Exception e) {
+                LoggingService.logError("Configuration", "Error saving GPS coordinates", e);
+            }
+        }
         Configuration.gpsCoordinates = gpsCoordinates;
     }
 
@@ -558,8 +566,8 @@ public final class Configuration {
                     setNode(WATCHDOG_ENABLED, value, configFile, configElement);
                     setWatchdogEnabled(!value.equals("off"));
                     break;
-                case GPS_COORDINATES:
-                    configureGps(value);
+                case GPS_MODE:
+                    configureGps(value, gpsCoordinates);
                     writeGpsToConfigFile();
                     break;
                 case FOG_TYPE:
@@ -620,21 +628,29 @@ public final class Configuration {
     /**
      * Configures GPS coordinates and mode in config file
      *
-     * @param gpsCoordinatesCommand coordinates special command or lat,lon string (prefer using DD GPS format)
+     * @param gpsModeCommand GPS Mode
+     * @param gpsCoordinatesCommand lat,lon string (prefer using DD GPS format)
      * @throws ConfigurationItemException
      */
-    private static void configureGps(String gpsCoordinatesCommand) throws ConfigurationItemException {
+    private static void configureGps(String gpsModeCommand, String gpsCoordinatesCommand) throws ConfigurationItemException {
         String gpsCoordinates;
         GpsMode currentMode;
 
-        if (GpsMode.AUTO.name().toLowerCase().equals(gpsCoordinatesCommand)) {
+        if (GpsMode.AUTO.name().toLowerCase().equals(gpsModeCommand)) {
             gpsCoordinates = GpsWebHandler.getGpsCoordinatesByExternalIp();
+            if ("".equals(gpsCoordinates) && (gpsCoordinatesCommand == null || !"".equals(gpsCoordinatesCommand))) {
+                gpsCoordinates = gpsCoordinatesCommand;
+            }
             currentMode = GpsMode.AUTO;
-        } else if (GpsMode.OFF.name().toLowerCase().equals(gpsCoordinatesCommand)) {
+        } else if (GpsMode.OFF.name().toLowerCase().equals(gpsModeCommand)) {
             gpsCoordinates = "";
             currentMode = GpsMode.OFF;
         } else {
-            gpsCoordinates = gpsCoordinatesCommand;
+            if (GpsMode.MANUAL.name().toLowerCase().equals(gpsModeCommand)) {
+                gpsCoordinates = gpsCoordinatesCommand;
+            } else {
+                gpsCoordinates = gpsModeCommand;
+            }
             currentMode = GpsMode.MANUAL;
         }
 
@@ -659,11 +675,8 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     public static void writeGpsToConfigFile() throws ConfigurationItemException {
-        if (gpsMode == GpsMode.MANUAL) {
-            setNode(GPS_COORDINATES, gpsCoordinates, configFile, configElement);
-        } else {
-            setNode(GPS_COORDINATES, gpsMode.name().toLowerCase(), configFile, configElement);
-        }
+        setNode(GPS_MODE, gpsMode.name().toLowerCase(), configFile, configElement);
+        setNode(GPS_COORDINATES, gpsCoordinates, configFile, configElement);
     }
 
     /**
@@ -762,7 +775,7 @@ public final class Configuration {
         setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY, configFile));
         setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT, configFile)));
         setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT, configFile)));
-        configureGps(getNode(GPS_COORDINATES, configFile));
+        configureGps(getNode(GPS_MODE, configFile), getNode(GPS_COORDINATES, configFile));
         setChangeFrequency(Integer.parseInt(getNode(CHANGE_FREQUENCY, configFile)));
         setDeviceScanFrequency(Integer.parseInt(getNode(DEVICE_SCAN_FREQUENCY, configFile)));
         setStatusFrequency(Integer.parseInt(getNode(STATUS_FREQUENCY, configFile)));
