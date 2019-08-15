@@ -926,6 +926,9 @@ public class FieldAgent implements IOFogModule {
         try {
             provisioningResult = orchestrator.provision(key);
 
+            microserviceManager.clear();
+            ProcessManager.getInstance().deleteRemainingMicroservices();
+
             StatusReporter.setFieldAgentStatus().setControllerStatus(OK);
             Configuration.setIofogUuid(provisioningResult.getString("uuid"));
             Configuration.setAccessToken(provisioningResult.getString("token"));
