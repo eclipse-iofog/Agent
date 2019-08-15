@@ -35,7 +35,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import sun.security.krb5.Config;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -60,7 +59,6 @@ import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
-import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 
 /**
  * holds IOFog instance configuration
