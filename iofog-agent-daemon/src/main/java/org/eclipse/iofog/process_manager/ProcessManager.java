@@ -167,7 +167,7 @@ public class ProcessManager implements IOFogModule {
 			});
 	}
 
-	private void deleteRemainingMicroservices() {
+	public void deleteRemainingMicroservices() {
 		Set<String> latestMicroserviceUuids = microserviceManager.getLatestMicroservices().stream()
 			.map(Microservice::getMicroserviceUuid)
 			.collect(Collectors.toSet());
@@ -205,7 +205,7 @@ public class ProcessManager implements IOFogModule {
 			} else if (!isCurrentMicroserviceUuid && !isLatestMicroserviceUuid) {
 				String containerName = DockerUtil.getIoFogContainerName(uuid);
 				Map<String, String> labels = runningContainersLabels.get(containerName);
-				if ((labels != null && labels.get("iofog-uuid") == Configuration.getIofogUuid()) || Configuration.isWatchdogEnabled()) {
+				if ((labels != null && Configuration.getIofogUuid().equals(labels.get("iofog-uuid"))) || Configuration.isWatchdogEnabled()) {
 					unknownMicroserviceUuids.add(uuid);
 				}
 			}
