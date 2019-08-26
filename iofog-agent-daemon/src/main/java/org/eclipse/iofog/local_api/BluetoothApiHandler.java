@@ -29,27 +29,27 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
-	private static final String MODULE_NAME = "Bluetooth API";
+    private static final String MODULE_NAME = "Bluetooth API";
 
-	private final FullHttpRequest req;
-	private final ByteBuf outputBuffer;
-	private final byte[] content;
-	private FullHttpResponse response;
+    private final FullHttpRequest req;
+    private final ByteBuf outputBuffer;
+    private final byte[] content;
+    private FullHttpResponse response;
 
-	
-	public BluetoothApiHandler(FullHttpRequest req, ByteBuf outputBuffer, byte[] content) {
-		this.req = req;
-		this.outputBuffer = outputBuffer;
-		this.content = content;
-	}
 
-	@Override
-	public FullHttpResponse call() throws Exception {
-		String host = "localhost";
-		int port = 10500;
-		
+    public BluetoothApiHandler(FullHttpRequest req, ByteBuf outputBuffer, byte[] content) {
+        this.req = req;
+        this.outputBuffer = outputBuffer;
+        this.content = content;
+    }
+
+    @Override
+    public FullHttpResponse call() throws Exception {
+        String host = "localhost";
+        int port = 10500;
+
         EventLoopGroup group = new NioEventLoopGroup(1);
-        
+
         try {
             Bootstrap b = new Bootstrap();
             b.option(ChannelOption.SO_REUSEADDR, true);
@@ -57,52 +57,52 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                     .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
-						protected void initChannel(SocketChannel ch) {
+                        protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new HttpClientCodec());
                             ch.pipeline().addLast(new HttpObjectAggregator(1048576));
                             ChannelInboundHandler handler = new SimpleChannelInboundHandler<HttpObject>() {
-								protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
-									if (msg instanceof HttpResponse) {
-										FullHttpResponse res = (FullHttpResponse) msg;
+                                protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
+                                    if (msg instanceof HttpResponse) {
+                                        FullHttpResponse res = (FullHttpResponse) msg;
 
-										outputBuffer.writeBytes(res.content());
-										response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, res.status(), outputBuffer);
-										HttpUtil.setContentLength(response, outputBuffer.readableBytes());
-										response.headers().set(res.headers());
-										ctx.channel().close().sync();
-									}
-								}
-							};
+                                        outputBuffer.writeBytes(res.content());
+                                        response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, res.status(), outputBuffer);
+                                        HttpUtil.setContentLength(response, outputBuffer.readableBytes());
+                                        response.headers().set(res.headers());
+                                        ctx.channel().close().sync();
+                                    }
+                                }
+                            };
                             ch.pipeline().addLast(handler);
                         }
                     });
 
             ByteBuf requestContent = Unpooled.copiedBuffer(content);
             try {
-				Channel channel = b.connect(host, port).sync().channel();
-				String endpoint = req.uri().substring(12);
-				FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.method(), endpoint, requestContent);
-				request.headers().set(req.headers());
-				channel.writeAndFlush(request).addListener(ChannelFutureListener.CLOSE);
-			} catch (Exception e) {
-            	throw e;
-			} finally {
-				ReferenceCountUtil.release(requestContent);
-			}
+                Channel channel = b.connect(host, port).sync().channel();
+                String endpoint = req.uri().substring(12);
+                FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.method(), endpoint, requestContent);
+                request.headers().set(req.headers());
+                channel.writeAndFlush(request).addListener(ChannelFutureListener.CLOSE);
+            } catch (Exception e) {
+                throw e;
+            } finally {
+                ReferenceCountUtil.release(requestContent);
+            }
         } catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         } finally {
             group.shutdownGracefully();
         }
 
         if (response == null) {
-    		String responseString = "{\"error\":\"unable to reach RESTblue container!\"}";
-    		outputBuffer.writeBytes(responseString.getBytes(UTF_8));
-    		response = ApiHandlerHelpers.notFoundResponse(outputBuffer, responseString);
-			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+            String responseString = "{\"error\":\"unable to reach RESTblue container!\"}";
+            outputBuffer.writeBytes(responseString.getBytes(UTF_8));
+            response = ApiHandlerHelpers.notFoundResponse(outputBuffer, responseString);
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         }
 
         return response;
-	}
+    }
 
 }
