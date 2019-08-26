@@ -55,7 +55,7 @@ public class MessageWebsocketWorker implements Runnable{
 			if(timeEllapsed > 20){
 				if(tryCount < 10){
 					sendRealTimeMessage(ctx);
-				}else{
+				} else {
 					WebSocketMap.unackMessageSendingMap.remove(ctx);
 					MessageBus.getInstance().disableRealTimeReceiving(WebsocketUtil.getIdForWebsocket(ctx, WebSocketMap.messageWebsocketMap));
 					WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.messageWebsocketMap);	

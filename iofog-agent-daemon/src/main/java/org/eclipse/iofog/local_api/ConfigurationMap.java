@@ -21,7 +21,7 @@ import java.util.Map;
  * @since 2016
  */
 public final class ConfigurationMap {
-	static Map<String, String> containerConfigMap = new HashMap<>();
+	public static Map<String, String> containerConfigMap = new HashMap<>();
 
 	private ConfigurationMap(){
 		throw new UnsupportedOperationException(ConfigurationMap.class + "could not be instantiated");

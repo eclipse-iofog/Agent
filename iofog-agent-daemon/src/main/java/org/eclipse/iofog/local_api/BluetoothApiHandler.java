@@ -20,6 +20,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.util.ReferenceCountUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.concurrent.Callable;
@@ -77,12 +78,17 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                     });
 
             ByteBuf requestContent = Unpooled.copiedBuffer(content);
-			Channel channel = b.connect(host, port).sync().channel();
-            String endpoint = req.uri().substring(12);
-            FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.method(), endpoint, requestContent);
-            request.headers().set(req.headers());
-            channel.writeAndFlush(request);
-            channel.closeFuture().sync();
+            try {
+				Channel channel = b.connect(host, port).sync().channel();
+				String endpoint = req.uri().substring(12);
+				FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, req.method(), endpoint, requestContent);
+				request.headers().set(req.headers());
+				channel.writeAndFlush(request).addListener(ChannelFutureListener.CLOSE);
+			} catch (Exception e) {
+            	throw e;
+			} finally {
+				ReferenceCountUtil.release(requestContent);
+			}
         } catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         } finally {

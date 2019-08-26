@@ -12,8 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.*;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,6 +20,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -66,27 +67,37 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		try {
 			if (msg instanceof FullHttpRequest) {
 				// full request
-				FullHttpRequest request = (FullHttpRequest) msg;
-				this.request = request;
-				ByteBuf content = request.content();
-				this.content = new byte[content.readableBytes()];
-				content.readBytes(this.content);
-				handleHttpRequest(ctx);
+				ByteBuf content = null;
+				try {
+					FullHttpRequest request = (FullHttpRequest) msg;
+					this.request = request;
+					content = request.content();
+					this.content = new byte[content.readableBytes()];
+					content.readBytes(this.content);
+					handleHttpRequest(ctx);
+				} finally {
+					release(content);
+					release(msg);
+				}
 			} else if (msg instanceof HttpRequest) {
 				// chunked request
 				if (this.baos == null)
 					this.baos = new ByteArrayOutputStream();
 				request = (HttpRequest) msg;
 			} else if (msg instanceof WebSocketFrame) {
-				String mapName = findContextMapName(ctx);
-				if (mapName != null && mapName.equals("control")) {
-					ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
-					controlSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-				} else if (mapName != null && mapName.equals("message")) {
-					MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
-					messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-				} else {
-					LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", new Exception());
+				try {
+					String mapName = findContextMapName(ctx);
+					if (mapName != null && mapName.equals("control")) {
+						ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
+						controlSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+					} else if (mapName != null && mapName.equals("message")) {
+						MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
+						messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+					} else {
+						LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", new Exception());
+					}
+				} finally {
+					release(msg);
 				}
 			} else if (msg instanceof HttpContent) {
 				HttpContent httpContent = (HttpContent) msg;
@@ -101,12 +112,19 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 						errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
 						sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
 						return;
+					} finally {
+						release(content);
 					}
 				}
 
 				if (msg instanceof LastHttpContent) {		// last chunk
 					this.content = baos.toByteArray();
-					handleHttpRequest(ctx);
+					baos = null;
+					try {
+						handleHttpRequest(ctx);
+					} finally {
+						release(request);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -277,6 +295,20 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
 		ChannelFuture f = ctx.channel().writeAndFlush(res);
 		if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
 			f.addListener(ChannelFutureListener.CLOSE);
+		}
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
+			throws Exception {
+		LoggingService.logError(MODULE_NAME, "Uncaught exception", cause);
+		FullHttpResponse response = ApiHandlerHelpers.internalServerErrorResponse(ctx.alloc().buffer(), cause.getMessage());
+		sendHttpResponse(ctx, request, response);
+	}
+
+	private void release(Object obj) {
+		if ((obj instanceof ReferenceCounted) && ((ReferenceCounted) obj).refCnt() > 0) {
+			ReferenceCountUtil.release(obj);
 		}
 	}
 }
