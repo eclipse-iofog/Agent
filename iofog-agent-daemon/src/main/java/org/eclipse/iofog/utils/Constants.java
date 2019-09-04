@@ -116,4 +116,25 @@ public class Constants {
     public static final String SENTRY_CACHE_PATH = CONFIG_DIR + "sentry-cache.json";
 
     public static final int CACHE_REGISTRY_ID = 2;
+    
+    public static final String FIELD_AGENT_PING_CONTROLLER = "FAPC";
+    public static final String FIELD_AGENT_GET_CHANGE_LIST = "FACL";
+    public static final String FIELD_AGENT_POST_STATUS = "FAPS";
+    public static final String FIELD_AGENT_POST_DIAGNOSTIC = "FAPD";
+	public static final String MESSAGE_BUS_CALCULATE_SPEED = "MBCS";
+	public static final String MESSAGE_BUS_CHECK_MESSAGE_SERVER_STATUS = "MBSS";
+	public static final String STATUS_REPORTER_SET_STATUS_REPORTER_SYSTEM_TIME = "SRST";
+	public static final String LOCAL_API_EVENT = "LAPI";
+	public static final String RESOURCE_CONSUMPTION_MANAGER_GET_USAGE_DATA = "RCUD";
+	public static final String PROCESS_MANAGER_CONTAINERS_MONITOR = "PMCM";
+	public static final String PROCESS_MANAGER_CHECK_TASKS = "PMCT";
+	public static final String RESOURCE_MANAGER_GET_USAGE_DATA = "RMUD";
+	public static final String TRACKER_SENDER_TASK = "TTST";
+	public static final String TRACKER_TIMER_LOGGER_TASK = "TTLT";
+	public static final String LOCAL_API_CONTROL_WEBSOCKET_WORKER = "LACW";
+	public static final String LOCAL_API_MESSAGE_WEBSOCKET_WORKER = "LAMW";
+
+	public static final String SHUTDOWN_HOOK = "SDHK";
+
+	public static final String SUPERVISOR_CHECK_LOCAL_API_STATUS = "SCLA";
 }

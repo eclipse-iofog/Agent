@@ -13,6 +13,7 @@
 package org.eclipse.iofog.supervisor;
 
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
@@ -23,6 +24,7 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.tracking.TrackingInfoUtils;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -55,14 +57,19 @@ public class Supervisor implements IOFogModule {
 	 *
 	 */
 	private Runnable checkLocalApiStatus = () -> {
+		Thread.currentThread().setName(Constants.SUPERVISOR_CHECK_LOCAL_API_STATUS);
+		logInfo("Check local API status");
 		try {
 			if (localApiThread != null && localApiThread.getState() == TERMINATED) {
-				localApiThread = new Thread(localApi, "Local Api");
+				localApiThread = new Thread(localApi, Constants.LOCAL_API_EVENT);
+				logInfo("Start local API : status not running");
 				localApiThread.start();
+				logInfo("Finished starting local API  ");
 			}
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+			LoggingService.logError(MODULE_NAME, "", new AgentSystemException(e.getMessage(), e));
 		}
+		logInfo("Finished Checking local API status");
 	};
 
 	public Supervisor() {}
@@ -73,9 +80,9 @@ public class Supervisor implements IOFogModule {
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
-        Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, "shutdown hook"));
+        Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, Constants.SHUTDOWN_HOOK));
 
-        logInfo("starting status reporter");
+        logInfo("Starting Supervisor");
         StatusReporter.start();
         StatusReporter.setSupervisorStatus().setModuleStatus(STATUS_REPORTER, RUNNING);
 
@@ -94,34 +101,37 @@ public class Supervisor implements IOFogModule {
         startModule(messageBus);
 
         localApi = LocalApi.getInstance();
-        localApiThread = new Thread(localApi, "Local Api");
+        localApiThread = new Thread(localApi, Constants.LOCAL_API_EVENT);
         localApiThread.start();
         scheduler.scheduleAtFixedRate(checkLocalApiStatus, 0, 10, SECONDS);
 
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
-		logInfo("Started");
+		logInfo("Started Supervisor");
         Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
 
         operationDuration();
     }
 
 	private void startModule(IOFogModule ioFogModule) throws Exception {
-        logInfo(" starting " + ioFogModule.getModuleName());
+        logInfo(" Starting " + ioFogModule.getModuleName());
         StatusReporter.setSupervisorStatus().setModuleStatus(ioFogModule.getModuleIndex(), STARTING);
         ioFogModule.start();
         StatusReporter.setSupervisorStatus().setModuleStatus(ioFogModule.getModuleIndex(), RUNNING);
+        logInfo(" Started " + ioFogModule.getModuleName());
     }
 
     private void operationDuration(){
+    	logInfo(" Start checking operation duration ");
         while (true) {
 			StatusReporter.setSupervisorStatus()
 				.setOperationDuration(currentTimeMillis());
             try {
                 Thread.sleep(Configuration.getStatusReportFreqSeconds() * 1000);
             } catch (InterruptedException e) {
-                logError(e.getMessage(), e);
+                logError("Error checking operation duration", new AgentSystemException("Error checking operation duration", e));
                 System.exit(1);
             }
+            logInfo(" Finished checking operation duration ");
         }
     }
 
@@ -132,10 +142,13 @@ public class Supervisor implements IOFogModule {
 	private final Runnable shutdownHook = () -> {
 		try {
 			scheduler.shutdownNow();
-			localApi.stopServer();
-			messageBus.stop();
+			if (localApi != null)
+				localApi.stopServer();
+			if (messageBus != null)
+				messageBus.stop();
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+			LoggingService.logError(MODULE_NAME, "Error in shutdown hook to stop message bus and local api",
+					new AgentSystemException("Error in shutdown hook to stop message bus and local api", e));
 		}
 	};
 

@@ -7,9 +7,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static org.eclipse.iofog.utils.Constants.TRACKING_UUID_PATH;
 
@@ -67,6 +69,7 @@ public class Tracker implements IOFogModule {
     }
 
     private String initTrackingUuid() {
+    	LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
         String uuid;
         Path path = Paths.get(TRACKING_UUID_PATH);
         try {
@@ -84,17 +87,20 @@ public class Tracker implements IOFogModule {
                 return createTrackingUuidFile(path);
             }
         } catch (IOException e) {
-            logError("Error while getting tracking UUID", e);
+            logError("Error while getting tracking UUID", 
+            		new AgentSystemException("Error while getting tracking UUID", e));
             uuid = "temp_" + generateRandomString(32);
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished initializing tracking uuid :" + uuid);
         return uuid;
     }
 
     private String createTrackingUuidFile(Path path) throws IOException {
+    	LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File :");
         String uuid;
         uuid = generateRandomString(32);
         Files.write(path, uuid.getBytes(), StandardOpenOption.CREATE);
-
+        LoggingService.logInfo(MODULE_NAME, "Finished create Tracking Uuid File :" + uuid);
         return uuid;
     }
 
@@ -112,6 +118,7 @@ public class Tracker implements IOFogModule {
     }
 
     public void handleEvent(TrackingEventType type, String value) {
+    	LoggingService.logInfo(MODULE_NAME, "start handle event");
         JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         JsonObject valueObj = null;
         switch (type) {
@@ -132,11 +139,14 @@ public class Tracker implements IOFogModule {
                 throw new IllegalArgumentException("unhandled event type");
         }
         handleEvent(type, valueObj);
+        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
     }
 
     public void handleEvent(TrackingEventType type, JsonStructure value) {
+    	LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
         TrackingEvent event = new TrackingEvent(this.uuid, new Date().getTime(), type, value);
         eventsStorage.pushEvent(event);
+        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
     }
 
     private class TimeLoggerTask extends TimerTask {
@@ -159,8 +169,11 @@ public class Tracker implements IOFogModule {
 
         @Override
         public void run() {
+        	Thread.currentThread().setName(Constants.TRACKER_TIMER_LOGGER_TASK);
+        	LoggingService.logInfo(MODULE_NAME, "start time logger task");
             iterations++;
             handleEvent(TrackingEventType.TIME, Long.toString(iterations * timeTrackingTimeoutMin));
+            LoggingService.logInfo(MODULE_NAME, "Finished time logger task");
         }
     }
 
@@ -184,6 +197,8 @@ public class Tracker implements IOFogModule {
 
         @Override
         public void run() {
+        	Thread.currentThread().setName(Constants.TRACKER_SENDER_TASK);
+        	LoggingService.logInfo(MODULE_NAME, "start sender task");
             List<TrackingEvent> events = eventsStorage.popAllEvents();
             JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
 
@@ -209,9 +224,11 @@ public class Tracker implements IOFogModule {
                 try {
                     HttpResponse response = httpClient.execute(postMethod);
                 } catch (IOException e) {
-                    logError(e.getMessage(), e);
+                    logError(e.getMessage(), 
+                    		new AgentSystemException("Error in sender task", e));
                 }
             }
+            LoggingService.logInfo(MODULE_NAME, "Finished sender task");
         }
     }
 }

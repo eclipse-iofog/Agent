@@ -14,6 +14,7 @@
 package org.eclipse.iofog.resource_manager;
 
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -41,7 +42,7 @@ public class ResourceManager implements IOFogModule {
     }
 
     public void start() {
-        new Thread(getUsageData, "ResourceManager : GetUsageData").start();
+        new Thread(getUsageData, Constants.RESOURCE_MANAGER_GET_USAGE_DATA).start();
 
         LoggingService.logInfo(MODULE_NAME, "started");
     }
@@ -49,13 +50,16 @@ public class ResourceManager implements IOFogModule {
     private Runnable getUsageData = () -> {
 
         while (true) {
+        	LoggingService.logInfo(MODULE_NAME, "Start getting usage data");
             FieldAgent.getInstance().sendUSBInfoFromHalToController();
             FieldAgent.getInstance().sendHWInfoFromHalToController();
             try {
                 Thread.sleep(Configuration.getDeviceScanFrequency() * 1000);
             } catch (InterruptedException e) {
-                LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+                LoggingService.logError(MODULE_NAME, "", 
+                		new AgentSystemException("Error getting usage data", e));
             }
+            LoggingService.logInfo(MODULE_NAME, "Finished getting usage data");
         }
     };
 

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
@@ -69,6 +70,7 @@ public class LocalApi implements Runnable {
 	 */
 	@Override
 	public void run() {
+		LoggingService.logInfo(MODULE_NAME, "Start local api server");
 		StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STARTING);
 
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
@@ -81,10 +83,10 @@ public class LocalApi implements Runnable {
 			server.start();
 		} catch (Exception e) {
 				stopServer();
-				LoggingService.logError(MODULE_NAME, "Unable to start local api server", e);
+				LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Unable to start local api server", e));
 				StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STOPPED);
 		}
-
+		LoggingService.logInfo(MODULE_NAME, "Local api server started");
 	}
 
 	/**
@@ -108,6 +110,7 @@ public class LocalApi implements Runnable {
 	 * Called by field-agtent.
 	 */
 	public void update(){
+		LoggingService.logInfo(MODULE_NAME, "Start the real-time control signal when the cofiguration updated");
 		Map<String, String> oldConfigMap = new HashMap<>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
@@ -115,5 +118,6 @@ public class LocalApi implements Runnable {
 		newConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		handler.initiateControlSignal(oldConfigMap, newConfigMap);
+		LoggingService.logInfo(MODULE_NAME, "Finish the real-time control signal when the cofiguration updated");
 	}
 }

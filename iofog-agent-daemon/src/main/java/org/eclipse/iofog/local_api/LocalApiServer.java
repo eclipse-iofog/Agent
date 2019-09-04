@@ -45,6 +45,7 @@ public final class LocalApiServer {
 	 * Create and start local api server
 	 */
 	public void start() throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start Create and start local api server");
 		final SslContext sslCtx;
 		if (SSL) {
 			SelfSignedCertificate ssc = new SelfSignedCertificate();
@@ -70,12 +71,14 @@ public final class LocalApiServer {
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished Create and start local api server");
 	}
 
 	/**
 	 * Stop local api server
 	 */
 	void stop() {
+		LoggingService.logInfo(MODULE_NAME, "Start stopping Local api server\n");
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 		LoggingService.logInfo(MODULE_NAME, "Local api server stopped\n");

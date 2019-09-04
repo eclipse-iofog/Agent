@@ -16,6 +16,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
@@ -35,15 +36,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.*;
@@ -88,6 +92,7 @@ public final class Configuration {
     private static float logDiskLimit;
     private static String logDiskDirectory;
     private static int logFileCount;
+    private static String logLevel;
     private static int statusFrequency;
     private static int changeFrequency;
     private static int deviceScanFrequency;
@@ -277,8 +282,13 @@ public final class Configuration {
             String res = null;
             try {
                 res = getFirstNodeByTagName(param.getXmlTag(), document).getTextContent();
-            } catch (Exception e) {
-                LoggingService.logError("Configuration", "Error getting node", e);
+            } catch (ConfigurationItemException e) {
+            	 LoggingService.logError(MODULE_NAME, "Error getting node", e);
+                 System.out.println("[" + MODULE_NAME + "] <" + param.getXmlTag() + "> "
+                         + " item not found or defined more than once. Default value - " + param.getDefaultValue() + " will be used");
+             
+            }catch (Exception e) {
+                LoggingService.logError(MODULE_NAME, "Error getting node", e);
                 System.out.println("[" + MODULE_NAME + "] <" + param.getXmlTag() + "> "
                         + " item not found or defined more than once. Default value - " + param.getDefaultValue() + " will be used");
             }
@@ -500,6 +510,10 @@ public final class Configuration {
                     setNode(LOG_FILE_COUNT, value, configFile, configElement);
                     setLogFileCount(Integer.parseInt(value));
                     break;
+                case LOG_LEVEL:
+                    setNode(LOG_FILE_COUNT, value, configFile, configElement);
+                    setLogLevel(value);
+                    break;
                 case STATUS_FREQUENCY:
                     try {
                         intValue = Integer.parseInt(value);
@@ -660,11 +674,11 @@ public final class Configuration {
             throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
                     + "Correct format is <DDD.DDDDD(lat),DDD.DDDDD(lon)> (GPS DD format)");
         }
-
+        setGpsMode(mode);
         if (gpsCoordinates != null && !StringUtils.isBlank(gpsCoordinates) && !gpsCoordinates.isEmpty()) {
             setGpsCoordinates(gpsCoordinates.trim());
         }
-        setGpsMode(mode);
+       
     }
 
     /**
@@ -749,13 +763,28 @@ public final class Configuration {
     /**
      * loads configuration from config.xml file
      *
-     * @throws Exception
+     * @throws ConfigurationItemException
      */
-    public static void loadConfig() throws Exception {
+    public static void loadConfig() throws ConfigurationItemException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        DocumentBuilder builder = null;
+        try {
+			builder = factory.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", e);
+			throw new ConfigurationItemException("Error while parsing config xml", e);
+		}
 
-        configFile = builder.parse(getCurrentConfigPath());
+        try {
+        	configFile = builder.parse(getCurrentConfigPath());
+		} catch (SAXException e) {
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", e);
+			throw new ConfigurationItemException("Error while parsing config xml", e);
+		} catch (IOException e) {
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", e);
+			throw new ConfigurationItemException("Error while parsing config xml", e);
+		}
+        
         configFile.getDocumentElement().normalize();
 
         configElement = (Element) getFirstNodeByTagName("config", configFile);
@@ -773,6 +802,7 @@ public final class Configuration {
         setLogDiskDirectory(getNode(LOG_DISK_DIRECTORY, configFile));
         setLogDiskLimit(Float.parseFloat(getNode(LOG_DISK_CONSUMPTION_LIMIT, configFile)));
         setLogFileCount(Integer.parseInt(getNode(LOG_FILE_COUNT, configFile)));
+        setLogLevel(getNode(LOG_LEVEL, configFile));       
         configureGps(getNode(GPS_MODE, configFile), getNode(GPS_COORDINATES, configFile));
         setChangeFrequency(Integer.parseInt(getNode(CHANGE_FREQUENCY, configFile)));
         setDeviceScanFrequency(Integer.parseInt(getNode(DEVICE_SCAN_FREQUENCY, configFile)));
@@ -787,13 +817,27 @@ public final class Configuration {
     /**
      * loads configuration about current config from config-switcher.xml
      *
-     * @throws Exception
+     * @throws ConfigurationItemException
      */
-    public static void loadConfigSwitcher() throws Exception {
+    public static void loadConfigSwitcher() throws ConfigurationItemException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        DocumentBuilder builder = null;
+		try {
+			builder = factory.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", e);
+			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
+		}
 
-        configSwitcherFile = builder.parse(CONFIG_SWITCHER_PATH);
+        try {
+			configSwitcherFile = builder.parse(CONFIG_SWITCHER_PATH);
+		} catch (SAXException e) {
+			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", e);
+			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
+		} catch (IOException e) {
+			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", e);
+			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
+		}
         configSwitcherFile.getDocumentElement().normalize();
 
         configSwitcherElement = (Element) getFirstNodeByTagName(SWITCHER_ELEMENT, configSwitcherFile);
@@ -898,6 +942,8 @@ public final class Configuration {
             } catch (IllegalArgumentException e) {
                 currentSwitcherState = ConfigSwitcherState.DEFAULT;
                 System.out.println("Error while reading current switcher state, using default config");
+                LoggingService.logError(MODULE_NAME, "Error while reading current switcher state, using default config", e);
+                throw new ConfigurationItemException("Error while reading current switcher state, using default config", e);
             }
         }
     }
@@ -987,10 +1033,12 @@ public final class Configuration {
         result.append(buildReportLine(getConfigParamMessage(LOG_DISK_DIRECTORY), logDiskDirectory));
         // log files count
         result.append(buildReportLine(getConfigParamMessage(LOG_FILE_COUNT), format("%d", logFileCount)));
+        // log files level
+        result.append(buildReportLine(getConfigParamMessage(LOG_LEVEL), format("%s", logLevel)));
         // status update frequency
         result.append(buildReportLine(getConfigParamMessage(STATUS_FREQUENCY), format("%d", statusFrequency)));
         // status update frequency
-        result.append(buildReportLine(getConfigParamMessage(CHANGE_FREQUENCY), format("%d", changeFrequency)));
+        result.append(buildReportLine(getConfigParamMessage(CHANGE_FREQUENCY), format("%d", changeFrequency))); 
         // scan devices frequency
         result.append(buildReportLine(getConfigParamMessage(DEVICE_SCAN_FREQUENCY), format("%d", deviceScanFrequency)));
         // post diagnostics frequency
@@ -1051,6 +1099,11 @@ public final class Configuration {
     public static void load() {
         try {
             Configuration.loadConfigSwitcher();
+        } catch (ConfigurationItemException e) {
+            System.out.println("invalid configuration item(s).");
+            System.out.println(e.getMessage());
+            System.out.println(ExceptionUtils.getFullStackTrace(e));
+            System.exit(1);
         } catch (Exception e) {
             System.out.println("Error while parsing " + Constants.CONFIG_SWITCHER_PATH);
             System.out.println(e.getMessage());
@@ -1112,13 +1165,15 @@ public final class Configuration {
     }
 
     public static void setupSupervisor() {
-        LoggingService.logInfo(MODULE_NAME, "starting supervisor");
+        LoggingService.logInfo(MODULE_NAME, "Starting supervisor");
+        
         try {
             Supervisor supervisor = new Supervisor();
             supervisor.start();
         } catch (Exception exp) {
-            LoggingService.logError(MODULE_NAME, "Error while starting supervisor", exp);
+            LoggingService.logError(MODULE_NAME, "Error while starting supervisor", new AgentSystemException("Error while starting supervisor", exp));
         }
+        LoggingService.logInfo(MODULE_NAME, "Started supervisor");
     }
 
     public static String getIpAddressExternal() {
@@ -1128,4 +1183,12 @@ public final class Configuration {
     public static void setIpAddressExternal(String ipAddressExternal) {
         Configuration.ipAddressExternal = ipAddressExternal;
     }
+
+	public static String getLogLevel() {
+		return logLevel;
+	}
+
+	public static void setLogLevel(String logLevel) {
+		Configuration.logLevel = logLevel;
+	}
 }

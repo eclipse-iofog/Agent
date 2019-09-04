@@ -15,6 +15,7 @@ package org.eclipse.iofog.local_api;
 import java.util.Map;
 
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import io.netty.buffer.ByteBuf;
@@ -38,6 +39,7 @@ public class ControlWebsocketWorker  implements Runnable{
 	 */
 	@Override
 	public void run() {
+		Thread.currentThread().setName(Constants.LOCAL_API_CONTROL_WEBSOCKET_WORKER);
 		LoggingService.logInfo(MODULE_NAME,"Initiating control signals for unacknowledged signals");
 
 		for(Map.Entry<ChannelHandlerContext, ControlSignalSentInfo> contextEntry : WebSocketMap.unackControlSignalsMap.entrySet()){
@@ -60,6 +62,7 @@ public class ControlWebsocketWorker  implements Runnable{
 				}
 			}
 		}
+		LoggingService.logInfo(MODULE_NAME,"Finished Initiating control signals for unacknowledged signals");
 	}
 
 	/**
@@ -68,6 +71,7 @@ public class ControlWebsocketWorker  implements Runnable{
 	 * @return void
 	 */
 	private void initiateControlSignal(ChannelHandlerContext ctx) {
+		LoggingService.logInfo(MODULE_NAME, "Start Helper to initiate control sinals");
 		ControlSignalSentInfo controlSignalSentInfo = WebSocketMap.unackControlSignalsMap.get(ctx);
 		int tryCount = controlSignalSentInfo.getSendTryCount() + 1;
 		WebSocketMap.unackControlSignalsMap.put(ctx, new ControlSignalSentInfo(tryCount, System.currentTimeMillis()));
@@ -75,5 +79,6 @@ public class ControlWebsocketWorker  implements Runnable{
 		ByteBuf buffer1 = ctx.alloc().buffer();
 		buffer1.writeByte(OPCODE_CONTROL_SIGNAL);
 		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
+		LoggingService.logInfo(MODULE_NAME, "Finished Helper to initiate control sinals");
 	}
 }

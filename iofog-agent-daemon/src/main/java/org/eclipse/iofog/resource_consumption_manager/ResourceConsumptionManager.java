@@ -15,7 +15,9 @@ package org.eclipse.iofog.resource_consumption_manager;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Pair;
 
@@ -74,9 +76,10 @@ public class ResourceConsumptionManager implements IOFogModule {
 	private Runnable getUsageData = () -> {
 		while (true) {
 			try {
+				logInfo("Get usage data");
 				Thread.sleep(Configuration.getGetUsageDataFreqSeconds() * 1000);
 
-				logInfo("Get usage data");
+				logInfo("Start Get usage data");
 
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();
@@ -101,9 +104,12 @@ public class ResourceConsumptionManager implements IOFogModule {
 					float amount = diskUsage - (diskLimit * 0.75f);
 					removeArchives(amount);
 				}
+			}catch (InterruptedException e) {
+				logError("Error getting usage data Thread interrupted", new AgentSystemException(e.getMessage(), e));
 			} catch (Exception e) {
-			    logError("Error getting usage data", e);
+			    logError("Error getting usage data", new AgentSystemException(e.getMessage(), e));
             }
+			logInfo("Finished Get usage data");
 		}
 	};
 
@@ -113,6 +119,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 * @param amount - disk space to be freed in bytes
 	 */
 	private void removeArchives(float amount) {
+		logInfo("Start remove archives : " + amount);
 		String archivesDirectory = Configuration.getDiskDirectory() + "messages/archive/";
 		
 		final File workingDirectory = new File(archivesDirectory);
@@ -136,6 +143,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 					break;
 			}
 		}
+		logInfo("Finished remove archives : ");
 	}
 	
 	/**
@@ -144,9 +152,11 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 * @return memory usage in bytes
 	 */
 	private float getMemoryUsage() {
+		logInfo("Start get memory usage");
 		Runtime runtime = Runtime.getRuntime();
 		long allocatedMemory = runtime.totalMemory();
 		long freeMemory = runtime.freeMemory();
+		logInfo("Finished get memory usage : "+ (allocatedMemory - freeMemory));
 		return (allocatedMemory - freeMemory);
 	}
 
@@ -156,6 +166,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 * @return float number between 0-100
 	 */
 	private float getCpuUsage() {
+		logInfo("Start get cpu usage");
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		String processId = processName.split("@")[0];
 
@@ -164,33 +175,40 @@ public class ResourceConsumptionManager implements IOFogModule {
 			Pair<Long, Long> before = parseStat(processId);
 			waitForSecond();
 			Pair<Long, Long> after = parseStat(processId);
-
+			logInfo("Finished get cpu usage : " + 100f * (after._1() - before._1()) / (after._2() - before._2()));
 			return 100f * (after._1() - before._1()) / (after._2() - before._2());
 		} else if (SystemUtils.IS_OS_WINDOWS) {
 			String response = getWinCPUUsage(processId);
+			logInfo("Finished get cpu usage : " + response);
 			return Float.parseFloat(response);
 		} else {
+			logInfo("Finished get cpu usage : " + 0);
 			return 0f;
 		}
 	}
 
 	private long getSystemAvailableMemory() {
+		logInfo("Start get system available memory");
 	    if (SystemUtils.IS_OS_WINDOWS) {
+	    	logInfo("Finished get system available memory : " + 0);
 	        return 0;
         }
 		final String MEM_AVAILABLE = "grep 'MemAvailable' /proc/meminfo | awk '{print $2}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(MEM_AVAILABLE);
 		long memInKB = Long.parseLong(parseOneLineResult(resultSet));
+		logInfo("Finished get system available memory : " + memInKB * 1024);
 		return memInKB * 1024;
 	}
 
 	private float getTotalCpu() {
+		logInfo("Start get total cpu");
         if (SystemUtils.IS_OS_WINDOWS) {
             return 0;
         }
         // @see https://github.com/Leo-G/DevopsWiki/wiki/How-Linux-CPU-Usage-Time-and-Percentage-is-calculated
 		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {print usage}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
+		logInfo("Finished get total cpu : " + Float.parseFloat(parseOneLineResult(resultSet)));
 		return Float.parseFloat(parseOneLineResult(resultSet));
 	}
 
@@ -199,11 +217,13 @@ public class ResourceConsumptionManager implements IOFogModule {
 	}
 
 	private long getAvailableDisk() {
+		logInfo("Start get available disk");
 		File[] roots = File.listRoots();
 		long freeSpace = 0;
 		for (File f : roots) {
 			freeSpace += f.getUsableSpace();
 		}
+		logInfo("Finished get available disk : " + freeSpace);
 		return freeSpace;
 	}
 
@@ -211,12 +231,13 @@ public class ResourceConsumptionManager implements IOFogModule {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException exp) {
-			logError("Thread was interrupted", exp);
+			logError("Thread was interrupted", new AgentSystemException("Thread was interrupted", exp) );
 		}
 
 	}
 
 	private Pair<Long, Long> parseStat(String processId){
+		logInfo("Inisde parse Stat");
 		long time = 0, total = 0;
 
 		try {
@@ -243,7 +264,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		} catch (IOException exp) {
 		    logError("Error getting CPU usage : " + exp.getMessage(), exp);
 		}
-
+		logInfo("Finished parse Stat");
 		return Pair.of(time, total);
 	}
 
@@ -262,6 +283,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 * @return size in bytes
 	 */
 	private long directorySize(String name) {
+		logInfo("Inside get directory size");
 		File directory = new File(name);
 		if (!directory.exists())
 			return 0;
@@ -274,6 +296,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 			else if (file.isDirectory())
 				length += directorySize(file.getPath());
 		}
+		logInfo("Finished directory size : " + length);
 		return length;
 	}
 
@@ -282,9 +305,11 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 * 
 	 */
 	public void instanceConfigUpdated() {
+		logInfo("Start Configuration instance updated");
 		diskLimit = Configuration.getDiskLimit() * 1_000_000_000;
 		cpuLimit = Configuration.getCpuLimit();
 		memoryLimit = Configuration.getMemoryLimit() * 1_000_000;
+		logInfo("Finished Config updated");
 	}
 	
 	/**
@@ -292,9 +317,10 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 * 
 	 */
 	public void start() {
+		logInfo("Starting");
 		instanceConfigUpdated();
 
-		new Thread(getUsageData, "ResourceConsumptionManager : GetUsageData").start();
+		new Thread(getUsageData, Constants.RESOURCE_CONSUMPTION_MANAGER_GET_USAGE_DATA).start();
 
 		logInfo("started");
 	}
