@@ -6,3 +6,9 @@ iofog-agent.iml
 **/out
 .gradle
 packaging/iofog-agent/usr/bin/*.jar
+.classpath
+.settings
+iofog-agent-daemon/bin
+iofog-agent-client/bin
+iofog-version-controller/bin
+.vscode

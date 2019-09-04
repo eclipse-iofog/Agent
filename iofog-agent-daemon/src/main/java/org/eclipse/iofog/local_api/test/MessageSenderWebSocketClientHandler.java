@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api.test;
 
+import io.netty.util.ReferenceCountUtil;
 import org.bouncycastle.util.Arrays;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.utils.BytesUtil;
@@ -126,73 +127,77 @@ public class MessageSenderWebSocketClientHandler extends SimpleChannelInboundHan
 	}
 
 	private void sendRealTimeMessageTest(ChannelHandlerContext ctx){
-		System.out.println("In clienttest : sendRealTimeMessageTest");
-		System.out.println("Test Counter: " + testCounter);
-
 		ByteBuf buffer1 = Unpooled.buffer(1024);
-		buffer1.writeByte(OPCODE_MSG);
-
-		//Actual Message
-		//short version = 4;//version
-		String id = ""; //id
-		String tag = "Bosch Camera 8798797"; //tag
-		String messageGroupId = "group1"; //messageGroupId
-		Integer seqNum;
-		synchronized(this){
-			testCounter++;
-			seqNum = testCounter; //sequence number
-		}
-		Integer seqTot = 100; //sequence total
-		Byte priority = 5; //priority 
-		Long timestamp = (long)0; //timestamp
-		String publisher = publisherId; //publisher
-		String authid = "auth"; //authid
-		String authGroup = "authgrp"; //auth group
-		Long chainPos = (long)10; //chain position
-		String hash = "hashingggg";  //hash
-		String prevHash = "prevhashingggg"; //previous hash
-		String nounce = "nounceee";  //nounce
-		Integer diffTarget = 30;//difficultytarget
-		String infotype = "image/jpeg"; //infotype
-		String infoformat = "base64"; //infoformat
-		String contextData = "gghh";
-		String contentData = "sdkjhwrtiy8wrtgSDFOiuhsrgowh4touwsdhsDFDSKJhsdkljasjklweklfjwhefiauhw98p328testcounter";
-		
-		System.out.println("Publisher: " + publisherId + "," + "testcounter: " + testCounter);
-
-		Message m = new Message();
-		m.setId(id);
-		m.setTag(tag);
-		m.setMessageGroupId(messageGroupId);
-		m.setSequenceNumber(seqNum);
-		m.setSequenceTotal(seqTot);
-		m.setPriority(priority);
-		m.setTimestamp(timestamp);
-		m.setPublisher(publisher);
-		m.setAuthIdentifier(authid);
-		m.setAuthGroup(authGroup);
-		m.setChainPosition(chainPos);
-		m.setHash(hash);
-		m.setPreviousHash(prevHash);
-		m.setNonce(nounce);
-		m.setDifficultyTarget(diffTarget);
-		m.setInfoType(infotype);
-		m.setInfoFormat(infoformat);
-		m.setContextData(contextData.getBytes(UTF_8));
-		m.setContentData(contentData.getBytes(UTF_8));
-
-		//Send Total Length of IOMessage - 4 bytes
 		try {
-			byte[] bmsg = m.getBytes();
-			int totalMsgLength = bmsg.length;
-			System.out.println("Total message length: "+ totalMsgLength);
-			buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
-			buffer1.writeBytes(bmsg);
+			System.out.println("In clienttest : sendRealTimeMessageTest");
+			System.out.println("Test Counter: " + testCounter);
 
-			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-			System.out.println("Send RealTime Message : done");
-		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
+			buffer1.writeByte(OPCODE_MSG);
+
+			//Actual Message
+			//short version = 4;//version
+			String id = ""; //id
+			String tag = "Bosch Camera 8798797"; //tag
+			String messageGroupId = "group1"; //messageGroupId
+			Integer seqNum;
+			synchronized (this) {
+				testCounter++;
+				seqNum = testCounter; //sequence number
+			}
+			Integer seqTot = 100; //sequence total
+			Byte priority = 5; //priority
+			Long timestamp = (long) 0; //timestamp
+			String publisher = publisherId; //publisher
+			String authid = "auth"; //authid
+			String authGroup = "authgrp"; //auth group
+			Long chainPos = (long) 10; //chain position
+			String hash = "hashingggg";  //hash
+			String prevHash = "prevhashingggg"; //previous hash
+			String nounce = "nounceee";  //nounce
+			Integer diffTarget = 30;//difficultytarget
+			String infotype = "image/jpeg"; //infotype
+			String infoformat = "base64"; //infoformat
+			String contextData = "gghh";
+			String contentData = "sdkjhwrtiy8wrtgSDFOiuhsrgowh4touwsdhsDFDSKJhsdkljasjklweklfjwhefiauhw98p328testcounter";
+
+			System.out.println("Publisher: " + publisherId + "," + "testcounter: " + testCounter);
+
+			Message m = new Message();
+			m.setId(id);
+			m.setTag(tag);
+			m.setMessageGroupId(messageGroupId);
+			m.setSequenceNumber(seqNum);
+			m.setSequenceTotal(seqTot);
+			m.setPriority(priority);
+			m.setTimestamp(timestamp);
+			m.setPublisher(publisher);
+			m.setAuthIdentifier(authid);
+			m.setAuthGroup(authGroup);
+			m.setChainPosition(chainPos);
+			m.setHash(hash);
+			m.setPreviousHash(prevHash);
+			m.setNonce(nounce);
+			m.setDifficultyTarget(diffTarget);
+			m.setInfoType(infotype);
+			m.setInfoFormat(infoformat);
+			m.setContextData(contextData.getBytes(UTF_8));
+			m.setContentData(contentData.getBytes(UTF_8));
+
+			//Send Total Length of IOMessage - 4 bytes
+			try {
+				byte[] bmsg = m.getBytes();
+				int totalMsgLength = bmsg.length;
+				System.out.println("Total message length: " + totalMsgLength);
+				buffer1.writeBytes(BytesUtil.integerToBytes(totalMsgLength));
+				buffer1.writeBytes(bmsg);
+
+				ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
+				System.out.println("Send RealTime Message : done");
+			} catch (Exception exp) {
+				logError(MODULE_NAME, exp.getMessage(), exp);
+			}
+		} finally {
+			ReferenceCountUtil.release(buffer1);
 		}
 	}
 

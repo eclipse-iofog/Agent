@@ -24,6 +24,7 @@ import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.ReferenceCountUtil;
 
 public class WebSocketClientHandlerControl extends SimpleChannelInboundHandler<Object>{
 	
@@ -78,10 +79,14 @@ public class WebSocketClientHandlerControl extends SimpleChannelInboundHandler<O
 			if(opcode == OPCODE_CONTROL_SIGNAL.intValue()){
 				System.out.println("Control signal received....");
 				ByteBuf buffer1 = Unpooled.buffer(126);
-				//buffer1.writeByte(OPCODE_ACK);
-				System.out.println(ctx);
-				System.out.println("Acknowledgment send... ");
-				ch.writeAndFlush(new TextWebSocketFrame(buffer1));
+				try {
+					//buffer1.writeByte(OPCODE_ACK);
+					System.out.println(ctx);
+					System.out.println("Acknowledgment send... ");
+					ch.writeAndFlush(new TextWebSocketFrame(buffer1));
+				} finally {
+					ReferenceCountUtil.release(buffer1);
+				}
 				return;
 			}
 		} 

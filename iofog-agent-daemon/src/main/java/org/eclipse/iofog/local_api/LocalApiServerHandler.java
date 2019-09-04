@@ -12,8 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.*;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,6 +20,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -35,248 +36,285 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Provide handler for the rest api and real-time websocket depending on the request.
- * Send response after processing. 
+ * Send response after processing.
+ *
  * @author ashita
  * @since 2016
  */
 
-public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object>{
+public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
 
-	private static final String MODULE_NAME = "Local API";
+    private static final String MODULE_NAME = "Local API";
 
-	private HttpRequest request;
-	private ByteArrayOutputStream baos;
-	private byte[] content;
+    private HttpRequest request;
+    private ByteArrayOutputStream baos;
+    private byte[] content;
 
-	private final EventExecutorGroup executor;
+    private final EventExecutorGroup executor;
 
-	public LocalApiServerHandler(EventExecutorGroup executor) {
-		super(false);
-		this.executor = executor;
-	}
+    public LocalApiServerHandler(EventExecutorGroup executor) {
+        super(false);
+        this.executor = executor;
+    }
 
-	/**
-	 * Method to be called on channel initializing
-	 * Can take requests as HttpRequest or Websocket frame
-	 * @param ctx ChannelHandlerContext
-	 * @param msg Object
-	 */
-	@Override
-	public void channelRead0(ChannelHandlerContext ctx, Object msg){
-		try {
-			if (msg instanceof FullHttpRequest) {
-				// full request
-				FullHttpRequest request = (FullHttpRequest) msg;
-				this.request = request;
-				ByteBuf content = request.content();
-				this.content = new byte[content.readableBytes()];
-				content.readBytes(this.content);
-				handleHttpRequest(ctx);
-			} else if (msg instanceof HttpRequest) {
-				// chunked request
-				if (this.baos == null)
-					this.baos = new ByteArrayOutputStream();
-				request = (HttpRequest) msg;
-			} else if (msg instanceof WebSocketFrame) {
-				String mapName = findContextMapName(ctx);
-				if (mapName != null && mapName.equals("control")) {
-					ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
-					controlSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-				} else if (mapName != null && mapName.equals("message")) {
-					MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
-					messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-				} else {
-					LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", new Exception());
-				}
-			} else if (msg instanceof HttpContent) {
-				HttpContent httpContent = (HttpContent) msg;
-				ByteBuf content = httpContent.content();
-				if (content.isReadable()) {
-					try {
-						content.readBytes(this.baos, content.readableBytes());
-					} catch (IOException e) {
-						String errorMsg = "Out of memory";
-						LoggingService.logError(MODULE_NAME, errorMsg, e);
-						ByteBuf	errorMsgBytes = ctx.alloc().buffer();
-						errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
-						sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
-						return;
-					}
-				}
+    /**
+     * Method to be called on channel initializing
+     * Can take requests as HttpRequest or Websocket frame
+     *
+     * @param ctx ChannelHandlerContext
+     * @param msg Object
+     */
+    @Override
+    public void channelRead0(ChannelHandlerContext ctx, Object msg) {
+        try {
+            if (msg instanceof FullHttpRequest) {
+                // full request
+                ByteBuf content = null;
+                try {
+                    FullHttpRequest request = (FullHttpRequest) msg;
+                    this.request = request;
+                    content = request.content();
+                    this.content = new byte[content.readableBytes()];
+                    content.readBytes(this.content);
+                    handleHttpRequest(ctx);
+                } finally {
+                    release(content);
+                    release(msg);
+                }
+            } else if (msg instanceof HttpRequest) {
+                // chunked request
+                if (this.baos == null)
+                    this.baos = new ByteArrayOutputStream();
+                request = (HttpRequest) msg;
+            } else if (msg instanceof WebSocketFrame) {
+                try {
+                    String mapName = findContextMapName(ctx);
+                    if (mapName != null && mapName.equals("control")) {
+                        ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
+                        controlSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+                    } else if (mapName != null && mapName.equals("message")) {
+                        MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
+                        messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+                    } else {
+                        LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", new Exception());
+                    }
+                } finally {
+                    release(msg);
+                }
+            } else if (msg instanceof HttpContent) {
+                HttpContent httpContent = (HttpContent) msg;
+                ByteBuf content = httpContent.content();
+                if (content.isReadable()) {
+                    try {
+                        content.readBytes(this.baos, content.readableBytes());
+                    } catch (IOException e) {
+                        String errorMsg = "Out of memory";
+                        LoggingService.logError(MODULE_NAME, errorMsg, e);
+                        ByteBuf errorMsgBytes = ctx.alloc().buffer();
+                        errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
+                        sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
+                        return;
+                    } finally {
+                        release(content);
+                    }
+                }
 
-				if (msg instanceof LastHttpContent) {		// last chunk
-					this.content = baos.toByteArray();
-					handleHttpRequest(ctx);
-				}
-			}
-		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request", e);
-		}
-	}
+                if (msg instanceof LastHttpContent) {        // last chunk
+                    this.content = baos.toByteArray();
+                    baos = null;
+                    try {
+                        handleHttpRequest(ctx);
+                    } finally {
+                        release(request);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request", e);
+        }
+    }
 
-	/**
-	 * Method to be called if the request is HttpRequest 
-	 * Pass the request to the handler call as per the request URI
-	 * @param ctx ChannelHandlerContext
-	 */
-	private void handleHttpRequest(ChannelHandlerContext ctx) {
-		if (request.uri().equals("/v2/config/get")) {
-			Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+    /**
+     * Method to be called if the request is HttpRequest
+     * Pass the request to the handler call as per the request URI
+     *
+     * @param ctx ChannelHandlerContext
+     */
+    private void handleHttpRequest(ChannelHandlerContext ctx) {
+        if (request.uri().equals("/v2/config/get")) {
+            Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().equals("/v2/messages/next")) {
-			Callable<FullHttpResponse> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().equals("/v2/messages/next")) {
+            Callable<FullHttpResponse> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().equals("/v2/messages/new")) {
-			Callable<FullHttpResponse> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().equals("/v2/messages/new")) {
+            Callable<FullHttpResponse> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().equals("/v2/messages/query")) {
-			Callable<FullHttpResponse> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().equals("/v2/messages/query")) {
+            Callable<FullHttpResponse> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/restblue")) {
-			Callable<FullHttpResponse> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/restblue")) {
+            Callable<FullHttpResponse> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/log")) {
-			Callable<FullHttpResponse> callable = new LogApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/log")) {
+            Callable<FullHttpResponse> callable = new LogApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/commandline")) {
-			Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/commandline")) {
+            Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().equals("/v2/gps")) {
-			Callable<FullHttpResponse> callable = new GpsApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().equals("/v2/gps")) {
+            Callable<FullHttpResponse> callable = new GpsApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/control/socket")) {
-			ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
-			controlSocket.handle(ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/control/socket")) {
+            ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
+            controlSocket.handle(ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/message/socket")) {
-			MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
-			messageSocket.handle(ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/message/socket")) {
+            MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
+            messageSocket.handle(ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/config")) {
-			Callable<FullHttpResponse> callable = new ConfigApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/config")) {
+            Callable<FullHttpResponse> callable = new ConfigApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/provision")) {
-			Callable<FullHttpResponse> callable = new ProvisionApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/provision")) {
+            Callable<FullHttpResponse> callable = new ProvisionApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/deprovision")) {
-			Callable<FullHttpResponse> callable = new DeprovisionApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/deprovision")) {
+            Callable<FullHttpResponse> callable = new DeprovisionApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/info")) {
-			Callable<FullHttpResponse> callable = new InfoApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/info")) {
+            Callable<FullHttpResponse> callable = new InfoApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/status")) {
-			Callable<FullHttpResponse> callable = new StatusApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/status")) {
+            Callable<FullHttpResponse> callable = new StatusApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		if (request.uri().startsWith("/v2/version")) {
-			Callable<FullHttpResponse> callable = new VersionApiHandler(request, ctx.alloc().buffer(), content);
-			runTask(callable, ctx, request);
-			return;
-		}
+        if (request.uri().startsWith("/v2/version")) {
+            Callable<FullHttpResponse> callable = new VersionApiHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            return;
+        }
 
-		LoggingService.logError(MODULE_NAME, "Error: Request not found", new Exception());
-		ByteBuf	errorMsgBytes = ctx.alloc().buffer();
-		String errorMsg = " Request not found ";
-		errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
-		sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
+        LoggingService.logError(MODULE_NAME, "Error: Request not found", new Exception());
+        ByteBuf errorMsgBytes = ctx.alloc().buffer();
+        String errorMsg = " Request not found ";
+        errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
+        sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
 
-	}
+    }
 
-	private String findContextMapName(ChannelHandlerContext ctx) {
-		if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap))
-			return "control";
-		else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap))
-			return "message";
-		else 
-			return null;
-	}
+    private String findContextMapName(ChannelHandlerContext ctx) {
+        if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap))
+            return "control";
+        else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap))
+            return "message";
+        else
+            return null;
+    }
 
-	/**
-	 * Method to be called on channel complete 
-	 * @param ctx ChannelHandlerContext
-	 */
-	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) {
-		ctx.flush();
-	}
+    /**
+     * Method to be called on channel complete
+     *
+     * @param ctx ChannelHandlerContext
+     */
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        ctx.flush();
+    }
 
-	/**
-	 * Helper for request thread
-	 * @param callable
-	 * @param ctx
-	 * @param req
-	 */
-	private void runTask(Callable<FullHttpResponse> callable, ChannelHandlerContext ctx, HttpRequest req) {
-		final Future<FullHttpResponse> future = executor.submit(callable);
-		future.addListener((GenericFutureListener<Future<Object>>) futureListener -> {
-			if (futureListener.isSuccess()) {
-				sendHttpResponse(ctx, req, (FullHttpResponse) futureListener.get());
-			} else {
-				ctx.fireExceptionCaught(futureListener.cause());
-				ctx.close();
-			}
-		});
-	}
+    /**
+     * Helper for request thread
+     *
+     * @param callable
+     * @param ctx
+     * @param req
+     */
+    private void runTask(Callable<FullHttpResponse> callable, ChannelHandlerContext ctx, HttpRequest req) {
+        final Future<FullHttpResponse> future = executor.submit(callable);
+        future.addListener((GenericFutureListener<Future<Object>>) futureListener -> {
+            if (futureListener.isSuccess()) {
+                sendHttpResponse(ctx, req, (FullHttpResponse) futureListener.get());
+            } else {
+                ctx.fireExceptionCaught(futureListener.cause());
+                ctx.close();
+            }
+        });
+    }
 
-	/**
-	 * Provide the response as per the requests
-	 * @param ctx
-	 * @param req
-	 * @param res
-	 */
-	private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) {
-		if (res.status().code() != 200) {
-			ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
-			res.content().writeBytes(buf);
-			buf.release();
-			HttpUtil.setContentLength(res, res.content().readableBytes());
-		}
+    /**
+     * Provide the response as per the requests
+     *
+     * @param ctx
+     * @param req
+     * @param res
+     */
+    private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) {
+        if (res.status().code() != 200) {
+            ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
+            res.content().writeBytes(buf);
+            buf.release();
+            HttpUtil.setContentLength(res, res.content().readableBytes());
+        }
 
-		ChannelFuture f = ctx.channel().writeAndFlush(res);
-		if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
-			f.addListener(ChannelFutureListener.CLOSE);
-		}
-	}
+        ChannelFuture f = ctx.channel().writeAndFlush(res);
+        if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
+            f.addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
+            throws Exception {
+        LoggingService.logError(MODULE_NAME, "Uncaught exception", cause);
+        FullHttpResponse response = ApiHandlerHelpers.internalServerErrorResponse(ctx.alloc().buffer(), cause.getMessage());
+        sendHttpResponse(ctx, request, response);
+    }
+
+    private void release(Object obj) {
+        if ((obj instanceof ReferenceCounted) && ((ReferenceCounted) obj).refCnt() > 0) {
+            ReferenceCountUtil.release(obj);
+        }
+    }
 }
