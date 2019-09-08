@@ -18,11 +18,9 @@ package org.eclipse.iofog.microservice;
  */
 public enum MicroserviceState {
 
-	NOT_RUNNING, CREATED, RUNNING, PAUSED, RESTARTING, STUCK_IN_RESTART, REMOVING, EXITED, DEAD, STOPPED, ATTACH, COMMIT, COPY, CREATE,
-	DESTROY, DETACH, DIE, EXEC_CREATE, EXEC_DETACH, EXEC_START, EXPORT, HEALTH_STATUS, KILL, OOM, PAUSE,
-	RENAME, RESIZE, RESTART, START, STOP, TOP, UNPAUSE, UPDATE, DELETE, IMPORT, LOAD, PULL, PUSH, SAVE, TAG, UNTAG;
+    QUEUED, PULLING, STARTING, RUNNING, STOPPING, DELETING, MARKED_FOR_DELETION, UPDATING, RESTARTING, STUCK_IN_RESTART, UNKNOWN, FAILED;
 
-	public static MicroserviceState fromText(String value){
-		return valueOf(value.toUpperCase());
-	}
+    public static MicroserviceState fromText(String value){
+        return valueOf(value.toUpperCase());
+    }
 }

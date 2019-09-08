@@ -17,8 +17,8 @@ import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
-import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.MicroserviceStatus;
+import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -114,6 +114,7 @@ public class ProcessManager implements IOFogModule {
 	};
 
 	private void addMicroservice(Microservice microservice) {
+		StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
 		addTask(new ContainerTask(ADD, microservice.getMicroserviceUuid()));
 	}
 
@@ -143,6 +144,7 @@ public class ProcessManager implements IOFogModule {
 			logError("Can't get IP address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage(), e);
 		}
 		if (shouldContainerBeUpdated(microservice, container, docker.getMicroserviceStatus(container.getId()))) {
+			StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.UPDATING);
 			addTask(new ContainerTask(UPDATE, microservice.getMicroserviceUuid()));
 		}
 	}
@@ -152,16 +154,17 @@ public class ProcessManager implements IOFogModule {
 			.filter(microservice -> !microservice.isUpdating())
 			.forEach(microservice -> {
 				Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
-				MicroserviceStatus status = containerOptional.isPresent()
-					? docker.getMicroserviceStatus(containerOptional.get().getId())
-					: new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
-				StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
 
 				if (!containerOptional.isPresent() && !microservice.isDelete()) {
+					StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
 					addMicroservice(microservice);
 				} else if (containerOptional.isPresent() && microservice.isDelete()) {
+					StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.MARKED_FOR_DELETION);
 					deleteMicroservice(microservice);
 				} else if (containerOptional.isPresent() && !microservice.isDelete()) {
+					String containerId = containerOptional.get().getId();
+					MicroserviceStatus status = docker.getMicroserviceStatus(containerId);
+					StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
 					updateMicroservice(containerOptional.get(), microservice);
 				}
 			});
@@ -179,6 +182,11 @@ public class ProcessManager implements IOFogModule {
 			runningContainers = docker.getRunningContainers();
 		}
 
+		Set<String> runningMicroserviceUuids = runningContainers
+				.stream()
+				.map(docker::getContainerMicroserviceUuid)
+				.collect(Collectors.toSet());
+
 		Map<String, Map<String, String>> runningContainersLabels = runningContainers
             .stream()
 			.collect(Collectors.toMap(docker::getContainerName, c -> c.getLabels()));
@@ -188,8 +196,7 @@ public class ProcessManager implements IOFogModule {
 				latestMicroserviceUuids.stream(),
 				currentMicroserviceUuids.stream()
 			),
-			runningContainers.stream()
-				.map(docker::getContainerMicroserviceUuid)
+			runningMicroserviceUuids.stream()
 		)
 			.collect(Collectors.toSet());
 
@@ -217,8 +224,6 @@ public class ProcessManager implements IOFogModule {
 
 	private void deleteOldAgentContainers(Set<String> oldAgentContainerNames) {
 		oldAgentContainerNames.forEach(name -> {
-			MicroserviceStatus status = new MicroserviceStatus(MicroserviceState.NOT_RUNNING);
-			StatusReporter.setProcessManagerStatus().setMicroservicesStatus(name, status);
 			disableMicroserviceFeaturesBeforeRemoval(name);
 			addTask(new ContainerTask(REMOVE, name));
 		});
@@ -299,6 +304,7 @@ public class ProcessManager implements IOFogModule {
 				task.incrementRetries();
 				addTask(task);
 			} else {
+				StatusReporter.setProcessManagerStatus().setMicroservicesState(task.getMicroserviceUuid(), MicroserviceState.FAILED);
 				Exception err = new Exception(format("Container %s %s operation failed after 5 attemps", task.getMicroserviceUuid(), task.getAction().toString()));
 				logError(err.getMessage(), err);
 			}
