@@ -13,12 +13,12 @@
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.exception.ConflictException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
-import org.eclipse.iofog.microservice.Microservice;
-import org.eclipse.iofog.microservice.MicroserviceManager;
-import org.eclipse.iofog.microservice.Registry;
+import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -82,6 +82,7 @@ public class ContainerManager {
 	}
 
 	private void createContainer(Microservice microservice, boolean pullImage) throws Exception {
+		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.PULLING);
 		Registry registry = getRegistry(microservice);
 		if (!registry.getUrl().equals("from_cache") && pullImage){
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
@@ -95,7 +96,11 @@ public class ContainerManager {
 			}
 			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", microservice.getImageName()));
 		}
+		if (!pullImage && !docker.findLocalImage(microservice.getImageName())) {
+			throw new NotFoundException("Image not found in local cache");
+		}
 		LoggingService.logInfo(MODULE_NAME, "creating container \"" + microservice.getImageName() + "\"");
+		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
 		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
@@ -132,6 +137,7 @@ public class ContainerManager {
 	private void stopContainer(String microserviceUuid) {
 		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 		containerOptional.ifPresent(container -> {
+			setMicroserviceStatus(microserviceUuid, MicroserviceState.STOPPING);
 			LoggingService.logInfo(MODULE_NAME, String.format("Stopping container \"%s\"", container.getId()));
 			try {
 				docker.stopContainer(container.getId());
@@ -150,7 +156,9 @@ public class ContainerManager {
 		synchronized (deleteLock) {
 			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 			if (containerOptional.isPresent()) {
+				stopContainer(microserviceUuid);
 				Container container = containerOptional.get();
+				setMicroserviceStatus(microserviceUuid, MicroserviceState.DELETING);
 				removeContainer(container.getId(), container.getImageId(), withCleanUp);
 			}
 		}
@@ -159,7 +167,6 @@ public class ContainerManager {
 	private void removeContainer(String containerId, String imageId, boolean withCleanUp) {
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
-			docker.stopContainer(containerId);
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
 				try {
@@ -204,5 +211,9 @@ public class ContainerManager {
 				removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), true);
 				break;
 		}
+	}
+
+	private void setMicroserviceStatus(String uuid, MicroserviceState state) {
+		StatusReporter.setProcessManagerStatus().setMicroservicesState(uuid, state);
 	}
 }

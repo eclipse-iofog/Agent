@@ -45,10 +45,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.eclipse.iofog.microservice.MicroserviceState.RUNNING;
 import static org.eclipse.iofog.microservice.MicroserviceState.fromText;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * provides methods for Docker commands
@@ -290,16 +288,41 @@ public class DockerUtil {
             if (containerState.getStartedAt() != null) {
                 result.setStartTime(getStartedTime(containerState.getStartedAt()));
             }
-            if (containerState.getStatus() != null) {
-                MicroserviceState microserviceState = MicroserviceState.fromText(containerState.getStatus());
-                result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId)
-                    ? MicroserviceState.STUCK_IN_RESTART
-                    : microserviceState);
-            }
+
+            MicroserviceState microserviceState = containerToMicroserviceState(containerState);
+             result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId)
+                ? MicroserviceState.STUCK_IN_RESTART
+                : microserviceState);
+
             result.setContainerId(containerId);
             result.setUsage(containerId);
         }
         return result;
+    }
+
+    private MicroserviceState containerToMicroserviceState(ContainerState containerState) {
+        if (containerState == null) {
+            return MicroserviceState.UNKNOWN;
+        }
+
+        switch (containerState.getStatus().toLowerCase()) {
+            case "running":
+                return MicroserviceState.RUNNING;
+            case "create":
+            case "attach":
+            case "start":
+                return MicroserviceState.STARTING;
+            case "restart":
+                return MicroserviceState.RESTARTING;
+            case "kill":
+            case "die":
+            case "stop":
+                return MicroserviceState.STOPPING;
+            case "destroy":
+                return MicroserviceState.DELETING;
+        }
+
+        return MicroserviceState.UNKNOWN;
     }
 
     public List<Container> getRunningContainers() {
@@ -307,9 +330,7 @@ public class DockerUtil {
             .filter(container -> {
                 InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
                 ContainerState containerState = inspectInfo.getState();
-                return containerState != null
-                    && containerState.getStatus() != null
-                    && MicroserviceState.fromText(containerState.getStatus()) == MicroserviceState.RUNNING;
+                return containerToMicroserviceState(containerState) == MicroserviceState.RUNNING;
             })
             .collect(Collectors.toList());
     }
@@ -325,7 +346,7 @@ public class DockerUtil {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         StatsCallback stats = new StatsCallback(countDownLatch);
         try (StatsCallback statscallback = statsCmd.exec(stats)) {
-            countDownLatch.await(5, TimeUnit.SECONDS);
+            countDownLatch.await(1, TimeUnit.SECONDS);
         } catch (InterruptedException | IOException e) {
             LoggingService.logError(MODULE_NAME, e.getMessage(), e);
         }
@@ -414,7 +435,7 @@ public class DockerUtil {
 
     public boolean isContainerRunning(String containerId) {
         Optional<String> status = getContainerStatus(containerId);
-        return status.isPresent() && status.get().equalsIgnoreCase(RUNNING.toString());
+        return status.isPresent() && status.get().equalsIgnoreCase(MicroserviceState.RUNNING.toString());
     }
 
     /**
@@ -447,20 +468,35 @@ public class DockerUtil {
             image = imageName;
         }
         PullImageCmd req =
-            registry.getIsPublic() ?
-                dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
-                dockerClient.pullImageCmd(image).withAuthConfig(
-                    new AuthConfig()
-                        .withRegistryAddress(registry.getUrl())
-                        .withEmail(registry.getUserEmail())
-                        .withUsername(registry.getUserName())
-                        .withPassword(registry.getPassword())
-                );
+                registry.getIsPublic() ?
+                        dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
+                        dockerClient.pullImageCmd(image).withAuthConfig(
+                                new AuthConfig()
+                                        .withRegistryAddress(registry.getUrl())
+                                        .withEmail(registry.getUserEmail())
+                                        .withUsername(registry.getUserName())
+                                        .withPassword(registry.getPassword())
+                        );
         if (tag != null)
             req.withTag(tag);
         PullImageResultCallback res = new PullImageResultCallback();
         res = req.exec(res);
         res.awaitSuccess();
+    }
+
+    /**
+     * search for {@link Image} locally
+     *
+     * @param imageName - imageName of {@link Microservice}
+     */
+    public boolean findLocalImage(String imageName) {
+        InspectImageCmd cmd = dockerClient.inspectImageCmd(imageName);
+        try {
+            InspectImageResponse res = cmd.exec();
+            return true;
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     /**
