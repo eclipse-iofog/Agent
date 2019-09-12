@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
+ * Copyright (c) 2019 Edgeworx, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -8,21 +8,21 @@
  * Contributors:
  * Saeid Baghbidi
  * Kilton Hopkins
- *  Ashita Nagar
+ * Neha Naithani
  *******************************************************************************/
-package org.eclipse.iofog.utils.configuration;
+package org.eclipse.iofog.exception;
 
-public class ConfigurationItemException extends Exception {
+/**
+ * Agent system Exception
+ * @author nehanaithani
+ *
+ */
+public class AgentSystemException extends AgentException{
 
 	private static final long serialVersionUID = 1L;
 
-	public ConfigurationItemException(String message) {
-		super(message);
-	}
-	public ConfigurationItemException(String message, Throwable cause) {
+	public AgentSystemException(String message, Exception cause) {
 		super(message, cause);
 	}
-	public ConfigurationItemException(Throwable cause) {
-		super(cause);
-	}
+
 }

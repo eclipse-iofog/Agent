@@ -51,7 +51,7 @@ public class SupervisorTest {
             PowerMockito.when(ProcessManager.getInstance()).thenReturn(null);
             PowerMockito.when(Tracker.getInstance()).thenReturn(new Tracker());
             PowerMockito.when(MessageBus.getInstance()).thenReturn(null);
-            PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
+           // PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,8 +76,8 @@ public class SupervisorTest {
             verify(supervisor, Mockito.never()).getModuleIndex();
             verify(supervisor, Mockito.atLeastOnce()).getModuleName();
 
-            verify(supervisor, Mockito.atLeastOnce()).logInfo("starting status reporter");
-            verify(supervisor, Mockito.atLeastOnce()).logInfo("Started");
+            verify(supervisor, Mockito.atLeastOnce()).logInfo("Starting Supervisor");
+            verify(supervisor, Mockito.atLeastOnce()).logInfo("Started Supervisor");
         } catch (Exception e) {
             e.printStackTrace();
         }

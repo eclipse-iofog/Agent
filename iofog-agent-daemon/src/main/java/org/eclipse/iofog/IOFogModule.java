@@ -30,6 +30,10 @@ public interface IOFogModule {
     default void logInfo(String message) {
         LoggingService.logInfo(this.getModuleName(), message);
     }
+    
+    default void logDebug(String message) {
+    	LoggingService.logDebug(this.getModuleName(), message);
+    }
 
     default void logWarning(String message) {
         LoggingService.logWarning(this.getModuleName(), message);
@@ -38,4 +42,5 @@ public interface IOFogModule {
     default void logError(String message, Exception e) {
         LoggingService.logError(this.getModuleName(), message, e);
     }
+    
 }

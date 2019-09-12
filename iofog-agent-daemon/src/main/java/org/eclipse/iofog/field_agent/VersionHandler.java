@@ -16,6 +16,7 @@ package org.eclipse.iofog.field_agent;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.enums.VersionCommand;
 import org.eclipse.iofog.field_agent.exceptions.UnknownVersionCommandException;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -102,6 +103,7 @@ public class VersionHandler {
 	}
 
 	private static boolean isPackageRepositoryUpdated() {
+		LoggingService.logInfo(MODULE_NAME, "start package repository update");
 		boolean isPackageRepositoryUpdated;
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT);
 		//if lock file exists and not empty
@@ -114,6 +116,7 @@ public class VersionHandler {
 			CommandShellExecutor.executeCommand(UPDATE_PACKAGE_REPOSITORY);
 			isPackageRepositoryUpdated = true;
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished package repository update : " + isPackageRepositoryUpdated);
 		return isPackageRepositoryUpdated;
 	}
 
@@ -126,6 +129,7 @@ public class VersionHandler {
 	 *
 	 */
 	static void changeVersion(JsonObject actionData) {
+		LoggingService.logInfo(MODULE_NAME, "Start performing change version operation, received from ioFog controller");
 		if (SystemUtils.IS_OS_WINDOWS) {
 			return; // TODO implement
 		}
@@ -140,8 +144,9 @@ public class VersionHandler {
 			}
 
 		} catch (UnknownVersionCommandException e) {
-			logError(MODULE_NAME, e.getMessage(), e);
+			logError(MODULE_NAME, "", new AgentSystemException("Error performing change version operation", e));
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 	}
 
 	/**
@@ -151,17 +156,19 @@ public class VersionHandler {
 	 * @param provisionKey new provision key (used to restart iofog correctly)
 	 */
 	private static void executeChangeVersionScript(VersionCommand command, String provisionKey) {
-
+		LoggingService.logInfo(MODULE_NAME, "Start executeing sh script to change iofog version");
 		String shToExecute = command.getScript();
 
 		try {
 			Runtime.getRuntime().exec("java -jar /usr/bin/iofog-agentvc.jar " + shToExecute + " " + provisionKey + " " + MAX_RESTARTING_TIMEOUT);
 		} catch (IOException e) {
-			logError(MODULE_NAME, e.getMessage(), e);
+			logError(MODULE_NAME, "", new AgentSystemException("Error executing sh script to change version", e));
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished executeing sh script to change iofog version");
 	}
 
 	private static boolean isValidChangeVersionOperation(VersionCommand command) {
+		LoggingService.logInfo(MODULE_NAME, "Checking is Valid Change Version Operation");
 		switch (command){
 			case UPGRADE:
 				return isReadyToUpgrade();

@@ -18,6 +18,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
+
 import javax.json.*;
 import java.io.*;
 import java.nio.file.FileSystems;
@@ -57,9 +58,9 @@ public final class LoggingService {
      */
     public static void logInfo(String moduleName, String msg) {
         if (Configuration.debugging)
-            System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
+            System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         else
-            logger.log(Level.INFO, String.format("[%s] : %s", moduleName, msg));
+            logger.log(Level.INFO, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
     }
 
     /**
@@ -79,12 +80,23 @@ public final class LoggingService {
 //        Sentry.capture(event);
 
         if (Configuration.debugging || logger == null) {
-            System.out.println(String.format("%s : %s (%s)", moduleName, msg, new Date(System.currentTimeMillis())));
+            System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         } else {
-            logger.log(Level.WARNING, String.format("[%s] : %s", moduleName, msg));
+            logger.log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
         }
     }
-
+    /**
+     * logs Level.FINE message
+     * For debug purpose
+     * @param moduleName - name of module
+     * @param msg        - message
+     */
+    public static void logDebug(String moduleName, String msg) {
+        if (Configuration.debugging)
+            System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
+        else
+            logger.log(Level.FINE, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
+    }
     /**
      * logs Level.Error message
      *
@@ -98,9 +110,9 @@ public final class LoggingService {
         }
 
         if (Configuration.debugging || logger == null) {
-            System.out.println(String.format("%s : %s (%s) - Exception: %s - Stack trace: %s", moduleName, msg, new Date(System.currentTimeMillis()), e.getMessage(), ExceptionUtils.getStackTrace(e)));
+            System.out.println(String.format("%s %s : %s (%s) - Exception: %s - Stack trace: %s", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis()), e.getMessage(), ExceptionUtils.getStackTrace(e)));
         } else {
-            logger.log(Level.SEVERE, String.format("[%s] : %s - Exception: %s - Stack trace: %s", moduleName, msg, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
+            logger.log(Level.SEVERE, String.format("[%s] [%s] : %s - Exception: %s - Stack trace: %s", Thread.currentThread().getName(), moduleName, msg, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
         }
     }
 
@@ -155,6 +167,7 @@ public final class LoggingService {
     public static void setupLogger() throws IOException {
         int maxFileSize = (int) (Configuration.getLogDiskLimit() * Constants.MiB);
         int logFileCount = Configuration.getLogFileCount();
+        String logLevel = Configuration.getLogLevel().toUpperCase();
         final File logDirectory = new File(Configuration.getLogDiskDirectory());
 
         logDirectory.mkdirs();
@@ -195,12 +208,14 @@ public final class LoggingService {
         logger.addHandler(logFileHandler);
 
         logger.setUseParentHandlers(false);
+        // Disabling the log level off
+        logger.setLevel(Level.parse(logLevel).equals(Level.OFF) ? Level.INFO : Level.parse(logLevel));
 
         logger.info("logger started.");
 
         loadSentryCache();
     }
-
+    
     private static void loadSentryCache() {
         File f = new File(Constants.SENTRY_CACHE_PATH);
         if (!f.exists()) {
