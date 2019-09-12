@@ -1,3 +1,4 @@
+package org.eclipse.iofog.supervisor;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.local_api.LocalApiStatus;
