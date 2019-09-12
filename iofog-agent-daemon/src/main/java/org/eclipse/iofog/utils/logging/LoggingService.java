@@ -57,7 +57,7 @@ public final class LoggingService {
      * @param msg        - message
      */
     public static void logInfo(String moduleName, String msg) {
-        if (Configuration.debugging)
+        if (Configuration.debugging || logger == null)
             System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         else
             logger.log(Level.INFO, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
