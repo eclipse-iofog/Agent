@@ -15,6 +15,9 @@ package org.eclipse.iofog.local_api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -33,7 +36,7 @@ import static org.eclipse.iofog.utils.configuration.Configuration.getOldNodeValu
 import static org.eclipse.iofog.utils.configuration.Configuration.setConfig;
 
 public class ConfigApiHandler implements Callable<FullHttpResponse> {
-    private static final String MODULE_NAME = "Local API";
+    private static final String MODULE_NAME = "Local API : ConfigApiHandler";
 
     private final HttpRequest req;
     private final ByteBuf outputBuffer;
@@ -58,6 +61,7 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
         put("gps", "gps");
         put("ft", "fog-type");
         put("dev", "developer-mode");
+        put("ll", "logs-level");
     }};
 
     public ConfigApiHandler(HttpRequest request, ByteBuf outputBuffer, byte[] content) {
@@ -68,20 +72,23 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Starting config Api Handler call");
+    	
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-            LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+            LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
         final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
         if (contentTypeError != null) {
-            LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+            LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
         }
 
         if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
+            LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }
 
@@ -115,10 +122,11 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
                 String result = objectMapper.writeValueAsString(errorMessages);
                 FullHttpResponse res = ApiHandlerHelpers.successResponse(outputBuffer, result);
                 res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+                LoggingService.logInfo(MODULE_NAME, "Finsihed config Api Handler call");
                 return res;
             } catch (Exception e) {
                 String errMsg = "Error updating new config ";
-                LoggingService.logError(MODULE_NAME, errMsg, e);
+                LoggingService.logError(MODULE_NAME, errMsg, new AgentSystemException(errMsg, e));
                 return ApiHandlerHelpers.badRequestResponse(outputBuffer, errMsg + e.toString());
             }
         } catch (Exception e) {

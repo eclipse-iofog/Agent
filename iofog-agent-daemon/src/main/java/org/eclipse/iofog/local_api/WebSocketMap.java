@@ -49,5 +49,6 @@ public final class WebSocketMap {
 					messageWebsocketMap.put(id, ctx);
 			}
 		}
+		LoggingService.logInfo("WebSocketMap", "Finished adding web socket");
 	}
 }

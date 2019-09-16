@@ -1028,6 +1028,8 @@ public class FieldAgent implements IOFogModule {
         } catch (UnknownHostException e) {
             StatusReporter.setFieldAgentStatus().setControllerVerified(false);
             provisioningResult = buildProvisionFailResponse("Connection error: unable to connect to fog controller.", e);
+        } catch (AgentSystemException e) {
+            provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         } catch (Exception e) {
             provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         }

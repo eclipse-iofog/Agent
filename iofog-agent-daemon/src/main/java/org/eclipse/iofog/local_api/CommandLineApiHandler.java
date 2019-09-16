@@ -16,6 +16,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import org.apache.http.util.TextUtils;
 import org.eclipse.iofog.command_line.CommandLineParser;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.Json;
@@ -34,7 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.utils.Constants.LOCAL_API_TOKEN_PATH;
 
 public class CommandLineApiHandler implements Callable<FullHttpResponse> {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : CommandLineApiHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -48,19 +49,21 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start processing commandline api request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
 		if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
 			String errorMsg = "Incorrect access token";
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg));
 			return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
 		}
 
@@ -71,6 +74,8 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 
 			String command = jsonObject.getString("command");
 			String result = CommandLineParser.parse(command);
+			
+			LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
 
 			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} catch (Exception e) {
