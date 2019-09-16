@@ -29,7 +29,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
-    private static final String MODULE_NAME = "Bluetooth API";
+    private static final String MODULE_NAME = "Local Api : Bluetooth API";
 
     private final FullHttpRequest req;
     private final ByteBuf outputBuffer;
@@ -45,6 +45,8 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Start processing commandline api request");
+    	
         String host = "localhost";
         int port = 10500;
 
@@ -100,8 +102,10 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
             outputBuffer.writeBytes(responseString.getBytes(UTF_8));
             response = ApiHandlerHelpers.notFoundResponse(outputBuffer, responseString);
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+            LoggingService.logInfo(MODULE_NAME, "error unable to reach RESTblue container!");
         }
-
+        
+        LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
         return response;
     }
 

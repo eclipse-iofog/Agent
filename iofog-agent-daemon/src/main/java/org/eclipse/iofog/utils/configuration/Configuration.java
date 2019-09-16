@@ -17,6 +17,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
@@ -119,6 +120,7 @@ public final class Configuration {
     private static int monitorSshTunnelStatusFreqSeconds;
 
     private static void updateAutomaticConfigParams() {
+    	LoggingService.logInfo(MODULE_NAME, "Start update Automatic ConfigParams ");
         switch (fogType) {
             case ARM:
                 statusReportFreqSeconds = 10;
@@ -143,6 +145,7 @@ public final class Configuration {
                 monitorSshTunnelStatusFreqSeconds = 10;
                 break;
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished update Automatic ConfigParams ");
     }
 
     public static int getStatusReportFreqSeconds() {
@@ -306,15 +309,19 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     private static void setNode(CommandLineConfigParam param, String content, Document document, Element node) throws ConfigurationItemException {
-        createNodeIfNotExists(param.getXmlTag(), document, node);
+    	LoggingService.logInfo(MODULE_NAME, "Start Setting node : " + param.getCommandName());
+    	createNodeIfNotExists(param.getXmlTag(), document, node);
         getFirstNodeByTagName(param.getXmlTag(), document).setTextContent(content);
+        LoggingService.logInfo(MODULE_NAME, "Finished Setting node : " + param.getCommandName());
     }
 
     private static void createNodeIfNotExists(String name, Document document, Element node) {
+    	LoggingService.logInfo(MODULE_NAME, "Start create Node IfNotExists : " + name);
         NodeList nodes = node.getElementsByTagName(name);
         if (nodes.getLength() == 0) {
             node.appendChild(document.createElement(name));
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished create Node IfNotExists : " + name);
     }
 
     /**
@@ -325,17 +332,20 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     private static Node getFirstNodeByTagName(String name, Document document) throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start get First Node By TagName : " + name);
         NodeList nodes = document.getElementsByTagName(name);
 
         if (nodes.getLength() != 1) {
             throw new ConfigurationItemException("<" + name + "> item not found or defined more than once");
         }
-
+        LoggingService.logInfo(MODULE_NAME, "Finished get First Node By TagName : " + name);
         return nodes.item(0);
     }
 
     public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters, Document document) throws ConfigurationItemException {
 
+    	LoggingService.logInfo(MODULE_NAME, "Start get Old Node Values For Parameters : ");
+    	
         HashMap<String, String> result = new HashMap<>();
 
         for (String option : parameters) {
@@ -344,6 +354,8 @@ public final class Configuration {
             result.put(cmdOption.getCommandName(), getNode(cmdOption, document));
         }
 
+        LoggingService.logInfo(MODULE_NAME, "Finished get Old Node Values For Parameters : ");
+        
         return result;
     }
 
@@ -354,6 +366,8 @@ public final class Configuration {
      * @throws Exception
      */
     public static void saveConfigUpdates() throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Start saving configuration data to config.xml");
+    	
         FieldAgent.getInstance().instanceConfigUpdated();
         ProcessManager.getInstance().instanceConfigUpdated();
         ResourceConsumptionManager.getInstance().instanceConfigUpdated();
@@ -361,6 +375,7 @@ public final class Configuration {
         MessageBus.getInstance().instanceConfigUpdated();
 
         updateConfigFile(getCurrentConfigPath(), configFile);
+        LoggingService.logInfo(MODULE_NAME, "Finished saving configuration data to config.xml");
     }
 
     /**
@@ -369,11 +384,13 @@ public final class Configuration {
      * @throws Exception
      */
     private static void updateConfigFile(String filePath, Document newFile) throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Start updating configuration data to config.xml");
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         StreamResult result = new StreamResult(new File(filePath));
         DOMSource source = new DOMSource(newFile);
         transformer.transform(source, result);
+        LoggingService.logInfo(MODULE_NAME, "Finished saving configuration data to config.xml");
     }
 
     /**
@@ -383,7 +400,8 @@ public final class Configuration {
      * @throws Exception
      */
     public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
-
+    	LoggingService.logInfo(MODULE_NAME, "Starting setting configuration base on commandline parameters");
+    	
         HashMap<String, String> messageMap = new HashMap<>();
 
         for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
@@ -395,6 +413,7 @@ public final class Configuration {
 
             if (isBlank(option) || isBlank(value)) {
                 if (!option.equals(CONTROLLER_CERT.getCommandName())) {
+                	LoggingService.logInfo(MODULE_NAME, "Parameter error : Command or value is invalid");
                     messageMap.put("Parameter error", "Command or value is invalid");
                     break;
                 }
@@ -403,6 +422,7 @@ public final class Configuration {
             int intValue;
             switch (cmdOption) {
                 case DISK_CONSUMPTION_LIMIT:
+                	LoggingService.logInfo(MODULE_NAME, "Setting disk consumption limit");
                     try {
                         Float.parseFloat(value);
                     } catch (Exception e) {
@@ -419,11 +439,13 @@ public final class Configuration {
                     break;
 
                 case DISK_DIRECTORY:
+                	LoggingService.logInfo(MODULE_NAME, "Setting disk directory");
                     value = addSeparator(value);
                     setDiskDirectory(value);
                     setNode(DISK_DIRECTORY, value, configFile, configElement);
                     break;
                 case MEMORY_CONSUMPTION_LIMIT:
+                	LoggingService.logInfo(MODULE_NAME, "Setting memory consumption limit");
                     try {
                         Float.parseFloat(value);
                     } catch (Exception e) {
@@ -438,6 +460,7 @@ public final class Configuration {
                     setNode(MEMORY_CONSUMPTION_LIMIT, value, configFile, configElement);
                     break;
                 case PROCESSOR_CONSUMPTION_LIMIT:
+                	LoggingService.logInfo(MODULE_NAME, "Setting processor consumption limit");
                     try {
                         Float.parseFloat(value);
                     } catch (Exception e) {
@@ -452,14 +475,17 @@ public final class Configuration {
                     setNode(PROCESSOR_CONSUMPTION_LIMIT, value, configFile, configElement);
                     break;
                 case CONTROLLER_URL:
+                	LoggingService.logInfo(MODULE_NAME, "Setting controller url");
                     setNode(CONTROLLER_URL, value, configFile, configElement);
                     setControllerUrl(value);
                     break;
                 case CONTROLLER_CERT:
+                	LoggingService.logInfo(MODULE_NAME, "Setting controller cert");
                     setNode(CONTROLLER_CERT, value, configFile, configElement);
                     setControllerCert(value);
                     break;
                 case DOCKER_URL:
+                	LoggingService.logInfo(MODULE_NAME, "Setting docker url");
                     if (value.startsWith("tcp://") || value.startsWith("unix://")) {
                         setNode(DOCKER_URL, value, configFile, configElement);
                         setDockerUrl(value);
@@ -469,6 +495,7 @@ public final class Configuration {
                     }
                     break;
                 case NETWORK_INTERFACE:
+                	LoggingService.logInfo(MODULE_NAME, "Setting disk network interface");
                     if (defaults || isValidNetworkInterface(value.trim())) {
                         setNode(NETWORK_INTERFACE, value, configFile, configElement);
                         setNetworkInterface(value);
@@ -478,6 +505,7 @@ public final class Configuration {
                     }
                     break;
                 case LOG_DISK_CONSUMPTION_LIMIT:
+                	LoggingService.logInfo(MODULE_NAME, "Setting log disk consumption limit");
                     try {
                         Float.parseFloat(value);
                     } catch (Exception e) {
@@ -492,11 +520,13 @@ public final class Configuration {
                     setLogDiskLimit(Float.parseFloat(value));
                     break;
                 case LOG_DISK_DIRECTORY:
+                	LoggingService.logInfo(MODULE_NAME, "Setting log disk directory");
                     value = addSeparator(value);
                     setNode(LOG_DISK_DIRECTORY, value, configFile, configElement);
                     setLogDiskDirectory(value);
                     break;
                 case LOG_FILE_COUNT:
+                	LoggingService.logInfo(MODULE_NAME, "Setting log file count");
                     try {
                         intValue = Integer.parseInt(value);
                     } catch (NumberFormatException e) {
@@ -511,10 +541,12 @@ public final class Configuration {
                     setLogFileCount(Integer.parseInt(value));
                     break;
                 case LOG_LEVEL:
+                	LoggingService.logInfo(MODULE_NAME, "Setting log level");
                     setNode(LOG_FILE_COUNT, value, configFile, configElement);
                     setLogLevel(value);
                     break;
                 case STATUS_FREQUENCY:
+                	LoggingService.logInfo(MODULE_NAME, "Setting status frequency");
                     try {
                         intValue = Integer.parseInt(value);
                     } catch (NumberFormatException e) {
@@ -529,6 +561,7 @@ public final class Configuration {
                     setStatusFrequency(Integer.parseInt(value));
                     break;
                 case CHANGE_FREQUENCY:
+                	LoggingService.logInfo(MODULE_NAME, "Setting change frequency");
                     try {
                         intValue = Integer.parseInt(value);
                     } catch (NumberFormatException e) {
@@ -543,6 +576,7 @@ public final class Configuration {
                     setChangeFrequency(Integer.parseInt(value));
                     break;
                 case DEVICE_SCAN_FREQUENCY:
+                	LoggingService.logInfo(MODULE_NAME, "Setting device scan frequency");
                     try {
                         intValue = Integer.parseInt(value);
                     } catch (NumberFormatException e) {
@@ -557,6 +591,7 @@ public final class Configuration {
                     setDeviceScanFrequency(Integer.parseInt(value));
                     break;
                 case POST_DIAGNOSTICS_FREQ:
+                	LoggingService.logInfo(MODULE_NAME, "Setting post diagnostic frequency");
                     try {
                         intValue = Integer.parseInt(value);
                     } catch (NumberFormatException e) {
@@ -571,6 +606,7 @@ public final class Configuration {
                     setPostDiagnosticsFreq(Integer.parseInt(value));
                     break;
                 case WATCHDOG_ENABLED:
+                	LoggingService.logInfo(MODULE_NAME, "Setting watchdog enabled");
                     if (!"off".equalsIgnoreCase(value) && !"on".equalsIgnoreCase(value)) {
                         messageMap.put(option, "Option -" + option + " has invalid value: " + value);
                         break;
@@ -579,14 +615,17 @@ public final class Configuration {
                     setWatchdogEnabled(!value.equals("off"));
                     break;
                 case GPS_MODE:
+                	LoggingService.logInfo(MODULE_NAME, "Setting gps mode");
                     configureGps(value, gpsCoordinates);
                     writeGpsToConfigFile();
                     break;
                 case FOG_TYPE:
+                	LoggingService.logInfo(MODULE_NAME, "Setting fogtype");
                     configureFogType(value);
                     setNode(FOG_TYPE, value, configFile, configElement);
                     break;
                 case DEV_MODE:
+                	LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
                     setNode(DEV_MODE, value, configFile, configElement);
                     setDeveloperMode(!value.equals("off"));
                     break;
@@ -602,7 +641,8 @@ public final class Configuration {
                     TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
         }
         saveConfigUpdates();
-
+        LoggingService.logInfo(MODULE_NAME, "Finished setting configuration base on commandline parameters");
+        
         return messageMap;
     }
 
@@ -613,6 +653,7 @@ public final class Configuration {
      * @throws ConfigurationItemException if {@link ArchitectureType} undefined
      */
     private static void configureFogType(String fogTypeCommand) throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start configure FogType ");
         ArchitectureType newFogType = ArchitectureType.UNDEFINED;
         switch (fogTypeCommand) {
             case "auto": {
@@ -635,6 +676,7 @@ public final class Configuration {
 
         setFogType(newFogType);
         updateAutomaticConfigParams();
+        LoggingService.logInfo(MODULE_NAME, "Finished configure FogType :  " + newFogType);
     }
 
     /**
@@ -645,7 +687,8 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     private static void configureGps(String gpsModeCommand, String gpsCoordinatesCommand) throws ConfigurationItemException {
-        String gpsCoordinates;
+    	LoggingService.logInfo(MODULE_NAME, "Start Configures GPS coordinates and mode in config file ");
+    	String gpsCoordinates;
         GpsMode currentMode;
 
         if (GpsMode.AUTO.name().toLowerCase().equals(gpsModeCommand)) {
@@ -667,9 +710,11 @@ public final class Configuration {
         }
 
         setGpsDataIfValid(currentMode, gpsCoordinates);
+        LoggingService.logInfo(MODULE_NAME, "Finished Configures GPS coordinates and mode in config file ");
     }
 
     public static void setGpsDataIfValid(GpsMode mode, String gpsCoordinates) throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Gps Data If Valid ");
         if (!isValidCoordinates(gpsCoordinates)) {
             throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
                     + "Correct format is <DDD.DDDDD(lat),DDD.DDDDD(lon)> (GPS DD format)");
@@ -678,7 +723,7 @@ public final class Configuration {
         if (gpsCoordinates != null && !StringUtils.isBlank(gpsCoordinates) && !gpsCoordinates.isEmpty()) {
             setGpsCoordinates(gpsCoordinates.trim());
         }
-       
+        LoggingService.logInfo(MODULE_NAME, "Finished set Gps Data If Valid ");
     }
 
     /**
@@ -687,8 +732,13 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     public static void writeGpsToConfigFile() throws ConfigurationItemException {
+    	
+    	LoggingService.logInfo(MODULE_NAME, "Start Writes GPS coordinates and GPS mode to config file ");
+    	
         setNode(GPS_MODE, gpsMode.name().toLowerCase(), configFile, configElement);
         setNode(GPS_COORDINATES, gpsCoordinates, configFile, configElement);
+        
+        LoggingService.logInfo(MODULE_NAME, "Finished Writes GPS coordinates and GPS mode to config file ");
     }
 
     /**
@@ -698,6 +748,8 @@ public final class Configuration {
      * @return
      */
     private static boolean isValidCoordinates(String gpsCoordinates) {
+    	
+    	LoggingService.logInfo(MODULE_NAME, "Start is Valid Coordinates ");
 
         boolean isValid = true;
 
@@ -716,7 +768,9 @@ public final class Configuration {
         } else {
             isValid = gpsCoordinates.isEmpty();
         }
-
+        
+        LoggingService.logInfo(MODULE_NAME, "Start is Valid Coordinates : " + isValid);
+        
         return isValid;
     }
 
@@ -727,22 +781,27 @@ public final class Configuration {
      * @return
      */
     private static boolean isValidNetworkInterface(String eth) {
+    	LoggingService.logInfo(MODULE_NAME, "Start is Valid network interface ");
+    	
         if (SystemUtils.IS_OS_WINDOWS) { // any name could be used for network interface on Win
             return true;
         }
 
         try {
             if (CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
+            	LoggingService.logInfo(MODULE_NAME, "Finished is Valid network interface : true");
                 return true;
             }
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             for (NetworkInterface networkInterface : list(networkInterfaces)) {
                 if (networkInterface.getName().equalsIgnoreCase(eth))
+                	LoggingService.logInfo(MODULE_NAME, "Finished is Valid network interface : true");
                     return true;
             }
         } catch (Exception e) {
-            logError(MODULE_NAME, "Error validating network interface", e);
+            logError(MODULE_NAME, "Error validating network interface", new AgentUserException("Error validating network interface", e));
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished is Valid network interface : false");
         return false;
     }
 
@@ -766,22 +825,24 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     public static void loadConfig() throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start load Config");
+    	
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = null;
         try {
 			builder = factory.newDocumentBuilder();
 		} catch (ParserConfigurationException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
 			throw new ConfigurationItemException("Error while parsing config xml", e);
 		}
 
         try {
         	configFile = builder.parse(getCurrentConfigPath());
 		} catch (SAXException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", e);
-			throw new ConfigurationItemException("Error while parsing config xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
+			throw new ConfigurationItemException("Error while parsing config xml");
 		} catch (IOException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
 			throw new ConfigurationItemException("Error while parsing config xml", e);
 		}
         
@@ -812,6 +873,8 @@ public final class Configuration {
         configureFogType(getNode(FOG_TYPE, configFile));
         setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
         setIpAddressExternal(GpsWebHandler.getExternalIp());
+        
+        LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
 
     /**
@@ -820,6 +883,8 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     public static void loadConfigSwitcher() throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start loads configuration about current config from config-switcher.xml");
+    	
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = null;
 		try {
@@ -832,10 +897,12 @@ public final class Configuration {
         try {
 			configSwitcherFile = builder.parse(CONFIG_SWITCHER_PATH);
 		} catch (SAXException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", 
+					new ConfigurationItemException("Error while parsing config switcher xml", e));
 			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
 		} catch (IOException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", 
+					new ConfigurationItemException("Error while parsing config switcher xml", e));
 			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
 		}
         configSwitcherFile.getDocumentElement().normalize();
@@ -843,10 +910,12 @@ public final class Configuration {
         configSwitcherElement = (Element) getFirstNodeByTagName(SWITCHER_ELEMENT, configSwitcherFile);
 
         verifySwitcherNode(SWITCHER_NODE, ConfigSwitcherState.DEFAULT.fullValue());
+        LoggingService.logInfo(MODULE_NAME, "Finished loads configuration about current config from config-switcher.xml");
     }
 
     // this code will be triggered in case of iofog updated (not newly installed) and add new option for config
     private static void createConfigProperty(CommandLineConfigParam cmdParam) throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Start create config property");
         // TODO: add appropriate handling of case when 0 nodes found or multiple before adding new property to file
         Element el = configFile.createElement(cmdParam.getXmlTag());
         el.appendChild(configFile.createTextNode(cmdParam.getDefaultValue()));
@@ -857,6 +926,7 @@ public final class Configuration {
         Transformer transformer = transformerFactory.newTransformer();
         StreamResult result = new StreamResult(getCurrentConfigPath());
         transformer.transform(source, result);
+        LoggingService.logInfo(MODULE_NAME, "Finished create config property");
     }
 
     public static String getAccessToken() {
@@ -912,24 +982,32 @@ public final class Configuration {
     }
 
     public static void setLogDiskDirectory(String logDiskDirectory) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Log Disk Directory");
         if (logDiskDirectory.charAt(0) != separatorChar)
             logDiskDirectory = separatorChar + logDiskDirectory;
         if (logDiskDirectory.charAt(logDiskDirectory.length() - 1) != separatorChar)
             logDiskDirectory += separatorChar;
         Configuration.logDiskDirectory = SNAP_COMMON + logDiskDirectory;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Log Disk Directory");
     }
 
     public static void setAccessToken(String accessToken) throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start set access token");
         setNode(ACCESS_TOKEN, accessToken, configFile, configElement);
         Configuration.accessToken = accessToken;
+        LoggingService.logInfo(MODULE_NAME, "Finished set access token");
     }
 
     public static void setIofogUuid(String iofogUuid) throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Iofog uuid");
         setNode(IOFOG_UUID, iofogUuid, configFile, configElement);
         Configuration.iofogUuid = iofogUuid;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Iofog uuid");
     }
 
     private static void verifySwitcherNode(String switcher, String defaultValue) throws ConfigurationItemException {
+    	LoggingService.logInfo(MODULE_NAME, "Start verify Switcher Node");
+    	
         NodeList nodes = configSwitcherElement.getElementsByTagName(switcher);
         if (nodes.getLength() == 0) {
             configSwitcherElement.appendChild(configSwitcherFile.createElement(switcher));
@@ -942,56 +1020,78 @@ public final class Configuration {
             } catch (IllegalArgumentException e) {
                 currentSwitcherState = ConfigSwitcherState.DEFAULT;
                 System.out.println("Error while reading current switcher state, using default config");
-                LoggingService.logError(MODULE_NAME, "Error while reading current switcher state, using default config", e);
+                LoggingService.logError(MODULE_NAME, "Error while reading current switcher state, using default config", 
+                		new ConfigurationItemException("Error while reading current switcher state, using default config", e));
                 throw new ConfigurationItemException("Error while reading current switcher state, using default config", e);
             }
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished verify Switcher Node");
     }
 
     private static void setControllerUrl(String controllerUrl) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set ControllerUrl");
         if (controllerUrl != null && controllerUrl.length() > 0 && controllerUrl.charAt(controllerUrl.length() - 1) != '/')
             controllerUrl += '/';
         Configuration.controllerUrl = controllerUrl;
+        LoggingService.logInfo(MODULE_NAME, "Finished set ControllerUrl");
     }
 
     private static void setControllerCert(String controllerCert) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Controller Cert");
         Configuration.controllerCert = SNAP_COMMON + controllerCert;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Controller Cert");
     }
 
     private static void setNetworkInterface(String networkInterface) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Network Interface");
         Configuration.networkInterface = networkInterface;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Network Interface");
     }
 
     private static void setDockerUrl(String dockerUrl) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Docker url");
         Configuration.dockerUrl = dockerUrl;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Docker url");
     }
 
     private static void setDiskLimit(float diskLimit) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Disk limit");
         Configuration.diskLimit = diskLimit;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Disk limit");
     }
 
     private static void setMemoryLimit(float memoryLimit) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set memory limit");
         Configuration.memoryLimit = memoryLimit;
+        LoggingService.logInfo(MODULE_NAME, "Finished set memory limit");
     }
 
     private static void setDiskDirectory(String diskDirectory) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Disk Directory");
         if (diskDirectory.charAt(0) != separatorChar)
             diskDirectory = separatorChar + diskDirectory;
         if (diskDirectory.charAt(diskDirectory.length() - 1) != separatorChar)
             diskDirectory += separatorChar;
         Configuration.diskDirectory = SNAP_COMMON + diskDirectory;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Disk Directory");
     }
 
     private static void setCpuLimit(float cpuLimit) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set cpu limit");
         Configuration.cpuLimit = cpuLimit;
+        LoggingService.logInfo(MODULE_NAME, "Finished set cpu limit");
     }
 
     private static void setLogDiskLimit(float logDiskLimit) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set log disk limit");
         Configuration.logDiskLimit = logDiskLimit;
+        LoggingService.logInfo(MODULE_NAME, "Finished set log disk limit");
     }
 
     private static void setLogFileCount(int logFileCount) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set log file count");
         Configuration.logFileCount = logFileCount;
+        LoggingService.logInfo(MODULE_NAME, "Finished set log file count");
     }
 
     /**
@@ -1000,6 +1100,7 @@ public final class Configuration {
      * @return info report
      */
     public static String getConfigReport() {
+    	LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
         String ipAddress = IOFogNetworkInterface.getCurrentIpAddress();
         String networkInterface = getNetworkInterfaceInfo();
         ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
@@ -1052,14 +1153,18 @@ public final class Configuration {
         //fog type
         result.append(buildReportLine(getConfigParamMessage(FOG_TYPE), fogType.name().toLowerCase()));
 
+        LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
+        
         return result.toString();
     }
 
     private static String buildReportLine(String messageDescription, String value) {
+    	LoggingService.logInfo(MODULE_NAME, "build Report Line");
         return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
     }
 
     public static String getNetworkInterfaceInfo() {
+    	LoggingService.logInfo(MODULE_NAME, "get Network Interface Info");
         if (!NETWORK_INTERFACE.getDefaultValue().equals(networkInterface)) {
             return networkInterface;
         }
@@ -1181,7 +1286,9 @@ public final class Configuration {
     }
 
     public static void setIpAddressExternal(String ipAddressExternal) {
+    	LoggingService.logInfo(MODULE_NAME, "Start set Ip Address External");
         Configuration.ipAddressExternal = ipAddressExternal;
+        LoggingService.logInfo(MODULE_NAME, "Finished set Ip Address External");
     }
 
 	public static String getLogLevel() {
@@ -1189,6 +1296,8 @@ public final class Configuration {
 	}
 
 	public static void setLogLevel(String logLevel) {
+		LoggingService.logInfo(MODULE_NAME, "Start set log level");
 		Configuration.logLevel = logLevel;
+		LoggingService.logInfo(MODULE_NAME, "Finished set log level");
 	}
 }

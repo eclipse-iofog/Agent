@@ -25,6 +25,8 @@ import io.netty.util.ReferenceCounted;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.ByteArrayOutputStream;
@@ -44,7 +46,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
 
-    private static final String MODULE_NAME = "Local API";
+    private static final String MODULE_NAME = "Local API : LocalApiServerHandler";
 
     private HttpRequest request;
     private ByteArrayOutputStream baos;
@@ -66,6 +68,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      */
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
+    	LoggingService.logInfo(MODULE_NAME, "Start channel initializing");
         try {
             if (msg instanceof FullHttpRequest) {
                 // full request
@@ -96,7 +99,8 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
                         MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
                         messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
                     } else {
-                        LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", new Exception());
+                        LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", 
+                        		new AgentSystemException("Cannot initiate real-time service: Context not found"));
                     }
                 } finally {
                     release(msg);
@@ -132,6 +136,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
         } catch (Exception e) {
             LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request", e);
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished channel initializing");
     }
 
     /**
@@ -141,117 +146,162 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      * @param ctx ChannelHandlerContext
      */
     private void handleHttpRequest(ChannelHandlerContext ctx) {
+    	LoggingService.logInfo(MODULE_NAME, "Start passig request to the relevant handler");
+    	
         if (request.uri().equals("/v2/config/get")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing config/get request");
             Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing config/get request");
             return;
         }
 
         if (request.uri().equals("/v2/messages/next")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing messages/next request");
             Callable<FullHttpResponse> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing messages/next request");
             return;
         }
 
         if (request.uri().equals("/v2/messages/new")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing messages/new request");
             Callable<FullHttpResponse> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing messages/new request");
             return;
         }
 
         if (request.uri().equals("/v2/messages/query")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing messages/query request");
             Callable<FullHttpResponse> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing messages/query request");
             return;
         }
 
         if (request.uri().startsWith("/v2/restblue")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing restblue request");
             Callable<FullHttpResponse> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing restblue request");
             return;
         }
 
         if (request.uri().startsWith("/v2/log")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing log request");
             Callable<FullHttpResponse> callable = new LogApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing log request");
             return;
         }
 
         if (request.uri().startsWith("/v2/commandline")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing commandline request");
             Callable<FullHttpResponse> callable = new CommandLineApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "finished Processing commandline request");
             return;
         }
 
         if (request.uri().equals("/v2/gps")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing gps request");
             Callable<FullHttpResponse> callable = new GpsApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing commandline request");
             return;
         }
 
         if (request.uri().startsWith("/v2/control/socket")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing control/socket request");
             ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
             controlSocket.handle(ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing control/socket request");
             return;
         }
 
         if (request.uri().startsWith("/v2/message/socket")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing message/socket request");
             MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
             messageSocket.handle(ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "finished Processing message/socket request");
             return;
         }
 
         if (request.uri().startsWith("/v2/config")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing config request");
             Callable<FullHttpResponse> callable = new ConfigApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing config request");
             return;
         }
 
         if (request.uri().startsWith("/v2/provision")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing provision request");
             Callable<FullHttpResponse> callable = new ProvisionApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing provision request");
             return;
         }
 
         if (request.uri().startsWith("/v2/deprovision")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing deprovision request");
             Callable<FullHttpResponse> callable = new DeprovisionApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing deprovision request");
             return;
         }
 
         if (request.uri().startsWith("/v2/info")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing info request");
             Callable<FullHttpResponse> callable = new InfoApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing info request");
             return;
         }
 
         if (request.uri().startsWith("/v2/status")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing status request");
             Callable<FullHttpResponse> callable = new StatusApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing status request");
             return;
         }
 
         if (request.uri().startsWith("/v2/version")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing version request");
             Callable<FullHttpResponse> callable = new VersionApiHandler(request, ctx.alloc().buffer(), content);
             runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing version request");
             return;
         }
 
-        LoggingService.logError(MODULE_NAME, "Error: Request not found", new Exception());
+        LoggingService.logError(MODULE_NAME, "Error: Request not found", new AgentSystemException("Error: Request not found"));
         ByteBuf errorMsgBytes = ctx.alloc().buffer();
         String errorMsg = " Request not found ";
         errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
         sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
+        LoggingService.logInfo(MODULE_NAME, "Finished passig request to the relevant handler");
 
     }
 
     private String findContextMapName(ChannelHandlerContext ctx) {
-        if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap))
-            return "control";
-        else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap))
-            return "message";
-        else
-            return null;
+    	LoggingService.logInfo(MODULE_NAME, "Start find context map name");
+    	
+        if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap)) {
+        	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : control");
+        	return "control";
+        }          
+        else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap)) {
+        	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : message");
+        	return "message";
+        }
+            
+        else {
+        	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : null");
+        	return null;
+        }
+            
     }
 
     /**
@@ -291,6 +341,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      * @param res
      */
     private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) {
+    	LoggingService.logInfo(MODULE_NAME, "Start providing response as per the request");
         if (res.status().code() != 200) {
             ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
             res.content().writeBytes(buf);
@@ -302,6 +353,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
         if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
             f.addListener(ChannelFutureListener.CLOSE);
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished providing response as per the request");
     }
 
     @Override
@@ -313,6 +365,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void release(Object obj) {
+    	LoggingService.logInfo(MODULE_NAME, "Releasing object lock");
         if ((obj instanceof ReferenceCounted) && ((ReferenceCounted) obj).refCnt() > 0) {
             ReferenceCountUtil.release(obj);
         }

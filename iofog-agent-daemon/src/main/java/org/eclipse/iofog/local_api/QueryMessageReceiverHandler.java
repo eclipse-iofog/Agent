@@ -14,6 +14,9 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -36,7 +39,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @since 2016
  */
 public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : QueryMessageReceiverHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -55,14 +58,17 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleQueryMessageRequest() {
+		LoggingService.logInfo(MODULE_NAME, "Starting handle query message request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", 
+					new AgentSystemException("Request method not allowed", new Exception()));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, 
+					new AgentSystemException(contentTypeError, new Exception()));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -74,7 +80,8 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 			validateMessageQueryInput(jsonObject);
 		} catch (Exception e) {
 			String errorMsg = "Incorrect input content/data " + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, e);
+			LoggingService.logError(MODULE_NAME, errorMsg, 
+					new AgentSystemException(errorMsg, e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -115,7 +122,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-
+		LoggingService.logInfo(MODULE_NAME, "Finished handle query message request");
 		return ApiHandlerHelpers.successResponse(outputBuffer, result);
 	}
 
@@ -126,20 +133,21 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return String
 	 */
 	private void validateMessageQueryInput(JsonObject message) throws Exception{
+		LoggingService.logInfo(MODULE_NAME, "Start validate MEssage Query input");
 		if (!message.containsKey("id")) {
-			Exception err = new Exception("Error: Missing input field id");
+			AgentUserException err = new AgentUserException("Error: Missing input field id", new Exception());
 			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
 			throw err;
 		}
 
 		if (!(message.containsKey("timeframestart") && message.containsKey("timeframeend"))) {
-			Exception err = new Exception("Error: Missing input field timeframe start or end");
+			AgentUserException err = new AgentUserException("Error: Missing input field timeframe start or end", new Exception());
 			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
 			throw err;
 		}
 
 		if (!message.containsKey("publishers")) {
-			Exception err = new Exception("Error: Missing input field publishers");
+			AgentUserException err = new AgentUserException("Error: Missing input field publishers", new Exception());
 			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
 			throw err;
 		}
@@ -147,7 +155,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 		try {
 			Long.parseLong(message.get("timeframestart").toString());
 		} catch (Exception e) {
-			Exception err = new Exception("Error: Invalid value of timeframestart");
+			AgentUserException err = new AgentUserException("Error: Invalid value of timeframestart", new Exception());
 			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
 			throw err;
 		}
@@ -155,11 +163,19 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 		try {
 			Long.parseLong(message.get("timeframeend").toString());
 		} catch (Exception e) {
-			throw new Exception("Error: Invalid value of timeframeend");
+			AgentUserException err = new AgentUserException("Error: Invalid value of timeframeend", new Exception());
+			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
+			throw err;
 		}
 
-		if ((message.getString("id").trim().equals("")))
-			throw new Exception("Error: Missing input field value id");
+		if ((message.getString("id").trim().equals(""))) {
+			AgentUserException err = new AgentUserException("Error: Missing input field value id", new Exception());
+			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
+			throw err;
+		}
+			
+		
+		LoggingService.logInfo(MODULE_NAME, "Finished validate MEssage Query input");
 	}
 
 	/**

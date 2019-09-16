@@ -14,6 +14,8 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -36,7 +38,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : MessageReceiverHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -55,14 +57,15 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleMessageRecievedRequest() {
+		LoggingService.logInfo(MODULE_NAME, "Start Handler method to deliver the messages to the receiver. Get the messages");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -74,7 +77,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 			validateRequest(jsonObject);
 		} catch (Exception e) {
 			String errorMsg = "Incorrect content/data" + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, e);
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg, e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -96,7 +99,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-
+		LoggingService.logInfo(MODULE_NAME, "Finished Handler method to deliver the messages to the receiver. Get the messages");
 		return ApiHandlerHelpers.successResponse(outputBuffer, result);
 	}
 
@@ -107,10 +110,11 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return String
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start Handler method to validate the request");
 		if (!jsonObject.containsKey("id") ||
 				jsonObject.isNull("id") ||
 				jsonObject.getString("id").trim().equals(""))
-			throw new Exception(" Id value not found ");
+			throw new AgentUserException(" Id value not found ");
 	}
 
 	/**

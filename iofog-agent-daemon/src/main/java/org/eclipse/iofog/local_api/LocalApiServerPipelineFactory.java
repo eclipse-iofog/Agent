@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.local_api;
 
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -30,6 +32,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 public class LocalApiServerPipelineFactory extends ChannelInitializer<SocketChannel>{
 	private final SslContext sslCtx;
 	private final EventExecutorGroup executor;
+	private static final String MODULE_NAME = "Local API : LocalApi ServerPipelineFactory";
 	
 	public LocalApiServerPipelineFactory(SslContext sslCtx) {
 		this.sslCtx = sslCtx;
@@ -42,6 +45,7 @@ public class LocalApiServerPipelineFactory extends ChannelInitializer<SocketChan
 	 * @return void
 	 */
 	public void initChannel(SocketChannel ch) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start Initialize channel for communication and assign handler");
 		ChannelPipeline pipeline = ch.pipeline();
 		if (sslCtx != null) {
 			pipeline.addLast(sslCtx.newHandler(ch.alloc()));
@@ -49,5 +53,6 @@ public class LocalApiServerPipelineFactory extends ChannelInitializer<SocketChan
 		pipeline.addLast(new HttpServerCodec());
 		pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
 		pipeline.addLast(new LocalApiServerHandler(executor));	
+		LoggingService.logInfo(MODULE_NAME, "Finished Initialize channel for communication and assign handler");
 	}
 }	

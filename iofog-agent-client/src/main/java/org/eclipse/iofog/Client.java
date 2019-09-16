@@ -186,6 +186,8 @@ public class Client {
 			"                                         storage\n" +
 			"                 -lc <#log files>        Set the number of log files to evenly\n" +
 			"                                         split the log storage limit\n" +
+			"                 -ll <log level>         Set the standard logging levels that\\n"+
+			"                                         can be used to control logging output" +
 			"                 -sf <#seconds>          Set the status update frequency\n" +
 			"                 -cf <#seconds>          Set the get changes frequency\n" +
 			"                 -df <#seconds>          Set the post diagnostics frequency\n" +

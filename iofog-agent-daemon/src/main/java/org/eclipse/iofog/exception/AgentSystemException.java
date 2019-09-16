@@ -21,8 +21,12 @@ public class AgentSystemException extends AgentException{
 
 	private static final long serialVersionUID = 1L;
 
-	public AgentSystemException(String message, Exception cause) {
+	public AgentSystemException(String message, Throwable cause) {
 		super(message, cause);
+	}
+	
+	public AgentSystemException(String message) {
+		super(message);
 	}
 
 }

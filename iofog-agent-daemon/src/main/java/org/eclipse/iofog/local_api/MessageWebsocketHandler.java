@@ -17,6 +17,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Map;
 
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
@@ -43,7 +45,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
  * @since 2016
  */
 public class MessageWebsocketHandler {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local api : Message Websocket Handler";
 
 	private static final Byte OPCODE_PING = 0x9;
 	private static final Byte OPCODE_PONG = 0xA;
@@ -60,13 +62,14 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
+		LoggingService.logInfo(MODULE_NAME, "Start Handler to open the websocket for the real-time message websocket");
 		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
 		String publisherId;
 
 		if (tokens.length < 5) {
-			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ", new Exception());
+			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ", new AgentUserException("Missing ID or ID value in URL", null));
 			return;
 		} else {
 			publisherId = tokens[4].trim().split("\\?")[0];
@@ -87,7 +90,7 @@ public class MessageWebsocketHandler {
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
 		MessageBus.getInstance().enableRealTimeReceiving(publisherId);
 
-		LoggingService.logInfo(MODULE_NAME, "Handshake end....");
+		LoggingService.logInfo(MODULE_NAME, "Finished Handler to open the websocket for the real-time message websocket. Handshake end....");
 	}
 
 	/**
@@ -98,7 +101,7 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-
+		LoggingService.logInfo(MODULE_NAME, "Start Handler for the real-time message receive and sending real time-time messages");
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
 			if (buffer.readableBytes() == 1) {
@@ -111,7 +114,7 @@ public class MessageWebsocketHandler {
 					}
 				}
 			} else {
-				LoggingService.logInfo(MODULE_NAME, "Ping opcode not found");
+				LoggingService.logInfo(MODULE_NAME, "Handler for the real-time message, Ping opcode not found");
 			}
 
 			return;
@@ -161,7 +164,7 @@ public class MessageWebsocketHandler {
 							buffer1.writeBytes(BytesUtil.longToBytes(msgTimestamp));
 							ctx.channel().write(new BinaryWebSocketFrame(buffer1));
 						} catch (Exception e) {
-							LoggingService.logError(MODULE_NAME, "wrong message format, validation failed", e);
+							LoggingService.logError(MODULE_NAME, "wrong message format, validation failed", new AgentSystemException(e.getMessage(), e));
 						}
 					}
 					return;
@@ -182,6 +185,7 @@ public class MessageWebsocketHandler {
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.messageWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished Handler for the real-time message receive and sending real time-time messages");
 	}
 
 	/**
@@ -191,6 +195,7 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
+		LoggingService.logInfo(MODULE_NAME, "Start Helper to send real-time messages");
 		ChannelHandlerContext ctx;
 		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
@@ -212,8 +217,10 @@ public class MessageWebsocketHandler {
 			buffer1.writeBytes(bytesMsg);
 			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 		} else {
-			LoggingService.logError(MODULE_NAME, "No active real-time websocket found for " + receiverId, new Exception());
+			LoggingService.logError(MODULE_NAME, "No active real-time websocket found for " + receiverId, 
+					new AgentSystemException("No active real-time websocket found for " + receiverId, null));
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished Helper to send real-time messages");
 
 	}
 
@@ -224,6 +231,7 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	private static String getWebSocketLocation(HttpRequest req) {
+		LoggingService.logInfo(MODULE_NAME, "Get web socketLocation");
 		String location = req.headers().get(HOST) + WEBSOCKET_PATH;
 		if (LocalApiServer.SSL) {
 			return "wss://" + location;

@@ -19,14 +19,15 @@ package org.eclipse.iofog.exception;
  */
 public class AgentException extends Exception{
 	
-	final Exception innerException;
-	final String message;
 	
 	private static final long serialVersionUID = 1L;
     
-	public AgentException(String message, Exception innerException) {
-		this.message = message;
-		this.innerException = innerException;
+	public AgentException(String message, Throwable innerException) {
+		super(message, innerException);
+	}
+	
+	public AgentException(String message) {
+		super(message);
 	}
 
 }

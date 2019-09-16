@@ -14,6 +14,8 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.message_bus.Message;
 import org.eclipse.iofog.message_bus.MessageBusUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -34,7 +36,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @since 2016
  */
 public class MessageSenderHandler implements Callable<FullHttpResponse> {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : MessageSenderHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -52,14 +54,15 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleMessageSenderRequest() {
+		LoggingService.logInfo(MODULE_NAME, "Start Handler method to publish the messages from the container to message bus");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -93,6 +96,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		builder.add("id", message.getId());
 
 		String sendMessageResult = builder.build().toString();
+		LoggingService.logInfo(MODULE_NAME, "Finished Handler method to publish the messages from the container to message bus");
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 
@@ -102,64 +106,66 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 * @param message
 	 */
 	private void validateMessage(JsonObject message) throws Exception {
-
+		
+		LoggingService.logInfo(MODULE_NAME, "Start Handler method to validate the request and the message to publish");
 		if (!message.containsKey("publisher"))
-			throw new Exception("Error: Missing input field publisher ");
+			throw new AgentUserException("Error: Missing input field publisher ");
 		if (!message.containsKey("version"))
-			throw new Exception("Error: Missing input field version ");
+			throw new AgentUserException("Error: Missing input field version ");
 		if (!message.containsKey("infotype"))
-			throw new Exception("Error: Missing input field infotype ");
+			throw new AgentUserException("Error: Missing input field infotype ");
 		if (!message.containsKey("infoformat"))
-			throw new Exception("Error: Missing input field infoformat ");
+			throw new AgentUserException("Error: Missing input field infoformat ");
 		if (!message.containsKey("contentdata"))
-			throw new Exception("Error: Missing input field contentdata ");
+			throw new AgentUserException("Error: Missing input field contentdata ");
 
 		if ((message.getString("publisher").trim().equals("")))
-			throw new Exception("Error: Missing input field value publisher ");
+			throw new AgentUserException("Error: Missing input field value publisher ");
 		if ((message.getString("infotype").trim().equals("")))
-			throw new Exception("Error: Missing input field value infotype ");
+			throw new AgentUserException("Error: Missing input field value infotype ");
 		if ((message.getString("infoformat").trim().equals("")))
-			throw new Exception("Error: Missing input field value infoformat ");
+			throw new AgentUserException("Error: Missing input field value infoformat ");
 
 		String version = message.get("version").toString();
 		if (!(version.matches("[0-9]+"))) {
-			throw new Exception("Error: Invalid  value for version");
+			throw new AgentUserException("Error: Invalid  value for version");
 		}
 
 		if (message.containsKey("sequencenumber")) {
 			String sNum = message.get("sequencenumber").toString();
 			if (!(sNum.matches("[0-9]+"))) {
-				throw new Exception("Error: Invalid  value for field sequence number ");
+				throw new AgentUserException("Error: Invalid  value for field sequence number ");
 			}
 		}
 
 		if (message.containsKey("sequencetotal")) {
 			String stot = message.get("sequencetotal").toString();
 			if (!(stot.matches("[0-9]+"))) {
-				throw new Exception("Error: Invalid  value for field sequence total ");
+				throw new AgentUserException("Error: Invalid  value for field sequence total ");
 			}
 		}
 
 		if (message.containsKey("priority")) {
 			String priority = message.get("priority").toString();
 			if (!(priority.matches("[0-9]+"))) {
-				throw new Exception("Error: Invalid  value for field priority ");
+				throw new AgentUserException("Error: Invalid  value for field priority ");
 			}
 		}
 
 		if (message.containsKey("chainposition")) {
 			String chainPos = message.get("chainposition").toString();
 			if (!(chainPos.matches("[0-9]+"))) {
-				throw new Exception("Error: Invalid  value for field chain position ");
+				throw new AgentUserException("Error: Invalid  value for field chain position ");
 			}
 		}
 
 		if (message.containsKey("difficultytarget")) {
 			String difftarget = message.get("difficultytarget").toString();
 			if (!(difftarget.matches("[0-9]*.?[0-9]*"))) {
-				throw new Exception("Error: Invalid  value for field difficulty target ");
+				throw new AgentUserException("Error: Invalid  value for field difficulty target ");
 			}
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished Handler method to validate the request and the message to publish");
 	}
 
 	/**
