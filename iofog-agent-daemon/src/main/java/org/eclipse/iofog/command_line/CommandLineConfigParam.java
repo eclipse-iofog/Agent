@@ -43,7 +43,7 @@ public enum CommandLineConfigParam {
     LOG_DISK_CONSUMPTION_LIMIT ("10", "l","log_disk_consumption_limit", "logLimit"),
     LOG_DISK_DIRECTORY ("/var/log/iofog-agent/", "ld","log_disk_directory", "logDirectory"),
     LOG_FILE_COUNT ("10", "lc","log_file_count", "logFileCount"),
-    LOG_LEVEL ("SEVERE", "ll","log_level", "loglevel"),
+    LOG_LEVEL ("INFO", "ll","log_level", "logLevel"),
     STATUS_FREQUENCY("10", "sf", "status_update_freq", "statusFrequency"),
     CHANGE_FREQUENCY("20", "cf", "get_changes_freq", "changeFrequency"),
     DEVICE_SCAN_FREQUENCY("60", "sd", "scan_devices_freq", "deviceScanFrequency"),

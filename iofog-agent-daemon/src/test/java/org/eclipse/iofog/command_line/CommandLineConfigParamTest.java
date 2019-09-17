@@ -20,6 +20,8 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Optional;
+
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -41,7 +43,8 @@ public class CommandLineConfigParamTest {
     @After
     public void tearDown() throws Exception {
     }
-
+    
+    @SuppressWarnings("static-access")
     @Test
     public void getCommandName() {
         assertEquals("", commandLineConfigParam.ACCESS_TOKEN.getCommandName());
@@ -69,7 +72,8 @@ public class CommandLineConfigParamTest {
         assertEquals("dev", commandLineConfigParam.DEV_MODE.getCommandName());
     }
 
-    @Test
+    @SuppressWarnings("static-access")
+	@Test
     public void getXmlTag() {
         assertEquals("access_token", commandLineConfigParam.ACCESS_TOKEN.getXmlTag());
         assertEquals("iofog_uuid", commandLineConfigParam.IOFOG_UUID.getXmlTag());
@@ -96,27 +100,104 @@ public class CommandLineConfigParamTest {
         assertEquals("dev_mode", commandLineConfigParam.DEV_MODE.getXmlTag());
     }
 
+    @SuppressWarnings("static-access")
     @Test
     public void getJsonProperty() {
+        assertEquals("", commandLineConfigParam.ACCESS_TOKEN.getJsonProperty());
+        assertEquals("", commandLineConfigParam.IOFOG_UUID.getJsonProperty());
+        assertEquals("diskLimit", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getJsonProperty());
+        assertEquals("diskDirectory", commandLineConfigParam.DISK_DIRECTORY.getJsonProperty());
+        assertEquals("memoryLimit", commandLineConfigParam.MEMORY_CONSUMPTION_LIMIT.getJsonProperty());
+        assertEquals("cpuLimit", commandLineConfigParam.PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty());
+        assertEquals("", commandLineConfigParam.CONTROLLER_URL.getJsonProperty());
+        assertEquals("", commandLineConfigParam.CONTROLLER_CERT.getJsonProperty());
+        assertEquals("dockerUrl", commandLineConfigParam.DOCKER_URL.getJsonProperty());
+        assertEquals("networkInterface", commandLineConfigParam.NETWORK_INTERFACE.getJsonProperty());
+        assertEquals("logLimit", commandLineConfigParam.LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty());
+        assertEquals("logDirectory", commandLineConfigParam.LOG_DISK_DIRECTORY.getJsonProperty());
+        assertEquals("logFileCount", commandLineConfigParam.LOG_FILE_COUNT.getJsonProperty());
+        assertEquals("logLevel", commandLineConfigParam.LOG_LEVEL.getJsonProperty());
+        assertEquals("statusFrequency", commandLineConfigParam.STATUS_FREQUENCY.getJsonProperty());
+        assertEquals("changeFrequency", commandLineConfigParam.CHANGE_FREQUENCY.getJsonProperty());
+        assertEquals("deviceScanFrequency", commandLineConfigParam.DEVICE_SCAN_FREQUENCY.getJsonProperty());
+        assertEquals("watchdogEnabled", commandLineConfigParam.WATCHDOG_ENABLED.getJsonProperty());
+        assertEquals("gpsMode", commandLineConfigParam.GPS_MODE.getJsonProperty());
+        assertEquals("gpscoordinates", commandLineConfigParam.GPS_COORDINATES.getJsonProperty());
+        assertEquals("postdiagnosticsfreq", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getJsonProperty());
+        assertEquals("", commandLineConfigParam.FOG_TYPE.getJsonProperty());
+        assertEquals("", commandLineConfigParam.DEV_MODE.getJsonProperty());
     }
 
+    @SuppressWarnings("static-access")
     @Test
     public void getDefaultValue() {
+        assertEquals("", commandLineConfigParam.ACCESS_TOKEN.getDefaultValue());
+        assertEquals("", commandLineConfigParam.IOFOG_UUID.getDefaultValue());
+        assertEquals("50", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getDefaultValue());
+        assertEquals("/var/lib/iofog-agent/", commandLineConfigParam.DISK_DIRECTORY.getDefaultValue());
+        assertEquals("4096", commandLineConfigParam.MEMORY_CONSUMPTION_LIMIT.getDefaultValue());
+        assertEquals("80", commandLineConfigParam.PROCESSOR_CONSUMPTION_LIMIT.getDefaultValue());
+        assertEquals("https://fogcontroller1.iofog.org:54421/api/v2/", commandLineConfigParam.CONTROLLER_URL.getDefaultValue());
+        assertEquals("/etc/iofog-agent/cert.crt", commandLineConfigParam.CONTROLLER_CERT.getDefaultValue());
+        assertEquals("unix:///var/run/docker.sock", commandLineConfigParam.DOCKER_URL.getDefaultValue());
+        assertEquals("dynamic", commandLineConfigParam.NETWORK_INTERFACE.getDefaultValue());
+        assertEquals("10", commandLineConfigParam.LOG_DISK_CONSUMPTION_LIMIT.getDefaultValue());
+        assertEquals("/var/log/iofog-agent/", commandLineConfigParam.LOG_DISK_DIRECTORY.getDefaultValue());
+        assertEquals("10", commandLineConfigParam.LOG_FILE_COUNT.getDefaultValue());
+        assertEquals("INFO", commandLineConfigParam.LOG_LEVEL.getDefaultValue());
+        assertEquals("10", commandLineConfigParam.STATUS_FREQUENCY.getDefaultValue());
+        assertEquals("20", commandLineConfigParam.CHANGE_FREQUENCY.getDefaultValue());
+        assertEquals("60", commandLineConfigParam.DEVICE_SCAN_FREQUENCY.getDefaultValue());
+        assertEquals("off", commandLineConfigParam.WATCHDOG_ENABLED.getDefaultValue());
+        assertEquals("auto", commandLineConfigParam.GPS_MODE.getDefaultValue());
+        assertEquals("", commandLineConfigParam.GPS_COORDINATES.getDefaultValue());
+        assertEquals("10", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getDefaultValue());
+        assertEquals("auto", commandLineConfigParam.FOG_TYPE.getDefaultValue());
+        assertEquals("on", commandLineConfigParam.DEV_MODE.getDefaultValue());
     }
 
+    @SuppressWarnings("static-access")
     @Test
     public void getCmdText() {
+        assertEquals("-", commandLineConfigParam.ACCESS_TOKEN.getCmdText());
+        assertEquals("-", commandLineConfigParam.IOFOG_UUID.getCmdText());
+        assertEquals("-d", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getCmdText());
+        assertEquals("-dl", commandLineConfigParam.DISK_DIRECTORY.getCmdText());
+        assertEquals("-m", commandLineConfigParam.MEMORY_CONSUMPTION_LIMIT.getCmdText());
+        assertEquals("-p", commandLineConfigParam.PROCESSOR_CONSUMPTION_LIMIT.getCmdText());
+        assertEquals("-a", commandLineConfigParam.CONTROLLER_URL.getCmdText());
+        assertEquals("-ac", commandLineConfigParam.CONTROLLER_CERT.getCmdText());
+        assertEquals("-c", commandLineConfigParam.DOCKER_URL.getCmdText());
+        assertEquals("-n", commandLineConfigParam.NETWORK_INTERFACE.getCmdText());
+        assertEquals("-l", commandLineConfigParam.LOG_DISK_CONSUMPTION_LIMIT.getCmdText());
+        assertEquals("-ld", commandLineConfigParam.LOG_DISK_DIRECTORY.getCmdText());
+        assertEquals("-lc", commandLineConfigParam.LOG_FILE_COUNT.getCmdText());
+        assertEquals("-ll", commandLineConfigParam.LOG_LEVEL.getCmdText());
+        assertEquals("-sf", commandLineConfigParam.STATUS_FREQUENCY.getCmdText());
+        assertEquals("-cf", commandLineConfigParam.CHANGE_FREQUENCY.getCmdText());
+        assertEquals("-sd", commandLineConfigParam.DEVICE_SCAN_FREQUENCY.getCmdText());
+        assertEquals("-idc", commandLineConfigParam.WATCHDOG_ENABLED.getCmdText());
+        assertEquals("-gps", commandLineConfigParam.GPS_MODE.getCmdText());
+        assertEquals("-", commandLineConfigParam.GPS_COORDINATES.getCmdText());
+        assertEquals("-df", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getCmdText());
+        assertEquals("-ft", commandLineConfigParam.FOG_TYPE.getCmdText());
+        assertEquals("-dev", commandLineConfigParam.DEV_MODE.getCmdText());
     }
 
     @Test
     public void getCommandByName() {
+        assertTrue(CommandLineConfigParam.getCommandByName("dev").isPresent());
+        assertFalse(CommandLineConfigParam.getCommandByName("dummyCommand").isPresent());
     }
 
     @Test
     public void getAllCmdTextNames() {
+        assertTrue(CommandLineConfigParam.getAllCmdTextNames().size() != 0);
     }
 
     @Test
     public void existParam() {
+        assertTrue(CommandLineConfigParam.existParam("-dev"));
+        assertFalse(CommandLineConfigParam.existParam("-dummyCommandName"));
     }
 }

@@ -195,7 +195,7 @@ public enum CommandLineAction {
 					try {
 						resetToDefault();
 					} catch (Exception e) {
-						LoggingService.logError(MODULE_NAME, "Error resetting configurtion", e);
+						LoggingService.logError(MODULE_NAME, "Error resetting configuration", e);
 						return "Error resetting configuration.";
 					}
 					return "Configuration has been reset to its defaults.";

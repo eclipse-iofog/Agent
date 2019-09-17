@@ -61,6 +61,6 @@ public class CommandLineParserTest {
     public void testNotSupportedConstructor() throws Exception {
         Constructor<CommandLineParser> constructor = CommandLineParser.class.getDeclaredConstructor();
         constructor.setAccessible(true);
-        commandLineParser = (CommandLineParser) constructor.newInstance();
+        commandLineParser = constructor.newInstance();
     }
 }
