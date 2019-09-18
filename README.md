@@ -49,49 +49,56 @@ There should be an ioFog code base for every processing platform that becomes pa
 
 See the docs folder in this repository for architecture, project microculture, engineering philosophy, functional specifications, and more.
 
-**IOFog Agent Setup**
+#### IOFog Agent Setup
 
-1.&ensp;In order to install IOFog Agent, you need to have Java and Docker installed on your machine.
+1. In order to install IOFog Agent, you need to have Java and Docker installed on your machine.
 
-     sudo add-apt-repository ppa:webupd8team/java
-     sudo apt-get update
-     sudo apt-get install oracle-java8-installer
-     curl -fsSL https://get.docker.com/ | sh
+         sudo add-apt-repository ppa:webupd8team/java
+         sudo apt-get update
+         sudo apt-get install oracle-java8-installer
+         curl -fsSL https://get.docker.com/ | sh
 
-2.&ensp;Install IOFog Agent
+2. Install IOFog Agent
 
-     curl -s https://packagecloud.io/install/repositories/iofog/iofog-agent/script.deb.sh | sudo bash
-     sudo apt-get install iofog-agent (release version)
-     or
-     sudo apt-get install iofog-agent-dev (developer's version)
+   A released version:
+
+         curl -s https://packagecloud.io/install/repositories/iofog/iofog-agent/script.deb.sh | sudo bash
+         sudo apt-get install iofog-agent
+
+   or, if you prefer a developer's version:
+
+         curl -s https://packagecloud.io/install/repositories/iofog/iofog-agent/script.deb.sh | sudo bash
+         sudo apt-get install iofog-agent-dev
 	   
     
-**Usage**
+#### Usage
 
-1.&ensp;To view help menu
+1. To view help menu
 
         sudo iofog-agent help
 
-2.&ensp;To view current status
+2. To view current status
 
         sudo iofog-agent status   
 
-3.&ensp;To view version and license
+3. To view version and license
 
         sudo iofog-agent version
         
-4.&ensp;To view current configuration
+4. To view current configuration
 
         sudo iofog-agent info
         
-5.&ensp;Provision iofog for use
+5. Provision iofog for use
 
         sudo iofog-agent provision ABCDWXYZ
 
-**Logs**
+#### Logs
+
 - Log files are located at '/var/log/iofog-agent'
 
-**System Requirements (Recommended)**
+#### System Requirements (Recommended)
+
 - Processor: 64 bit Dual Core or better
 - RAM: 1 GB minimum
 - Hard Disk: 5 GB minimum
@@ -99,18 +106,23 @@ See the docs folder in this repository for architecture, project microculture, e
 - Docker 1.10 or higher
 - Linux kernel 3.10 or higher
 
-**Platforms Supported (Ubuntu Linux)**
+#### Platforms Supported (Ubuntu Linux)
+
 - 14.04 - Trusty Tahr
 - 16.04 - Xenial Xerus
 
 
-&ensp;- IOFog Agent Update:
+#### IOFog Agent Update
 
-        sudo service iofog-agent stop       
+  If you're running a released version:
+
+        sudo service iofog-agent stop
         sudo apt-get install --only-upgrade iofog-agent
         sudo service iofog-agent start
-        or
+
+  or, if you have a developer's version:
+
         sudo service iofog-agent stop
-        sudo apt-get install --only-upgrade iofog-agent-dev (developer's version)
-        sudo service iofog-agent stop        
+        sudo apt-get install --only-upgrade iofog-agent-dev
+        sudo service iofog-agent start
 
