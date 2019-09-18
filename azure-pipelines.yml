@@ -68,7 +68,7 @@ jobs:
         name: setvarStep
 
       - script: |
-          echo "gcr.io/${REPOSITORY}:${BUILDTAG}" > GCR_DOCKER_IMAGE
+          echo "gcr.io/$(repository):$(imageTag)" > GCR_DOCKER_IMAGE
         displayName: 'Save Docker image name and tag to GCR_DOCKER_IMAGE into artifacts'
 
       - task: Docker@2
