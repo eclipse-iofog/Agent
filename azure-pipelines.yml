@@ -14,7 +14,8 @@ trigger:
 variables:
   repository: 'focal-freedom-236620/agent'
   buildTag: b-$(Build.BuildId)
-  branchTag: $(Build.SourceBranchName)
+  ref: $(Build.SourceBranch)
+  imageTag:
   releaseCandidate: 'rc1'
 
 jobs:
@@ -53,15 +54,16 @@ jobs:
         displayName: 'Snyk monitor'
 
       - script: |
-          echo "##vso[task.setvariable variable=supplementaryTag]latest"
-          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
-            echo "##vso[task.setvariable variable=supplementaryTag]rc-$(Build.SourceBranchName)"
-          #If branch starts with ref/tags, apply version tag
-          elif [[ $(Build.SourceBranch) == refs/tags* ]]; then
-            supplementaryTag= echo $(supplementaryTag) | awk '{print substr($1,2);}'
-            echo $supplementaryTag
-            echo "##vso[task.setvariable variable=supplementaryTag]$supplementaryTag"
+          if [[ $(ref) == refs/tags* ]]; then
+            TAG=$(echo $(ref) | sed "s|refs/tags/v||g")
+            echo "##vso[task.setvariable variable=imageTag]$TAG"
+          else
+            LATESTTAG=$(git tag | tail -1)
+            LATESTVERS=${LATESTTAG#?}
+            if [ -z "$LATESTVERS" ]; then LATESTVERS=0.0.0; fi
+            echo "##vso[task.setvariable variable=imageTag]$LATESTVERS-b$(buildTag)"
           fi
+          echo $(imageTag)
         displayName: 'Setup supplementary tag for docker images'
         name: setvarStep
 
@@ -77,10 +79,8 @@ jobs:
           command: 'buildAndPush'
           Dockerfile: 'Dockerfile'
           tags: |
-            $(buildTag)
-            $(branchTag)
+            $(imageTag)
             latest
-            $(supplementaryTag)
 
       - script: |
           echo "api test"
@@ -110,8 +110,6 @@ jobs:
           version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
           if [[ $(Build.SourceBranch) == refs/tags* ]]; then
             pkg_version=$version
-          elif [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
-            pkg_version=$version-$(releaseCandidate)-b$(Build.BuildId)
           else
             pkg_version=$version-b$(Build.BuildId)
           fi
