@@ -542,7 +542,7 @@ public final class Configuration {
                     break;
                 case LOG_LEVEL:
                 	LoggingService.logInfo(MODULE_NAME, "Setting log level");
-                    setNode(LOG_FILE_COUNT, value, configFile, configElement);
+                    setNode(LOG_LEVEL, value, configFile, configElement);
                     setLogLevel(value);
                     break;
                 case STATUS_FREQUENCY:
