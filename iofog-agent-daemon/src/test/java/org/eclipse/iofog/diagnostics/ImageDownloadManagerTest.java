@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.ArrayList;
@@ -55,41 +56,35 @@ public class ImageDownloadManagerTest {
     private DefaultDockerClientConfig defaultDockerClientConfig;
     private DockerClientBuilder dockerClientBuilder;
     private Container container;
+    private LoggingService loggingService;
     private CommandShellResultSet<List<String>, List<String>> resultSetWithPath;
     private List<String> error;
     private List<String> value;
+    private String MODULE_NAME;
 
     @Before
     public void setUp() throws Exception {
         microserviceUuid = "microservice-id";
-
         imageDownloadManager = mock(ImageDownloadManager.class);
-
         mockStatic(Configuration.class);
         when(Configuration.getDockerUrl()).thenReturn("unix://dockerUrl/");
         when(Configuration.getDockerApiVersion()).thenReturn("19.03.1");
-
         orchestrator = mock(Orchestrator.class);
-
         defaultDockerClientConfig = mock( DefaultDockerClientConfig.class);
         dockerClientBuilder = mock( DockerClientBuilder.class);
         mockStatic(DockerClientBuilder.class);
         dockerClient = mock(DockerClient.class);
         mockStatic(DockerClient.class);
-
         mockStatic(CommandShellExecutor.class);
-
         when(DockerClientBuilder.getInstance(any(DefaultDockerClientConfig.class))).thenReturn(dockerClientBuilder);
         when( dockerClientBuilder.build()).thenReturn(dockerClient);
-
         dockerUtil = mock(DockerUtil.class);
         mockStatic(DockerUtil.class);
-
         container = mock(Container.class);
-
         when(DockerUtil.getInstance()).thenReturn(dockerUtil);
-
-
+        loggingService = mock(LoggingService.class);
+        mockStatic(LoggingService.class);
+        MODULE_NAME = "Image Download Manager";
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -104,6 +99,7 @@ public class ImageDownloadManagerTest {
         error = null;
         value =null;
         resultSetWithPath = null;
+        MODULE_NAME = null;
     }
 
     /**
@@ -111,11 +107,12 @@ public class ImageDownloadManagerTest {
      * then createImageSnapshot returns
      */
     @Test
-    public void createImageSnapshotWithNullContainer() {
+    public void createImageSnapshotWhenGetContainerReturnsNull() {
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(null);
-
         imageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
+        PowerMockito.verifyStatic(LoggingService.class);
+        LoggingService.logWarning(MODULE_NAME,"Image snapshot: container not running.");
     }
 
     /**
@@ -124,18 +121,21 @@ public class ImageDownloadManagerTest {
      *
      */
     @Test
-    public void createImageSnapshotWithCommandExecuteSuccess() {
-
+    public void createImageSnapshotWhenCommandExecuteReturnsSuccess() throws Exception {
         error = new ArrayList<>();
         value = new ArrayList<>();
-        value.add("path");
+        value.add("local/path/newFile");
         resultSetWithPath = new CommandShellResultSet<>(value, error);
-
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
-
         imageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
+        verify(orchestrator, atLeastOnce()).sendFileToController(any(), any());
+        PowerMockito.verifyStatic(LoggingService.class);
+        LoggingService.logInfo(MODULE_NAME, "Image snapshot newFile deleted");
+        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
+
+
     }
 
     /**
@@ -144,17 +144,19 @@ public class ImageDownloadManagerTest {
      *
      */
     @Test
-    public void createImageSnapshotWithCommandExecuteFailure() {
+    public void createImageSnapshotWhenCommandExecuteReturnsError() throws Exception {
         error = new ArrayList<>();
         value = new ArrayList<>();
         error.add("error");
         resultSetWithPath = new CommandShellResultSet<>(value, error);
-
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
-
         imageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
+        verify(orchestrator, never()).sendFileToController(any(), any());
+        PowerMockito.verifyStatic(LoggingService.class);
+        LoggingService.logWarning(MODULE_NAME,"error=[error], value=[]");
+
     }
 
 
@@ -164,16 +166,17 @@ public class ImageDownloadManagerTest {
      *
      */
     @Test
-    public void createImageSnapshotWithCommandExecuteReturnsEmpty() {
+    public void createImageSnapshotWhenCommandExecuteReturnsEmpty() throws Exception {
         error = new ArrayList<>();
         value = new ArrayList<>();
         resultSetWithPath = new CommandShellResultSet<>(value, error);
-
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
-
         imageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
+        verify(orchestrator, never()).sendFileToController(any(), any());
+        PowerMockito.verifyStatic(LoggingService.class);
+        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
     }
 
     /**
@@ -182,17 +185,18 @@ public class ImageDownloadManagerTest {
      *
      */
     @Test
-    public void createImageSnapshotWithCommandExecuteReturnsBlankValue() {
+    public void createImageSnapshotWhenCommandExecuteReturnsBlankValue() throws Exception {
         error = new ArrayList<>();
         value = new ArrayList<>();
         value.add("");
         resultSetWithPath = new CommandShellResultSet<>(value, error);
-
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
-
         imageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
+        verify(orchestrator, atLeastOnce()).sendFileToController(any(), any());
+        PowerMockito.verifyStatic(LoggingService.class);
+        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
     }
 
     /**
@@ -201,23 +205,19 @@ public class ImageDownloadManagerTest {
      *
      */
     @Test
-    public void createImageSnapshotWithOrchestratorRequestException() throws Exception{
+    public void throwsExceptionWhenCreateImageSnapshotCallsOrchestrator() throws Exception{
         error = new ArrayList<>();
         value = new ArrayList<>();
         value.add("");
         resultSetWithPath = new CommandShellResultSet<>(value, error);
-
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
-
         doThrow(new Exception("Error")).when(orchestrator).sendFileToController(any(), any());
-
         imageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
         verify(orchestrator, atLeastOnce()).sendFileToController(any(), any());
-
-
-
+        PowerMockito.verifyStatic(LoggingService.class);
+        LoggingService.logError(any(), any(), any());
     }
 }
