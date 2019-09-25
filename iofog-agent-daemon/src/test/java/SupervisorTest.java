@@ -51,7 +51,7 @@ public class SupervisorTest {
             PowerMockito.when(ProcessManager.getInstance()).thenReturn(null);
             PowerMockito.when(Tracker.getInstance()).thenReturn(new Tracker());
             PowerMockito.when(MessageBus.getInstance()).thenReturn(null);
-           // PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
+            // PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
         } catch (Exception e) {
             e.printStackTrace();
         }
