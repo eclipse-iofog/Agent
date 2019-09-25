@@ -23,21 +23,24 @@ import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
 /**
  * Agent Exception
- * @author nehanaithani
  *
+ * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({StraceDiagnosticManager.class,
@@ -80,7 +83,7 @@ public class StraceDiagnosticManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        microserviceUuid= null;
+        microserviceUuid = null;
         jsonObject = null;
         straceDiagnosticManager = null;
         iterator = null;
@@ -131,7 +134,7 @@ public class StraceDiagnosticManagerTest {
         Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getString("microserviceUuid");
         Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getBoolean("straceRun");
         PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Disabling microservice strace diagnostics for miroservice : microserviceUuid");
+        LoggingService.logInfo(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
     }
 
     /**
@@ -152,7 +155,7 @@ public class StraceDiagnosticManagerTest {
         PowerMockito.verifyStatic(CommandShellExecutor.class, Mockito.times(1));
         CommandShellExecutor.executeCommand(any());
         PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
-        LoggingService.logError(any(),any(),any());
+        LoggingService.logError(any(), any(), any());
     }
 
     /**
@@ -228,11 +231,10 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * Asserts mock is same as the StraceDiagnosticManager.getInstance()
      */
     @Test
-    public void testGetInstanceIsSameAsMock()  {
+    public void testGetInstanceIsSameAsMock() {
         straceDiagnosticManager = mock(StraceDiagnosticManager.class);
         PowerMockito.mockStatic(StraceDiagnosticManager.class);
         when(straceDiagnosticManager.getInstance()).thenReturn(straceDiagnosticManager);
@@ -240,20 +242,18 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * Asserts straceDiagnosticManager.getMonitoringMicroservices()
      */
     @Test
     public void testGetMonitoringMicroservices() {
         assertEquals(0, straceDiagnosticManager.getMonitoringMicroservices().size());
-        microserviceStraceData = new MicroserviceStraceData(microserviceUuid,5,true);
+        microserviceStraceData = new MicroserviceStraceData(microserviceUuid, 5, true);
         straceDiagnosticManager.getMonitoringMicroservices().add(microserviceStraceData);
         assertEquals(1, straceDiagnosticManager.getMonitoringMicroservices().size());
 
     }
 
     /**
-     *
      * Test enableMicroserviceStraceDiagnostics with valid microserviceUuid
      */
     @Test
@@ -275,7 +275,6 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * Test enableMicroserviceStraceDiagnostics with invalid microserviceUuid
      */
     @Test
@@ -297,12 +296,11 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * Test disableMicroserviceStraceDiagnostics with valid microserviceUuid
      */
     @Test
     public void testDisableMicroserviceStraceDiagnosticsWhenMicroserviceUuidIsPresent() {
-        microserviceStraceData = new MicroserviceStraceData(microserviceUuid,5,true);
+        microserviceStraceData = new MicroserviceStraceData(microserviceUuid, 5, true);
         straceDiagnosticManager.getMonitoringMicroservices().add(microserviceStraceData);
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(microserviceUuid);
         assertEquals(0, straceDiagnosticManager.getMonitoringMicroservices().size());
@@ -312,12 +310,11 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * Test disableMicroserviceStraceDiagnostics with microserviceUuid which is not present
      */
     @Test
     public void testDisableMicroserviceStraceDiagnosticsWhenMicroserviceUuidIsNotPresent() {
-        microserviceStraceData = new MicroserviceStraceData("newMicroserviceUuid",1234,true);
+        microserviceStraceData = new MicroserviceStraceData("newMicroserviceUuid", 1234, true);
         straceDiagnosticManager.getMonitoringMicroservices().add(microserviceStraceData);
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(microserviceUuid);
         assertEquals(1, straceDiagnosticManager.getMonitoringMicroservices().size());
@@ -327,7 +324,6 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * Test disableMicroserviceStraceDiagnostics with microserviceUuid null
      */
     @Test
@@ -339,13 +335,12 @@ public class StraceDiagnosticManagerTest {
     }
 
     /**
-     *
      * method to empty monitoringservices
      */
-    private void removeDummyMonitoringServices(){
-        if(straceDiagnosticManager.getMonitoringMicroservices() != null &&
-                straceDiagnosticManager.getMonitoringMicroservices().size() > 0){
-            for(MicroserviceStraceData data : straceDiagnosticManager.getMonitoringMicroservices()){
+    private void removeDummyMonitoringServices() {
+        if (straceDiagnosticManager.getMonitoringMicroservices() != null &&
+                straceDiagnosticManager.getMonitoringMicroservices().size() > 0) {
+            for (MicroserviceStraceData data : straceDiagnosticManager.getMonitoringMicroservices()) {
                 straceDiagnosticManager.getMonitoringMicroservices().remove(data);
             }
         }

@@ -23,10 +23,11 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.Assert.*;
+
 /**
  * Agent Exception
- * @author nehanaithani
  *
+ * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({MicroserviceStraceData.class})
@@ -138,7 +139,7 @@ public class MicroserviceStraceDataTest {
     public void testHashCodeWhenObjectAreEqual() {
         MicroserviceStraceData anotherMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, straceRun);
         assertTrue(microserviceStraceData.equals(anotherMicroserviceStraceData));
-        assertEquals(microserviceStraceData.hashCode(),anotherMicroserviceStraceData.hashCode());
+        assertEquals(microserviceStraceData.hashCode(), anotherMicroserviceStraceData.hashCode());
     }
 
     /**
@@ -148,7 +149,7 @@ public class MicroserviceStraceDataTest {
     public void testHashCodeWhenObjectAreDifferent() {
         MicroserviceStraceData anotherMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, 4002, straceRun);
         assertFalse(microserviceStraceData.equals(anotherMicroserviceStraceData));
-        assertNotEquals(microserviceStraceData.hashCode(),anotherMicroserviceStraceData.hashCode());
+        assertNotEquals(microserviceStraceData.hashCode(), anotherMicroserviceStraceData.hashCode());
     }
 
     /**
@@ -160,7 +161,7 @@ public class MicroserviceStraceDataTest {
         microserviceStraceData.setResultBuffer(resultBuffer);
         assertEquals(resultBuffer, microserviceStraceData.getResultBuffer());
         assertTrue(microserviceStraceData.equals(microserviceStraceData));
-        assertEquals(microserviceStraceData.hashCode(),microserviceStraceData.hashCode());
+        assertEquals(microserviceStraceData.hashCode(), microserviceStraceData.hashCode());
     }
 
     /**
@@ -170,8 +171,8 @@ public class MicroserviceStraceDataTest {
     public void testGetResultBufferAsString() {
         resultBuffer.add("data");
         microserviceStraceData.setResultBuffer(resultBuffer);
-        assertTrue( microserviceStraceData.getResultBufferAsString() instanceof String);
+        assertTrue(microserviceStraceData.getResultBufferAsString() instanceof String);
         assertEquals("data\n", microserviceStraceData.getResultBufferAsString());
-        assertTrue( microserviceStraceData.getResultBuffer() instanceof List);
+        assertTrue(microserviceStraceData.getResultBuffer() instanceof List);
     }
 }
