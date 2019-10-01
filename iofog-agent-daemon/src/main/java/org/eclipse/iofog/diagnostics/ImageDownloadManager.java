@@ -40,7 +40,7 @@ public class ImageDownloadManager {
     	LoggingService.logInfo(MODULE_NAME, String.format("\"Start Create image snapshot \"%s :" , microserviceUuid));
         Optional<Container> containerOptional = DockerUtil.getInstance().getContainer(microserviceUuid);
         String image;
-        if (containerOptional.isPresent()) {
+        if (containerOptional != null && containerOptional.isPresent()) {
             Container container = containerOptional.get();
             image = container.getImage();
         } else {
@@ -57,16 +57,18 @@ public class ImageDownloadManager {
         if (resultSetWithPath.getError().size() > 0) {
             LoggingService.logWarning(MODULE_NAME, resultSetWithPath.toString());
         } else {
-            String path = resultSetWithPath.getValue().get(0);
-            try {
-                //TODO: think about send few files
-                File imageFile = getFileByImagePath(path);
-                orchestrator.sendFileToController("image-snapshot", imageFile);
-                imageFile.delete();
-                logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
-            } catch (Exception e) {
-                logError(MODULE_NAME, "Unable send image snapshot path",
-                		new AgentSystemException("Unable send image snapshot path", e));
+            if(!resultSetWithPath.getValue().isEmpty()){
+                String path = resultSetWithPath.getValue().get(0);
+                try {
+                    //TODO: think about send few files
+                    File imageFile = getFileByImagePath(path);
+                    orchestrator.sendFileToController("image-snapshot", imageFile);
+                    imageFile.delete();
+                    logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
+                } catch (Exception e) {
+                    logError(MODULE_NAME, "Unable send image snapshot path",
+                            new AgentSystemException("Unable send image snapshot path", e));
+                }
             }
         }
         LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
