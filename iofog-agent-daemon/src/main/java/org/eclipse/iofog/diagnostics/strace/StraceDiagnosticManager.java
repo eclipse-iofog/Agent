@@ -56,14 +56,16 @@ public class StraceDiagnosticManager {
 	public void updateMonitoringMicroservices(JsonObject diagnosticData) {
 		LoggingService.logInfo(MODULE_NAME, "Trying to update strace monitoring microservices");
 
-		if (diagnosticData.containsKey("straceValues")) {
+		if (diagnosticData !=null && diagnosticData.containsKey("straceValues")) {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
-			for (JsonValue microserviceValue : straceMicroserviceChanges) {
-				JsonObject microservice = (JsonObject) microserviceValue;
-				if (microservice.containsKey("microserviceUuid")) {
-					String microserviceUuid = microservice.getString("microserviceUuid");
-					boolean strace = microservice.getBoolean("straceRun");
-					manageMicroservice(microserviceUuid, strace);
+			if(straceMicroserviceChanges != null){
+				for (JsonValue microserviceValue : straceMicroserviceChanges) {
+					JsonObject microservice = (JsonObject) microserviceValue;
+					if (microservice.containsKey("microserviceUuid")) {
+						String microserviceUuid = microservice.getString("microserviceUuid");
+						boolean strace = microservice.getBoolean("straceRun");
+						manageMicroservice(microserviceUuid, strace);
+					}
 				}
 			}
 		}
@@ -115,7 +117,6 @@ public class StraceDiagnosticManager {
 	private int getPidByContainerName(String containerName) throws IllegalArgumentException {
 		LoggingService.logInfo(MODULE_NAME, "Start getting pid of microservice by container name : "+ containerName);
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + containerName);
-
 		if (resultSet.getValue() != null && resultSet.getValue().size() > 1 && resultSet.getValue().get(1) != null) {
 			String pid = resultSet.getValue().get(1).split("\\s+")[1];
 			LoggingService.logInfo(MODULE_NAME, "Finished getting pid of microservice by container name :" + Integer.parseInt(pid));
