@@ -35,12 +35,15 @@ public class SupervisorStatus {
 	}
 
 	public SupervisorStatus setModuleStatus(int module, ModulesStatus status) {
-		modulesStatus[module] = status;
+		if (modulesStatus.length > module)
+			modulesStatus[module] = status;
 		return this;
 	}
 	
 	public ModulesStatus getModuleStatus(int module) {
-		return modulesStatus[module];
+		if (modulesStatus.length > module)
+			return modulesStatus[module];
+		return null;
 	}
 	
 	public ModulesStatus getDaemonStatus() {
