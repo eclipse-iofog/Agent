@@ -20,6 +20,7 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Pair;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -156,7 +157,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		Runtime runtime = Runtime.getRuntime();
 		long allocatedMemory = runtime.totalMemory();
 		long freeMemory = runtime.freeMemory();
-		logInfo("Finished get memory usage : "+ (allocatedMemory - freeMemory));
+		logInfo("Finished get memory usage : "+ (float)(allocatedMemory - freeMemory));
 		return (allocatedMemory - freeMemory);
 	}
 
@@ -182,7 +183,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 			logInfo("Finished get cpu usage : " + response);
 			return Float.parseFloat(response);
 		} else {
-			logInfo("Finished get cpu usage : " + 0);
+			logInfo("Finished get cpu usage : " + 0f);
 			return 0f;
 		}
 	}
@@ -196,7 +197,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		final String MEM_AVAILABLE = "grep 'MemAvailable' /proc/meminfo | awk '{print $2}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(MEM_AVAILABLE);
 		long memInKB = 0L;
-		if(!parseOneLineResult(resultSet).isEmpty()){
+		if(resultSet != null && !parseOneLineResult(resultSet).isEmpty()){
 			memInKB = Long.parseLong(parseOneLineResult(resultSet));
 		}
 		logInfo("Finished get system available memory : " + memInKB * 1024);
@@ -212,7 +213,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {print usage}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
 		float totalCpu = 0f;
-		if(!parseOneLineResult(resultSet).isEmpty()){
+		if(resultSet != null && !parseOneLineResult(resultSet).isEmpty()){
 			totalCpu = Float.parseFloat(parseOneLineResult(resultSet));
 		}
 		logInfo("Finished get total cpu : " + totalCpu);
@@ -269,18 +270,23 @@ public class ResourceConsumptionManager implements IOFogModule {
 		        }
 		    }
 		} catch (IOException exp) {
-		    logError("Error getting CPU usage : " + exp.getMessage(), exp);
+		    logError("Error getting CPU usage : " + exp.getMessage(), new AgentSystemException("Error getting CPU usage : " + exp.getMessage(), exp));
+		}catch (Exception exp) {
+		    logError("Error getting CPU usage : " + exp.getMessage(), new AgentSystemException("Error getting CPU usage : " + exp.getMessage(), exp));
 		}
 		logInfo("Finished parse Stat");
 		return Pair.of(time, total);
 	}
 
 	private static String getWinCPUUsage(final String pid) {
+		LoggingService.logInfo(MODULE_NAME, "getting Window CPU usage");
 		String cmd = String.format(POWERSHELL_GET_CPU_USAGE, pid);
 		final CommandShellResultSet<List<String>, List<String>> response = executeCommand(cmd);
-		return !response.getError().isEmpty() || response.getValue().isEmpty() ?
+		return response != null ?
+				!response.getError().isEmpty() || response.getValue().isEmpty() ?
 				"0" :
-				response.getValue().get(0);
+				response.getValue().get(0) :
+				"0";
 	}
 
 	/**
