@@ -76,14 +76,14 @@ public class MicroserviceStraceData {
 		MicroserviceStraceData that = (MicroserviceStraceData) o;
 		return pid == that.pid &&
 				Objects.equals(microserviceUuid, that.microserviceUuid) &&
-				Objects.equals(straceRun, that.straceRun) &&
+				Objects.equals(straceRun.get(), that.straceRun.get()) &&
 				Objects.equals(resultBuffer, that.resultBuffer);
 	}
 
 	@Override
 	public int hashCode() {
 
-		return Objects.hash(microserviceUuid, pid, straceRun, resultBuffer);
+		return Objects.hash(microserviceUuid, pid, straceRun.get(), resultBuffer);
 	}
 
 	public String getResultBufferAsString() {
