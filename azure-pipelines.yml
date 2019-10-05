@@ -36,6 +36,11 @@ jobs:
           testResultsFiles: '**/TEST-*.xml'
           tasks: 'build'
 
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: 'JaCoCo'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/reports/jacocoHtml'
+
       # We need nodejs for Snyk
       - task: NodeTool@0
         inputs:

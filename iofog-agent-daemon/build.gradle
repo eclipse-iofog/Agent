@@ -1,5 +1,6 @@
 plugins {
     id "com.github.johnrengelman.shadow"
+    id 'jacoco'
 }
 
 description = 'iofog-agent-daemon'
@@ -54,3 +55,17 @@ jar {
     manifest.attributes["Main-Class"] = 'org.eclipse.iofog.Daemon'
     manifest.attributes["Implementation-Version"] = rootProject.property('version')
 }
+
+jacoco {
+    toolVersion = "0.8.4"
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/reports/jacocoHtml")
+    }
+}
+
+test.finalizedBy jacocoTestReport
