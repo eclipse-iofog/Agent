@@ -251,7 +251,7 @@ public class FieldAgent implements IOFogModule {
         } catch (Exception e) {
         	logError("Unable send tracking logs", new AgentSystemException("Unable send tracking logs", e));
         }
-        logInfo("Start posting tracking");
+        logInfo("Finished posting tracking");
     }
 
     /**
