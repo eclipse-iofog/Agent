@@ -36,10 +36,18 @@ jobs:
           testResultsFiles: '**/TEST-*.xml'
           tasks: 'build'
 
+      - script: |
+          ls -la '$(System.DefaultWorkingDirectory)'
+          ls -la '$(System.DefaultWorkingDirectory)/iofog-agent-daemon'
+          ls -la '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build'
+          ls -la '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports'
+          ls -la '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+        displayName: 'TEST'
+
       - task: PublishCodeCoverageResults@1
         inputs:
           codeCoverageTool: 'JaCoCo'
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports'
         displayName: 'Publish Code Coverage Results'
 
       # We need nodejs for Snyk
