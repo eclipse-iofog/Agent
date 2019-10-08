@@ -39,7 +39,8 @@ jobs:
       - task: PublishCodeCoverageResults@1
         inputs:
           codeCoverageTool: 'JaCoCo'
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/reports/jacocoHtml'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+        displayName: 'Publish Code Coverage Results'
 
       # We need nodejs for Snyk
       - task: NodeTool@0
