@@ -1,15 +1,19 @@
 package org.eclipse.iofog.tracking;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 
 public class TrackingInfoUtils {
+    private static String MODULE_NAME = "Tracking Info Utils";
     public static JsonObject getStartTrackingInfo() {
+        LoggingService.logInfo(MODULE_NAME, "Start getting tracking information");
         JsonObject startInfo = null;
         try {
             String gpsCoordinates = Configuration.getGpsCoordinates();
@@ -29,25 +33,50 @@ public class TrackingInfoUtils {
                     .build();
 
         } catch(Exception e) {
+            LoggingService.logError(MODULE_NAME, "can't parse start config",
+                    new AgentSystemException("can't parse start config"));
             startInfo = Json.createObjectBuilder()
                     .add("error", "can't parse start config")
                     .build();
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished getting tracking information");
         return startInfo;
     }
 
     public static JsonObject getConfigUpdateInfo(String option, String newValue) {
-        JsonObject info = Json.createObjectBuilder()
-                .add(option, newValue)
-                .build();
+        LoggingService.logInfo(MODULE_NAME, "Start getting config update information");
+        JsonObject info = null;
+        if (option != null && newValue != null){
+            info = Json.createObjectBuilder()
+                    .add(option, newValue)
+                    .build();
+        } else {
+            LoggingService.logError(MODULE_NAME, "can't update config info : option or value must not be null",
+                    new AgentSystemException("can't update config info : option or value must not be null"));
+            info = Json.createObjectBuilder()
+                    .add("error", "can't update config info : option or value must not be null")
+                    .build();
+        }
+        LoggingService.logInfo(MODULE_NAME, "Finished getting config update information");
         return info;
     }
 
     public static JsonObject getMicroservicesInfo(JsonArray microservices) {
-        JsonObject info = Json.createObjectBuilder()
-                .add("microservices", microservices)
-                .add("microservicesCount", microservices == null ? 0 : microservices.size())
-                .build();
+        LoggingService.logInfo(MODULE_NAME, "Start getting microservice information");
+        JsonObject info = null;
+        if(microservices != null){
+            info = Json.createObjectBuilder()
+                    .add("microservices", microservices)
+                    .add("microservicesCount", microservices.size())
+                    .build();
+        } else {
+            LoggingService.logError(MODULE_NAME, "can't get microservices info : option or value must not be null",
+                    new AgentSystemException("can't get microservices info : option or value must not be null"));
+            info = Json.createObjectBuilder()
+                    .add("error", "can't get microservices info : microservices must not be null")
+                    .build();
+        }
+        LoggingService.logInfo(MODULE_NAME, "Finished getting microservice information");
         return info;
     }
 }
