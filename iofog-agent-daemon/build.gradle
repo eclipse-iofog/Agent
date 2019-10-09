@@ -68,4 +68,35 @@ jacocoTestReport {
     }
 }
 
+project.ext.jacocoOfflineSourceSets = [ 'main' ]
+task doJacocoOfflineInstrumentation(dependsOn: [ classes, project.configurations.jacocoAnt ]) {
+    inputs.files classes.outputs.files
+    File outputDir = new File(project.buildDir, 'instrumentedClasses')
+    outputs.dir outputDir
+    doFirst {
+        project.delete(outputDir)
+        ant.taskdef(
+                resource: 'org/jacoco/ant/antlib.xml',
+                classpath: project.configurations.jacocoAnt.asPath,
+                uri: 'jacoco'
+        )
+        def instrumented = false
+        jacocoOfflineSourceSets.each { sourceSetName ->
+            if (file(sourceSets[sourceSetName].java.outputDir).exists()) {
+                def instrumentedClassedDir = "${outputDir}/${sourceSetName}"
+                ant.'jacoco:instrument'(destdir: instrumentedClassedDir) {
+                    fileset(dir: sourceSets[sourceSetName].java.outputDir, includes: '**/*.class')
+                }
+                sourceSets.test.runtimeClasspath -= files(sourceSets[sourceSetName].java.outputDir)
+                sourceSets.test.runtimeClasspath += files(instrumentedClassedDir)
+                instrumented = true
+            }
+        }
+        if (instrumented) {
+            test.jvmArgs += '-noverify'
+        }
+    }
+}
+
+test.dependsOn(doJacocoOfflineInstrumentation)
 test.finalizedBy jacocoTestReport
