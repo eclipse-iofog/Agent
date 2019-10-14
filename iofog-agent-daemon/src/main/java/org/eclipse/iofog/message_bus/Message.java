@@ -18,12 +18,11 @@ import java.util.Base64;
 import javax.json.Json;
 import javax.json.JsonObject;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.utils.BytesUtil;
-import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.iofog.utils.logging.LoggingService.logError;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
+import static org.eclipse.iofog.utils.logging.LoggingService.*;
 
 /**
  * represents IOMessage
@@ -647,7 +646,7 @@ public class Message {
 			dataBaos.writeTo(result);
 			return result.toByteArray();
 		} catch (IOException exc) {
-			logError(MODULE_NAME, exc.getMessage(), exc);
+			logError(MODULE_NAME, "Error in getBytes", new AgentSystemException("Error in getBytes", exc));
 		}
 
 		return new byte[] {};
@@ -683,7 +682,7 @@ public class Message {
 			contextData = result.contextData;
 			contentData = result.contentData;
 		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
+			logError(MODULE_NAME, "Error in decodeBase64", new AgentSystemException("Error in decodeBase64", exp));
 		}
 	}
 
@@ -716,7 +715,7 @@ public class Message {
 		try {
 			return Base64.getEncoder().encode(this.getBytes());
 		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
+			logError(MODULE_NAME, "Error in encodeBase64", new AgentSystemException("Error in encodeBase64", exp));
 			return new byte[] {};
 		}
 	}

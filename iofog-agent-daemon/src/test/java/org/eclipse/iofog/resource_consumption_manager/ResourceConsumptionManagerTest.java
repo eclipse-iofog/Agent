@@ -15,6 +15,7 @@ package org.eclipse.iofog.resource_consumption_manager;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -43,7 +44,7 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ResourceConsumptionManager.class, LoggingService.class,
-        Configuration.class, CommandShellExecutor.class})
+        Configuration.class, CommandShellExecutor.class, StatusReporter.class})
 public class ResourceConsumptionManagerTest {
     private ResourceConsumptionManager resourceConsumptionManager;
     private static final String MODULE_NAME = "Resource Consumption Manager";
@@ -61,6 +62,7 @@ public class ResourceConsumptionManagerTest {
         PowerMockito.mockStatic(LoggingService.class);
         PowerMockito.mockStatic(Configuration.class);
         PowerMockito.mockStatic(CommandShellExecutor.class);
+        PowerMockito.mockStatic(StatusReporter.class);
         PowerMockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
         PowerMockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
         PowerMockito.when(Configuration.getCpuLimit()).thenReturn(1.0f);
@@ -156,7 +158,7 @@ public class ResourceConsumptionManagerTest {
     /**
      * Test start method
      */
-    @Test
+    @Test (timeout = 1000L)
     public void testStartThread() {
         resourceConsumptionManager.start();
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());

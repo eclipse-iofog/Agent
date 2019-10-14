@@ -84,10 +84,12 @@ public class MessageBus implements IOFogModule {
 	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void enableRealTimeReceiving(String receiver) {
-		MessageReceiver rec = receivers.get(receiver); 
+		logInfo("Starting enable real time receiving");
+		MessageReceiver rec = receiver != null ? receivers.get(receiver) : null;
 		if (rec == null)
 			return;
 		rec.enableRealTimeReceiving();
+		logInfo("Finishing enable real time receiving");
 	}
 
 	/**
@@ -96,10 +98,12 @@ public class MessageBus implements IOFogModule {
 	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void disableRealTimeReceiving(String receiver) {
-		MessageReceiver rec = receivers.get(receiver); 
+		logInfo("Starting disable real time receiving");
+		MessageReceiver rec = receiver != null ? receivers.get(receiver) : null;
 		if (rec == null)
 			return;
 		rec.disableRealTimeReceiving();
+		logInfo("Finishing disable real time receiving");
 	}
 
 	/**
@@ -110,15 +114,12 @@ public class MessageBus implements IOFogModule {
 		logInfo("Starting initialization of message bus publisher and receiver");
 		lastSpeedMessageCount = 0;
 		lastSpeedTime = System.currentTimeMillis();
-		
 		routes = microserviceManager.getRoutes();
 		idGenerator = new MessageIdGenerator();
 		publishers = new ConcurrentHashMap<>();
 		receivers = new ConcurrentHashMap<>();
-
 		if (routes == null)
 			return;
-		
 		routes.entrySet().stream()
 			.filter(route -> route.getValue() != null)
 			.filter(route -> route.getValue().getReceivers() != null)
@@ -321,7 +322,7 @@ public class MessageBus implements IOFogModule {
 	 */
 	public void start() {
 		microserviceManager = MicroserviceManager.getInstance();
-		
+
 		messageBusServer = new MessageBusServer();
 		try {
 			logInfo("STARTING MESSAGE BUS SERVER");
@@ -339,7 +340,7 @@ public class MessageBus implements IOFogModule {
             		new AgentSystemException("Error starting message bus module", e));
 			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
-		
+
 		logInfo("MESSAGE BUS SERVER STARTED");
 		init();
 
@@ -361,7 +362,7 @@ public class MessageBus implements IOFogModule {
 		try {
 			messageBusServer.stopServer();
 		} catch (Exception exp) {
-			logError("", new AgentSystemException("Error closing receivers and publishers and stops ActiveMQ server", exp));
+			logError("Error closing receivers and publishers and stops ActiveMQ server", new AgentSystemException("Error closing receivers and publishers and stops ActiveMQ server", exp));
 		}
 		logInfo("Finished closing receivers and publishers and stops ActiveMQ server");
 	}

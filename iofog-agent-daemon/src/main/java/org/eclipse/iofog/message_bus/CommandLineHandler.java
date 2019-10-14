@@ -17,6 +17,8 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.eclipse.iofog.command_line.CommandLineParser;
 import org.eclipse.iofog.exception.AgentUserException;
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
@@ -32,30 +34,37 @@ public class CommandLineHandler implements MessageHandler {
 
 	@Override
 	public void onMessage(ClientMessage message) {
-		try {
-			message.acknowledge();
-		} catch (ActiveMQException exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
-		}
-		String command = message.getStringProperty("command");
-		String result;
-		try {
-			result = CommandLineParser.parse(command);
-		} catch (AgentUserException e) {
-			result = "Failure";
-			logError(MODULE_NAME, e.getMessage(), e);
-		}
-		ClientMessage response = MessageBusServer.getSession().createMessage(false);
-		response.putStringProperty("response", result);
-		response.putObjectProperty("receiver", "iofog.commandline.response");
-		
-		try {
-			synchronized (messageBusSessionLock) {
-				MessageBusServer.getCommandlineProducer().send(response);
+		LoggingService.logInfo(MODULE_NAME, "starting onMessage : listener for command-line communications");
+		if (message != null) {
+			try {
+				message.acknowledge();
+			} catch (ActiveMQException exp) {
+				logError(MODULE_NAME, "ActiveMQException in acknowledging listener for command-line communications",
+						new AgentSystemException("ActiveMQException in acknowledging listener for command-line communications", exp));
 			}
-		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
+			String command = message.getStringProperty("command");
+			if (command != null) {
+				String result;
+				try {
+					result = CommandLineParser.parse(command);
+				} catch (AgentUserException e) {
+					result = "Failure";
+					logError(MODULE_NAME, e.getMessage(), e);
+				}
+				ClientMessage response = MessageBusServer.getSession().createMessage(false);
+				response.putStringProperty("response", result);
+				response.putObjectProperty("receiver", "iofog.commandline.response");
+				try {
+					synchronized (messageBusSessionLock) {
+						MessageBusServer.getCommandlineProducer().send(response);
+					}
+				} catch (Exception exp) {
+					logError(MODULE_NAME, "Error in listener for command-line communications",
+							new AgentSystemException("Error in listener for command-line communications", exp));
+				}
+			}
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished onMessage : listener for command-line communications");
 	}
 
 }

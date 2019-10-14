@@ -33,6 +33,8 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -41,11 +43,12 @@ import static org.mockito.Mockito.*;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Tracker.class, HttpClients.class, LoggingService.class})
+@PrepareForTest({Tracker.class, HttpClients.class, LoggingService.class, Timer.class})
 // @PowerMockIgnore({"javax.net.ssl.*"})
 public class TrackerTest {
     private Tracker tracker;
     private String MODULE_NAME;
+    private Timer timer;
 
     @Before
     public void setUp() throws Exception {
@@ -53,7 +56,11 @@ public class TrackerTest {
         setMock(tracker);
         PowerMockito.mockStatic(LoggingService.class);
         PowerMockito.mockStatic(HttpClients.class);
+        PowerMockito.mockStatic(Timer.class);
+        timer = mock(Timer.class);
         PowerMockito.when(HttpClients.createDefault()).thenReturn(Mockito.mock(CloseableHttpClient.class));
+        PowerMockito.whenNew(Timer.class).withNoArguments().thenReturn(timer);
+        PowerMockito.doNothing().when(timer).schedule(any(), anyLong(), anyLong());
         PowerMockito.mockStatic(Files.class);
         MODULE_NAME = "Tracker";
     }
