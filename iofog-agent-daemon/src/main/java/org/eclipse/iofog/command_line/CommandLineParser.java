@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.command_line;
 
+import org.eclipse.iofog.exception.AgentUserException;
+
 /**
  * to parse command-line parameters 
  * 
@@ -27,7 +29,7 @@ public final class CommandLineParser {
 		throw new UnsupportedOperationException(this.getClass() + " could not be instantiated");
 	}
 
-	public static String parse(String command) {
+	public static String parse(String command) throws AgentUserException{
 		String[] args = command.split(" ");
 		return CommandLineAction.getActionByKey(args[0]).perform(args);
 	}

@@ -83,7 +83,7 @@ public class ApiHandlerHelpers {
     	LoggingService.logInfo(MODULE_NAME, "Create internal server error response");
         return createResponse(outputBuffer, content, INTERNAL_SERVER_ERROR);
     }
-
+    
     private static FullHttpResponse createResponse(ByteBuf outputBuffer, String content, HttpResponseStatus status) {
     	LoggingService.logInfo(MODULE_NAME, "Start create response");
     	if (outputBuffer != null) {
