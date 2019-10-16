@@ -19,6 +19,8 @@ import org.eclipse.iofog.command_line.CommandLineParser;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -26,6 +28,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
@@ -73,11 +77,24 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 			JsonObject jsonObject = reader.readObject();
 
 			String command = jsonObject.getString("command");
-			String result = CommandLineParser.parse(command);
-			
-			LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+			Map<String, String> resultMap = new HashMap<>();
+			ObjectMapper objectMapper = new ObjectMapper();
+			String result;
+			try {
+				result = CommandLineParser.parse(command);
+				resultMap.put("response", result);
+				String jsonResult = objectMapper.writeValueAsString(resultMap);
+				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+				return ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
+			} catch (AgentUserException e) {
+				result = e.getMessage();
+				resultMap.put("response", result);
+				resultMap.put("error", "Internal server error");
+				String jsonResult = objectMapper.writeValueAsString(resultMap);
+				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+				return ApiHandlerHelpers.internalServerErrorResponse(outputBuffer, jsonResult);
+			}		
 
-			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} catch (Exception e) {
 			String errorMsg = " Log message parsing error, " + e.getMessage();
 			LoggingService.logError(MODULE_NAME, errorMsg, e);
