@@ -1003,8 +1003,12 @@ public class FieldAgent implements IOFogModule {
             provisioningResult = orchestrator.provision(key);
 
             microserviceManager.clear();
-            ProcessManager.getInstance().deleteRemainingMicroservices();
-
+            try{
+                ProcessManager.getInstance().deleteRemainingMicroservices();
+            } catch (Exception e) {
+                logError("Error deleting remaining microservices",
+                        new AgentSystemException("Error deleting remaining microservices", e));
+            }
             StatusReporter.setFieldAgentStatus().setControllerStatus(OK);
             Configuration.setIofogUuid(provisioningResult.getString("uuid"));
             Configuration.setAccessToken(provisioningResult.getString("token"));
