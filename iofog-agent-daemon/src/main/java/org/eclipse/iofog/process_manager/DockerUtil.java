@@ -522,15 +522,17 @@ public class DockerUtil {
      */
     @SuppressWarnings("resource")
 	public void pullImage(String imageName, Registry registry) throws AgentSystemException {
-    	LoggingService.logInfo(MODULE_NAME ,String.format("pull image \"%s\" ", imageName));
-        String tag = "latest", image;
-        if (imageName.contains(":")) {
-            String[] sp = imageName.split(":");
-            image = sp[0];
+    	LoggingService.logInfo(MODULE_NAME , String.format("pull image \"%s\" ", imageName));
+        String tag = null, image;
+        String[] sp = imageName.split(":");
+        image = sp[0];
+
+        if (sp.length > 1) {
             tag = sp[1];
         } else {
-            image = imageName;
+            tag = "latest";
         }
+
         try {
         	PullImageCmd req =
                     registry.getIsPublic() ?
