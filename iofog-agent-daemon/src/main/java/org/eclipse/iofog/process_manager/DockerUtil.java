@@ -445,8 +445,17 @@ public class DockerUtil {
      */
     private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
     	LoggingService.logInfo(MODULE_NAME ,"is PortMapping Equal");
-        return getMicroservicePorts(microservice).equals(getContainerPorts(inspectInfo));
 
+        List<PortMapping> microservicePorts = getMicroservicePorts(microservice);
+        Collections.sort(microservicePorts);
+
+        List<PortMapping> containerPorts = getContainerPorts(inspectInfo);
+        Collections.sort(containerPorts);
+
+        boolean areEqual = microservicePorts.equals(containerPorts);
+        LoggingService.logInfo(MODULE_NAME ,"is PortMapping Equal: " + areEqual);
+
+        return areEqual;
     }
 
     private List<PortMapping> getMicroservicePorts(Microservice microservice) {
@@ -514,7 +523,7 @@ public class DockerUtil {
     @SuppressWarnings("resource")
 	public void pullImage(String imageName, Registry registry) throws AgentSystemException {
     	LoggingService.logInfo(MODULE_NAME ,String.format("pull image \"%s\" ", imageName));
-        String tag = null, image;
+        String tag = "latest", image;
         if (imageName.contains(":")) {
             String[] sp = imageName.split(":");
             image = sp[0];
@@ -533,8 +542,7 @@ public class DockerUtil {
                                             .withUsername(registry.getUserName())
                                             .withPassword(registry.getPassword())
                             );
-            if (tag != null)
-                req.withTag(tag);
+            req.withTag(tag);
             PullImageResultCallback res = new PullImageResultCallback();
             res = req.exec(res);
             res.awaitSuccess();
