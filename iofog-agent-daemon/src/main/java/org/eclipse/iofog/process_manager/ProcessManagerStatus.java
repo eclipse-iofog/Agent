@@ -53,11 +53,15 @@ public class ProcessManagerStatus {
 
         microservicesStatus.forEach((key, status) -> {
             JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-                .add("id", key)
-                .add("status", status.getStatus().toString());
-            if (status.getContainerId() != null) {
+                .add("id", key != null ? key : "UNKNOWN")
+                .add("status", status != null ?
+                        (status.getStatus() != null ? status.getStatus().toString() : "UNKNOWN") :
+                        "UNKNOWN");
+            if (status != null && status.getContainerId() != null) {
                 objectBuilder
-                        .add("containerId", status.getContainerId())
+                        .add("containerId", status.getContainerId() != null ?
+                                status.getContainerId() :
+                                "UNKNOWN")
                         .add("startTime", status.getStartTime())
                         .add("operatingDuration", status.getOperatingDuration())
                         .add("cpuUsage", nf.format(status.getCpuUsage()))

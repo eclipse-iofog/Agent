@@ -387,7 +387,7 @@ public class DockerUtil {
         try (StatsCallback statscallback = statsCmd.exec(stats)) {
             countDownLatch.await(1, TimeUnit.SECONDS);
         } catch (InterruptedException | IOException e) {
-            LoggingService.logError(MODULE_NAME, e.getMessage(), new AgentUserException(e.getMessage(), e));
+            LoggingService.logError(MODULE_NAME, "Error while getting Container Stats", new AgentUserException(e.getMessage(), e));
         }
         LoggingService.logInfo(MODULE_NAME ,"Finished get Container Stats");
         return Optional.ofNullable(stats.getStats());
@@ -433,7 +433,7 @@ public class DockerUtil {
         boolean isRootHostAccess = microservice.isRootHostAccess();
         HostConfig hostConfig = inspectInfo.getHostConfig();
         return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
-            || !isRootHostAccess && (hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
+            || !isRootHostAccess && (hostConfig != null && hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
     }
 
     /**
@@ -466,15 +466,16 @@ public class DockerUtil {
     private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
     	LoggingService.logInfo(MODULE_NAME ,"get list of Container Ports");
         HostConfig hostConfig = inspectInfo.getHostConfig();
-        Ports ports = hostConfig.getPortBindings();
-        return ports.getBindings().entrySet().stream()
+        Ports ports = hostConfig != null ? hostConfig.getPortBindings() : null;
+        return ports != null ? ports.getBindings().entrySet().stream()
             .flatMap(entity -> {
                 int exposedPort = entity.getKey().getPort();
                 return Arrays.stream(entity.getValue())
                     .map(Binding::getHostPortSpec)
                     .map(hostPort -> new PortMapping(Integer.valueOf(hostPort), exposedPort));
             })
-            .collect(Collectors.toList());
+            .collect(Collectors.toList()) :
+                new ArrayList<>();
     }
 
     public Optional<String> getContainerStatus(String containerId) {
@@ -590,7 +591,7 @@ public class DockerUtil {
 
         Ports portBindings = new Ports();
         List<ExposedPort> exposedPorts = new ArrayList<>();
-        if (microservice.getPortMappings() != null)
+        if (microservice.getPortMappings() != null && microservice.getPortMappings().size() != 0)
             microservice.getPortMappings().forEach(mapping -> {
                 ExposedPort internal = ExposedPort.tcp(mapping.getInside());
                 Binding external = Binding.bindPort(mapping.getOutside());
@@ -599,7 +600,7 @@ public class DockerUtil {
             });
         List<Volume> volumes = new ArrayList<>();
         List<Bind> volumeBindings = new ArrayList<>();
-        if (microservice.getVolumeMappings() != null) {
+        if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size() != 0) {
             microservice.getVolumeMappings().forEach(volumeMapping -> {
                 Volume volume = new Volume(volumeMapping.getContainerDestination());
                 volumes.add(volume);
@@ -646,7 +647,7 @@ public class DockerUtil {
             .withRestartPolicy(restartPolicy)
             .withLabels(labels);
 
-        if (microservice.getVolumeMappings() != null) {
+        if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size()!= 0) {
             cmd = cmd
                 .withVolumes(volumes.toArray(new Volume[volumes.size()]))
                 .withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
