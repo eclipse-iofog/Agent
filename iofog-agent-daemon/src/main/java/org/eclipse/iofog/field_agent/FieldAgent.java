@@ -119,7 +119,8 @@ public class FieldAgent implements IOFogModule {
     private JsonObject getFogStatus() {
     	logInfo("get Fog Status");
         return Json.createObjectBuilder()
-                .add("daemonStatus", StatusReporter.getSupervisorStatus().getDaemonStatus().toString())
+                .add("daemonStatus", StatusReporter.getSupervisorStatus().getDaemonStatus().toString() == null ?
+                        "UNKNOWN" : StatusReporter.getSupervisorStatus().getDaemonStatus().toString())
                 .add("daemonOperatingDuration", StatusReporter.getSupervisorStatus().getOperationDuration())
                 .add("daemonLastStart", StatusReporter.getSupervisorStatus().getDaemonLastStart())
                 .add("memoryUsage", StatusReporter.getResourceConsumptionManagerStatus().getMemoryUsage())
@@ -131,19 +132,27 @@ public class FieldAgent implements IOFogModule {
                 .add("systemAvailableDisk", StatusReporter.getResourceConsumptionManagerStatus().getAvailableDisk())
                 .add("systemAvailableMemory", StatusReporter.getResourceConsumptionManagerStatus().getAvailableMemory())
                 .add("systemTotalCpu", StatusReporter.getResourceConsumptionManagerStatus().getTotalCpu())
-                .add("microserviceStatus", StatusReporter.getProcessManagerStatus().getJsonMicroservicesStatus())
+                .add("microserviceStatus", StatusReporter.getProcessManagerStatus().getJsonMicroservicesStatus() == null ?
+                        Json.createObjectBuilder().add("status","UNKNOWN").build().toString() :
+                        StatusReporter.getProcessManagerStatus().getJsonMicroservicesStatus())
                 .add("repositoryCount", StatusReporter.getProcessManagerStatus().getRegistriesCount())
-                .add("repositoryStatus", StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus())
+                .add("repositoryStatus", StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus() == null ?
+                        "UNKNOWN" : StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus())
                 .add("systemTime", StatusReporter.getStatusReporterStatus().getSystemTime())
                 .add("lastStatusTime", StatusReporter.getStatusReporterStatus().getLastUpdate())
-                .add("ipAddress", IOFogNetworkInterface.getCurrentIpAddress())
-                .add("ipAddressExternal", Configuration.getIpAddressExternal())
+                .add("ipAddress", IOFogNetworkInterface.getCurrentIpAddress() == null ?
+                        "UNKNOWN" : IOFogNetworkInterface.getCurrentIpAddress())
+                .add("ipAddressExternal", Configuration.getIpAddressExternal() == null ?
+                        "UNKNOWN" : Configuration.getIpAddressExternal())
                 .add("processedMessages", StatusReporter.getMessageBusStatus().getProcessedMessages())
-                .add("microserviceMessageCounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerMicroservice())
+                .add("microserviceMessageCounts", StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerMicroservice() == null ?
+                        "UNKNOWN" : StatusReporter.getMessageBusStatus().getJsonPublishedMessagesPerMicroservice())
                 .add("messageSpeed", StatusReporter.getMessageBusStatus().getAverageSpeed())
                 .add("lastCommandTime", StatusReporter.getFieldAgentStatus().getLastCommandTime())
-                .add("tunnelStatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus())
-                .add("version", getVersion())
+                .add("tunnelStatus", StatusReporter.getSshManagerStatus().getJsonProxyStatus() == null ?
+                        "UNKNOWN" : StatusReporter.getSshManagerStatus().getJsonProxyStatus())
+                .add("version", getVersion() == null ?
+                        "UNKNOWN" : getVersion())
                 .add("isReadyToUpgrade", isReadyToUpgrade())
                 .add("isReadyToRollback", isReadyToRollback())
                 .build();
@@ -251,7 +260,7 @@ public class FieldAgent implements IOFogModule {
         } catch (Exception e) {
         	logError("Unable send tracking logs", new AgentSystemException("Unable send tracking logs", e));
         }
-        logInfo("Start posting tracking");
+        logInfo("Finished posting tracking");
     }
 
     /**
@@ -287,6 +296,7 @@ public class FieldAgent implements IOFogModule {
                 logInfo("Start get IOFog changes list from IOFog controller");
                 
                 if (notProvisioned() || !isControllerConnected(false)) {
+                    logInfo("Cannot get change list due to controller status not provisioned or controller not connected");
                     continue;
                 }
 
@@ -389,7 +399,11 @@ public class FieldAgent implements IOFogModule {
         }
 
         CommandShellResultSet<List<String>, List<String>> result = CommandShellExecutor.executeCommand("shutdown -r now");
-        if (result.getError().size() > 0) {
+        if (result == null) {
+            LoggingService.logError(MODULE_NAME, "Error in Remote reboot of Linux machine from IOFog controller",
+                    new AgentSystemException("Error in Remote reboot of Linux machine from IOFog controller"));
+        }
+        if (result != null && result.getError().size() > 0) {
             LoggingService.logWarning(MODULE_NAME, result.toString());
         }
         logInfo("Finished Remote reboot of Linux machine from IOFog controller");
@@ -460,7 +474,7 @@ public class FieldAgent implements IOFogModule {
 
         String filename = "registries.json";
         try {
-            JsonArray registriesList;
+            JsonArray registriesList = null;
             if (fromFile) {
                 registriesList = readFile(filesPath + filename);
                 if (registriesList == null) {
@@ -469,27 +483,35 @@ public class FieldAgent implements IOFogModule {
                 }
             } else {
                 JsonObject result = orchestrator.request("registries", RequestType.GET, null, null);
-
-                registriesList = result.getJsonArray("registries");
-                saveFile(registriesList, filesPath + filename);
-            }
-
-            List<Registry> registries = new ArrayList<>();
-            for (int i = 0; i < registriesList.size(); i++) {
-                JsonObject registry = registriesList.getJsonObject(i);
-                Registry.RegistryBuilder registryBuilder = new Registry.RegistryBuilder()
-                        .setId(registry.getInt("id"))
-                        .setUrl(registry.getString("url"))
-                        .setIsPublic(registry.getBoolean("isPublic", false));
-                if (!registry.getBoolean("isPublic", false)) {
-                    registryBuilder.setUserName(registry.getString("username"))
-                            .setPassword(registry.getString("password"))
-                            .setUserEmail(registry.getString("userEmail"));
-
+                if(result.containsKey("registries")) {
+                    registriesList = result.getJsonArray("registries");
+                    saveFile(registriesList, filesPath + filename);
+                } else {
+                    logError("Error loading registries from IOFog controller",
+                            new AgentUserException("Error loading registries from IOFog controller"));
                 }
-                registries.add(registryBuilder.build());
             }
-            microserviceManager.setRegistries(registries);
+            List<Registry> registries = new ArrayList<>();
+            if (registriesList != null && registriesList.size() != 0) {
+                for (int i = 0; i < registriesList.size(); i++) {
+                    JsonObject registry = registriesList.getJsonObject(i);
+                    Registry.RegistryBuilder registryBuilder = new Registry.RegistryBuilder()
+                            .setId(registry.getInt("id"))
+                            .setUrl(registry.getString("url"))
+                            .setIsPublic(registry.getBoolean("isPublic", false));
+                    if (!registry.getBoolean("isPublic", false)) {
+                        registryBuilder.setUserName(registry.getString("username"))
+                                .setPassword(registry.getString("password"))
+                                .setUserEmail(registry.getString("userEmail"));
+
+                    }
+                    logInfo("loading registries in progress");
+                    registries.add(registryBuilder.build());
+                }
+                microserviceManager.setRegistries(registries);
+            } else {
+                logInfo("Registries list is empty");
+            }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
             logError("Unable to get registries", 
@@ -542,6 +564,7 @@ public class FieldAgent implements IOFogModule {
         }
 
         microserviceManager.setRoutes(routes);
+        logInfo("Finished process routes");
     }
 
     private JsonArray loadMicroservicesJsonFile() {
@@ -557,12 +580,13 @@ public class FieldAgent implements IOFogModule {
      */
     private List<Microservice> loadMicroservices(boolean fromFile) {
         logInfo("Start Loading microservices...");
+        List<Microservice> microserviceList = new ArrayList<>();
         if (notProvisioned() || !isControllerConnected(fromFile)) {
-            return new ArrayList<>();
+            return microserviceList;
         }
 
         String filename = MICROSERVICE_FILE;
-        JsonArray microservicesJson;
+        JsonArray microservicesJson = null;
         try {
             if (fromFile) {
                 microservicesJson = readFile(filesPath + filename);
@@ -571,18 +595,25 @@ public class FieldAgent implements IOFogModule {
                 }
             } else {
                 JsonObject result = orchestrator.request("microservices", RequestType.GET, null, null);
-                microservicesJson = result.getJsonArray("microservices");
-                saveFile(microservicesJson, filesPath + filename);
+                if(result.containsKey("microservices")) {
+                    microservicesJson = result.getJsonArray("microservices");
+                    saveFile(microservicesJson, filesPath + filename);
+                } else {
+                    logError("Error loading microservices from IOFog controller",
+                            new AgentUserException("Error loading microservices from IOFog controller"));
+                }
             }
             try {
-                List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
-                        .boxed()
-                        .map(microservicesJson::getJsonObject)
-                        .map(containerJsonObjectToMicroserviceFunction())
-                        .collect(toList());
-                microserviceManager.setLatestMicroservices(microservices);
-                logInfo("Finished Loading microservices...");
-                return microservices;
+                if (microservicesJson != null){
+                    List<Microservice> microservices = IntStream.range(0, microservicesJson.size())
+                            .boxed()
+                            .map(microservicesJson::getJsonObject)
+                            .map(containerJsonObjectToMicroserviceFunction())
+                            .collect(toList());
+                    microserviceManager.setLatestMicroservices(microservices);
+                    logInfo("Loading of microservices in progress");
+                    microserviceList.addAll(microservices);
+                }
             } catch (Exception e) {
                 logError("Unable to parse microservices", new AgentSystemException("Unable to parse microservices", e));
             }
@@ -594,7 +625,7 @@ public class FieldAgent implements IOFogModule {
             logError("Unable to get microservices", new AgentSystemException("Unable to get microservices", e));
         }
         logInfo("Finished Loading microservices...");
-        return new ArrayList<>();
+        return microserviceList;
     }
 
     private List<String> getStringList(JsonValue jsonValue) {
@@ -808,10 +839,10 @@ public class FieldAgent implements IOFogModule {
                 .add("data", data)
                 .build();
         try (JsonWriter writer = Json.createWriter(new OutputStreamWriter(new FileOutputStream(filename), UTF_8))) {
-            writer.writeObject(object);
+             writer.writeObject(object);
         } catch (IOException e) {
-            logError("Error saving data to file '" + filename + "'", 
-            		new AgentUserException("Error saving data to file '" + filename + "'", e));
+            logError("Error saving data to file '" + filename + "'",
+                    new AgentUserException("Error saving data to file '" + filename + "'", e));
         }
         logInfo("Finished save file");
     }
@@ -820,7 +851,6 @@ public class FieldAgent implements IOFogModule {
      * gets IOFog instance configuration from IOFog controller
      */
     private void getFogConfig() {
-        logInfo("Get ioFog config");
         logInfo("Starting Get ioFog config");
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
@@ -833,73 +863,109 @@ public class FieldAgent implements IOFogModule {
 
         try {
             JsonObject configs = orchestrator.request("config", RequestType.GET, null, null);
+            if (configs != null && configs.size() != 0) {
+                String networkInterface = configs.containsKey(NETWORK_INTERFACE.getJsonProperty())  ?
+                        configs.getString(NETWORK_INTERFACE.getJsonProperty()) :
+                        NETWORK_INTERFACE.getDefaultValue();
+                String dockerUrl = configs.containsKey(DOCKER_URL.getJsonProperty())  ?
+                        configs.getString(DOCKER_URL.getJsonProperty()) :
+                        DOCKER_URL.getDefaultValue();
+                double diskLimit = configs.containsKey(DISK_CONSUMPTION_LIMIT.getJsonProperty()) ?
+                        configs.getJsonNumber(DISK_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue() :
+                        Double.parseDouble(DISK_CONSUMPTION_LIMIT.getDefaultValue());
+                String diskDirectory = configs.containsKey(DISK_DIRECTORY.getJsonProperty()) ?
+                        configs.getString(DISK_DIRECTORY.getJsonProperty()) :
+                        DISK_DIRECTORY.getDefaultValue();
+                double memoryLimit = configs.containsKey(MEMORY_CONSUMPTION_LIMIT.getJsonProperty()) ?
+                        configs.getJsonNumber(MEMORY_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue() :
+                        Double.parseDouble(MEMORY_CONSUMPTION_LIMIT.getDefaultValue());
+                double cpuLimit = configs.containsKey(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty()) ?
+                        configs.getJsonNumber(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue() :
+                        Double.parseDouble(PROCESSOR_CONSUMPTION_LIMIT.getDefaultValue());
+                double logLimit = configs.containsKey(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()) ?
+                        configs.getJsonNumber(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue() :
+                        Double.parseDouble(LOG_DISK_CONSUMPTION_LIMIT.getDefaultValue());
+                String logDirectory = configs.containsKey(LOG_DISK_DIRECTORY.getJsonProperty()) ?
+                        configs.getString(LOG_DISK_DIRECTORY.getJsonProperty()) :
+                        LOG_DISK_DIRECTORY.getDefaultValue();
+                int logFileCount = configs.containsKey(LOG_FILE_COUNT.getJsonProperty()) ?
+                        configs.getInt(LOG_FILE_COUNT.getJsonProperty()) :
+                        Integer.parseInt(LOG_FILE_COUNT.getDefaultValue());
+                int statusFrequency = configs.containsKey(STATUS_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(STATUS_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(STATUS_FREQUENCY.getDefaultValue());
+                int changeFrequency = configs.containsKey(CHANGE_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(CHANGE_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(CHANGE_FREQUENCY.getDefaultValue());
+                int deviceScanFrequency = configs.containsKey(DEVICE_SCAN_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(DEVICE_SCAN_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(DEVICE_SCAN_FREQUENCY.getDefaultValue());
+                boolean watchdogEnabled = configs.containsKey(WATCHDOG_ENABLED.getJsonProperty()) ?
+                        configs.getBoolean(WATCHDOG_ENABLED.getJsonProperty()) :
+                        WATCHDOG_ENABLED.getDefaultValue().equalsIgnoreCase("OFF") ? false : true;
+                double latitude = configs.containsKey("latitude") ?
+                        configs.getJsonNumber("latitude").doubleValue() :
+                        0;
+                double longitude = configs.containsKey("longitude") ?
+                        configs.getJsonNumber("longitude").doubleValue() :
+                        0;
+                String gpsCoordinates = latitude + "," + longitude;
+                String logLevel = configs.containsKey(LOG_LEVEL.getJsonProperty()) ?
+                        configs.getString(LOG_LEVEL.getJsonProperty()) :
+                        LOG_LEVEL.getDefaultValue();
 
-            String networkInterface = configs.getString(NETWORK_INTERFACE.getJsonProperty());
-            String dockerUrl = configs.getString(DOCKER_URL.getJsonProperty());
-            double diskLimit = configs.getJsonNumber(DISK_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
-            String diskDirectory = configs.getString(DISK_DIRECTORY.getJsonProperty());
-            double memoryLimit = configs.getJsonNumber(MEMORY_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
-            double cpuLimit = configs.getJsonNumber(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
-            double logLimit = configs.getJsonNumber(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty()).doubleValue();
-            String logDirectory = configs.getString(LOG_DISK_DIRECTORY.getJsonProperty());
-            int logFileCount = configs.getInt(LOG_FILE_COUNT.getJsonProperty());
-            int statusFrequency = configs.getInt(STATUS_FREQUENCY.getJsonProperty());
-            int changeFrequency = configs.getInt(CHANGE_FREQUENCY.getJsonProperty());
-            int deviceScanFrequency = configs.getInt(DEVICE_SCAN_FREQUENCY.getJsonProperty());
-            boolean watchdogEnabled = configs.getBoolean(WATCHDOG_ENABLED.getJsonProperty());
-            double latitude = configs.getJsonNumber("latitude").doubleValue();
-            double longitude = configs.getJsonNumber("longitude").doubleValue();
-            String gpsCoordinates = latitude + "," + longitude;
+                Map<String, Object> instanceConfig = new HashMap<>();
 
-            Map<String, Object> instanceConfig = new HashMap<>();
+                if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
+                        !Configuration.getNetworkInterface().equals(networkInterface))
+                    instanceConfig.put(NETWORK_INTERFACE.getCommandName(), networkInterface);
 
-            if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
-                    !Configuration.getNetworkInterface().equals(networkInterface))
-                instanceConfig.put(NETWORK_INTERFACE.getCommandName(), networkInterface);
+                if (!Configuration.getDockerUrl().equals(dockerUrl))
+                    instanceConfig.put(DOCKER_URL.getCommandName(), dockerUrl);
 
-            if (!Configuration.getDockerUrl().equals(dockerUrl))
-                instanceConfig.put(DOCKER_URL.getCommandName(), dockerUrl);
+                if (Configuration.getDiskLimit() != diskLimit)
+                    instanceConfig.put(DISK_CONSUMPTION_LIMIT.getCommandName(), diskLimit);
 
-            if (Configuration.getDiskLimit() != diskLimit)
-                instanceConfig.put(DISK_CONSUMPTION_LIMIT.getCommandName(), diskLimit);
+                if (!Configuration.getDiskDirectory().equals(diskDirectory))
+                    instanceConfig.put(DISK_DIRECTORY.getCommandName(), diskDirectory);
 
-            if (!Configuration.getDiskDirectory().equals(diskDirectory))
-                instanceConfig.put(DISK_DIRECTORY.getCommandName(), diskDirectory);
+                if (Configuration.getMemoryLimit() != memoryLimit)
+                    instanceConfig.put(MEMORY_CONSUMPTION_LIMIT.getCommandName(), memoryLimit);
 
-            if (Configuration.getMemoryLimit() != memoryLimit)
-                instanceConfig.put(MEMORY_CONSUMPTION_LIMIT.getCommandName(), memoryLimit);
+                if (Configuration.getCpuLimit() != cpuLimit)
+                    instanceConfig.put(PROCESSOR_CONSUMPTION_LIMIT.getCommandName(), cpuLimit);
 
-            if (Configuration.getCpuLimit() != cpuLimit)
-                instanceConfig.put(PROCESSOR_CONSUMPTION_LIMIT.getCommandName(), cpuLimit);
+                if (Configuration.getLogDiskLimit() != logLimit)
+                    instanceConfig.put(LOG_DISK_CONSUMPTION_LIMIT.getCommandName(), logLimit);
 
-            if (Configuration.getLogDiskLimit() != logLimit)
-                instanceConfig.put(LOG_DISK_CONSUMPTION_LIMIT.getCommandName(), logLimit);
+                if (!Configuration.getLogDiskDirectory().equals(logDirectory))
+                    instanceConfig.put(LOG_DISK_DIRECTORY.getCommandName(), logDirectory);
 
-            if (!Configuration.getLogDiskDirectory().equals(logDirectory))
-                instanceConfig.put(LOG_DISK_DIRECTORY.getCommandName(), logDirectory);
+                if (Configuration.getLogFileCount() != logFileCount)
+                    instanceConfig.put(LOG_FILE_COUNT.getCommandName(), logFileCount);
 
-            if (Configuration.getLogFileCount() != logFileCount)
-                instanceConfig.put(LOG_FILE_COUNT.getCommandName(), logFileCount);
+                if (Configuration.getStatusFrequency() != statusFrequency)
+                    instanceConfig.put(STATUS_FREQUENCY.getCommandName(), statusFrequency);
 
-            if (Configuration.getStatusFrequency() != statusFrequency)
-                instanceConfig.put(STATUS_FREQUENCY.getCommandName(), statusFrequency);
+                if (Configuration.getChangeFrequency() != changeFrequency)
+                    instanceConfig.put(CHANGE_FREQUENCY.getCommandName(), changeFrequency);
 
-            if (Configuration.getChangeFrequency() != changeFrequency)
-                instanceConfig.put(CHANGE_FREQUENCY.getCommandName(), changeFrequency);
+                if (Configuration.getDeviceScanFrequency() != deviceScanFrequency)
+                    instanceConfig.put(DEVICE_SCAN_FREQUENCY.getCommandName(), deviceScanFrequency);
 
-            if (Configuration.getDeviceScanFrequency() != deviceScanFrequency)
-                instanceConfig.put(DEVICE_SCAN_FREQUENCY.getCommandName(), deviceScanFrequency);
+                if (Configuration.isWatchdogEnabled() != watchdogEnabled)
+                    instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled ? "on" : "off");
 
-            if (Configuration.isWatchdogEnabled() != watchdogEnabled)
-                instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled ? "on" : "off");
+                if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
+                    instanceConfig.put(GPS_MODE.getCommandName(), gpsCoordinates);
+                }
 
-            if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
-                instanceConfig.put(GPS_MODE.getCommandName(), gpsCoordinates);
+                if (!Configuration.getLogLevel().equals(logLevel))
+                    instanceConfig.put(LOG_LEVEL.getCommandName(), logLevel);
+
+                if (!instanceConfig.isEmpty())
+                    Configuration.setConfig(instanceConfig, false);
             }
-
-            if (!instanceConfig.isEmpty())
-                Configuration.setConfig(instanceConfig, false);
-
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
             logError("Unable to get ioFog config due to broken certificate",
@@ -920,36 +986,34 @@ public class FieldAgent implements IOFogModule {
         }
 
         logInfo("posting ioFog config");
-        double latitude, longitude;
+        double latitude = 0, longitude = 0;
         try {
             String gpsCoordinates = Configuration.getGpsCoordinates();
-
-            String[] coords = gpsCoordinates.split(",");
-
-            latitude = Double.parseDouble(coords[0]);
-            longitude = Double.parseDouble(coords[1]);
+            if (gpsCoordinates != null) {
+                String[] coords = gpsCoordinates.split(",");
+                latitude = Double.parseDouble(coords[0]);
+                longitude = Double.parseDouble(coords[1]);
+            }
         } catch (Exception e) {
-            latitude = 0;
-            longitude = 0;
             logError("Error while parsing GPS coordinates", new AgentSystemException(e.getMessage(), e));
         }
 
         Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
         JsonObject json = Json.createObjectBuilder()
-                .add(NETWORK_INTERFACE.getJsonProperty(), connectedAddress == null ? "not found" : connectedAddress._1().getName())
-                .add(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl())
+                .add(NETWORK_INTERFACE.getJsonProperty(), connectedAddress == null ? "UNKNOWN" : connectedAddress._1().getName())
+                .add(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl() == null ? "UNKNOWN" : Configuration.getDockerUrl())
                 .add(DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getDiskLimit())
-                .add(DISK_DIRECTORY.getJsonProperty(), Configuration.getDiskDirectory())
+                .add(DISK_DIRECTORY.getJsonProperty(), Configuration.getDiskDirectory() == null ? "UNKNOWN" : Configuration.getDiskDirectory())
                 .add(MEMORY_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getMemoryLimit())
                 .add(PROCESSOR_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getCpuLimit())
                 .add(LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty(), Configuration.getLogDiskLimit())
-                .add(LOG_DISK_DIRECTORY.getJsonProperty(), Configuration.getLogDiskDirectory())
+                .add(LOG_DISK_DIRECTORY.getJsonProperty(), Configuration.getLogDiskDirectory() == null ? "UNKNOWN" : Configuration.getLogDiskDirectory())
                 .add(LOG_FILE_COUNT.getJsonProperty(), Configuration.getLogFileCount())
                 .add(STATUS_FREQUENCY.getJsonProperty(), Configuration.getStatusFrequency())
                 .add(CHANGE_FREQUENCY.getJsonProperty(), Configuration.getChangeFrequency())
                 .add(DEVICE_SCAN_FREQUENCY.getJsonProperty(), Configuration.getDeviceScanFrequency())
                 .add(WATCHDOG_ENABLED.getJsonProperty(), Configuration.isWatchdogEnabled())
-                .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode().name().toLowerCase())
+                .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode() == null ? "UNKNOWN" : Configuration.getGpsMode().name().toLowerCase())
                 .add("latitude", latitude)
                 .add("longitude", longitude)
                 .build();
@@ -1078,7 +1142,7 @@ public class FieldAgent implements IOFogModule {
                 orchestrator.request("deprovision", RequestType.POST, null, getDeprovisionBody());
             } catch (CertificateException | SSLHandshakeException e) {
                 verificationFailed(e);
-                logError("Unable to make deprovision request ",
+                logError("Unable to make deprovision request due to broken certificate ",
                 		new AgentSystemException("Unable to make deprovision request due to broken certificate", e));
             } catch (Exception e) {
                 logError("Unable to make deprovision request ",
@@ -1121,18 +1185,21 @@ public class FieldAgent implements IOFogModule {
      * sends IOFog configuration when any changes applied
      */
     public void instanceConfigUpdated() {
+        logInfo("Start IOFog configuration update");
         try {
             postFogConfig();
         } catch (Exception e) {
             logError("Error posting updated for config ", e);
         }
         orchestrator.update();
+        logInfo("Finished IOFog configuration update");
     }
 
     /**
      * starts Field Agent module
      */
     public void start() {
+        logInfo("Start the Field Agent");
         if (isNullOrEmpty(Configuration.getIofogUuid()) || isNullOrEmpty(Configuration.getAccessToken()))
             StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
 
@@ -1153,6 +1220,7 @@ public class FieldAgent implements IOFogModule {
         new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
         new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
         new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
+        logInfo("Field Agent started");
     }
 
     /**
@@ -1269,8 +1337,10 @@ public class FieldAgent implements IOFogModule {
         try {
             URL url = new URL(spec);
             connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod(HttpMethod.GET);
-            connection.getResponseCode();
+            if(connection != null){
+                connection.setRequestMethod(HttpMethod.GET);
+                connection.getResponseCode();
+            }
         } catch (IOException exc) {
             connection = null;
             logWarning("HAL is not enabled for this Iofog Agent at the moment");

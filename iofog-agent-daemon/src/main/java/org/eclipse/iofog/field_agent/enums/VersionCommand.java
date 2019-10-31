@@ -18,6 +18,7 @@ import javax.json.JsonObject;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 
 public enum VersionCommand {
@@ -57,7 +58,9 @@ public enum VersionCommand {
 	}
 
 	public static VersionCommand parseJson(JsonObject versionData) throws UnknownVersionCommandException {
-		String versionCommandStr = versionData.getString("versionCommand");
+		String versionCommandStr = versionData != null ? versionData.containsKey("versionCommand") ?
+				versionData.getString("versionCommand") :
+				EMPTY : EMPTY;
 		return parseCommandString(versionCommandStr);
 	}
 
