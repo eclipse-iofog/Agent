@@ -1,5 +1,6 @@
 plugins {
     id "com.github.johnrengelman.shadow"
+    id 'com.bmuschko.clover'
     id 'jacoco'
 }
 
@@ -22,6 +23,7 @@ dependencies {
     testCompile 'org.powermock:powermock-module-junit4:2.0.2'
     testCompile 'org.powermock:powermock-api-mockito2:2.0.2'
     testCompile 'org.powermock:powermock-core:2.0.2'
+    clover 'org.openclover:clover:4.3.1'
 }
 
 task createProperties(dependsOn: processResources) {
@@ -56,6 +58,13 @@ jar {
     manifest.attributes["Implementation-Version"] = rootProject.property('version')
 }
 
+clover {
+    report {
+        html = true
+        xml = true
+        testResultsInclude = '**/TEST-*.xml'
+    }
+}
 jacoco {
     toolVersion = "0.8.4"
 }
