@@ -185,37 +185,44 @@ public class FieldAgent implements IOFogModule {
     /**
      * sends IOFog instance status to IOFog controller
      */
+    private void postStatusHelper() {
+        logInfo("posting ioFog status");
+        try {
+            logInfo("Start posting ioFog status");
+            JsonObject status = getFogStatus();
+            if (Configuration.debugging) {
+                logInfo(status.toString());
+            }
+            connected = isControllerConnected(false);
+            if (!connected)
+                return;
+            logInfo("Controller connection verified");
+
+            logInfo("Sending ioFog status...");
+            orchestrator.request("status", RequestType.PUT, null, status);
+            onPostStatusSuccess();
+        } catch (CertificateException | SSLHandshakeException | ConnectException e) {
+            verificationFailed(e);
+            logError("Unable to send status due to broken certificate",
+                    new AgentSystemException("Unable to send status due to broken certificate", e));
+        } catch (ForbiddenException e) {
+            deProvision(true);
+            logError("Unable to send status due to broken certificate",
+                    new AgentSystemException("Unable to send status due to broken certificate", e));
+        } catch (Exception e) {
+            logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
+        }
+        logInfo("Finished posting ioFog status");
+    }
+
     private final Runnable postStatus = () -> {
         while (true) {
-        	logInfo("posting ioFog status");
             try {
                 Thread.sleep(Configuration.getStatusFrequency() * 1000);
-                logInfo("Start posting ioFog status");
-                JsonObject status = getFogStatus();
-                if (Configuration.debugging) {
-                    logInfo(status.toString());
-                }
-                logInfo("Post ioFog status");
-                connected = isControllerConnected(false);
-                if (!connected)
-                    continue;
-                logInfo("Controller connection verified");
-                
-                logInfo("Sending ioFog status...");
-                orchestrator.request("status", RequestType.PUT, null, status);
-                onPostStatusSuccess();
-            } catch (CertificateException | SSLHandshakeException | ConnectException e) {
-                verificationFailed(e);
-                logError("Unable to send status due to broken certificate",
-                		new AgentSystemException("Unable to send status due to broken certificate", e));
-            } catch (ForbiddenException e) {
-                deProvision(true);
-                logError("Unable to send status due to broken certificate",
-                		new AgentSystemException("Unable to send status due to broken certificate", e));
+                postStatusHelper();
             } catch (Exception e) {
                 logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
             }
-            logInfo("Finished posting ioFog status");
         }
     };
 
@@ -1087,6 +1094,8 @@ public class FieldAgent implements IOFogModule {
             notifyModules();
 
             sendHWInfoFromHalToController();
+
+            postStatusHelper();
 
             logInfo("Provisioning success");
 
