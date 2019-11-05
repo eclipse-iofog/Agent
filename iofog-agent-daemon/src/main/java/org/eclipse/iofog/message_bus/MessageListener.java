@@ -14,7 +14,9 @@ package org.eclipse.iofog.message_bus;
 
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.local_api.MessageCallback;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
@@ -37,15 +39,18 @@ public class MessageListener implements MessageHandler{
 	
 	@Override
 	public void onMessage(ClientMessage msg) {
+		LoggingService.logInfo(MODULE_NAME, "Start acknowledging message onMessage");
 		try {
 			synchronized (messageBusSessionLock) {
 				msg.acknowledge();
 			}
 		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);}
-
+			LoggingService.logError(MODULE_NAME, "Error acknowledging message",
+					new AgentSystemException("Error acknowledging message", exp));
+		}
 		Message message = new Message(msg.getBytesProperty("message"));
 		callback.sendRealtimeMessage(message);
+		LoggingService.logInfo(MODULE_NAME, "Finish acknowledging message onMessage");
 	}
 
 }

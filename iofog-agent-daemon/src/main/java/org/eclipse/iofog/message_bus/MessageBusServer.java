@@ -138,10 +138,10 @@ public class MessageBusServer {
 		synchronized (messageBusSessionLock) {
 			messageBusSession = sf.createSession(true, true, 0);
 			ClientSession.QueueQuery queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.ADDRESS));
-			if (queueQuery.isExists())
+			if (queueQuery != null && queueQuery.isExists())
 				messageBusSession.deleteQueue(Constants.ADDRESS);
 			queueQuery = messageBusSession.queueQuery(new SimpleString(Constants.COMMAND_LINE_ADDRESS));
-			if (queueQuery.isExists())
+			if (queueQuery != null && queueQuery.isExists())
 				messageBusSession.deleteQueue(Constants.COMMAND_LINE_ADDRESS);
 			messageBusSession.createQueue(Constants.ADDRESS, Constants.ADDRESS, false);
 			messageBusSession.createQueue(Constants.COMMAND_LINE_ADDRESS, Constants.COMMAND_LINE_ADDRESS, false);
@@ -276,18 +276,25 @@ public class MessageBusServer {
 				try {
 					value.close();
 				} catch (ActiveMQException e) {
-					LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+					LoggingService.logError(MODULE_NAME, "Error closing consumer",
+							new AgentSystemException("Error closing consumer", e));
 				}
 			});
-		if (commandlineConsumer != null)
-			commandlineConsumer.close();
+		if (commandlineConsumer != null) {
+			try {
+				commandlineConsumer.close();
+			} catch (ActiveMQException e) {
+				LoggingService.logError(MODULE_NAME, "Error closing commandlineConsumer",
+						new AgentSystemException("Error closing commandlineConsumer", e));
+			}
+		}
 		if (producers != null)
 			producers.forEach((key, value) -> {
 				try {
 					value.close();
 				} catch (ActiveMQException e) {
-					LoggingService.logError(MODULE_NAME, "Error stopping server",
-							new AgentSystemException(e.getMessage(), e));
+					LoggingService.logError(MODULE_NAME, "Error closing producer",
+							new AgentSystemException("Error closing producer", e));
 				}
 			});
 		if (serverLocator != null)

@@ -89,7 +89,7 @@ public class MessagePublisher implements AutoCloseable{
 		try {
 			archive.close();
 		} catch (Exception exp) {
-			logError(MODULE_NAME, "", new AgentSystemException("Error closing message publisher", exp));
+			logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished closing publish");
 	}
@@ -103,6 +103,7 @@ public class MessagePublisher implements AutoCloseable{
 	 * @return list of {@link Message}
 	 */
 	public synchronized List<Message> messageQuery(long from, long to) {
+		LoggingService.logInfo(MODULE_NAME, "Getting messages by query");
 		return archive.messageQuery(from, to);
 	}
 	
