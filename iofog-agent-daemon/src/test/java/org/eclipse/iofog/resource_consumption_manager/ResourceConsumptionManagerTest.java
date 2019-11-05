@@ -61,6 +61,7 @@ public class ResourceConsumptionManagerTest {
         PowerMockito.mockStatic(LoggingService.class);
         PowerMockito.mockStatic(Configuration.class);
         PowerMockito.mockStatic(CommandShellExecutor.class);
+        PowerMockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
         PowerMockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
         PowerMockito.when(Configuration.getCpuLimit()).thenReturn(1.0f);
         PowerMockito.when(Configuration.getDiskLimit()).thenReturn(1.0f);
