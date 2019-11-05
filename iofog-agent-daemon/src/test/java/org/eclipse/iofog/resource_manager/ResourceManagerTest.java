@@ -63,7 +63,7 @@ public class ResourceManagerTest {
     /**
      * Test the start method
      */
-    @Test ( timeout = 10000L )
+    @Test ( timeout = 100000L )
     public void testStart() {
         resourceManager.start();
         verify(resourceManager, Mockito.times(1)).start();
