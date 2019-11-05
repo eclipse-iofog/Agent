@@ -96,7 +96,7 @@ public class ContainerManager {
 			try {
 				docker.pullImage(microservice.getImageName(), registry);
 			} catch (Exception e) {
-				LoggingService.logError(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache", 
+				LoggingService.logError(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache",
 						new AgentSystemException("unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache", e));
 				createContainer(microservice, false);
 				LoggingService.logInfo(MODULE_NAME, "created \"" + microservice.getImageName() + "\" from local cache");
@@ -133,7 +133,7 @@ public class ContainerManager {
 			microservice.setContainerIpAddress(docker.getContainerIpAddress(microservice.getContainerId()));
 		} catch (Exception ex) {
 			LoggingService.logError(MODULE_NAME,
-					String.format("Container \"%s\" not found", microservice.getImageName()), 
+					String.format("Container \"%s\" not found", microservice.getImageName()),
 					new AgentSystemException(String.format("Container \"%s\" not found", microservice.getImageName()), ex));
 		}
 		LoggingService.logInfo(MODULE_NAME, String.format("Finished trying to start container \"%s\"", microservice.getImageName()));
@@ -165,7 +165,7 @@ public class ContainerManager {
 	/**
 	 * removes a {@link Container} by Microservice uuid
 	 */
-	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) {
+	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) throws AgentSystemException {
 		LoggingService.logInfo(MODULE_NAME, "Start remove container by microserviceuuid : " + microserviceUuid);
 		synchronized (deleteLock) {
 			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
@@ -179,7 +179,7 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "Finished remove container by microserviceuuid : " + microserviceUuid);
 	}
 
-	private void removeContainer(String containerId, String imageId, boolean withCleanUp) {
+	private void removeContainer(String containerId, String imageId, boolean withCleanUp) throws AgentSystemException{
 		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
 		try {
 			docker.removeContainer(containerId, withCleanUp);
@@ -189,6 +189,9 @@ public class ContainerManager {
 				} catch (ConflictException ex) {
 					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId),
 							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", containerId), ex));
+				} catch (Exception ex) {
+					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId),
+							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", containerId), ex));
 				}
 			}
 
@@ -196,7 +199,7 @@ public class ContainerManager {
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, String.format("Error removing container \"%s\"", containerId),
 					new AgentSystemException(String.format("Error removing container \"%s\"", containerId), e));
-			throw e;
+			throw new AgentSystemException(String.format("Error removing container \"%s\"", containerId), e);
 		}
 	}
 
@@ -208,26 +211,30 @@ public class ContainerManager {
 	public void execute(ContainerTask task) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "Start executes assigned task");
 		docker = DockerUtil.getInstance();
-		Optional<Microservice> microserviceOptional = microserviceManager.findLatestMicroserviceByUuid(task.getMicroserviceUuid());
-		switch (task.getAction()) {
-			case ADD:
-				if (microserviceOptional.isPresent()) {
-					addContainer(microserviceOptional.get());
+		if (task != null) {
+			Optional<Microservice> microserviceOptional = microserviceManager.findLatestMicroserviceByUuid(task.getMicroserviceUuid());
+			switch (task.getAction()) {
+				case ADD:
+					if (microserviceOptional.isPresent()) {
+						addContainer(microserviceOptional.get());
+					}
 					break;
-				}
-			case UPDATE:
-				if (microserviceOptional.isPresent()) {
-					Microservice microservice = microserviceOptional.get();
-					updateContainer(microserviceOptional.get(), microservice.isRebuild() && microservice.getRegistryId() != Constants.CACHE_REGISTRY_ID);
+				case UPDATE:
+					if (microserviceOptional.isPresent()) {
+						Microservice microservice = microserviceOptional.get();
+						updateContainer(microserviceOptional.get(), microservice.isRebuild() && microservice.getRegistryId() != Constants.CACHE_REGISTRY_ID);
+					}
 					break;
-				}
-			case REMOVE:
-				removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), false);
-				break;
-
-			case REMOVE_WITH_CLEAN_UP:
-				removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), true);
-				break;
+				case REMOVE:
+					removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), false);
+					break;
+				case REMOVE_WITH_CLEAN_UP:
+					removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), true);
+					break;
+			}
+		} else {
+			LoggingService.logError(MODULE_NAME, "Container Task cannot be null",
+					new AgentSystemException("Container Task container be null"));
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished executes assigned task");
 	}
