@@ -36,7 +36,7 @@ public class RestartStuckCheckerTest {
      */
     @Test
     public void testIsStuckFirstTime() {
-       assertFalse(RestartStuckChecker.isStuck("uuid"));
+       assertFalse(RestartStuckChecker.isStuck("containerId"));
     }
 
     /**
