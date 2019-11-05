@@ -386,7 +386,7 @@ public class MessageBusTest {
     /**
      * Test getNextId
      */
-    @Test (timeout = 1000L)
+    @Test
     public void testGetNextId() {
         initiateMockStart();
         assertNotNull(messageBus.getNextId());
