@@ -14,11 +14,11 @@ package org.eclipse.iofog.microservice;
 
 /**
  * represents Microservices port mappings
- * 
+ *
  * @author saeid
  *
  */
-public class PortMapping {
+public class PortMapping implements Comparable<PortMapping> {
 	private final int outside;
 	private final int inside;
 
@@ -44,8 +44,17 @@ public class PortMapping {
 	public boolean equals(Object other) {
 		if (this == other) return true;
 		if (other == null || getClass() != other.getClass()) return false;
-		
+
 		PortMapping o = (PortMapping) other;
 		return this.outside == o.outside && this.inside == o.inside;
+	}
+
+	@Override
+	public int compareTo(PortMapping o) {
+		if (this.inside == o.inside) {
+			return this.outside - o.outside;
+		}
+
+		return this.inside - o.inside;
 	}
 }

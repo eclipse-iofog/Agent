@@ -1,5 +1,8 @@
 package org.eclipse.iofog.tracking;
 
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonStructure;
@@ -10,13 +13,21 @@ public class TrackingEvent {
     private Long timestamp;
     private TrackingEventType type;
     private JsonStructure data;
+    private final String MODULE_NAME = "TrackingEvent";
 
-    public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, JsonStructure data) {
-        this.uuid = uuid;
-        this.timestamp = timestamp;
-        this.sourceType = "agent";
-        this.type = type;
-        this.data = data;
+    public TrackingEvent(String uuid, Long timestamp, TrackingEventType type, JsonStructure data) throws AgentSystemException {
+        if (uuid != null && timestamp != null && type != null && data !=null){
+            this.uuid = uuid;
+            this.timestamp = timestamp;
+            this.sourceType = "agent";
+            this.type = type;
+            this.data = data;
+        } else {
+            LoggingService.logError(MODULE_NAME, "Error creating TrackingEvent object",
+                    new AgentSystemException("Error creating TrackingEvent object : arguments cannot be null"));
+            throw new AgentSystemException("Error creating TrackingEvent object : arguments cannot be null");
+        }
+
     }
 
     public String getUuid() {
@@ -57,6 +68,7 @@ public class TrackingEvent {
     }
 
     public JsonObject toJsonObject() {
+        LoggingService.logInfo(MODULE_NAME, "Getting JsonObject of TrackingEvent");
         return Json.createObjectBuilder()
                 .add("uuid", uuid)
                 .add("timestamp", timestamp)

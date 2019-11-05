@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.command_line;
 
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
@@ -108,15 +109,20 @@ public enum CommandLineAction {
 		}
 
 		@Override
-		public String perform(String[] args) {
+		public String perform(String[] args) throws AgentUserException {
 			String status;
 			try {
 				status = FieldAgent.getInstance().deProvision(false);
 			} catch (Exception e) {
 				status = "Error";
-				LoggingService.logError(MODULE_NAME, "error de-provisioning", e);
+				LoggingService.logError(MODULE_NAME, "error de-provisioning", new AgentUserException("error de-provisioning"));
+				throw new AgentUserException(format(getDeprovisionMessage(), status));
 			}
 			Tracker.getInstance().handleEvent(TrackingEventType.DEPROVISION, status);
+			if (status.equalsIgnoreCase("\nFailure - not provisioned")) {
+				LoggingService.logError(MODULE_NAME, "error de-provisioning", new AgentUserException("error de-provisioning"));
+				throw new AgentUserException(format(getDeprovisionMessage(), status));
+			}
 			return format(getDeprovisionMessage(), status);
 		}
 	},
@@ -159,7 +165,7 @@ public enum CommandLineAction {
 		}
 
 		@Override
-		public String perform(String[] args) {
+		public String perform(String[] args) throws AgentUserException {
 			if (args.length < 2) {
 				return showHelp();
 			}
@@ -168,10 +174,14 @@ public enum CommandLineAction {
 			String result;
 			if (provisioningResult == null) {
 				result = getProvisionCommonErrorMessage();
+				Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
+				throw new AgentUserException(result);
 			} else if (provisioningResult.containsKey("uuid")) {
 				result = format(getProvisionStatusSuccessMessage(), provisioningResult.getString("uuid"));
 			} else {
 				result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errorMessage"));
+				Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
+				throw new AgentUserException(result);
 			}
 			Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
 			return format(getProvisionMessage(), provisionKey, result);
@@ -256,7 +266,7 @@ public enum CommandLineAction {
 
 	public abstract List<String> getKeys();
 
-	public abstract String perform(String[] args);
+	public abstract String perform(String[] args) throws AgentUserException;
 
 	public static CommandLineAction getActionByKey(String cmdKey) {
 		for (CommandLineAction action:

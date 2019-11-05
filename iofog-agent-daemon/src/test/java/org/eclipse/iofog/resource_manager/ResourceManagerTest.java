@@ -47,21 +47,8 @@ public class ResourceManagerTest {
         PowerMockito.mockStatic(FieldAgent.class);
         PowerMockito.mockStatic(LoggingService.class);
         when(FieldAgent.getInstance()).thenReturn(fieldAgent);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).
-                when(fieldAgent).sendHWInfoFromHalToController();
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).
-                when(fieldAgent).sendUSBInfoFromHalToController();
-
+        PowerMockito.doNothing().when(fieldAgent).sendUSBInfoFromHalToController();
+        PowerMockito.doNothing().when(fieldAgent).sendHWInfoFromHalToController();
     }
 
     /**
@@ -76,7 +63,7 @@ public class ResourceManagerTest {
     /**
      * Test the start method
      */
-    @Test ( timeout = 5000L )
+    @Test ( timeout = 100000L )
     public void testStart() {
         resourceManager.start();
         verify(resourceManager, Mockito.times(1)).start();

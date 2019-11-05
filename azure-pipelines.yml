@@ -15,6 +15,7 @@ variables:
   repository: 'focal-freedom-236620/agent'
   buildTag: $(Build.BuildId)
   ref: $(Build.SourceBranch)
+  branchTag: $(Build.SourceBranchName)
   imageTag:
   releaseCandidate: 'rc1'
 
@@ -35,6 +36,13 @@ jobs:
           publishJUnitResults: true
           testResultsFiles: '**/TEST-*.xml'
           tasks: 'build'
+
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: 'JaCoCo'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+        displayName: 'Publish Code Coverage Results'
 
       # We need nodejs for Snyk
       - task: NodeTool@0
@@ -80,7 +88,10 @@ jobs:
           Dockerfile: 'Dockerfile'
           tags: |
             $(imageTag)
+            $(branchTag)
             latest
+        condition: or(and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/heads/release/')), and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop')), and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/')))
+
 
       - script: |
           echo "api test"

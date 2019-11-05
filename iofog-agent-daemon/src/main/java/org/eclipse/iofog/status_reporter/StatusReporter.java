@@ -25,6 +25,7 @@ import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -116,7 +117,7 @@ public final class StatusReporter {
 		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
 
-		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB", availableDisk));
+		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB (%.2f %%)", availableDisk, ((availableDisk * Constants.MiB) / getTotalDisk()) * 100.0f));
 		result.append("\\nSystem Available Memory     : ").append(String.format("%.2f MB", availableMemory));
 		result.append("\\nSystem Total CPU            : ").append(String.format("%.2f %%", totalCpu));
 
@@ -224,4 +225,8 @@ public final class StatusReporter {
 		LoggingService.logInfo(MODULE_NAME, "Started Status Reporter");
 	}
 
+    private static float getTotalDisk() {
+        File root = new File("/");
+        return root.getTotalSpace();
+    }
 }

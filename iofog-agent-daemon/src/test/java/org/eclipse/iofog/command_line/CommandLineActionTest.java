@@ -13,11 +13,15 @@
 
 package org.eclipse.iofog.command_line;
 
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEvent;
 import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,8 +46,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({CommandLineAction.class, StatusReporter.class, FieldAgent.class, Configuration.class,
-        Orchestrator.class, CmdProperties.class})
+@PrepareForTest({CommandLineAction.class, StatusReporter.class, FieldAgent.class, Configuration.class, Orchestrator.class, CmdProperties.class, Tracker.class, LoggingService.class})
 public class CommandLineActionTest {
     private CommandLineAction commandLineAction;
     private StatusReporter statusReporter;
@@ -51,6 +54,7 @@ public class CommandLineActionTest {
     private List stop;
     private HashMap<String, String> result;
     private CmdProperties cmdProperties;
+    private Tracker tracker;
 
     @Before
     public void setUp() throws Exception {
@@ -58,6 +62,7 @@ public class CommandLineActionTest {
         statusReporter = mock(StatusReporter.class);
         fieldAgent = mock(FieldAgent.class);
         cmdProperties = mock(CmdProperties.class);
+        mockStatic(LoggingService.class);
         stop = new ArrayList(Collections.singleton("stop"));
         result = new HashMap<>();
         result.put("ll", "info");
@@ -66,16 +71,13 @@ public class CommandLineActionTest {
         mockStatic(Configuration.class);
         mockStatic(StatusReporter.class);
         mockStatic(CmdProperties.class);
+        mockStatic(Tracker.class);
+        tracker = mock(Tracker.class);
+        PowerMockito.when(Tracker.getInstance()).thenReturn(tracker);
         PowerMockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
-        PowerMockito.when(fieldAgent.provision("dummy")).thenReturn(Json.createObjectBuilder()
-                .add("status", "success")
-                .add("errorMessage", "")
-                .add("uuid", "uuid")
-                .build());
-        PowerMockito.when(fieldAgent.provision("anotherkey")).thenReturn(Json.createObjectBuilder()
-                .add("status", "success")
-                .add("errorMessage", "Key not valid")
-                .build());
+        PowerMockito.doNothing().when(tracker).handleEvent(any(), anyString());
+        PowerMockito.when(fieldAgent.provision("dummy")).thenReturn(Json.createObjectBuilder().add("status", "success").add("errorMessage", "").add("uuid", "uuid").build());
+        PowerMockito.when(fieldAgent.provision("anotherkey")).thenReturn(Json.createObjectBuilder().add("status", "success").add("errorMessage", "Key not valid").build());
         PowerMockito.when(fieldAgent.provision("prod")).thenReturn(null);
         PowerMockito.when(statusReporter.getStatusReport()).thenReturn(status);
         // CommandProperties mock
@@ -111,10 +113,14 @@ public class CommandLineActionTest {
     @Test
     public void testHelpActionPerform() {
         String[] helpArgs = {"help", "--help", "-h", "-?"};
-        assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[0]).perform(helpArgs));
-        assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[1]).perform(helpArgs));
-        assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[2]).perform(helpArgs));
-        assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[3]).perform(helpArgs));
+        try {
+            assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[0]).perform(helpArgs));
+            assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[1]).perform(helpArgs));
+            assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[2]).perform(helpArgs));
+            assertEquals(helpContent, CommandLineAction.getActionByKey(helpArgs[3]).perform(helpArgs));
+        } catch (AgentUserException e) {
+            fail("Shall never happen");
+        }
     }
 
     /**
@@ -123,7 +129,11 @@ public class CommandLineActionTest {
     @Test
     public void testVersionActionPerform() {
         String[] args = {"version", "--version", "-v"};
-        assertEquals(version, CommandLineAction.getActionByKey(args[0]).perform(args));
+        try {
+            assertEquals(version, CommandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            fail("Shall never happen");
+        }
     }
 
     /**
@@ -132,8 +142,12 @@ public class CommandLineActionTest {
     @Test
     public void testStatusActionPerform() {
         String[] args = {"status"};
-        assertTrue(!CommandLineAction.getActionByKey(args[0]).perform(args).isEmpty());
-        assertEquals(status, CommandLineAction.getActionByKey(args[0]).perform(args));
+        try {
+            assertTrue(! CommandLineAction.getActionByKey(args[0]).perform(args).isEmpty());
+            assertEquals(status, CommandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            fail("Shall never happen");
+        }
     }
 
     /**
@@ -142,9 +156,25 @@ public class CommandLineActionTest {
     @Test
     public void testDeProvisionActionPerform() {
         String[] args = {"deprovision"};
-        assertTrue(!CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
-        PowerMockito.when(fieldAgent.deProvision(anyBoolean())).thenReturn("done");
-        assertEquals("Deprovisioning from controller ... done", commandLineAction.getActionByKey(args[0]).perform(args));
+        assertTrue(! CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
+        PowerMockito.when(fieldAgent.deProvision(anyBoolean())).thenReturn("\nSuccess - tokens, identifiers and keys removed");
+        try {
+            assertEquals("Deprovisioning from controller ... \nSuccess - tokens, identifiers and keys removed", commandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
+    }
+
+    /**
+     * deprovision command with failure
+     * throws AgentSystemException
+     */
+    @Test(expected = AgentUserException.class)
+    public void throwsAgentUserExcpetionWhenDeProvisionActionPerform() throws AgentUserException {
+        String[] args = {"deprovision"};
+        assertTrue(! CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
+        PowerMockito.when(fieldAgent.deProvision(anyBoolean())).thenReturn("\nFailure - not provisioned");
+        commandLineAction.getActionByKey(args[0]).perform(args);
     }
 
 
@@ -154,9 +184,13 @@ public class CommandLineActionTest {
     @Test
     public void testInfoActionPerform() {
         String[] args = {"info"};
-        assertTrue(!CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
+        assertTrue(! CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
         when(Configuration.getConfigReport()).thenReturn("Config report");
-        assertEquals("Config report", commandLineAction.getActionByKey(args[0]).perform(args));
+        try {
+            assertEquals("Config report", commandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
     }
 
     /**
@@ -165,8 +199,12 @@ public class CommandLineActionTest {
     @Test
     public void testSwitchActionPerformWithNoValue() {
         String[] args = {"switch"};
-        assertTrue(!CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
-        assertEquals(helpContent, CommandLineAction.getActionByKey(args[0]).perform(args));
+        assertTrue(! CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
+        try {
+            assertEquals(helpContent, CommandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
     }
 
     /**
@@ -176,7 +214,11 @@ public class CommandLineActionTest {
     public void testSwitchActionPerformWithValidValue() {
         String[] anotherArgs = {"switch", "prod"};
         when(Configuration.setupConfigSwitcher(any())).thenReturn("success");
-        assertEquals("success", commandLineAction.getActionByKey(anotherArgs[0]).perform(anotherArgs));
+        try {
+            assertEquals("success", commandLineAction.getActionByKey(anotherArgs[0]).perform(anotherArgs));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
     }
 
     /**
@@ -186,7 +228,11 @@ public class CommandLineActionTest {
     @Test
     public void testSwitchActionPerformWithInvalidValue() {
         String[] anotherArgs = {"switch", "dummy"};
-        assertEquals("Invalid switcher state", commandLineAction.getActionByKey(anotherArgs[0]).perform(anotherArgs));
+        try {
+            assertEquals("Invalid switcher state", commandLineAction.getActionByKey(anotherArgs[0]).perform(anotherArgs));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
     }
 
     /**
@@ -195,18 +241,21 @@ public class CommandLineActionTest {
     @Test
     public void testProvisionActionPerformWithNoValue() {
         String[] args = {"provision"};
-        assertTrue(!CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
-        assertEquals(helpContent, CommandLineAction.getActionByKey(args[0]).perform(args));
+        assertTrue(! CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
+        try {
+            assertEquals(helpContent, CommandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
     }
 
     /**
      * When provisioningResult of FieldAgent returns null response.
      */
-    @Test
-    public void testProvisionActionPerformWithTwoArgs() {
+    @Test(expected = AgentUserException.class)
+    public void testProvisionActionPerformWithTwoArgs() throws AgentUserException {
         String[] anotherArgs = {"provision", "prod"};
-        assertEquals("Provisioning with key \"prod\" ... Result: \n" +
-                "Provisioning failed", commandLineAction.getActionByKey(anotherArgs[0]).perform(anotherArgs));
+        commandLineAction.getActionByKey(anotherArgs[0]).perform(anotherArgs);
     }
 
     /**
@@ -215,19 +264,22 @@ public class CommandLineActionTest {
     @Test
     public void testProvisionActionPerformReturnsUUID() {
         String[] anotherArgs1 = {"provision", "dummy"};
-        assertEquals("Provisioning with key \"dummy\" ... Result: \n" +
-                "Provision success - Iofog UUID is uuid", commandLineAction.getActionByKey(anotherArgs1[0]).perform(anotherArgs1));
+        try {
+            assertEquals("Provisioning with key \"dummy\" ... Result: \n" + "Provision success - Iofog UUID is uuid", commandLineAction.getActionByKey(anotherArgs1[0]).perform(anotherArgs1));
+        } catch (AgentUserException e) {
+            fail("This shall never happen");
+        }
     }
 
     /**
      * When FieldAgent.provision(provisionKey) returns the mock response without uuid
+     * throws AgentUserException
      */
-    @Test
-    public void testProvisionActionPerformResponseWithoutUUID() {
+    @Test(expected = AgentUserException.class)
+    public void throwsAgentUserExceptionProvisionActionPerformResponseWithoutUUID() throws AgentUserException {
         String[] anotherArgs2 = {"provision", "anotherkey"};
-        assertEquals("Provisioning with key \"anotherkey\" ... Result: \n" +
-                        "Provision failed with error message: \"Key not valid\"",
-                commandLineAction.getActionByKey(anotherArgs2[0]).perform(anotherArgs2));
+        commandLineAction.getActionByKey(anotherArgs2[0]).perform(anotherArgs2);
+
     }
 
     /**
@@ -236,10 +288,11 @@ public class CommandLineActionTest {
     @Test
     public void testConfigActionPerformWithOutOption() throws Exception {
         String[] args = {"config"};
-        assertTrue(!CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
+        assertTrue(! CommandLineAction.getActionByKey(args[0]).getKeys().isEmpty());
         assertEquals(helpContent, CommandLineAction.getActionByKey(args[0]).perform(args));
 
     }
+
     /**
      * When config command without options display help
      * Test when config option value is ambiguous
@@ -257,8 +310,7 @@ public class CommandLineActionTest {
     @Test
     public void testConfigActionPerformWithDefaultOption() throws Exception {
         String[] anotherArgs1 = {"config", "defaults"};
-        assertEquals("Configuration has been reset to its defaults.",
-                CommandLineAction.getActionByKey(anotherArgs1[0]).perform(anotherArgs1));
+        assertEquals("Configuration has been reset to its defaults.", CommandLineAction.getActionByKey(anotherArgs1[0]).perform(anotherArgs1));
 
     }
 
@@ -281,8 +333,7 @@ public class CommandLineActionTest {
                 thenReturn(result);
         PowerMockito.when(Configuration.setConfig(anyMap(), anyBoolean())).
                 thenThrow(new Exception("item not found or defined more than once"));
-        assertEquals("Error updating new config : item not found or defined more than once",
-                CommandLineAction.getActionByKey(logArgs[0]).perform(logArgs));
+        assertEquals("Error updating new config : item not found or defined more than once", CommandLineAction.getActionByKey(logArgs[0]).perform(logArgs));
     }
 
 
@@ -296,8 +347,7 @@ public class CommandLineActionTest {
         PowerMockito.when(Configuration.setConfig(anyMap(), anyBoolean())).thenReturn(new HashMap<>());
         PowerMockito.when(Configuration.getOldNodeValuesForParameters(anySet(), any())).
                 thenReturn(result);
-        assertEquals("\\n\tChange accepted for Parameter : - ll, Old value was :info, New Value is : severe",
-                CommandLineAction.getActionByKey(logArgs[0]).perform(logArgs));
+        assertEquals("\\n\tChange accepted for Parameter : - ll, Old value was :info, New Value is : severe", CommandLineAction.getActionByKey(logArgs[0]).perform(logArgs));
 
     }
 
