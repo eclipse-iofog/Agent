@@ -633,8 +633,13 @@ public final class Configuration {
                         break;
                     case FOG_TYPE:
                         LoggingService.logInfo(MODULE_NAME, "Setting fogtype");
-                        configureFogType(value);
-                        setNode(FOG_TYPE, value, configFile, configElement);
+                        try {
+                            configureFogType(value);
+                            setNode(FOG_TYPE, value, configFile, configElement);
+                        } catch (ConfigurationItemException e){
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
                         break;
                     case DEV_MODE:
                         LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
