@@ -44,8 +44,8 @@ jobs:
       - bash: cd $(System.DefaultWorkingDirectory)/iofog-agent-daemon && ls -lR && cat $(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/clover/clover.xml
       - task: PublishCodeCoverageResults@1
         inputs:
-          codeCoverageTool: 'JaCoCo'
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
+          codeCoverageTool: 'Cobertura'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/clover/clover.xml'
           reportDirectory: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/clover/html'
         displayName: 'Publish Code Coverage Results'
       # We need nodejs for Snyk
