@@ -416,7 +416,7 @@ public final class Configuration {
                     if (!option.equals(CONTROLLER_CERT.getCommandName())) {
                         LoggingService.logInfo(MODULE_NAME, "Parameter error : Command or value is invalid");
                         messageMap.put("Parameter error", "Command or value is invalid");
-                        break;
+                        continue;
                     }
                 }
 

@@ -203,7 +203,7 @@ public class Orchestrator {
             get.setConfig(config);
         	CloseableHttpResponse response = client.execute(get);
 
-            if (response.getStatusLine().getStatusCode() != 200) {
+            if (response !=null && response.getStatusLine().getStatusCode() != 200) {
                 if (response.getStatusLine().getStatusCode() == 404) {
                 	logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
                 			new AgentUserException("unable to connect to IOFog Controller endpoint", null));

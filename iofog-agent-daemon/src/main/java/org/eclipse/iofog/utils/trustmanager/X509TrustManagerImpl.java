@@ -32,10 +32,12 @@ public class X509TrustManagerImpl implements X509TrustManager {
 	@Override
 	public void checkServerTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
 		boolean verified = false;
-		for (X509Certificate cert : certs) {
-			if (cert.equals(controllerCert)) {
-				verified = true;
-				break;
+		if (certs !=null){
+			for (X509Certificate cert : certs) {
+				if (cert.equals(controllerCert)) {
+					verified = true;
+					break;
+				}
 			}
 		}
 		if (!verified)

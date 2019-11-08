@@ -18,6 +18,7 @@ import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
+import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -39,12 +40,14 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
+import static org.eclipse.iofog.utils.Constants.*;
 import static org.junit.Assert.*;
 import static org.powermock.api.mockito.PowerMockito.*;
 import static org.powermock.api.support.membermodification.MemberMatcher.method;
@@ -55,22 +58,33 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Configuration.class, LoggingService.class, FieldAgent.class, ProcessManager.class, ResourceConsumptionManager.class,
-        MessageBus.class, Transformer.class, TransformerFactory.class, StreamResult.class, DOMSource.class})
+        MessageBus.class, Transformer.class, TransformerFactory.class, StreamResult.class, DOMSource.class, Supervisor.class})
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.*", "com.sun.org.apache.xalan.*"})
 public class ConfigurationTest {
     private MessageBus messageBus;
-    private Configuration configuration;
     private FieldAgent fieldAgent;
     private ProcessManager processManager;
     private ResourceConsumptionManager resourceConsumptionManager;
+    private Supervisor supervisor;
+    private String MODULE_NAME;
+    private String MOCK_CONFIG_SWITCHER_PATH;
+    private String MOCK_DEFAULT_CONFIG_PATH;
+    private String ORIGINAL_DEFAULT_CONFIG_PATH;
+    private String ORIGINAL_CONFIG_SWITCHER_PATH;
 
     @Before
     public void setUp() throws Exception {
+        MODULE_NAME = "Configuration";
+        MOCK_CONFIG_SWITCHER_PATH = "../packaging/iofog-agent/etc/iofog-agent/config-switcher_new.xml";
+        MOCK_DEFAULT_CONFIG_PATH = "../packaging/iofog-agent/etc/iofog-agent/config_new.xml";
+        ORIGINAL_DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_PATH;
+        ORIGINAL_CONFIG_SWITCHER_PATH = CONFIG_SWITCHER_PATH;
         mockStatic(Configuration.class, Mockito.CALLS_REAL_METHODS);
         messageBus = mock(MessageBus.class);
         fieldAgent = mock(FieldAgent.class);
         processManager =mock(ProcessManager.class);
         resourceConsumptionManager = mock(ResourceConsumptionManager.class);
+        supervisor = mock(Supervisor.class);
         PowerMockito.mockStatic(LoggingService.class);
         PowerMockito.mockStatic(FieldAgent.class);
         PowerMockito.mockStatic(ResourceConsumptionManager.class);
@@ -82,10 +96,33 @@ public class ConfigurationTest {
         PowerMockito.when(ProcessManager.getInstance()).thenReturn(processManager);
         PowerMockito.whenNew(DOMSource.class).withArguments(Mockito.any()).thenReturn(mock(DOMSource.class));
         PowerMockito.whenNew(StreamResult.class).withParameterTypes(File.class).withArguments(Mockito.any(File.class)).thenReturn(mock(StreamResult.class));
+        PowerMockito.whenNew(Supervisor.class).withNoArguments().thenReturn(supervisor);
+        PowerMockito.doNothing().when(supervisor).start();
+        setFinalStatic(Constants.class.getField("CONFIG_SWITCHER_PATH"), MOCK_CONFIG_SWITCHER_PATH);
+        setFinalStatic(Constants.class.getField("DEFAULT_CONFIG_PATH"), MOCK_DEFAULT_CONFIG_PATH);
     }
 
     @After
     public void tearDown() throws Exception {
+        MODULE_NAME = null;
+        // reset to original
+        setFinalStatic(Constants.class.getField("CONFIG_SWITCHER_PATH"), ORIGINAL_CONFIG_SWITCHER_PATH);
+        setFinalStatic(Constants.class.getField("DEFAULT_CONFIG_PATH"), ORIGINAL_DEFAULT_CONFIG_PATH);
+    }
+
+    /**
+     * Helper method to mock the CONFIG_SWITCHER_PATH & DEFAULT_CONFIG_PATH
+     * @param field
+     * @param newValue
+     * @throws Exception
+     */
+    static void setFinalStatic(Field field, Object newValue) throws Exception {
+        field.setAccessible(true);
+        // remove final modifier from field
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~ Modifier.FINAL);
+        field.set(null, newValue);
     }
 
     private void initializeConfiguration() throws Exception {
@@ -111,6 +148,17 @@ public class ConfigurationTest {
             assertEquals(5,  Configuration.getGetUsageDataFreqSeconds());
             assertEquals("1.23",  Configuration.getDockerApiVersion());
             assertEquals(60,  Configuration.getSetSystemTimeFreqSeconds());
+            assertEquals("/etc/iofog-agent/cert.crt", Configuration.getControllerCert());
+            assertEquals("http://localhost:54421/api/v3/",Configuration.getControllerUrl());
+            assertEquals("unix:///var/run/docker.sock", Configuration.getDockerUrl());
+            assertEquals("/var/lib/iofog-agent/", Configuration.getDiskDirectory());
+            assertEquals(50.0, Configuration.getDiskLimit(), 0);
+            assertEquals(4096, Configuration.getMemoryLimit(), 0);
+            assertEquals(80.0, Configuration.getCpuLimit(), 0);
+            assertEquals(10.0, Configuration.getLogFileCount(), 0);
+            assertEquals("Default value", "dynamic", Configuration.getNetworkInterface());
+            assertEquals("Default value", "not found(dynamic)", Configuration.getNetworkInterfaceInfo());
+            assertEquals("Default value", 10.0, Configuration.getLogDiskLimit(), 0);
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -156,10 +204,18 @@ public class ConfigurationTest {
             assertEquals("Default value", "INFO", Configuration.getLogLevel());
             Configuration.setLogLevel("SEVERE");
             assertEquals("New Value", "SEVERE", Configuration.getLogLevel());
+            assertEquals("Default value", "/var/log/iofog-agent/", Configuration.getLogDiskDirectory());
+            Configuration.setLogDiskDirectory("/var/new-log/");
+            assertEquals("New Value", "/var/new-log/", Configuration.getLogDiskDirectory());
+            assertEquals("Default value", "", Configuration.getIofogUuid());
+            Configuration.setIofogUuid("uuid");
+            assertEquals("New Value", "uuid", Configuration.getIofogUuid());
+            assertEquals("Default value", "", Configuration.getAccessToken());
+            Configuration.setAccessToken("token");
+            assertEquals("New Value", "token", Configuration.getAccessToken());
         } catch (Exception e) {
             fail("This should not happen");
         }
-
     }
 
     /**
@@ -201,13 +257,13 @@ public class ConfigurationTest {
     }
 
     /**
-     * Test reset to
+     * Test reset
      *
      */
-    /*@Test
-    public void resetToDefault() {
+    @Test
+    public void testResetToDefault() {
         try {
-            suppress(method(Configuration.class, "saveConfigUpdates"));
+            suppress(method(Configuration.class, "updateConfigFile"));
             initializeConfiguration();
             Configuration.setWatchdogEnabled(true);
             assertTrue("New Value", Configuration.isWatchdogEnabled());
@@ -234,135 +290,183 @@ public class ConfigurationTest {
             assertEquals("New Value", "SEVERE", Configuration.getLogLevel());
             Configuration.resetToDefault();
             assertFalse("Default Value", Configuration.isWatchdogEnabled());
-            assertEquals("Default Value", 30, Configuration.getStatusFrequency());
-            assertEquals("Default Value", 60, Configuration.getChangeFrequency());
+            assertEquals("Default Value", 10, Configuration.getStatusFrequency());
+            assertEquals("Default Value", 20, Configuration.getChangeFrequency());
             assertEquals("Default Value", 60, Configuration.getDeviceScanFrequency());
             assertEquals("Default value", GpsMode.AUTO, Configuration.getGpsMode());
             assertEquals("Default value", 10, Configuration.getPostDiagnosticsFreq());
-            assertEquals("Default value", ArchitectureType.INTEL_AMD, Configuration.getFogType());
             assertEquals("Default value", true, Configuration.isDeveloperMode());
             assertNotNull("Default value", Configuration.getIpAddressExternal());
             assertEquals("Default value", "INFO", Configuration.getLogLevel());
         } catch(Exception e) {
-
+            fail("This should not happen");
         }
-    }*/
-    @Test
-    public void setGpsDataIfValid() {
     }
 
+    /**
+     * Test setGpsDataIfValid
+     */
     @Test
-    public void writeGpsToConfigFile() {
+    public void testSetGpsDataIfValid() {
+        try {
+            Configuration.setGpsDataIfValid(GpsMode.OFF, "-7.6878,00.100");
+            assertEquals("New Value",GpsMode.OFF, Configuration.getGpsMode());
+            assertEquals("New Value","-7.6878,00.100", Configuration.getGpsCoordinates());
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test writeGpsToConfigFile
+     */
     @Test
-    public void loadConfig() {
+    public void testWriteGpsToConfigFile() {
+        try {
+            initializeConfiguration();
+            Configuration.writeGpsToConfigFile();
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+            LoggingService.logInfo("Configuration", "Finished Writes GPS coordinates and GPS mode to config file ");
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
+
+    /**
+     * Test loadConfig
+     */
+    @Test
+    public void testLoadConfig() {
         try {
             Field privateCurrentSwitcherState = Configuration.class.getDeclaredField("currentSwitcherState");
             privateCurrentSwitcherState.setAccessible(true);
             privateCurrentSwitcherState.set(Configuration.class, Constants.ConfigSwitcherState.DEFAULT);
             Configuration.loadConfig();
-            assertEquals(5,  Configuration.getStatusReportFreqSeconds());
+            PowerMockito.verifyPrivate(Configuration.class).invoke("setIofogUuid", Mockito.any());
+            PowerMockito.verifyPrivate(Configuration.class).invoke("setAccessToken", Mockito.any());
         } catch (Exception e) {
-            System.out.println(e);
             fail("This should not happen");
         }
     }
 
+    /**
+     * Test loadConfigSwitcher
+     */
     @Test
-    public void loadConfigSwitcher() {
+    public void testLoadConfigSwitcher() {
+        try {
+            Configuration.loadConfigSwitcher();
+            PowerMockito.verifyStatic(LoggingService.class);
+            LoggingService.logInfo(MODULE_NAME, "Start loads configuration about current config from config-switcher.xml");
+            PowerMockito.verifyStatic(LoggingService.class);
+            LoggingService.logInfo(MODULE_NAME, "Finished loads configuration about current config from config-switcher.xml");
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("getFirstNodeByTagName",
+                    Mockito.eq(SWITCHER_ELEMENT), Mockito.any(Document.class));
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("verifySwitcherNode",
+                    Mockito.eq(SWITCHER_NODE), Mockito.eq(Constants.ConfigSwitcherState.DEFAULT.fullValue()));
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test getConfigReport
+     */
     @Test
-    public void getAccessToken() {
+    public void testGetConfigReport() {
+        try {
+            initializeConfiguration();
+            String report = Configuration.getConfigReport();
+            assertTrue(report.contains("Iofog UUID"));
+            assertTrue(report.contains("Network Interface"));
+            assertTrue(report.contains("Docker URL"));
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test getCurrentConfig
+     */
     @Test
-    public void getControllerUrl() {
+    public void tetGetCurrentConfig() {
+        try {
+            initializeConfiguration();
+            assertNotNull(Configuration.getCurrentConfig());
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test getCurrentConfigPath
+     */
     @Test
-    public void getControllerCert() {
+    public void testGetCurrentConfigPath() {
+        try {
+            initializeConfiguration();
+            assertEquals(MOCK_DEFAULT_CONFIG_PATH, Configuration.getCurrentConfigPath());
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test setupConfigSwitcher when currentSwitcherState is same as previousState
+     */
     @Test
-    public void getNetworkInterface() {
+    public void testSetupConfigSwitcherAsDefault() {
+        try {
+            initializeConfiguration();
+            assertEquals("Already using this configuration.", Configuration.setupConfigSwitcher(Constants.ConfigSwitcherState.DEFAULT));
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test load
+     */
     @Test
-    public void getDockerUrl() {
+    public void testLoad() {
+        try {
+            Configuration.load();
+            PowerMockito.verifyStatic(Configuration.class);
+            Configuration.loadConfigSwitcher();
+            PowerMockito.verifyStatic(Configuration.class);
+            Configuration.loadConfig();
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test setupSupervisor
+     */
     @Test
-    public void getDiskLimit() {
+    public void testSetupSupervisor() {
+        try {
+            Configuration.setupSupervisor();
+            Mockito.verify(supervisor).start();
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
+    /**
+     * Test setupSupervisor
+     */
     @Test
-    public void getMemoryLimit() {
-    }
-
-    @Test
-    public void getDiskDirectory() {
-    }
-
-    @Test
-    public void getCpuLimit() {
-    }
-
-    @Test
-    public void getIofogUuid() {
-    }
-
-    @Test
-    public void getLogFileCount() {
-    }
-
-    @Test
-    public void getLogDiskLimit() {
-    }
-
-    @Test
-    public void getLogDiskDirectory() {
-    }
-
-    @Test
-    public void setLogDiskDirectory() {
-    }
-
-    @Test
-    public void setAccessToken() {
-    }
-
-    @Test
-    public void setIofogUuid() {
-    }
-
-    @Test
-    public void getConfigReport() {
-    }
-
-    @Test
-    public void getNetworkInterfaceInfo() {
-    }
-
-    @Test
-    public void getCurrentConfig() {
-    }
-
-    @Test
-    public void getCurrentConfigPath() {
-    }
-
-    @Test
-    public void setupConfigSwitcher() {
-    }
-
-    @Test
-    public void load() {
-    }
-
-    @Test
-    public void setupSupervisor() {
+    public void testSupervisorThrowsExceptionOnSetupSupervisor() {
+        try {
+            PowerMockito.doThrow(mock(Exception.class)).when(supervisor).start();
+            Configuration.setupSupervisor();
+            Mockito.verify(supervisor).start();
+            PowerMockito.verifyStatic(LoggingService.class);
+            LoggingService.logError(Mockito.eq("Configuration"), Mockito.eq("Error while starting supervisor"), Mockito.any());
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
     /**
