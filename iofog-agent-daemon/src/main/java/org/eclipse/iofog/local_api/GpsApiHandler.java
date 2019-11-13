@@ -62,7 +62,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		} else {
 			String errorMsg = "Not supported method: " + req.method();
 			outputBuffer.writeBytes(errorMsg.getBytes());
-			return new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST, outputBuffer);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 	}
 

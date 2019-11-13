@@ -60,6 +60,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
+                            System.out.println("I am here");
                             ch.pipeline().addLast(new HttpClientCodec());
                             ch.pipeline().addLast(new HttpObjectAggregator(1048576));
                             ChannelInboundHandler handler = new SimpleChannelInboundHandler<HttpObject>() {
@@ -92,7 +93,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                 ReferenceCountUtil.release(requestContent);
             }
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+            LoggingService.logError(MODULE_NAME, "Error unable to reach RESTblue container!", e);
         } finally {
             group.shutdownGracefully();
         }

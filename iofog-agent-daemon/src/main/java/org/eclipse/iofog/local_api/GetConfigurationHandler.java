@@ -97,7 +97,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 		} else {
 			String errorMsg = "No configuration found for the id " + receiverId;
 			LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg));
-			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 	}
 
