@@ -950,7 +950,7 @@ public class DockerUtilTest {
         try {
             PowerMockito.when(registry.getUrl()).thenReturn("url");
             PowerMockito.when(registry.getIsPublic()).thenReturn(true);
-            imageID = "agent:1.3.0-beta";
+            imageID = "agent:1.3.0";
             dockerUtil.pullImage(imageID, registry);
             Mockito.verify(dockerClient).pullImageCmd(any());
             Mockito.verify(pullImageCmd).withRegistry(any());
@@ -974,7 +974,7 @@ public class DockerUtilTest {
             PowerMockito.when(registry.getPassword()).thenReturn("password");
             PowerMockito.when(registry.getUrl()).thenReturn("registryUrl");
             PowerMockito.when(registry.getIsPublic()).thenReturn(false);
-            imageID = "agent:1.3.0-beta";
+            imageID = "agent:1.3.0";
             dockerUtil.pullImage(imageID, registry);
             Mockito.verify(dockerClient).pullImageCmd(any());
             Mockito.verify(pullImageCmd, Mockito.never()).withRegistry(any());
@@ -996,7 +996,7 @@ public class DockerUtilTest {
         PowerMockito.doThrow(spy(new NotFoundException("Exception"))).when(pullImageCmd).exec(any());
         PowerMockito.when(registry.getUrl()).thenReturn("url");
         PowerMockito.when(registry.getIsPublic()).thenReturn(true);
-        imageID = "agent:1.3.0-beta";
+        imageID = "agent:1.3.0";
         dockerUtil.pullImage(imageID, registry);
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Image not found"), any());
@@ -1012,7 +1012,7 @@ public class DockerUtilTest {
         PowerMockito.doThrow(spy(new NotModifiedException("Exception"))).when(pullImageCmd).exec(any());
         PowerMockito.when(registry.getUrl()).thenReturn("url");
         PowerMockito.when(registry.getIsPublic()).thenReturn(true);
-        imageID = "agent:1.3.0-beta";
+        imageID = "agent:1.3.0";
         dockerUtil.pullImage(imageID, registry);
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Image not found"), any());
