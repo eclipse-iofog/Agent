@@ -56,7 +56,7 @@ public class TrackingEventsStorageTest {
     }
 
     /**
-     *
+     * Test
      */
     @Test
     public void testPushEventAndPopAllEvents() {
