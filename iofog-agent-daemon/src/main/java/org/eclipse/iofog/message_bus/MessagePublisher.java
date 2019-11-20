@@ -15,8 +15,10 @@ package org.eclipse.iofog.message_bus;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.Route;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.List;
 
@@ -56,12 +58,15 @@ public class MessagePublisher implements AutoCloseable{
 	 * @throws Exception
 	 */
 	synchronized void publish(Message message) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start publish message :" + this.name );
 		byte[] bytes = message.getBytes();
 
 		try {
 			archive.save(bytes, message.getTimestamp());
 		} catch (Exception e) {
-			logError("Message Publisher (" + this.name + ")", "unable to archive massage", e);
+			logError(MODULE_NAME, "Message Publisher (" + this.name + ")unable to archive message",
+					new AgentSystemException("Message Publisher (" + this.name + ")unable to archive message", e));
+
 		}
 		for (String receiver : route.getReceivers()) {
 			ClientMessage msg = session.createMessage(false);
@@ -71,18 +76,22 @@ public class MessagePublisher implements AutoCloseable{
 				producer.send(msg);
 			}
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finsihed publish message : " + this.name);
 	}
 
 	synchronized void updateRoute(Route route) {
+		LoggingService.logInfo(MODULE_NAME, "Updating route");
 		this.route = route;
 	}
 
 	public synchronized void close() {
+		LoggingService.logInfo(MODULE_NAME, "Start closing publish");
 		try {
 			archive.close();
 		} catch (Exception exp) {
-			logError(MODULE_NAME, exp.getMessage(), exp);
+			logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished closing publish");
 	}
 
 	/**
@@ -94,6 +103,7 @@ public class MessagePublisher implements AutoCloseable{
 	 * @return list of {@link Message}
 	 */
 	public synchronized List<Message> messageQuery(long from, long to) {
+		LoggingService.logInfo(MODULE_NAME, "Getting messages by query");
 		return archive.messageQuery(from, to);
 	}
 	

@@ -31,7 +31,7 @@ public class LogFormatter extends Formatter {
 		final DateFormat df = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss.SSS");
 		StringBuilder builder = new StringBuilder();
 		builder.append("[").append(df.format(System.currentTimeMillis())).append("] ");
-		builder.append("[").append(record.getLevel() == Level.WARNING ? "WARN" : "INFO").append("] ");
+		builder.append("[").append(record.getLevel().toString()).append("] ");
 		builder.append(formatMessage(record)).append('\n');
 		return builder.toString();
 	}

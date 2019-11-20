@@ -3,9 +3,14 @@ plugins {
 }
 
 description = 'iofog-agent-client'
-
+configurations {
+    // configuration that holds jars to include in the jar
+    extraLibs
+}
 dependencies {
     compile 'org.slf4j:slf4j-nop:1.7.13'
+	extraLibs ('javax.json:javax.json-api:1.0', 'org.glassfish:javax.json:1.1.4')
+	configurations.compile.extendsFrom(configurations.extraLibs)
 }
 
 task createProperties(dependsOn: processResources) {
@@ -36,6 +41,9 @@ task copyJar(type: Copy) {
 }
 
 jar {
-        manifest.attributes["Main-Class"] = 'org.eclipse.iofog.Client'
-        manifest.attributes["Implementation-Version"] = project.property('version')
+    from {
+    	configurations.extraLibs.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+	manifest.attributes["Main-Class"] = 'org.eclipse.iofog.Client'
+	manifest.attributes["Implementation-Version"] = project.property('version')
 }

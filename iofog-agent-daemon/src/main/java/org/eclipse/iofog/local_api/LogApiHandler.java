@@ -14,6 +14,8 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
@@ -26,7 +28,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LogApiHandler implements Callable<FullHttpResponse> {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : LogApiHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -40,14 +42,15 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start handling http call of log api");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -70,6 +73,7 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 		}
 		if (!result) {
 			String errorMsg = "Log message parsing error, " + "Logger initialized null";
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -79,6 +83,7 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 
 		String sendMessageResult = builder.build().toString();
 
+		LoggingService.logInfo(MODULE_NAME, "Finished handling http call of log api");
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 

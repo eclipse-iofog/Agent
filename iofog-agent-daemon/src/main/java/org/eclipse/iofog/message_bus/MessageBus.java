@@ -13,10 +13,13 @@
 package org.eclipse.iofog.message_bus;
 
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
+import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
  * Message Bus module
@@ -80,10 +84,12 @@ public class MessageBus implements IOFogModule {
 	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void enableRealTimeReceiving(String receiver) {
-		MessageReceiver rec = receivers.get(receiver); 
+		logInfo("Starting enable real time receiving");
+		MessageReceiver rec = receiver != null ? receivers.get(receiver) : null;
 		if (rec == null)
 			return;
 		rec.enableRealTimeReceiving();
+		logInfo("Finishing enable real time receiving");
 	}
 
 	/**
@@ -92,10 +98,12 @@ public class MessageBus implements IOFogModule {
 	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void disableRealTimeReceiving(String receiver) {
-		MessageReceiver rec = receivers.get(receiver); 
+		logInfo("Starting disable real time receiving");
+		MessageReceiver rec = receiver != null ? receivers.get(receiver) : null;
 		if (rec == null)
 			return;
 		rec.disableRealTimeReceiving();
+		logInfo("Finishing disable real time receiving");
 	}
 
 	/**
@@ -103,17 +111,15 @@ public class MessageBus implements IOFogModule {
 	 * 
 	 */
 	private void init() {
+		logInfo("Starting initialization of message bus publisher and receiver");
 		lastSpeedMessageCount = 0;
 		lastSpeedTime = System.currentTimeMillis();
-		
 		routes = microserviceManager.getRoutes();
 		idGenerator = new MessageIdGenerator();
 		publishers = new ConcurrentHashMap<>();
 		receivers = new ConcurrentHashMap<>();
-
 		if (routes == null)
 			return;
-		
 		routes.entrySet().stream()
 			.filter(route -> route.getValue() != null)
 			.filter(route -> route.getValue().getReceivers() != null)
@@ -124,8 +130,8 @@ public class MessageBus implements IOFogModule {
 					try {
 						messageBusServer.createProducer(publisher);
 					} catch (Exception e) {
-						LoggingService.logError(MODULE_NAME + "(" + publisher + ")",
-								"unable to start publisher module", e);
+						logError(MODULE_NAME,
+								new AgentSystemException("unable to start publisher module :" + publisher, e));
 					}
 					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
 
@@ -136,12 +142,13 @@ public class MessageBus implements IOFogModule {
 								try {
 									messageBusServer.createConsumer(item);
 								} catch (Exception e) {
-									LoggingService.logError(MODULE_NAME + "(" + item + ")",
-											"unable to start receiver module", e);
+									logError(MODULE_NAME,
+											new AgentSystemException("unable to start receiver module" + item, e));
 								}
 								return new MessageReceiver(item, messageBusServer.getConsumer(item));
 							})));
 			});
+		logInfo("Finished initialization of message bus publisher and receiver");
 
 	}
 	
@@ -152,9 +159,10 @@ public class MessageBus implements IOFogModule {
 	private final Runnable calculateSpeed = () -> {
 		while (true) {
 			try {
+				logInfo("calculating message processing speed");
 				Thread.sleep(Configuration.getSpeedCalculationFreqMinutes() * 60 * 1000);
 
-				logInfo("calculating message processing speed");
+				logInfo("Start calculating message processing speed");
 
 				long now = System.currentTimeMillis();
 				long msgs = StatusReporter.getMessageBusStatus().getProcessedMessages();
@@ -164,8 +172,10 @@ public class MessageBus implements IOFogModule {
 				lastSpeedMessageCount = msgs;
 				lastSpeedTime = now;
 			} catch (Exception exp) {
-				logError(exp.getMessage(), exp);
+				logError(MODULE_NAME,
+						new AgentSystemException("unable to calculate message processing speed", exp));
 			}
+			logInfo("Finished calculating message processing speed");
 		}
 	};
 	
@@ -176,9 +186,10 @@ public class MessageBus implements IOFogModule {
 	private final Runnable checkMessageServerStatus = () -> {
 		while (true) {
 			try {
+				logInfo("Check message bus server status");
 				Thread.sleep(5000);
 
-				logInfo("Check message bus server status");
+				logInfo("Start Check message bus server status");
 				if (!messageBusServer.isServerActive() || messageBusServer.isMessageBusSessionClosed()) {
 					logWarning("Server is not active. restarting...");
 					stop();
@@ -188,7 +199,7 @@ public class MessageBus implements IOFogModule {
 						logInfo("Server restarted");
 						init();
 					} catch (Exception e) {
-						logError("Server restart failed", e);
+						logError("", new AgentSystemException("Server restart failed", e));
 					}
 				}
 
@@ -205,7 +216,7 @@ public class MessageBus implements IOFogModule {
 								publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
 								logInfo("Producer module restarted");
 							} catch (Exception e) {
-								logError("Unable to restart producer module for " + publisher, e);
+								logError("", new AgentSystemException("Unable to restart producer module for " + publisher, e));
 							}
 						}
 					}
@@ -220,13 +231,14 @@ public class MessageBus implements IOFogModule {
 							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
 							logInfo("Consumer module restarted");
 						} catch (Exception e) {
-							logError("Unable to restart consumer module for " + receiver, e);
+							logError("", new AgentSystemException("Unable to restart consumer module for " + receiver, e));
 						}
 					}
 				});
 			} catch (Exception exp) {
-				logError(exp.getMessage(), exp);
+				logError("", new AgentSystemException("Error Checking message bus server status", exp));
 			}
+			logInfo("Finished Check message bus server status");
 		}
 	};
 	
@@ -236,6 +248,7 @@ public class MessageBus implements IOFogModule {
 	 * 
 	 */
 	public void update() {
+		logInfo("Start update routes, list of publishers and receivers");
 		synchronized (updateLock) {
 			Map<String, Route> newRoutes = microserviceManager.getRoutes();
 			List<String> newPublishers = new ArrayList<>();
@@ -291,6 +304,7 @@ public class MessageBus implements IOFogModule {
 				}
 			});
 		}
+		logInfo("Finished update routes, list of publishers and receivers");
 	}
 	
 	/**
@@ -308,7 +322,7 @@ public class MessageBus implements IOFogModule {
 	 */
 	public void start() {
 		microserviceManager = MicroserviceManager.getInstance();
-		
+
 		messageBusServer = new MessageBusServer();
 		try {
 			logInfo("STARTING MESSAGE BUS SERVER");
@@ -318,17 +332,20 @@ public class MessageBus implements IOFogModule {
 			try {
 				messageBusServer.stopServer();
 			} catch (Exception exp) {
-				logError(exp.getMessage(), exp);
+				 logError("Error stopping message bus module",
+		            		new AgentSystemException("Error stopping message bus module", exp));
 			}
 			logError("Unable to start message bus server", e);
+			logError("Error starting message bus module",
+            		new AgentSystemException("Error starting message bus module", e));
 			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
-		
+
 		logInfo("MESSAGE BUS SERVER STARTED");
 		init();
 
-		new Thread(calculateSpeed, "MessageBus : CalculateSpeed").start();
-		new Thread(checkMessageServerStatus, "MessageBus : CheckMessageBusServerStatus").start();
+		new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED).start();
+		new Thread(checkMessageServerStatus, Constants.MESSAGE_BUS_CHECK_MESSAGE_SERVER_STATUS).start();
 	}
 	
 	/**
@@ -336,7 +353,8 @@ public class MessageBus implements IOFogModule {
 	 * 
 	 */
 	public void stop() {
-		for (MessageReceiver receiver : receivers.values()) 
+		logInfo("Start closing receivers and publishers and stops ActiveMQ server");
+		for (MessageReceiver receiver : receivers.values())
 			receiver.close();
 		
 		for (MessagePublisher publisher : publishers.values())
@@ -344,8 +362,9 @@ public class MessageBus implements IOFogModule {
 		try {
 			messageBusServer.stopServer();
 		} catch (Exception exp) {
-			logError(exp.getMessage(), exp);
+			logError("Error closing receivers and publishers and stops ActiveMQ server", new AgentSystemException("Error closing receivers and publishers and stops ActiveMQ server", exp));
 		}
+		logInfo("Finished closing receivers and publishers and stops ActiveMQ server");
 	}
 
 	/**

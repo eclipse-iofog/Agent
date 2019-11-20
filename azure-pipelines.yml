@@ -13,8 +13,10 @@ trigger:
 
 variables:
   repository: 'focal-freedom-236620/agent'
-  buildTag: b-$(Build.BuildId)
+  buildTag: $(Build.BuildId)
+  ref: $(Build.SourceBranch)
   branchTag: $(Build.SourceBranchName)
+  imageTag:
   releaseCandidate: 'rc1'
 
 jobs:
@@ -35,6 +37,20 @@ jobs:
           testResultsFiles: '**/TEST-*.xml'
           tasks: 'build'
 
+      - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+        displayName: ReportGenerator
+        inputs:
+          reports: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
+          targetdir: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+          reporttypes: 'HtmlInline_AzurePipelines;Badges'
+
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: 'JaCoCo'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+        displayName: 'Publish Code Coverage Results'
+
       # We need nodejs for Snyk
       - task: NodeTool@0
         inputs:
@@ -53,20 +69,21 @@ jobs:
         displayName: 'Snyk monitor'
 
       - script: |
-          echo "##vso[task.setvariable variable=supplementaryTag]latest"
-          if [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
-            echo "##vso[task.setvariable variable=supplementaryTag]rc-$(Build.SourceBranchName)"
-          #If branch starts with ref/tags, apply version tag
-          elif [[ $(Build.SourceBranch) == refs/tags* ]]; then
-            supplementaryTag= echo $(supplementaryTag) | awk '{print substr($1,2);}'
-            echo $supplementaryTag
-            echo "##vso[task.setvariable variable=supplementaryTag]$supplementaryTag"
+          if [[ $(ref) == refs/tags* ]]; then
+            TAG=$(echo $(ref) | sed "s|refs/tags/v||g")
+            echo "##vso[task.setvariable variable=imageTag]$TAG"
+          else
+            LATESTTAG=$(git tag | tail -1)
+            LATESTVERS=${LATESTTAG#?}
+            if [ -z "$LATESTVERS" ]; then LATESTVERS=0.0.0; fi
+            echo "##vso[task.setvariable variable=imageTag]$LATESTVERS-b$(buildTag)"
           fi
+          echo $(imageTag)
         displayName: 'Setup supplementary tag for docker images'
         name: setvarStep
 
       - script: |
-          echo "gcr.io/${REPOSITORY}:${BUILDTAG}" > GCR_DOCKER_IMAGE
+          echo "gcr.io/$(repository):$(imageTag)" > GCR_DOCKER_IMAGE
         displayName: 'Save Docker image name and tag to GCR_DOCKER_IMAGE into artifacts'
 
       - task: Docker@2
@@ -77,10 +94,11 @@ jobs:
           command: 'buildAndPush'
           Dockerfile: 'Dockerfile'
           tags: |
-            $(buildTag)
+            $(imageTag)
             $(branchTag)
             latest
-            $(supplementaryTag)
+        condition: or(and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/heads/release/')), and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop')), and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/')))
+
 
       - script: |
           echo "api test"
@@ -110,8 +128,6 @@ jobs:
           version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
           if [[ $(Build.SourceBranch) == refs/tags* ]]; then
             pkg_version=$version
-          elif [[ $(Build.SourceBranch) == refs/heads/release* ]]; then
-            pkg_version=$version-$(releaseCandidate)-b$(Build.BuildId)
           else
             pkg_version=$version-b$(Build.BuildId)
           fi

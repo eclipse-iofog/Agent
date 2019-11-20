@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.utils.BytesUtil;
 import org.eclipse.iofog.utils.Constants;
@@ -117,10 +118,14 @@ public class MessageArchive implements AutoCloseable{
 		indexFile.seek(indexFile.length());
 		dataFile.seek(dataFile.length());
 		long dataPos = dataFile.getFilePointer();
-		
-		indexFile.write(message, 0, HEADER_SIZE);
-		indexFile.writeLong(dataPos);
-		dataFile.write(message, HEADER_SIZE, message.length - HEADER_SIZE);
+		try {
+			indexFile.write(message, 0, HEADER_SIZE);
+			indexFile.writeLong(dataPos);
+			dataFile.write(message, HEADER_SIZE, message.length - HEADER_SIZE);
+		} catch(Exception e) {
+			LoggingService.logError(MODULE_NAME, "Error saving archive",
+					new AgentSystemException("Error saving archive", e));
+		}
 	}
 	
 	/**
@@ -188,6 +193,7 @@ public class MessageArchive implements AutoCloseable{
 	 * @return list of {@link Message}
 	 */
 	public List<Message> messageQuery(long from, long to) {
+		LoggingService.logInfo(MODULE_NAME, "Start message query");
 		boolean outOfMemory = false;
 		List<Message> result = new ArrayList<>();
 		
@@ -195,22 +201,24 @@ public class MessageArchive implements AutoCloseable{
 		FilenameFilter filter = (dir, fileName) -> fileName.substring(0, name.length()).equals(name)
 				&& fileName.substring(fileName.indexOf(".")).equals(".idx");
 		File[] listOfFiles = workingDirectory.listFiles(filter);
-		Arrays.sort(listOfFiles);
-		
 		Stack<File> resultSet = new Stack<>();
-		int i = listOfFiles.length - 1;
-		for (; i >= 0; i--) {
-			File file = listOfFiles[i];
-			if (!file.isFile())
-				continue;
-			long timestamp = Long.parseLong(file.getName().substring(name.length() + 1, file.getName().indexOf(".")));
-			if (timestamp < from)
-				break;
-			if (timestamp >= from && timestamp <= to)
-				resultSet.push(file);
+		if (listOfFiles != null) {
+			Arrays.sort(listOfFiles);
+
+			int i = listOfFiles.length - 1;
+			for (; i >= 0; i--) {
+				File file = listOfFiles[i];
+				if (!file.isFile())
+					continue;
+				long timestamp = Long.parseLong(file.getName().substring(name.length() + 1, file.getName().indexOf(".")));
+				if (timestamp < from)
+					break;
+				if (timestamp >= from && timestamp <= to)
+					resultSet.push(file);
+			}
+			if (i >= 0)
+				resultSet.push(listOfFiles[i]);
 		}
-		if (i >= 0)
-			resultSet.push(listOfFiles[i]);
 		
 		byte[] header = new byte[HEADER_SIZE];
 		while (!resultSet.isEmpty() && !outOfMemory) {
@@ -244,7 +252,7 @@ public class MessageArchive implements AutoCloseable{
 				LoggingService.logError("Message Archive", e.getMessage(), e);
 			}
 		}
-		
+		LoggingService.logInfo(MODULE_NAME, "Finish message query");
 		return result;
 	}
 }

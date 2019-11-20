@@ -246,6 +246,8 @@ definitions:
         type: string
       logs-count:
         type: string
+      logs-level:
+        type: string
       status-frequency:
         type: string
       changes-frequency:

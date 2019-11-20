@@ -15,6 +15,7 @@ package org.eclipse.iofog.diagnostics.strace;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -55,34 +56,41 @@ public class StraceDiagnosticManager {
 	public void updateMonitoringMicroservices(JsonObject diagnosticData) {
 		LoggingService.logInfo(MODULE_NAME, "Trying to update strace monitoring microservices");
 
-		if (diagnosticData.containsKey("straceValues")) {
+		if (diagnosticData !=null && diagnosticData.containsKey("straceValues")) {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
-			for (JsonValue microserviceValue : straceMicroserviceChanges) {
-				JsonObject microservice = (JsonObject) microserviceValue;
-				if (microservice.containsKey("microserviceUuid")) {
-					String microserviceUuid = microservice.getString("microserviceUuid");
-					boolean strace = microservice.getBoolean("straceRun");
-					manageMicroservice(microserviceUuid, strace);
+			if(straceMicroserviceChanges != null){
+				for (JsonValue microserviceValue : straceMicroserviceChanges) {
+					JsonObject microservice = (JsonObject) microserviceValue;
+					if (microservice.containsKey("microserviceUuid")) {
+						String microserviceUuid = microservice.getString("microserviceUuid");
+						boolean strace = microservice.getBoolean("straceRun");
+						manageMicroservice(microserviceUuid, strace);
+					}
 				}
 			}
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished update strace monitoring microservices");
 	}
 
 	private void manageMicroservice(String microserviceUuid, boolean strace) {
+		LoggingService.logInfo(MODULE_NAME, "Start manage microservices");
         if (strace) {
             enableMicroserviceStraceDiagnostics(microserviceUuid);
         } else {
             disableMicroserviceStraceDiagnostics(microserviceUuid);
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished manage microservices");
 	}
 
 	private Optional<MicroserviceStraceData> getStraceDataByMicroserviceUuid(String microserviceUuid) {
+		LoggingService.logInfo(MODULE_NAME, "Start getting Strace Data By MicroserviceUuid : "+ microserviceUuid);
 		return this.monitoringMicroservices.stream()
 				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
 				.findFirst();
 	}
 
 	public void enableMicroserviceStraceDiagnostics(String microserviceUuid) {
+		LoggingService.logInfo(MODULE_NAME, "Start enable microservice for strace diagnostics : " + microserviceUuid);
 		try {
 			int pid = getPidByContainerName(DockerUtil.getIoFogContainerName(microserviceUuid));
 			MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, true);
@@ -92,11 +100,14 @@ public class StraceDiagnosticManager {
 			this.monitoringMicroservices.add(newMicroserviceStraceData);
 			runStrace(newMicroserviceStraceData);
 		} catch (IllegalArgumentException e) {
-			logError(MODULE_NAME, "Can't get pid of process", e);
+			logError(MODULE_NAME, "Can't get pid of process",
+					new AgentSystemException("Can't get pid of process", e));
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished enable microservice for strace diagnostics : " + microserviceUuid);
     }
 
 	public void disableMicroserviceStraceDiagnostics(String microserviceUuid) {
+		LoggingService.logInfo(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : " + microserviceUuid);
         getStraceDataByMicroserviceUuid(microserviceUuid).ifPresent(microserviceStraceData -> {
             microserviceStraceData.setStraceRun(false);
             this.monitoringMicroservices.remove(microserviceStraceData);
@@ -104,10 +115,11 @@ public class StraceDiagnosticManager {
     }
 
 	private int getPidByContainerName(String containerName) throws IllegalArgumentException {
+		LoggingService.logInfo(MODULE_NAME, "Start getting pid of microservice by container name : "+ containerName);
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + containerName);
-
 		if (resultSet.getValue() != null && resultSet.getValue().size() > 1 && resultSet.getValue().get(1) != null) {
 			String pid = resultSet.getValue().get(1).split("\\s+")[1];
+			LoggingService.logInfo(MODULE_NAME, "Finished getting pid of microservice by container name :" + Integer.parseInt(pid));
 			return Integer.parseInt(pid);
 		} else {
 			throw new IllegalArgumentException();
@@ -115,6 +127,7 @@ public class StraceDiagnosticManager {
 	}
 
 	private void runStrace(MicroserviceStraceData microserviceStraceData) {
+		LoggingService.logInfo(MODULE_NAME, "Start running strace ");
 		String straceCommand = "strace -p " + microserviceStraceData.getPid();
 		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, microserviceStraceData.getResultBuffer());
 		CommandShellExecutor.executeDynamicCommand(
@@ -123,9 +136,11 @@ public class StraceDiagnosticManager {
 			microserviceStraceData.getStraceRun(),
 			killOrphanedStraceProcessesRunnable()
 		);
+		LoggingService.logInfo(MODULE_NAME, "Finished running strace ");
 	}
 
 	private Runnable killOrphanedStraceProcessesRunnable() {
+		LoggingService.logInfo(MODULE_NAME, "killing orphaned strace processes.");
 		return () -> {
 			CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("pgrep strace");
 			if (resultSet.getValue() != null) {

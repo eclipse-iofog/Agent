@@ -42,6 +42,8 @@
 	<log_disk_directory>/var/log/iofog-agent/</log_disk_directory>
 
 	<log_file_count>10</log_file_count>
+	
+	<log_level>INFO</log_level>
 
 	<status_update_freq>30</status_update_freq>
 
@@ -52,6 +54,8 @@
 	<scan_devices_freq>60</scan_devices_freq>
 
 	<gps>auto</gps>
+
+	<gps_coordinates>0,0</gps_coordinates>
 
 	<isolated_docker_container>off</isolated_docker_container>
 </config>

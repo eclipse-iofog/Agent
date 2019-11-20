@@ -36,6 +36,7 @@ public class MicroserviceStatus {
 	private String containerId;
 
 	public MicroserviceStatus() {
+		this.status = MicroserviceState.UNKNOWN;
 	}
 
 	public MicroserviceStatus(MicroserviceState status) {

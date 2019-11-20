@@ -16,7 +16,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import org.apache.http.util.TextUtils;
 import org.eclipse.iofog.command_line.CommandLineParser;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -25,6 +28,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static io.netty.handler.codec.http.HttpMethod.POST;
@@ -34,7 +39,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.utils.Constants.LOCAL_API_TOKEN_PATH;
 
 public class CommandLineApiHandler implements Callable<FullHttpResponse> {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : CommandLineApiHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -48,19 +53,21 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Start processing commandline api request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
 		if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
 			String errorMsg = "Incorrect access token";
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg));
 			return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
 		}
 
@@ -70,9 +77,24 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 			JsonObject jsonObject = reader.readObject();
 
 			String command = jsonObject.getString("command");
-			String result = CommandLineParser.parse(command);
+			Map<String, String> resultMap = new HashMap<>();
+			ObjectMapper objectMapper = new ObjectMapper();
+			String result;
+			try {
+				result = CommandLineParser.parse(command);
+				resultMap.put("response", result);
+				String jsonResult = objectMapper.writeValueAsString(resultMap);
+				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+				return ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
+			} catch (AgentUserException e) {
+				result = e.getMessage();
+				resultMap.put("response", result);
+				resultMap.put("error", "Internal server error");
+				String jsonResult = objectMapper.writeValueAsString(resultMap);
+				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+				return ApiHandlerHelpers.internalServerErrorResponse(outputBuffer, jsonResult);
+			}
 
-			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} catch (Exception e) {
 			String errorMsg = " Log message parsing error, " + e.getMessage();
 			LoggingService.logError(MODULE_NAME, errorMsg, e);

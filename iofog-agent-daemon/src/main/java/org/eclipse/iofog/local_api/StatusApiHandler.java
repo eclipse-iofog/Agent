@@ -17,6 +17,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
+
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -29,7 +31,7 @@ import static io.netty.handler.codec.http.HttpMethod.GET;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class StatusApiHandler implements Callable<FullHttpResponse> {
-    private static final String MODULE_NAME = "Local API";
+    private static final String MODULE_NAME = "Status Api Handler";
 
     private final HttpRequest req;
     private final ByteBuf outputBuffer;
@@ -43,14 +45,18 @@ public class StatusApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Starting status Api Handler call");
         if (!ApiHandlerHelpers.validateMethod(this.req, GET)) {
-            LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+            LoggingService.logError(MODULE_NAME, "Request method not allowed",
+            		new AgentSystemException("Request method not allowed", new Exception()));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
         if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
+            LoggingService.logError(MODULE_NAME, errorMsg,
+            		new AgentSystemException(errorMsg, new Exception()));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }
 
@@ -68,10 +74,11 @@ public class StatusApiHandler implements Callable<FullHttpResponse> {
             FullHttpResponse res;
             res = ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
             res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+            LoggingService.logInfo(MODULE_NAME, "Finished status Api Handler call");
             return res;
         } catch (Exception e) {
             String errorMsg = "Log message parsing error, " + e.getMessage();
-            LoggingService.logError(MODULE_NAME, errorMsg, e);
+            LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(errorMsg, e));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
         }
     }

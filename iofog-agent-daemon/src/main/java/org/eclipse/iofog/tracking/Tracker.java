@@ -7,9 +7,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.iofog.IOFogModule;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.logging.LoggingService;
 
 import static org.eclipse.iofog.utils.Constants.TRACKING_UUID_PATH;
 
@@ -41,6 +43,7 @@ public class Tracker implements IOFogModule {
     private TrackingEventsStorage eventsStorage = new TrackingEventsStorage();
     @Override
     public void start() throws Exception {
+        LoggingService.logInfo(MODULE_NAME, "Start Tracker");
         this.uuid = initTrackingUuid();
 
         loggerTimer = new Timer();
@@ -54,6 +57,7 @@ public class Tracker implements IOFogModule {
         senderTimer.schedule(senderTask,
                 senderTask.getSendTimeoutMin() * 60 * 1000,
                 senderTask.getSendTimeoutMin() * 60 * 1000);
+        LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
     }
 
     @Override
@@ -67,6 +71,7 @@ public class Tracker implements IOFogModule {
     }
 
     private String initTrackingUuid() {
+    	LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
         String uuid;
         Path path = Paths.get(TRACKING_UUID_PATH);
         try {
@@ -84,22 +89,25 @@ public class Tracker implements IOFogModule {
                 return createTrackingUuidFile(path);
             }
         } catch (IOException e) {
-            logError("Error while getting tracking UUID", e);
+            logError("Error while getting tracking UUID",
+            		new AgentSystemException("Error while getting tracking UUID", e));
             uuid = "temp_" + generateRandomString(32);
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished initializing tracking uuid :" + uuid);
         return uuid;
     }
 
     private String createTrackingUuidFile(Path path) throws IOException {
+    	LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File ");
         String uuid;
         uuid = generateRandomString(32);
         Files.write(path, uuid.getBytes(), StandardOpenOption.CREATE);
-
+        LoggingService.logInfo(MODULE_NAME, "Finished create Tracking Uuid File :" + uuid);
         return uuid;
     }
 
     private String generateRandomString(final int size) {
-
+        LoggingService.logInfo(MODULE_NAME, "Start generating random string");
         StringBuffer randString = new StringBuffer();
         final String possible = "2346789bcdfghjkmnpqrtvwxyzBCDFGHJKLMNPQRTVWXYZ";
         Random random = new Random();
@@ -107,36 +115,56 @@ public class Tracker implements IOFogModule {
         for (int i = 0; i < size; i++) {
             randString.append(possible.charAt(random.nextInt(possible.length())));
         }
-
+        LoggingService.logInfo(MODULE_NAME, "Finished generating random string : " + randString.toString());
         return randString.toString();
     }
 
     public void handleEvent(TrackingEventType type, String value) {
+    	LoggingService.logInfo(MODULE_NAME, "start handle event");
         JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         JsonObject valueObj = null;
-        switch (type) {
-            case TIME:
-                valueObj = jsonObjectBuilder.add("deltaTime", value + " min").build();
-                break;
-            case ERROR:
-                valueObj = jsonObjectBuilder.add("message", value).build();
-                break;
-            case PROVISION:
-                valueObj = jsonObjectBuilder.add("provisionStatus", value).build();
-                break;
-            case DEPROVISION:
-                valueObj = jsonObjectBuilder.add("deprovisionStatus", value).build();
-                break;
-            default:
-                //other events types not handled because should be used with handleEvent(TrackingEventType type, JsonStructure value) method
-                throw new IllegalArgumentException("unhandled event type");
+        if(type != null && value != null) {
+            switch (type) {
+                case TIME:
+                    valueObj = jsonObjectBuilder.add("deltaTime", value + " min").build();
+                    break;
+                case ERROR:
+                    valueObj = jsonObjectBuilder.add("message", value).build();
+                    break;
+                case PROVISION:
+                    valueObj = jsonObjectBuilder.add("provisionStatus", value).build();
+                    break;
+                case DEPROVISION:
+                    valueObj = jsonObjectBuilder.add("deprovisionStatus", value).build();
+                    break;
+                default:
+                    //other events types not handled because should be used with handleEvent(TrackingEventType type, JsonStructure value) method
+                    throw new IllegalArgumentException("unhandled event type");
+            }
+            handleEvent(type, valueObj);
+        } else {
+            LoggingService.logError(MODULE_NAME, "Error handling Event : Tracking event type and value cannot be null",
+                    new AgentSystemException("Error handling Event : Tracking event type and value cannot be null"));
         }
-        handleEvent(type, valueObj);
+        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
     }
 
     public void handleEvent(TrackingEventType type, JsonStructure value) {
-        TrackingEvent event = new TrackingEvent(this.uuid, new Date().getTime(), type, value);
-        eventsStorage.pushEvent(event);
+    	LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+    	if (type !=null && value != null) {
+            TrackingEvent event = null;
+            try {
+                event = new TrackingEvent(this.uuid, new Date().getTime(), type, value);
+                eventsStorage.pushEvent(event);
+                LoggingService.logInfo(MODULE_NAME, "Handle event pushed task to event storage");
+            } catch (AgentSystemException e) {
+                LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+            }
+        } else {
+            LoggingService.logError(MODULE_NAME, "Error handling Event : Tracking event type and jsonObject cannot be null",
+                    new AgentSystemException("Error handling Event : Tracking event type and jsonObject cannot be null"));
+        }
+        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
     }
 
     private class TimeLoggerTask extends TimerTask {
@@ -159,8 +187,11 @@ public class Tracker implements IOFogModule {
 
         @Override
         public void run() {
+        	Thread.currentThread().setName(Constants.TRACKER_TIMER_LOGGER_TASK);
+        	LoggingService.logInfo(MODULE_NAME, "start time logger task");
             iterations++;
             handleEvent(TrackingEventType.TIME, Long.toString(iterations * timeTrackingTimeoutMin));
+            LoggingService.logInfo(MODULE_NAME, "Finished time logger task");
         }
     }
 
@@ -184,6 +215,8 @@ public class Tracker implements IOFogModule {
 
         @Override
         public void run() {
+        	Thread.currentThread().setName(Constants.TRACKER_SENDER_TASK);
+        	LoggingService.logInfo(MODULE_NAME, "start sender task");
             List<TrackingEvent> events = eventsStorage.popAllEvents();
             JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
 
@@ -209,9 +242,11 @@ public class Tracker implements IOFogModule {
                 try {
                     HttpResponse response = httpClient.execute(postMethod);
                 } catch (IOException e) {
-                    logError(e.getMessage(), e);
+                    logError(e.getMessage(),
+                    		new AgentSystemException("Error in sender task", e));
                 }
             }
+            LoggingService.logInfo(MODULE_NAME, "Finished sender task");
         }
     }
 }

@@ -15,6 +15,7 @@ package org.eclipse.iofog.utils;
 import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
 
 /**
  * provides methods for "number <=> byte array" conversions
@@ -31,61 +32,80 @@ public class BytesUtil {
 	}
 	
 	public static byte[] longToBytes(long x) {
+		logInfo(MODULE_NAME, "Inside longToBytes");
 		byte[] b = new byte[8];
 		for (int i = 0; i < 8; ++i) {
 			b[i] = (byte) (x >> (8 - i - 1 << 3));
 		}
+		logInfo(MODULE_NAME, "Finished longToBytes");
 		return b;
 	}
 
 	public static long bytesToLong(byte[] bytes) {
+		logInfo(MODULE_NAME, "Inside bytesToLong");
 		long result = 0;
 		for (byte aByte : bytes) {
 			result = (result << 8) + (aByte & 0xff);
 		}
+		logInfo(MODULE_NAME, "Finished bytesToLong");
 		return result;
 	}
 
 	public static byte[] integerToBytes(int x) {
+		logInfo(MODULE_NAME, "Inside integerToBytes");
 		byte[] b = new byte[4];
 		for (int i = 0; i < 4; ++i) {
 			b[i] = (byte) (x >> (4 - i - 1 << 3));
 		}
+		logInfo(MODULE_NAME, "Finished integerToBytes");
 		return b;
 	}
 
 	public static int bytesToInteger(byte[] bytes) {
+		logInfo(MODULE_NAME, "Inside bytesToInteger");
 		int result = 0;
 		for (byte aByte : bytes) {
 			result = (result << 8) + (aByte & 0xff);
 		}
+		logInfo(MODULE_NAME, "Finished bytesToInteger");
 		return result;
 	}
 
 	public static byte[] shortToBytes(short x) {
+		logInfo(MODULE_NAME, "Inside shortToBytes");
 		byte[] b = new byte[2];
 		for (int i = 0; i < 2; ++i) {
 			b[i] = (byte) (x >> (2 - i - 1 << 3));
 		}
+		logInfo(MODULE_NAME, "Finished shortToBytes");
 		return b;
 	}
 
 	public static short bytesToShort(byte[] bytes) {
+		logInfo(MODULE_NAME, "Finished bytesToShort");
 		short result = 0;
 		for (byte aByte : bytes) {
 			result = (short) ((result << 8) + (aByte & 0xff));
 		}
+		logInfo(MODULE_NAME, "Finished bytesToShort");
 		return result;
 	}
 
 	public static byte[] stringToBytes(String s) {
-		if (s == null)
+		logInfo(MODULE_NAME, "Inside stringToBytes");
+		if (s == null) {
+			logInfo(MODULE_NAME, "Finished stringToBytes");
 			return new byte[] {};
-		else
+		}		
+		else {
+			logInfo(MODULE_NAME, "Finished stringToBytes");
 			return s.getBytes(UTF_8);
+		}
+			
 	}
 
 	public static String bytesToString(byte[] bytes) {
+		logInfo(MODULE_NAME, "Create bytesToString");
 		return new String(bytes);
 	}
 
@@ -97,6 +117,7 @@ public class BytesUtil {
 	 * @return string
 	 */
 	public static String byteArrayToString(byte[] bytes) {
+		logInfo(MODULE_NAME, "Create byteArrayToString");
 		StringBuilder result = new StringBuilder();
 
 		result.append("[");
@@ -106,7 +127,7 @@ public class BytesUtil {
 			result.append(b);
 		}
 		result.append("]");
-
+		logInfo(MODULE_NAME, "Finished byteArrayToString");
 		return result.toString();
 	}
 }

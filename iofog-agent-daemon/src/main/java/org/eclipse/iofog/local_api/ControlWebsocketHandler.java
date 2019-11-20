@@ -16,6 +16,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.*;
+
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -50,6 +52,7 @@ public class ControlWebsocketHandler {
 	 * @return void
 	 */
 	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
+		LoggingService.logInfo(MODULE_NAME, "Start Handler to open the websocket for the real-time control signals");
 		String uri = req.uri();
 		uri = uri.substring(1);
 		String[] tokens = uri.split("/");
@@ -57,7 +60,8 @@ public class ControlWebsocketHandler {
 		String id;
 
 		if (tokens.length < 5) {
-			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ", new Exception());
+			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ",
+					new AgentSystemException(" Missing ID or ID value in URL", null));
 			return;
 		} else {
 			id = tokens[4].trim();
@@ -75,6 +79,7 @@ public class ControlWebsocketHandler {
 
 		WebSocketMap.addWebsocket('C', id, ctx);
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
+		LoggingService.logInfo(MODULE_NAME, "Finished Handler to open the websocket for the real-time control signals");
 	}
 
 	/**
@@ -86,7 +91,8 @@ public class ControlWebsocketHandler {
 	 * @return void
 	 */
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-
+		LoggingService.logInfo(MODULE_NAME, "Start handling the websocket frame");
+		LoggingService.logInfo(MODULE_NAME, "Send control signals to container on configuration change");
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
 			if (buffer.readableBytes() == 1) {
@@ -121,6 +127,7 @@ public class ControlWebsocketHandler {
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.controlWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished handling the websocket frame");
 	}
 
 	/**
@@ -131,7 +138,7 @@ public class ControlWebsocketHandler {
 	 * @return void
 	 */
 	public void initiateControlSignal(Map<String, String> oldConfigMap, Map<String, String> newConfigMap) {
-
+		LoggingService.logInfo(MODULE_NAME, "Start Helper method to compare the configuration map control signals");
 		// Compare the old and new config map
 		Map<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
 		ArrayList<String> changedConfigElmtsList = new ArrayList<>();
@@ -160,7 +167,7 @@ public class ControlWebsocketHandler {
 				ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 			}
 		}
-
+		LoggingService.logInfo(MODULE_NAME, "Finished Helper method to compare the configuration map control signals");
 	}
 
 	/**
@@ -170,10 +177,13 @@ public class ControlWebsocketHandler {
 	 * @return void
 	 */
 	private static String getWebSocketLocation(HttpRequest req) {
+		LoggingService.logInfo(MODULE_NAME, "Start get web socket path");
 		String location = req.headers().get(HOST) + WEBSOCKET_PATH;
 		if (LocalApiServer.SSL) {
+			LoggingService.logInfo(MODULE_NAME, "Finished get web socket path");
 			return "wss://" + location;
 		} else {
+			LoggingService.logInfo(MODULE_NAME, "Finished get web socket path");
 			return "ws://" + location;
 		}
 	}

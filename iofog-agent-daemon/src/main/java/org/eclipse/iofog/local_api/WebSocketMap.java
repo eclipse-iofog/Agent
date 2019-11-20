@@ -15,6 +15,8 @@ package org.eclipse.iofog.local_api;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.iofog.utils.logging.LoggingService;
+
 import io.netty.channel.ChannelHandlerContext;
 
 /**
@@ -37,6 +39,7 @@ public final class WebSocketMap {
 	}
 	
 	public static void addWebsocket(char ws, String id, ChannelHandlerContext ctx) {
+		LoggingService.logInfo("WebSocketMap", "Adding web socket");
 		synchronized (WebSocketMap.class) {
 			switch (ws) {
 				case 'C':
@@ -46,5 +49,6 @@ public final class WebSocketMap {
 					messageWebsocketMap.put(id, ctx);
 			}
 		}
+		LoggingService.logInfo("WebSocketMap", "Finished adding web socket");
 	}
 }

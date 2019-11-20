@@ -14,6 +14,9 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.*;
@@ -33,7 +36,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : GetConfigurationHandler";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -51,14 +54,15 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleGetConfigurationRequest() {
+		LoggingService.logInfo(MODULE_NAME, "Start processing config request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+			LoggingService.logError(MODULE_NAME, contentTypeError, new AgentUserException(contentTypeError));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 
@@ -68,9 +72,13 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 
 		try {
 			validateRequest(jsonObject);
-		} catch (Exception e) {
+		} catch (AgentUserException e) {
 			String errorMsg = "Incorrect content/data, " + e.getMessage();
 			LoggingService.logError(MODULE_NAME, errorMsg, e);
+			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
+		} catch (Exception e) {
+			String errorMsg = "Incorrect content/data, " + e.getMessage();
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(errorMsg, e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -84,11 +92,11 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 			builder.add("config", containerConfig);
 			String result = builder.build().toString();
 
-
+			LoggingService.logInfo(MODULE_NAME, "Finished processing config request");
 			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} else {
 			String errorMsg = "No configuration found for the id " + receiverId;
-			LoggingService.logError(MODULE_NAME, errorMsg, new Exception());
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(errorMsg));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
 	}
@@ -100,10 +108,11 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 * @return String
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Validate config request");
 		if (!jsonObject.containsKey("id") ||
 				jsonObject.isNull("id") ||
 				jsonObject.getString("id").trim().equals(""))
-			throw new Exception(" Id value not found ");
+			throw new AgentUserException(" Id value not found ");
 	}
 
 	/**

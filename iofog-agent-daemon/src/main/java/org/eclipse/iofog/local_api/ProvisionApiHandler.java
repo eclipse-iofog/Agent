@@ -17,6 +17,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
+
+import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -36,7 +39,7 @@ import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.configuration.Configuration.setConfig;
 
 public class ProvisionApiHandler implements Callable<FullHttpResponse> {
-    private static final String MODULE_NAME = "Local API";
+    private static final String MODULE_NAME = "Local API : Provision Api Handler";
     private final String PROVISIONING_KEY = "provisioning-key";
 
     private final HttpRequest req;
@@ -51,20 +54,25 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
+    	LoggingService.logInfo(MODULE_NAME, "Start processing request in Provision Api Handler");
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-            LoggingService.logError(MODULE_NAME, "Request method not allowed", new Exception());
+            LoggingService.logError(MODULE_NAME, "Request method not allowed",
+            		new AgentUserException("Request method not allowed", new Exception()));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
         final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
         if (contentTypeError != null) {
-            LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
+            LoggingService.logError(MODULE_NAME, contentTypeError,
+            		new AgentUserException(contentTypeError, new Exception()));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
         }
 
         if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
+            LoggingService.logError(MODULE_NAME, contentTypeError,
+            		new AgentUserException("Incorrect access token", new Exception()));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }
 
@@ -93,10 +101,11 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
                 res = ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
             }
             res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+            LoggingService.logInfo(MODULE_NAME, "Finished processing request in Provision Api Handler");
             return res;
         } catch (Exception e) {
             String errorMsg = "Log message parsing error, " + e.getMessage();
-            LoggingService.logError(MODULE_NAME, errorMsg, e);
+            LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(e.getMessage(), e));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
         }
     }

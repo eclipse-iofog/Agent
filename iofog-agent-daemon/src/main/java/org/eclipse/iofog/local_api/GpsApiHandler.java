@@ -15,6 +15,8 @@ package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -32,7 +34,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class GpsApiHandler implements Callable<FullHttpResponse> {
-	private static final String MODULE_NAME = "Local API";
+	private static final String MODULE_NAME = "Local API : gps API";
 
 	private final HttpRequest req;
 	private final ByteBuf outputBuffer;
@@ -46,6 +48,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() {
+		LoggingService.logInfo(MODULE_NAME, "Start processing gps request");
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
 			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
@@ -64,6 +67,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 	}
 
 	private FullHttpResponse setAgentGpsCoordinates() {
+		LoggingService.logInfo(MODULE_NAME, "Start post agent gps coordiates request");
 		String msgString = new String(content, StandardCharsets.UTF_8);
 		JsonReader reader = Json.createReader(new StringReader(msgString));
 		JsonObject jsonObject = reader.readObject();
@@ -79,7 +83,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 			Configuration.saveConfigUpdates();
 		} catch (Exception e) {
 			String errorMsg = " Error with setting GPS, " + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, e);
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(errorMsg, e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -89,11 +93,16 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 		String sendMessageResult = builder.build().toString();
 
+		LoggingService.logInfo(MODULE_NAME, "finished post agent gps coordiates request");
+		LoggingService.logInfo(MODULE_NAME, "Finished processing gps request");
+		
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 
 	private FullHttpResponse getAgentGpsCoordinates() {
 
+		LoggingService.logInfo(MODULE_NAME, "Start get agent gps coordiates request");
+		
 		String gpsCoordinates = Configuration.getGpsCoordinates();
 		String[] latLon = gpsCoordinates.split(",");
 
@@ -109,6 +118,9 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 		String sendMessageResult = builder.build().toString();
 
+		LoggingService.logInfo(MODULE_NAME, "Finished get agent gps coordiates request");
+		LoggingService.logInfo(MODULE_NAME, "Finished processing gps request");
+		
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 }

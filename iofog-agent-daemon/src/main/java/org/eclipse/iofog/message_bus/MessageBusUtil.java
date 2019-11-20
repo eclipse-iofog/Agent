@@ -15,6 +15,7 @@ package org.eclipse.iofog.message_bus;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
@@ -23,7 +24,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 public class MessageBusUtil {
 
 	private final MessageBus messageBus;
-	
+	private static final String MODULE_NAME = "Message Bus Util";
 	public MessageBusUtil() {
 		messageBus = MessageBus.getInstance();
 	}
@@ -35,6 +36,7 @@ public class MessageBusUtil {
 	 * @return published {@link Message} containing the id and timestamp 
 	 */
 	public void publishMessage(Message message) {
+		LoggingService.logInfo(MODULE_NAME, "Start publish message");
 		long timestamp = System.currentTimeMillis();
 		StatusReporter.setMessageBusStatus().increasePublishedMessagesPerMicroservice(message.getPublisher());
 		message.setId(messageBus.getNextId());
@@ -45,9 +47,11 @@ public class MessageBusUtil {
 			try {
 				publisher.publish(message);
 			} catch (Exception e) {
-				LoggingService.logError("Message Publisher (" + publisher.getName() + ")", "unable to send message", e);
+				LoggingService.logError(MODULE_NAME, "Unable to send message : Message Publisher (" + publisher.getName()+ ")",
+						new AgentSystemException("Unable to send message", e));
 			}
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finishing publish message");
 	}
 	
 	/**
@@ -57,15 +61,18 @@ public class MessageBusUtil {
 	 * @return list of {@link Message}
 	 */
 	public List<Message> getMessages(String receiver) {
+		LoggingService.logInfo(MODULE_NAME, "Starting get message");
 		List<Message> messages = new ArrayList<>();
 		MessageReceiver rec = messageBus.getReceiver(receiver); 
 		if (rec != null) {
 			try {
 				messages = rec.getMessages();
 			} catch (Exception e) {
-				LoggingService.logError("Message Receiver (" + receiver + ")", "unable to receive messages", e);
+				LoggingService.logError(MODULE_NAME, "unable to receive messages : Message Receiver (" + receiver + ")",
+						new AgentSystemException("unable to receive messages", e));
 			}
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finishing get message");
 		return messages;
 	}
 	
@@ -79,13 +86,15 @@ public class MessageBusUtil {
 	 * @return list of {@link Message}
 	 */
 	public List<Message> messageQuery(String publisher, String receiver, long from, long to) {
-		Route route = messageBus.getRoutes().get(publisher); 
+		LoggingService.logInfo(MODULE_NAME, "Starting message query");
+		Route route = messageBus.getRoutes().get(publisher);
 		if (to < from || route == null || !route.getReceivers().contains(receiver))
 			return null;
 
 		MessagePublisher messagePublisher = messageBus.getPublisher(publisher);
 		if (messagePublisher == null)
 			return null;
+		LoggingService.logInfo(MODULE_NAME, "Finishing message query");
 		return messagePublisher.messageQuery(from, to);
 	}
 	

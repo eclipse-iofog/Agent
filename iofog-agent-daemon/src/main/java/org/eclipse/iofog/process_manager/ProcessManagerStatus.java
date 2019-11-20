@@ -22,6 +22,7 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * represents Process Manager status
@@ -51,17 +52,22 @@ public class ProcessManagerStatus {
         nf.setMaximumFractionDigits(2);
 
         microservicesStatus.forEach((key, status) -> {
-            if (status.getContainerId() != null) {
-                JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
-                    .add("id", key)
-                    .add("containerId", status.getContainerId())
-                    .add("status", status.getStatus().toString())
-                    .add("startTime", status.getStartTime())
-                    .add("operatingDuration", status.getOperatingDuration())
-                    .add("cpuUsage", nf.format(status.getCpuUsage()))
-                    .add("memoryUsage", String.format("%d", status.getMemoryUsage()));
-                arrayBuilder.add(objectBuilder);
+            JsonObjectBuilder objectBuilder = Json.createObjectBuilder()
+                .add("id", key != null ? key : "UNKNOWN")
+                .add("status", status != null ?
+                        (status.getStatus() != null ? status.getStatus().toString() : "UNKNOWN") :
+                        "UNKNOWN");
+            if (status != null && status.getContainerId() != null) {
+                objectBuilder
+                        .add("containerId", status.getContainerId() != null ?
+                                status.getContainerId() :
+                                "UNKNOWN")
+                        .add("startTime", status.getStartTime())
+                        .add("operatingDuration", status.getOperatingDuration())
+                        .add("cpuUsage", nf.format(status.getCpuUsage()))
+                        .add("memoryUsage", String.format("%d", status.getMemoryUsage()));
             }
+            arrayBuilder.add(objectBuilder);
         });
         return arrayBuilder.build().toString();
     }
@@ -99,6 +105,15 @@ public class ProcessManagerStatus {
         return this;
     }
 
+    public ProcessManagerStatus setMicroservicesState(String microserviceUuid, MicroserviceState state) {
+        synchronized (microservicesStatus) {
+            MicroserviceStatus status = microservicesStatus.getOrDefault(microserviceUuid, new MicroserviceStatus());
+            status.setStatus(state);
+            this.microservicesStatus.put(microserviceUuid, status);
+        }
+        return this;
+    }
+
     public MicroserviceStatus getMicroserviceStatus(String microserviceUuid) {
         synchronized (microservicesStatus) {
             if (!this.microservicesStatus.containsKey(microserviceUuid))
@@ -109,7 +124,8 @@ public class ProcessManagerStatus {
 
     public void removeNotRunningMicroserviceStatus() {
         synchronized (microservicesStatus) {
-            microservicesStatus.entrySet().removeIf(entry -> entry.getValue().getStatus() == MicroserviceState.NOT_RUNNING);
+            microservicesStatus.entrySet().removeIf(entry -> entry.getValue().getStatus() == MicroserviceState.UNKNOWN ||
+                    entry.getValue().getStatus() == MicroserviceState.DELETING);
         }
     }
 
@@ -120,5 +136,4 @@ public class ProcessManagerStatus {
     public Map<Integer, LinkStatus> getRegistriesStatus() {
         return registriesStatus;
     }
-
 }

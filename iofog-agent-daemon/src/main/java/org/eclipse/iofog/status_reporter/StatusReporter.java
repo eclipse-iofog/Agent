@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.status_reporter;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgentStatus;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBusStatus;
@@ -20,9 +21,11 @@ import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
 import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
+import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -53,11 +56,14 @@ public final class StatusReporter {
 	 * sets system time property
 	 */
 	private static final Runnable setStatusReporterSystemTime = () -> {
+		LoggingService.logInfo(MODULE_NAME, "Inside setStatusReporterSystemTime");
 		try {
+			Thread.currentThread().setName(Constants.STATUS_REPORTER_SET_STATUS_REPORTER_SYSTEM_TIME);
 			setStatusReporterStatus().setSystemTime(System.currentTimeMillis());
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+			LoggingService.logError(MODULE_NAME, e.getMessage(), new AgentSystemException(e.getMessage(), e));
 		}
+		LoggingService.logInfo(MODULE_NAME, "Finished setStatusReporterSystemTime");
 	};
 
 	private StatusReporter() {
@@ -69,6 +75,7 @@ public final class StatusReporter {
 	 * @return status report
 	 */
 	public static String getStatusReport() {
+		LoggingService.logInfo(MODULE_NAME, "Getting Status Report");
 		StringBuilder result = new StringBuilder();
 
 		Calendar cal = Calendar.getInstance();
@@ -110,49 +117,58 @@ public final class StatusReporter {
 		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
 
-		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB", availableDisk));
+		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB (%.2f %%)", availableDisk, ((availableDisk * Constants.MiB) / getTotalDisk()) * 100.0f));
 		result.append("\\nSystem Available Memory     : ").append(String.format("%.2f MB", availableMemory));
 		result.append("\\nSystem Total CPU            : ").append(String.format("%.2f %%", totalCpu));
 
+		LoggingService.logInfo(MODULE_NAME, "Finished Getting Status Report : " + result.toString());
 		return result.toString();
 	}
 
 	public static SupervisorStatus setSupervisorStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Supervisor Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return supervisorStatus;
 	}
 
 	public static ResourceConsumptionManagerStatus setResourceConsumptionManagerStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set ResourceConsumption Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return resourceConsumptionManagerStatus;
 	}
 
 	public static ResourceManagerStatus setResourceManagerStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Resource Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return resourceManagerStatus;
 	}
 
 	public static MessageBusStatus setMessageBusStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Message Bus Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return messageBusStatus;
 	}
 
 	public static FieldAgentStatus setFieldAgentStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Field Agent Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return fieldAgentStatus;
 	}
 
 	public static StatusReporterStatus setStatusReporterStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Status Reporter Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return statusReporterStatus;
 	}
 
 	public static ProcessManagerStatus setProcessManagerStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Process Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return processManagerStatus;
 	}
 
 	public static SshProxyManagerStatus setSshProxyManagerStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set SshProxy Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return sshManagerStatus;
 	}
@@ -162,6 +178,7 @@ public final class StatusReporter {
 	}
 
 	public static LocalApiStatus setLocalApiStatus() {
+		LoggingService.logInfo(MODULE_NAME, "set Local Api Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return localApiStatus;
 	}
@@ -202,9 +219,14 @@ public final class StatusReporter {
 	 * starts Status Reporter module
 	 */
 	public static void start() {
+		LoggingService.logInfo(MODULE_NAME, "Starting Status Reporter");
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 		scheduler.scheduleAtFixedRate(setStatusReporterSystemTime, Configuration.getSetSystemTimeFreqSeconds(), Configuration.getSetSystemTimeFreqSeconds(), TimeUnit.SECONDS);
-		LoggingService.logInfo(MODULE_NAME, "started");
+		LoggingService.logInfo(MODULE_NAME, "Started Status Reporter");
 	}
 
+    private static float getTotalDisk() {
+        File root = new File("/");
+        return root.getTotalSpace();
+    }
 }

@@ -19,4 +19,10 @@ public class ConfigurationItemException extends Exception {
 	public ConfigurationItemException(String message) {
 		super(message);
 	}
+	public ConfigurationItemException(String message, Throwable cause) {
+		super(message, cause);
+	}
+	public ConfigurationItemException(Throwable cause) {
+		super(cause);
+	}
 }

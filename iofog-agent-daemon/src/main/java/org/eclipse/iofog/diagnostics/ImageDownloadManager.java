@@ -16,6 +16,7 @@ package org.eclipse.iofog.diagnostics;
 import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -36,9 +37,10 @@ public class ImageDownloadManager {
     private static final String MODULE_NAME = "Image Download Manager";
 
     public static void createImageSnapshot(Orchestrator orchestrator, String microserviceUuid) {
+    	LoggingService.logInfo(MODULE_NAME, String.format("\"Start Create image snapshot \"%s :" , microserviceUuid));
         Optional<Container> containerOptional = DockerUtil.getInstance().getContainer(microserviceUuid);
         String image;
-        if (containerOptional.isPresent()) {
+        if (containerOptional != null && containerOptional.isPresent()) {
             Container container = containerOptional.get();
             image = container.getImage();
         } else {
@@ -55,32 +57,37 @@ public class ImageDownloadManager {
         if (resultSetWithPath.getError().size() > 0) {
             LoggingService.logWarning(MODULE_NAME, resultSetWithPath.toString());
         } else {
-            String path = resultSetWithPath.getValue().get(0);
-            try {
-                //TODO: think about send few files
-                File imageFile = getFileByImagePath(path);
-                orchestrator.sendFileToController("image-snapshot", imageFile);
-                imageFile.delete();
-                logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
-            } catch (Exception e) {
-                logError(MODULE_NAME, "Unable send image snapshot path", e);
+            if(!resultSetWithPath.getValue().isEmpty()){
+                String path = resultSetWithPath.getValue().get(0);
+                try {
+                    //TODO: think about send few files
+                    File imageFile = getFileByImagePath(path);
+                    orchestrator.sendFileToController("image-snapshot", imageFile);
+                    imageFile.delete();
+                    logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
+                } catch (Exception e) {
+                    logError(MODULE_NAME, "Unable send image snapshot path",
+                            new AgentSystemException("Unable send image snapshot path", e));
+                }
             }
         }
+        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
     }
 
     private static File getFileByImagePath(String path) {
-
+    	LoggingService.logInfo(MODULE_NAME, "Start get file by image path");
         URL url = null;
         try {
             url = new URL("file://" + path);
         } catch (MalformedURLException e) {
-            logError(MODULE_NAME, "Unable to load image", e);
+        	logError(MODULE_NAME, "Unable to load image",
+            		new AgentSystemException("Unable to load image", e));
         }
         File file = null;
         if ((url != null ? url.getPath() : null) != null) {
             file = new File(url.getPath());
         }
-
+        LoggingService.logInfo(MODULE_NAME, "Finished get file by image path");
         return file;
     }
 
