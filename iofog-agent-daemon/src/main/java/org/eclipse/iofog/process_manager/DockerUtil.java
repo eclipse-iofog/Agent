@@ -110,7 +110,7 @@ public class DockerUtil {
         }
         initDockerClient();
         LoggingService.logInfo(MODULE_NAME , "Finished Docker Client re-initialization");
-        
+
     }
 
 
@@ -226,15 +226,15 @@ public class DockerUtil {
             LoggingService.logInfo(MODULE_NAME , "Finished get Container IpAddress");
             return inspect.getNetworkSettings().getIpAddress();
         } catch (NotModifiedException exp) {
-            logError(MODULE_NAME, "Error getting container ipAddress", 
+            logError(MODULE_NAME, "Error getting container ipAddress",
             		new AgentSystemException("Error getting container ipAddress", exp));
             throw new AgentSystemException("Error getting container ipAddress", exp);
         }catch (NotFoundException exp) {
-            logError(MODULE_NAME, "Error getting container ipAddress", 
+            logError(MODULE_NAME, "Error getting container ipAddress",
             		new AgentSystemException("Error getting container ipAddress", exp));
             throw new AgentSystemException("Error getting container ipAddress", exp);
         }catch (Exception exp) {
-            logError(MODULE_NAME, "Error getting container ipAddress", 
+            logError(MODULE_NAME, "Error getting container ipAddress",
             		new AgentSystemException("Error getting container ipAddress", exp));
             throw new AgentSystemException("Error getting container ipAddress", exp);
         }
@@ -301,7 +301,7 @@ public class DockerUtil {
             LoggingService.logInfo(MODULE_NAME , "Finished get started time of container");
             return local.getTime() + milli;
         } catch (Exception e) {
-        	logError(MODULE_NAME, "Error getting started time of container", 
+        	logError(MODULE_NAME, "Error getting started time of container",
             		new AgentSystemException("Error getting started time of container", e));
             return 0;
         }

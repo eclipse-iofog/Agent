@@ -47,7 +47,7 @@ public class StatusApiHandler implements Callable<FullHttpResponse> {
     public FullHttpResponse call() throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Starting status Api Handler call");
         if (!ApiHandlerHelpers.validateMethod(this.req, GET)) {
-            LoggingService.logError(MODULE_NAME, "Request method not allowed", 
+            LoggingService.logError(MODULE_NAME, "Request method not allowed",
             		new AgentSystemException("Request method not allowed", new Exception()));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
@@ -55,7 +55,7 @@ public class StatusApiHandler implements Callable<FullHttpResponse> {
         if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-            LoggingService.logError(MODULE_NAME, errorMsg, 
+            LoggingService.logError(MODULE_NAME, errorMsg,
             		new AgentSystemException(errorMsg, new Exception()));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }

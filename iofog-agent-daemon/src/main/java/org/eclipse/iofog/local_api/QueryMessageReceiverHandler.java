@@ -60,14 +60,14 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 	private FullHttpResponse handleQueryMessageRequest() {
 		LoggingService.logInfo(MODULE_NAME, "Starting handle query message request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-			LoggingService.logError(MODULE_NAME, "Request method not allowed", 
+			LoggingService.logError(MODULE_NAME, "Request method not allowed",
 					new AgentSystemException("Request method not allowed", new Exception()));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
 		}
 
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
-			LoggingService.logError(MODULE_NAME, contentTypeError, 
+			LoggingService.logError(MODULE_NAME, contentTypeError,
 					new AgentSystemException(contentTypeError, new Exception()));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
 		}
@@ -80,7 +80,7 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 			validateMessageQueryInput(jsonObject);
 		} catch (Exception e) {
 			String errorMsg = "Incorrect input content/data " + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, 
+			LoggingService.logError(MODULE_NAME, errorMsg,
 					new AgentSystemException(errorMsg, e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
@@ -173,8 +173,8 @@ public class QueryMessageReceiverHandler implements Callable<FullHttpResponse> {
 			LoggingService.logError(MODULE_NAME, err.getMessage(), err);
 			throw err;
 		}
-			
-		
+
+
 		LoggingService.logInfo(MODULE_NAME, "Finished validate MEssage Query input");
 	}
 

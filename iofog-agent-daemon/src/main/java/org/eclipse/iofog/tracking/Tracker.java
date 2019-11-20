@@ -89,7 +89,7 @@ public class Tracker implements IOFogModule {
                 return createTrackingUuidFile(path);
             }
         } catch (IOException e) {
-            logError("Error while getting tracking UUID", 
+            logError("Error while getting tracking UUID",
             		new AgentSystemException("Error while getting tracking UUID", e));
             uuid = "temp_" + generateRandomString(32);
         }
@@ -242,7 +242,7 @@ public class Tracker implements IOFogModule {
                 try {
                     HttpResponse response = httpClient.execute(postMethod);
                 } catch (IOException e) {
-                    logError(e.getMessage(), 
+                    logError(e.getMessage(),
                     		new AgentSystemException("Error in sender task", e));
                 }
             }

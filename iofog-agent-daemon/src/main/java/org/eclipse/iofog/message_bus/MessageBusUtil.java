@@ -87,7 +87,7 @@ public class MessageBusUtil {
 	 */
 	public List<Message> messageQuery(String publisher, String receiver, long from, long to) {
 		LoggingService.logInfo(MODULE_NAME, "Starting message query");
-		Route route = messageBus.getRoutes().get(publisher); 
+		Route route = messageBus.getRoutes().get(publisher);
 		if (to < from || route == null || !route.getReceivers().contains(receiver))
 			return null;
 

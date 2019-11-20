@@ -103,7 +103,7 @@ public class ProcessManager implements IOFogModule {
 			try {
 				Thread.sleep(Configuration.getMonitorContainersStatusFreqSeconds() * 1000);
 			} catch (InterruptedException e) {
-				logError("Error while sleeping thread", 
+				logError("Error while sleeping thread",
 						new AgentSystemException("Error while sleeping thread", e));
 			}
 			logInfo("Start Monitoring containers");

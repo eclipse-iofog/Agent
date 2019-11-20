@@ -73,7 +73,7 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
     @Override
     public FullHttpResponse call() throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Starting config Api Handler call");
-    	
+
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
             LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
             return ApiHandlerHelpers.methodNotAllowedResponse();

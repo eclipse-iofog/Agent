@@ -143,11 +143,11 @@ public class Orchestrator {
 				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
 	            client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 			} catch (NoSuchAlgorithmException e) {
-				throw new AgentSystemException(e.getMessage(), e );		
+				throw new AgentSystemException(e.getMessage(), e );
 			} catch (KeyManagementException e) {
 				throw new AgentSystemException(e.getMessage(), e );
 			}
-            
+
         } else {
             client = HttpClients.createDefault();
         }
@@ -179,7 +179,7 @@ public class Orchestrator {
      *
      * @param surl - endpoind to be called
      * @return result in Json format
-     * @throws AgentSystemException 
+     * @throws AgentSystemException
      */
     private JsonObject getJSON(String surl) throws AgentUserException  {
     	logInfo(MODULE_NAME, "Start getJSON for result of a IOFog Controller endpoint");
@@ -219,7 +219,7 @@ public class Orchestrator {
             Reader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
             JsonReader jsonReader = Json.createReader(in);
             result = jsonReader.readObject();
-            
+
 
         } catch (UnsupportedEncodingException e) {
         	logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
@@ -235,12 +235,12 @@ public class Orchestrator {
     		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
         			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
     		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
-    		
+
     	} catch (IOException e) {
     		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
         			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
     		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
-    		
+
     	}catch (Exception e) {
     		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
         			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
@@ -401,10 +401,10 @@ public class Orchestrator {
         try {
             initialize(secure);
         } catch (AgentSystemException exp) {
-        	logError(MODULE_NAME,"Error while updating local variables when changes applied", 
+        	logError(MODULE_NAME,"Error while updating local variables when changes applied",
             		new AgentUserException("Error while updating local variables when changes applied", exp));
         } catch (Exception exp) {
-            logError(MODULE_NAME,"Error while updating local variables when changes applied", 
+            logError(MODULE_NAME,"Error while updating local variables when changes applied",
             		new AgentUserException("Error while updating local variables when changes applied", exp));
         }
         logInfo(MODULE_NAME, "Finished updates local variables when changes applied");

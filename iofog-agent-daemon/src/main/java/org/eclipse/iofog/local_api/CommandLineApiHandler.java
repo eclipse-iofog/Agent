@@ -93,7 +93,7 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 				String jsonResult = objectMapper.writeValueAsString(resultMap);
 				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
 				return ApiHandlerHelpers.internalServerErrorResponse(outputBuffer, jsonResult);
-			}		
+			}
 
 		} catch (Exception e) {
 			String errorMsg = " Log message parsing error, " + e.getMessage();

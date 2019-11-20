@@ -301,7 +301,7 @@ public class FieldAgent implements IOFogModule {
             try {
                 Thread.sleep(Configuration.getChangeFrequency() * 1000);
                 logInfo("Start get IOFog changes list from IOFog controller");
-                
+
                 if (notProvisioned() || !isControllerConnected(false)) {
                     logInfo("Cannot get change list due to controller status not provisioned or controller not connected");
                     continue;
@@ -313,7 +313,7 @@ public class FieldAgent implements IOFogModule {
                     result = orchestrator.request("config/changes", RequestType.GET, null, null);
                 } catch (CertificateException | SSLHandshakeException e) {
                     verificationFailed(e);
-                    logError("Unable to get changes", 
+                    logError("Unable to get changes",
                     		new AgentSystemException("Unable to get changes due to broken certificate", e));
                     continue;
                 } catch (Exception e) {
@@ -421,7 +421,7 @@ public class FieldAgent implements IOFogModule {
      */
     private void changeVersion() {
         LoggingService.logInfo(MODULE_NAME, "Get change version action");
-       
+
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
         }
@@ -521,13 +521,13 @@ public class FieldAgent implements IOFogModule {
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
-            logError("Unable to get registries", 
+            logError("Unable to get registries",
             		new AgentUserException("Unable to get registries due to broken certificate", e));
         }  catch (AgentUserException e) {
-            logError("Unable to get registries", 
+            logError("Unable to get registries",
             		new AgentUserException("Unable to get registries", e));
         } catch (AgentSystemException e) {
-            logError("Unable to get registries", 
+            logError("Unable to get registries",
             		new AgentUserException("Unable to get registries", e));
         } catch (Exception e) {
             logError("Unable to get registries", new AgentSystemException("Unable to get registries", e));
@@ -715,7 +715,7 @@ public class FieldAgent implements IOFogModule {
             try {
                 LoggingService.setupMicroserviceLogger(microservice.getMicroserviceUuid(), microservice.getLogSize());
             } catch (IOException e) {
-                logError("Error at setting up microservice logger", 
+                logError("Error at setting up microservice logger",
                 		new AgentSystemException("Error at setting up microservice logger", e));
             }
             return microservice;
@@ -741,7 +741,7 @@ public class FieldAgent implements IOFogModule {
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
-            logError("Error pinging controller due to broken certificate", 
+            logError("Error pinging controller due to broken certificate",
             		new AgentSystemException("Error pinging controller due to broken certificate", e));
         } catch (Exception e) {
             verificationFailed(e);

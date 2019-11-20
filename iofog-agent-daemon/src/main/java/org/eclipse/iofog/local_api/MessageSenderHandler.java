@@ -106,7 +106,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 * @param message
 	 */
 	private void validateMessage(JsonObject message) throws Exception {
-		
+
 		LoggingService.logInfo(MODULE_NAME, "Start Handler method to validate the request and the message to publish");
 		if (!message.containsKey("publisher"))
 			throw new AgentUserException("Error: Missing input field publisher ");

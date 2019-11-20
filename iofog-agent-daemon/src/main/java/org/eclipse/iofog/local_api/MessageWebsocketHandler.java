@@ -217,7 +217,7 @@ public class MessageWebsocketHandler {
 			buffer1.writeBytes(bytesMsg);
 			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
 		} else {
-			LoggingService.logError(MODULE_NAME, "No active real-time websocket found for " + receiverId, 
+			LoggingService.logError(MODULE_NAME, "No active real-time websocket found for " + receiverId,
 					new AgentSystemException("No active real-time websocket found for " + receiverId, null));
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished Helper to send real-time messages");

@@ -66,7 +66,7 @@ public class MessagePublisher implements AutoCloseable{
 		} catch (Exception e) {
 			logError(MODULE_NAME, "Message Publisher (" + this.name + ")unable to archive message",
 					new AgentSystemException("Message Publisher (" + this.name + ")unable to archive message", e));
-			
+
 		}
 		for (String receiver : route.getReceivers()) {
 			ClientMessage msg = session.createMessage(false);

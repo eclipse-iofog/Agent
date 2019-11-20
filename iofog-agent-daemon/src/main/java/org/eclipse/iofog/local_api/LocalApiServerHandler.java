@@ -99,7 +99,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
                         MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
                         messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
                     } else {
-                        LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", 
+                        LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found",
                         		new AgentSystemException("Cannot initiate real-time service: Context not found"));
                     }
                 } finally {
@@ -147,7 +147,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      */
     private void handleHttpRequest(ChannelHandlerContext ctx) {
     	LoggingService.logInfo(MODULE_NAME, "Start passig request to the relevant handler");
-    	
+
         if (request.uri().equals("/v2/config/get")) {
         	LoggingService.logInfo(MODULE_NAME, "Start Processing config/get request");
             Callable<FullHttpResponse> callable = new GetConfigurationHandler(request, ctx.alloc().buffer(), content);
@@ -287,21 +287,21 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private String findContextMapName(ChannelHandlerContext ctx) {
     	LoggingService.logInfo(MODULE_NAME, "Start find context map name");
-    	
+
         if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap)) {
         	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : control");
         	return "control";
-        }          
+        }
         else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap)) {
         	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : message");
         	return "message";
         }
-            
+
         else {
         	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : null");
         	return null;
         }
-            
+
     }
 
     /**

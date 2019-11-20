@@ -215,7 +215,7 @@ public final class LoggingService {
 
         loadSentryCache();
     }
-    
+
     private static void loadSentryCache() {
         File f = new File(Constants.SENTRY_CACHE_PATH);
         if (!f.exists()) {

@@ -332,11 +332,11 @@ public class MessageBus implements IOFogModule {
 			try {
 				messageBusServer.stopServer();
 			} catch (Exception exp) {
-				 logError("Error stopping message bus module", 
+				 logError("Error stopping message bus module",
 		            		new AgentSystemException("Error stopping message bus module", exp));
 			}
 			logError("Unable to start message bus server", e);
-			logError("Error starting message bus module", 
+			logError("Error starting message bus module",
             		new AgentSystemException("Error starting message bus module", e));
 			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 		}
@@ -354,7 +354,7 @@ public class MessageBus implements IOFogModule {
 	 */
 	public void stop() {
 		logInfo("Start closing receivers and publishers and stops ActiveMQ server");
-		for (MessageReceiver receiver : receivers.values()) 
+		for (MessageReceiver receiver : receivers.values())
 			receiver.close();
 		
 		for (MessagePublisher publisher : publishers.values())

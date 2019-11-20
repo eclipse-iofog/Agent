@@ -56,14 +56,14 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
     public FullHttpResponse call() throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Start processing request in Provision Api Handler");
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
-            LoggingService.logError(MODULE_NAME, "Request method not allowed", 
+            LoggingService.logError(MODULE_NAME, "Request method not allowed",
             		new AgentUserException("Request method not allowed", new Exception()));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
         final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
         if (contentTypeError != null) {
-            LoggingService.logError(MODULE_NAME, contentTypeError, 
+            LoggingService.logError(MODULE_NAME, contentTypeError,
             		new AgentUserException(contentTypeError, new Exception()));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, contentTypeError);
         }
@@ -71,7 +71,7 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
         if (!ApiHandlerHelpers.validateAccessToken(this.req)) {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
-            LoggingService.logError(MODULE_NAME, contentTypeError, 
+            LoggingService.logError(MODULE_NAME, contentTypeError,
             		new AgentUserException("Incorrect access token", new Exception()));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }

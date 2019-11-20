@@ -55,7 +55,7 @@ public class DeprovisionApiHandler implements Callable<FullHttpResponse> {
     public FullHttpResponse call() throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Starting deprovison Api Handler call");
         if (!ApiHandlerHelpers.validateMethod(this.req, DELETE)) {
-            LoggingService.logError(MODULE_NAME, "Request method not allowed", 
+            LoggingService.logError(MODULE_NAME, "Request method not allowed",
             		new AgentUserException("Request method not allowed"));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
