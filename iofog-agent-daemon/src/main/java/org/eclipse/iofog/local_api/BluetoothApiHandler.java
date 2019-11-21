@@ -92,7 +92,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                 ReferenceCountUtil.release(requestContent);
             }
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+            LoggingService.logError(MODULE_NAME, "Error unable to reach RESTblue container!", e);
         } finally {
             group.shutdownGracefully();
         }

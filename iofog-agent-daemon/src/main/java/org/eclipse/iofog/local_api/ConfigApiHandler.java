@@ -109,25 +109,31 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
             }
 
             try {
-                HashMap<String, String> errorMap = setConfig(configMap, false);
-                HashMap<String, String> errorMessages = new HashMap<>();
-                for (Map.Entry<String, String> error : errorMap.entrySet()) {
-                    String configName = CONFIG_MAP.get(error.getKey());
-                    String errorMessage = error.getValue().replaceAll(" \\-[a-z] ", " ");
+                if (configMap.size() != 0) {
+                    HashMap<String, String> errorMap = setConfig(configMap, false);
+                    HashMap<String, String> errorMessages = new HashMap<>();
+                    for (Map.Entry<String, String> error : errorMap.entrySet()) {
+                        String configName = CONFIG_MAP.get(error.getKey());
+                        String errorMessage = error.getValue().replaceAll(" \\-[a-z] ", " ");
 
-                    errorMessages.put(configName, errorMessage);
+                        errorMessages.put(configName, errorMessage);
+                    }
+
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String result = objectMapper.writeValueAsString(errorMessages);
+                    FullHttpResponse res = ApiHandlerHelpers.successResponse(outputBuffer, result);
+                    res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+                    LoggingService.logInfo(MODULE_NAME, "Finsihed config Api Handler call");
+                    return res;
+                } else {
+                    String errMsg = "Request not valid";
+                    LoggingService.logError(MODULE_NAME, errMsg, new AgentSystemException(errMsg));
+                    return ApiHandlerHelpers.badRequestResponse(outputBuffer, errMsg);
                 }
-
-                ObjectMapper objectMapper = new ObjectMapper();
-                String result = objectMapper.writeValueAsString(errorMessages);
-                FullHttpResponse res = ApiHandlerHelpers.successResponse(outputBuffer, result);
-                res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
-                LoggingService.logInfo(MODULE_NAME, "Finsihed config Api Handler call");
-                return res;
             } catch (Exception e) {
                 String errMsg = "Error updating new config ";
                 LoggingService.logError(MODULE_NAME, errMsg, new AgentSystemException(errMsg, e));
-                return ApiHandlerHelpers.badRequestResponse(outputBuffer, errMsg + e.toString());
+                return ApiHandlerHelpers.badRequestResponse(outputBuffer, errMsg + e.getMessage());
             }
         } catch (Exception e) {
             String errorMsg = "Log message parsing error, " + e.getMessage();
