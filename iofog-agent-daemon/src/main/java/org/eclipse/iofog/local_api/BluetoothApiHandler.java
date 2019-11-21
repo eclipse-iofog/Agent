@@ -60,7 +60,6 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
-                            System.out.println("I am here");
                             ch.pipeline().addLast(new HttpClientCodec());
                             ch.pipeline().addLast(new HttpObjectAggregator(1048576));
                             ChannelInboundHandler handler = new SimpleChannelInboundHandler<HttpObject>() {
