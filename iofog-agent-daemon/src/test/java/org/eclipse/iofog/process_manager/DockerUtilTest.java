@@ -32,24 +32,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 import static org.powermock.api.mockito.PowerMockito.*;
 
@@ -183,12 +179,7 @@ public class DockerUtilTest {
         PowerMockito.when(DockerClientBuilder.getInstance(any(DockerClientConfig.class))).thenReturn(dockerClientBuilder);
         PowerMockito.when(dockerClientBuilder.build()).thenReturn(dockerClient);
         PowerMockito.when(dockerClient.eventsCmd()).thenReturn(eventsCmd);
-        PowerMockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).when(eventsCmd).exec(any());
+        PowerMockito.doAnswer((Answer) invocation -> null).when(eventsCmd).exec(any());
         PowerMockito.when(dockerClient.listNetworksCmd()).thenReturn(listNetworksCmd);
         PowerMockito.when(listNetworksCmd.exec()).thenReturn(networkList);
         PowerMockito.when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
@@ -204,12 +195,7 @@ public class DockerUtilTest {
         PowerMockito.doNothing().when(stopContainerCmd).exec();
         PowerMockito.when(dockerClient.pullImageCmd(anyString())).thenReturn(pullImageCmd);
         PowerMockito.when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
-        PowerMockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).when(inspectImageCmd).exec();
+        PowerMockito.doAnswer((Answer) invocation -> null).when(inspectImageCmd).exec();
         PowerMockito.when(pullImageCmd.withRegistry(anyString())).thenReturn(pullImageCmd);
         PowerMockito.when(pullImageCmd.withTag(anyString())).thenReturn(pullImageCmd);
         PowerMockito.when(pullImageCmd.withAuthConfig(any())).thenReturn(pullImageCmd);
@@ -267,14 +253,13 @@ public class DockerUtilTest {
         reset(dockerUtil, dockerClient, dockerClientConfig, defaultDockerClientConfig, processManagerStatus, inspectContainerResponse,
                 hostConfig, inspectContainerCmd, stopContainerCmd, removeContainerCmd, startContainerCmd, listNetworksCmd, statsCmd, statsCallback, containerState,
                 microservice, container, microserviceStatus) ;
-        Field instance = ProcessManager.class.getDeclaredField("instance");
+        Field instance = DockerUtil.class.getDeclaredField("instance");
         instance.setAccessible(true);
         instance.set(null, null);
         containerList = null;
         networkList = null;
         if (method != null)
             method.setAccessible(false);
-
     }
 
     /**
