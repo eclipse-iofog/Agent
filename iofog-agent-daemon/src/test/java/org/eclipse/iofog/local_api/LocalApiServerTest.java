@@ -21,6 +21,7 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -36,6 +37,7 @@ import static org.junit.Assert.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LocalApiServer.class, NioEventLoopGroup.class, SelfSignedCertificate.class, ServerBootstrap.class, LocalApiServerPipelineFactory.class, LoggingService.class,
         ChannelFuture.class, ControlWebsocketWorker.class, MessageWebsocketWorker.class})
+@Ignore
 public class LocalApiServerTest {
     private LocalApiServer localApiServer;
     private NioEventLoopGroup nioEventLoopGroup;

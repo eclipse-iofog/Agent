@@ -30,6 +30,7 @@ import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
@@ -324,29 +325,32 @@ public class FieldAgent implements IOFogModule {
                 StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
                 JsonObject changes = result;
-                if (changes.getBoolean("deleteNode") && !initialization) {
+                if (changes.getBoolean("deleteNode", false) && !initialization) {
                     deleteNode();
                 } else {
-                    if (changes.getBoolean("reboot") && !initialization) {
+                    if (changes.getBoolean("reboot", false) && !initialization) {
                         reboot();
                     }
-                    if (changes.getBoolean("isImageSnapshot") && !initialization) {
+                    if (changes.getBoolean("isImageSnapshot", false) && !initialization) {
                         createImageSnapshot();
                     }
-                    if (changes.getBoolean("config") && !initialization) {
+                    if (changes.getBoolean("config", false) && !initialization) {
                         getFogConfig();
                     }
-                    if (changes.getBoolean("version") && !initialization) {
+                    if (changes.getBoolean("version", false) && !initialization) {
                         changeVersion();
                     }
-                    if (changes.getBoolean("registries") || initialization) {
+                    if (changes.getBoolean("registries", false) || initialization) {
                         loadRegistries(false);
                         ProcessManager.getInstance().update();
                     }
-                    if (changes.getBoolean("microserviceConfig") || changes.getBoolean("microserviceList") ||
-                            changes.getBoolean("routing") || initialization) {
-                        boolean microserviceConfig = changes.getBoolean("microserviceConfig");
-                        boolean routing = changes.getBoolean("routing");
+                    if (changes.getBoolean("prune", false) && !initialization) {
+                        DockerPruningManager.getInstance().pruneAgent();
+                    }
+                    if ((changes.getBoolean("microserviceConfig", false) || changes.getBoolean("microserviceList", false)
+                            || changes.getBoolean("routing", false) || initialization)) {
+                        boolean microserviceConfig = changes.getBoolean("microserviceConfig", false);
+                        boolean routing = changes.getBoolean("routing", false);
 
                         List<Microservice> microservices = loadMicroservices(false);
 
@@ -363,10 +367,10 @@ public class FieldAgent implements IOFogModule {
                         Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
                                 TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
                     }
-                    if (changes.getBoolean("tunnel") && !initialization) {
+                    if (changes.getBoolean("tunnel", false) && !initialization) {
                         sshProxyManager.update(getProxyConfig());
                     }
-                    if (changes.getBoolean("diagnostics") && !initialization) {
+                    if (changes.getBoolean("diagnostics", false) && !initialization) {
                         updateDiagnostics();
                     }
                 }

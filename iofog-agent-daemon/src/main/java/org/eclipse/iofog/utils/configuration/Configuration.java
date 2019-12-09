@@ -24,6 +24,7 @@ import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.tracking.Tracker;
@@ -106,6 +107,8 @@ public final class Configuration {
     private static final Map<String, Object> defaultConfig;
     private static boolean developerMode;
     private static String ipAddressExternal;
+    private static long dockerPruningFrequency;
+    private static long availableDiskThreshold;
 
     public static boolean debugging = false;
 
@@ -421,6 +424,7 @@ public final class Configuration {
                 }
 
                 int intValue;
+                long longValue;
                 switch (cmdOption) {
                     case DISK_CONSUMPTION_LIMIT:
                         LoggingService.logInfo(MODULE_NAME, "Setting disk consumption limit");
@@ -645,6 +649,38 @@ public final class Configuration {
                         LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
                         setNode(DEV_MODE, value, configFile, configElement);
                         setDeveloperMode(!value.equals("off"));
+                        break;
+                    case DOCKER_PRUNING_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting docker pruning frequency");
+                        try {
+                            longValue = Long.parseLong(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (longValue < 1) {
+                            messageMap.put(option, "Docker pruning frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(DOCKER_PRUNING_FREQUENCY, value, configFile, configElement);
+                        setDockerPruningFrequency(Long.parseLong(value));
+                        DockerPruningManager.getInstance().refreshSchedule();
+                        break;
+                    case AVAILABLE_DISK_THRESHOLD:
+                        LoggingService.logInfo(MODULE_NAME, "Setting available disk threshold");
+                        try {
+                            longValue = Long.parseLong(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (longValue < 1) {
+                            messageMap.put(option, "Available disk threshold must be greater than 1");
+                            break;
+                        }
+                        setNode(AVAILABLE_DISK_THRESHOLD, value, configFile, configElement);
+                        setAvailableDiskThreshold(Long.parseLong(value));
+                        DockerPruningManager.getInstance().refreshSchedule();
                         break;
                     default:
                         throw new ConfigurationItemException("Invalid parameter -" + option);
@@ -893,6 +929,8 @@ public final class Configuration {
         configureFogType(getNode(FOG_TYPE, configFile));
         setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
         setIpAddressExternal(GpsWebHandler.getExternalIp());
+        setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
+        setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
         
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
@@ -1172,6 +1210,10 @@ public final class Configuration {
         result.append(buildReportLine(getConfigParamMessage(GPS_COORDINATES), gpsCoordinates));
         //fog type
         result.append(buildReportLine(getConfigParamMessage(FOG_TYPE), fogType.name().toLowerCase()));
+        // docker pruning frequency
+        result.append(buildReportLine(getConfigParamMessage(DOCKER_PRUNING_FREQUENCY), format("%d", dockerPruningFrequency)));
+        // available disk threshold
+        result.append(buildReportLine(getConfigParamMessage(AVAILABLE_DISK_THRESHOLD), format("%d", availableDiskThreshold)));
 
         LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
         
@@ -1320,4 +1362,20 @@ public final class Configuration {
 		Configuration.logLevel = logLevel;
 		LoggingService.logInfo(MODULE_NAME, "Finished set log level");
 	}
+
+    public static long getDockerPruningFrequency() {
+        return dockerPruningFrequency;
+    }
+
+    public static void setDockerPruningFrequency(long dockerPruningFrequency) {
+        Configuration.dockerPruningFrequency = dockerPruningFrequency;
+    }
+
+    public static long getAvailableDiskThreshold() {
+        return availableDiskThreshold;
+    }
+
+    public static void setAvailableDiskThreshold(long availableDiskThreshold) {
+        Configuration.availableDiskThreshold = availableDiskThreshold;
+    }
 }

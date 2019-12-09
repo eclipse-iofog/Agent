@@ -28,6 +28,8 @@ public class ResourceConsumptionManagerStatus {
 	private long availableMemory;
 	private float totalCpu;
 	private long availableDisk;
+
+	private long totalDiskSpace;
 	
 	public ResourceConsumptionManagerStatus() {
 	}
@@ -111,5 +113,13 @@ public class ResourceConsumptionManagerStatus {
 	public ResourceConsumptionManagerStatus setAvailableDisk(long availableDisk) {
 		this.availableDisk = availableDisk;
 		return this;
+	}
+
+	public long getTotalDiskSpace() {
+		return totalDiskSpace;
+	}
+
+	public void setTotalDiskSpace(long totalDiskSpace) {
+		this.totalDiskSpace = totalDiskSpace;
 	}
 }

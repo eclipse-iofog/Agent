@@ -202,20 +202,13 @@ public class DockerUtilTest {
         PowerMockito.when(pullImageCmd.exec(any())).thenReturn(pullImageResultCallback);
         PowerMockito.when(dockerClient.inspectContainerCmd(anyString())).thenReturn(inspectContainerCmd);
         PowerMockito.when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withLogConfig(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withEnv(any(List.class))).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withName(any())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withCpusetCpus(any())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withRestartPolicy(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withLabels(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withExposedPorts(any(ExposedPort.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withPortBindings(any(Ports.class))).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withVolumes(any(Volume.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withBinds(any(Bind.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withExtraHosts(any(String.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withPrivileged(any())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withNetworkMode(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withCmd(any(List.class))).thenReturn(createContainerCmd);
+        PowerMockito.when(createContainerCmd.withHostConfig(any(HostConfig.class))).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.exec()).thenReturn(createContainerResponse);
         PowerMockito.when(createContainerResponse.getId()).thenReturn(containerID);
         PowerMockito.when(inspectContainerCmd.exec()).thenReturn(inspectContainerResponse);
@@ -1035,10 +1028,8 @@ public class DockerUtilTest {
         PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
         assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
         Mockito.verify(createContainerCmd).exec();
-        Mockito.verify(createContainerCmd).withExtraHosts(any(String.class));
-        Mockito.verify(createContainerCmd).withRestartPolicy(any());
+        Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withPortBindings(any(Ports.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withCmd(any(List.class));
     }
@@ -1057,10 +1048,8 @@ public class DockerUtilTest {
         PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
         assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
         Mockito.verify(microservice).isRootHostAccess();
-        Mockito.verify(createContainerCmd).withExtraHosts(any(String.class));
-        Mockito.verify(createContainerCmd).withRestartPolicy(any());
+        Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withPortBindings(any(Ports.class));
         Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withCmd(any(List.class));
     }
@@ -1082,12 +1071,9 @@ public class DockerUtilTest {
         PowerMockito.when(microservice.getImageName()).thenReturn("microserviceName");
         PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
         assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
-        Mockito.verify(createContainerCmd).withLogConfig(any());
+        Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withExposedPorts(any(ExposedPort.class));
-        Mockito.verify(createContainerCmd).withBinds(any(Bind.class));
-        Mockito.verify(createContainerCmd).withRestartPolicy(any());
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withPortBindings(any(Ports.class));
         Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd).withCmd(any(List.class));
     }

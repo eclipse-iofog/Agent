@@ -89,6 +89,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 				long availableMemory = getSystemAvailableMemory();
 				float totalCpu = getTotalCpu();
 				long availableDisk = getAvailableDisk();
+				long totalDiskSpace = getTotalDiskSpace();
 
 				StatusReporter.setResourceConsumptionManagerStatus()
 						.setMemoryUsage(memoryUsage / 1_000_000)
@@ -99,7 +100,9 @@ public class ResourceConsumptionManager implements IOFogModule {
 						.setCpuViolation(cpuUsage > cpuLimit)
 						.setAvailableMemory(availableMemory)
 						.setAvailableDisk(availableDisk)
-						.setTotalCpu(totalCpu);
+						.setTotalCpu(totalCpu)
+						.setTotalDiskSpace(totalDiskSpace);
+
 
 				if (diskUsage > diskLimit) {
 					float amount = diskUsage - (diskLimit * 0.75f);
@@ -338,4 +341,14 @@ public class ResourceConsumptionManager implements IOFogModule {
 		logInfo("started");
 	}
 
+	private long getTotalDiskSpace() {
+		logInfo("Start get available disk");
+		File[] roots = File.listRoots();
+		long totalDiskSpace = 0;
+		for (File f : roots) {
+			totalDiskSpace += f.getTotalSpace();
+		}
+		logInfo("Finished get available disk : " + totalDiskSpace);
+		return totalDiskSpace;
+	}
 }

@@ -17,6 +17,7 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
@@ -55,6 +56,12 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
+			try {
+				Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				LoggingService.logError(MODULE_NAME, "Error stopping running microservices", e);
+				return "Error stopping running microservices.";
+			}
 			if(Configuration.getIofogUuid() != ""){
 				try {
 					ProcessManager.getInstance().stopRunningMicroservices(true, Configuration.getIofogUuid());
@@ -272,6 +279,17 @@ public enum CommandLineAction {
 
 			return result.toString();
 		}
+	},
+	PRUNE_ACTION {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("prune");
+		}
+
+		@Override
+		public String perform(String[] args) {
+			return DockerPruningManager.getInstance().pruneAgent();
+		}
 	};
 
 	public abstract List<String> getKeys();
@@ -353,6 +371,8 @@ public enum CommandLineAction {
 			"                 -cf <#seconds>          Set the get changes frequency\\n" +
 			"                 -df <#seconds>          Set the post diagnostics frequency\\n" +
 			"                 -sd <#seconds>          Set the scan devices frequency\\n" +
+			"                 -pf <#seconds>          Set the docker pruning frequency\\n" +
+			"                 -dt <#percentage>       Set the available disk threshold\\n" +
 			"                 -idc <on/off>           Set the mode on which any not\\n" +
 			"										  registered docker container will be\\n" +
 			"										  shut down\\n" +

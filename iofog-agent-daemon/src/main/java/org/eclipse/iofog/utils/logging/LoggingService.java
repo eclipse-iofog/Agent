@@ -13,6 +13,7 @@
 package org.eclipse.iofog.utils.logging;
 
 import io.sentry.Sentry;
+import io.sentry.event.User;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
@@ -106,6 +107,7 @@ public final class LoggingService {
      */
     public static void logError(String moduleName, String msg, Throwable e) {
         if (newSentryException(e)) {
+            Sentry.getStoredClient().getContext().setUser(new User(System.getProperty("user.name"), System.getProperty("user.name"), "", ""));
             Sentry.capture(e);
         }
 
