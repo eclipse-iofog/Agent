@@ -42,6 +42,7 @@ import static org.junit.Assert.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LocalApiServerPipelineFactory.class, SslContext.class, SocketChannel.class, ChannelPipeline.class,
         LoggingService.class, HttpServerCodec.class, HttpObjectAggregator.class, LocalApiServerHandler.class, DefaultEventExecutorGroup.class})
+@Ignore
 public class LocalApiServerPipelineFactoryTest {
     private LocalApiServerPipelineFactory localApiServerPipelineFactory;
     private SslContext sslContext;

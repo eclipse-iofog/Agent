@@ -35,6 +35,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({InfoApiHandler.class, HttpRequest.class, ByteBuf.class, ApiHandlerHelpers.class, LoggingService.class,
         Json.class, JsonReader.class, JsonObject.class, Configuration.class,
         ObjectMapper.class})
+@Ignore
 public class InfoApiHandlerTest {
     private InfoApiHandler infoApiHandler;
     private HttpRequest httpRequest;

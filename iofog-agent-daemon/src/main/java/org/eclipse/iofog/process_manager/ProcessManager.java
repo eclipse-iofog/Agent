@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.iofog.process_manager;
 
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.model.Container;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
@@ -239,16 +240,100 @@ public class ProcessManager implements IOFogModule {
 		LoggingService.logInfo(MODULE_NAME ,"Finished delete Remaining Microservices");
 	}
 
-	private void deleteOldAgentContainers(Set<String> oldAgentContainerNames) {
-		logInfo("Delete old agent containers");
-		oldAgentContainerNames.forEach(name -> {
+	/**
+	 * Stop running microservices when agent deprovision.
+	 * Stop and delete microservices when agents stops
+	 * @param withCleanUp
+	 */
+	public void stopRunningMicroservices(boolean withCleanUp, String iofogUuid) {
+		LoggingService.logInfo(MODULE_NAME ,"Stop delete Remaining Microservices");
+		if (withCleanUp) {
+			List<Container> allContainers;
+			synchronized (deleteLock) {
+				allContainers = docker.getContainers();
+			}
+			Set<String> allMicroserviceUuids = allContainers
+					.stream()
+					.map(docker::getContainerMicroserviceUuid)
+					.collect(Collectors.toSet());
+			Map<String, Map<String, String>> allContainersLabels = allContainers
+					.stream()
+					.collect(Collectors.toMap(docker::getContainerName, c -> c.getLabels()));
+
+			allMicroserviceUuids.forEach(uuid -> {
+				String containerName = DockerUtil.getIoFogContainerName(uuid);
+				Map<String, String> labels = allContainersLabels.get(containerName);
+				if ((labels != null && iofogUuid.equals(labels.get("iofog-uuid"))) || Configuration.isWatchdogEnabled()) {
+					disableMicroserviceFeaturesBeforeRemoval(uuid);
+					removeContainerByMicroserviceUuid(uuid, withCleanUp);
+				}
+			});
+		} else {
+			List<Container> runningContainers;
+			synchronized (deleteLock) {
+				runningContainers = docker.getRunningContainers();
+			}
+			Set<String> allRunningMicroserviceUuids = runningContainers
+					.stream()
+					.map(docker::getContainerMicroserviceUuid)
+					.collect(Collectors.toSet());
+			Map<String, Map<String, String>> runningContainersLabels = runningContainers
+					.stream()
+					.collect(Collectors.toMap(docker::getContainerName, c -> c.getLabels()));
+
+			Set<String> runningMicroserviceUuids = new HashSet<>();
+
+			allRunningMicroserviceUuids.forEach(uuid -> {
+				String containerName = DockerUtil.getIoFogContainerName(uuid);
+				Map<String, String> labels = runningContainersLabels.get(containerName);
+				if ((labels != null && iofogUuid.equals(labels.get("iofog-uuid"))) || Configuration.isWatchdogEnabled()) {
+					runningMicroserviceUuids.add(uuid);
+				}
+			});
+			stopRunningAgentContainers(runningMicroserviceUuids);
+		}
+		LoggingService.logInfo(MODULE_NAME ,"Finished stop running Microservices");
+	}
+
+	/**
+	 * removes a {@link Container} by Microservice uuid
+	 */
+	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) {
+		LoggingService.logInfo(MODULE_NAME, "Start remove container by microserviceuuid : " + microserviceUuid);
+		synchronized (deleteLock) {
+			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
+			if (containerOptional.isPresent()) {
+				Container container = containerOptional.get();
+				try {
+					docker.stopContainer(container.getId());
+					docker.removeContainer(container.getId(), withCleanUp);
+				} catch (Exception ex) {
+					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", container.getId()),
+							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", container.getId()), ex));
+				}
+			}
+		}
+		LoggingService.logInfo(MODULE_NAME, "Finished remove container by microserviceuuid : " + microserviceUuid);
+	}
+
+	private void stopRunningAgentContainers(Set<String> runningMicroserviceUuids) {
+		logInfo("Stop running containers" + runningMicroserviceUuids.size());
+		runningMicroserviceUuids.forEach(name -> {
+			disableMicroserviceFeaturesBeforeRemoval(name);
+			addTask(new ContainerTask(STOP, name));
+		});
+	}
+
+	private void deleteOldAgentContainers(Set<String> runningMicroserviceUuids) {
+		logInfo("Delete running containers" + runningMicroserviceUuids.size());
+		runningMicroserviceUuids.forEach(name -> {
 			disableMicroserviceFeaturesBeforeRemoval(name);
 			addTask(new ContainerTask(REMOVE, name));
 		});
 	}
 
 	private void deleteUnknownContainers(Set<String> unknownContainerNames) {
-		logInfo("Delete unknown containers");
+		logInfo("Delete unknown containers" + unknownContainerNames.size());
 		unknownContainerNames.forEach(name -> addTask(new ContainerTask(REMOVE, name)));
 	}
 
