@@ -17,6 +17,7 @@ import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -42,6 +43,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ApiHandlerHelpers.class, HttpRequest.class, HttpHeaders.class, LoggingService.class, ByteBuf.class,
         BufferedReader.class, FileReader.class})
+@Ignore
 public class ApiHandlerHelpersTest {
     private HttpRequest request;
     private HttpMethod expectedMethod;

@@ -158,6 +158,7 @@ public class ContainerManager {
 						new AgentSystemException(String.format("Error stopping container \"%s\"", container.getId()), e));
 			}
 		});
+		setMicroserviceStatus(microserviceUuid, MicroserviceState.STOPPED);
 		LoggingService.logInfo(MODULE_NAME, "Stopped container by microserviceuuid : " + microserviceUuid);
 
 	}
@@ -231,12 +232,20 @@ public class ContainerManager {
 				case REMOVE_WITH_CLEAN_UP:
 					removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), true);
 					break;
+				case STOP:
+					stopContainerByMicroserviceUuid(task.getMicroserviceUuid());
+					break;
 			}
 		} else {
 			LoggingService.logError(MODULE_NAME, "Container Task cannot be null",
 					new AgentSystemException("Container Task container be null"));
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished executes assigned task");
+	}
+
+	private void stopContainerByMicroserviceUuid(String microserviceUuid) {
+		LoggingService.logInfo(MODULE_NAME, String.format("stopping container with microserviceId \"%s\"", microserviceUuid));
+		stopContainer(microserviceUuid);
 	}
 
 	private void setMicroserviceStatus(String uuid, MicroserviceState state) {

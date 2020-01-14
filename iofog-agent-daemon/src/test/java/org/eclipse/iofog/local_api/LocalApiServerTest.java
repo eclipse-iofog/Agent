@@ -87,6 +87,7 @@ public class LocalApiServerTest {
 
     @After
     public void tearDown() throws Exception {
+        localApiServer.stop();
         localApiServer = null;
         MODULE_NAME = null;
         nioEventLoopGroup = null;
@@ -97,7 +98,6 @@ public class LocalApiServerTest {
         selfSignedCertificate = null;
         serverBootstrap = null;
         localApiServerPipelineFactory = null;
-        localApiServer = null;
     }
 
     /**

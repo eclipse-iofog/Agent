@@ -13,8 +13,10 @@
 
 package org.eclipse.iofog.command_line;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
@@ -53,6 +55,14 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
+			if(Configuration.getIofogUuid() != ""){
+				try {
+					ProcessManager.getInstance().stopRunningMicroservices(true, Configuration.getIofogUuid());
+				} catch (Exception e) {
+					LoggingService.logError(MODULE_NAME, "Error stopping running microservices", e);
+					return "Error stopping running microservices.";
+				}
+			}
 			System.setOut(systemOut);
 			System.exit(0);
 			return EMPTY;

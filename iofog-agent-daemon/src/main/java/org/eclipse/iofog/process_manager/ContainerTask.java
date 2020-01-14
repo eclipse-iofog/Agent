@@ -27,7 +27,8 @@ public class ContainerTask {
         ADD,
         UPDATE,
         REMOVE,
-        REMOVE_WITH_CLEAN_UP
+        REMOVE_WITH_CLEAN_UP,
+        STOP
     }
 
     private Tasks action;
