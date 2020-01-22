@@ -1578,6 +1578,7 @@ public class FieldAgentTest {
         when(Configuration.getDeviceScanFrequency()).thenReturn(60);
         when(Configuration.isWatchdogEnabled()).thenReturn(false);
         when(Configuration.getGpsCoordinates()).thenReturn("4000.0, 2000.3");
+        PowerMockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
     }
 
     /**

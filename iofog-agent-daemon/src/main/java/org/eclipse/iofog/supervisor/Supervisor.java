@@ -18,6 +18,7 @@ import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
@@ -108,7 +109,7 @@ public class Supervisor implements IOFogModule {
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
 		logInfo("Started Supervisor");
         Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
-
+		DockerPruningManager.getInstance().start();
         operationDuration();
     }
 

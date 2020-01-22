@@ -52,7 +52,9 @@ public enum CommandLineConfigParam {
     GPS_COORDINATES ("", "", "gps_coordinates", "gpscoordinates"),
     POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
     FOG_TYPE ("auto", "ft", "fog_type", ""),
-    DEV_MODE ("on", "dev", "dev_mode", "");
+    DEV_MODE ("on", "dev", "dev_mode", ""),
+    DOCKER_PRUNING_FREQUENCY ("60", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
+    AVAILABLE_DISK_THRESHOLD ("90", "dt", "available_disk_threshold", "availableDiskThreshold");
 
     private final String commandName;
     private final String xmlTag;

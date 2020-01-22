@@ -14,6 +14,8 @@ package org.eclipse.iofog.microservice;
 
 
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.CpuStatsConfig;
+import com.github.dockerjava.api.model.MemoryStatsConfig;
 import com.github.dockerjava.api.model.Statistics;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -109,43 +111,36 @@ public class MicroserviceStatus {
 			Optional<Statistics> statisticsAfter = docker.getContainerStats(containerId);
 
 			if (statisticsBefore.isPresent() && statisticsAfter.isPresent()) {
-				Map<String, Object> usageBefore = statisticsBefore.get().getCpuStats();
+				CpuStatsConfig usageBefore = statisticsBefore.get().getCpuStats();
 				float totalUsageBefore = extractTotalUsage(usageBefore);
 				float systemCpuUsageBefore = extractSystemCpuUsage(usageBefore);
 
-				Map<String, Object> usageAfter = statisticsAfter.get().getCpuStats();
+				CpuStatsConfig usageAfter = statisticsAfter.get().getCpuStats();
 				float totalUsageAfter = extractTotalUsage(usageAfter);
 				float systemCpuUsageAfter = extractSystemCpuUsage(usageAfter);
 				setCpuUsage(Math.abs(1000f * ((totalUsageAfter - totalUsageBefore) / (systemCpuUsageAfter - systemCpuUsageBefore))));
 
-				Map<String, Object> memoryUsage = statisticsAfter.get().getMemoryStats();
+				MemoryStatsConfig memoryUsage = statisticsAfter.get().getMemoryStats();
 				setMemoryUsage(extractMemoryUsage(memoryUsage));
 			}
 		}
 	}
 
-	private long extractMemoryUsage(Map<String, Object> memoryUsage) {
-		return memoryUsage.containsKey("usage")
-				? Long.parseLong(memoryUsage.get("usage").toString())
-				: 0;
+	private long extractMemoryUsage(MemoryStatsConfig memoryUsage) {
+		return memoryUsage.getUsage();
 	}
 
 	@SuppressWarnings("unchecked")
-	private float extractTotalUsage(Map<String, Object> statistics) {
+	private float extractTotalUsage(CpuStatsConfig cpuStatsConfig) {
 		float totalUsage = 0;
-		if (statistics.containsKey("cpu_usage")) {
-			Map<String, Object> cpuUsage = (Map<String, Object>) statistics.get("cpu_usage");
-			if (cpuUsage.containsKey("total_usage")) {
-				totalUsage = Long.parseLong(cpuUsage.get("total_usage").toString());
-			}
+		if (cpuStatsConfig.getCpuUsage() != null){
+			totalUsage = cpuStatsConfig.getCpuUsage().getTotalUsage();
 		}
 		return totalUsage;
 	}
 
-	private float extractSystemCpuUsage(Map<String, Object> statistics) {
-		return statistics.containsKey("system_cpu_usage")
-				? Long.parseLong((statistics.get("system_cpu_usage")).toString())
-				: 0;
+	private float extractSystemCpuUsage(CpuStatsConfig cpuStatsConfig) {
+		return cpuStatsConfig.getSystemCpuUsage();
 	}
 
 	@Override

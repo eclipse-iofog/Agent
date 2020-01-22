@@ -213,6 +213,7 @@ public class OrchestratorTest {
     @After
     public void tearDown() throws Exception {
         provisionKey = null;
+        orchestrator = null;
         Mockito.reset(certificateFactory, httpClientBuilder, jsonObjectBuilder, jsonReader, fileInputStream,
                 stringEntity, response, anotherJsonObject, jsonObject);
     }
@@ -289,7 +290,7 @@ public class OrchestratorTest {
                 .withParameterTypes(InputStream.class, String.class)
                 .withArguments(Mockito.any(), Mockito.anyString())
                 .thenThrow(mock(UnsupportedEncodingException.class));
-        assertFalse(orchestrator.ping());
+        orchestrator.ping();
         PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
     }
     /**

@@ -636,39 +636,51 @@ public class DockerUtil {
 
         Map<String, String> labels = new HashMap<>();
         labels.put("iofog-uuid", Configuration.getIofogUuid());
+        HostConfig hostConfig = HostConfig.newHostConfig();
+        hostConfig.withPortBindings(portBindings);
+        hostConfig.withLogConfig(containerLog);
+        hostConfig.withCpusetCpus("0");
+        hostConfig.withRestartPolicy(restartPolicy);
 
         CreateContainerCmd cmd = dockerClient.createContainerCmd(microservice.getImageName())
-            .withLogConfig(containerLog)
-            .withCpusetCpus("0")
             .withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
-            .withPortBindings(portBindings)
             .withEnv(envVars)
             .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
-            .withRestartPolicy(restartPolicy)
             .withLabels(labels);
 
         if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size()!= 0) {
-            cmd = cmd
-                .withVolumes(volumes.toArray(new Volume[volumes.size()]))
-                .withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
+            cmd = cmd.withVolumes(volumes.toArray(new Volume[volumes.size()]));
+            hostConfig.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
         }
 
         if (SystemUtils.IS_OS_WINDOWS) {
-            cmd = microservice.isRootHostAccess()
-                ? cmd.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true)
-                : cmd.withExtraHosts(extraHosts).withPrivileged(true);
+            if(microservice.isRootHostAccess()){
+                hostConfig.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true);
+            } else {
+                hostConfig.withExtraHosts(extraHosts).withPrivileged(true);
+            }
         } else if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
-            cmd = microservice.isRootHostAccess()
-                ? cmd.withNetworkMode("host").withPrivileged(true)
-                : cmd.withExtraHosts(extraHosts).withPrivileged(true);
+            if(microservice.isRootHostAccess()){
+                hostConfig.withNetworkMode("host").withPrivileged(true);
+            } else {
+                hostConfig.withExtraHosts(extraHosts).withPrivileged(true);
+            }
         }
 
         if (microservice.getArgs() != null && microservice.getArgs().size() > 0) {
             cmd = cmd.withCmd(microservice.getArgs());
         }
-
+        cmd = cmd.withHostConfig(hostConfig);
         CreateContainerResponse resp = cmd.exec();
         LoggingService.logInfo(MODULE_NAME , "Finished create container");
         return resp.getId();
+    }
+
+    /**
+     * docker prune a {@link Image}
+     */
+    public void dockerPrune() throws NotModifiedException {
+        LoggingService.logInfo(MODULE_NAME , "docker image prune");
+        dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).withLabelFilter("iofog-uuid").exec();
     }
 }
