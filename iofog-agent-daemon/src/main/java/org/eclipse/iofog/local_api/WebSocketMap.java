@@ -51,4 +51,8 @@ public final class WebSocketMap {
 		}
 		LoggingService.logInfo("WebSocketMap", "Finished adding web socket");
 	}
+
+	public static Map<String, ChannelHandlerContext> getMessageWebsocketMap() {
+		return messageWebsocketMap;
+	}
 }

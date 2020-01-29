@@ -12,9 +12,13 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
+import io.netty.channel.ChannelHandlerContext;
+import org.apache.qpid.jms.JmsConnectionRemotelyClosedException;
+import org.apache.qpid.jms.exceptions.JmsConnectionClosedException;
+import org.apache.qpid.jms.exceptions.JmsConnectionFailedException;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.exception.AgentSystemException;
-import org.eclipse.iofog.exception.AgentUserException;
+import org.eclipse.iofog.local_api.WebSocketMap;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.Route;
@@ -23,6 +27,8 @@ import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +37,6 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
-import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
  * Message Bus module
@@ -110,7 +115,7 @@ public class MessageBus implements IOFogModule {
 	 * initialize list of {@link Message} publishers and receivers
 	 * 
 	 */
-	private void init() {
+	private void init() throws Exception {
 		logInfo("Starting initialization of message bus publisher and receiver");
 		lastSpeedMessageCount = 0;
 		lastSpeedTime = System.currentTimeMillis();
@@ -120,6 +125,7 @@ public class MessageBus implements IOFogModule {
 		receivers = new ConcurrentHashMap<>();
 		if (routes == null)
 			return;
+
 		routes.entrySet().stream()
 			.filter(route -> route.getValue() != null)
 			.filter(route -> route.getValue().getReceivers() != null)
@@ -134,22 +140,33 @@ public class MessageBus implements IOFogModule {
 								new AgentSystemException("unable to start publisher module :" + publisher, e));
 					}
 					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
-
-					receivers.putAll(entry.getValue().getReceivers()
-							.stream()
-							.filter(item -> !receivers.containsKey(item))
-							.collect(Collectors.toMap(item -> item, item -> {
-								try {
-									messageBusServer.createConsumer(item);
-								} catch (Exception e) {
-									logError(MODULE_NAME,
-											new AgentSystemException("unable to start receiver module" + item, e));
-								}
-								return new MessageReceiver(item, messageBusServer.getConsumer(item));
-							})));
 			});
-		logInfo("Finished initialization of message bus publisher and receiver");
 
+		List<Microservice> microservices = microserviceManager.getLatestMicroservices();
+		microservices.forEach(microservice -> {
+			if (!microservice.isConsumer()) {
+				return;
+			}
+
+			String id = microservice.getMicroserviceUuid();
+			try {
+				messageBusServer.createConsumer(id);
+				MessageReceiver messageReceiver = new MessageReceiver(id, messageBusServer.getConsumer(id));
+				receivers.put(id, messageReceiver);
+
+				Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.getMessageWebsocketMap();
+				if (messageSocketMap.containsKey(id)) {
+					messageReceiver.enableRealTimeReceiving();
+				}
+			} catch (Exception e) {
+				logError(MODULE_NAME,
+						new AgentSystemException("unable to start receiver module " + id, e));
+			}
+		});
+
+		messageBusServer.setExceptionListener(new MessageBusExceptionListener(messageBusServer, publishers, receivers, routes, startServer));
+
+		logInfo("Finished initialization of message bus publisher and receiver");
 	}
 	
 	/**
@@ -178,70 +195,7 @@ public class MessageBus implements IOFogModule {
 			logInfo("Finished calculating message processing speed");
 		}
 	};
-	
-	/**
-	 * monitors ActiveMQ server
-	 * 
-	 */
-	private final Runnable checkMessageServerStatus = () -> {
-		while (true) {
-			try {
-				logInfo("Check message bus server status");
-				Thread.sleep(5000);
 
-				logInfo("Start Check message bus server status");
-				if (!messageBusServer.isServerActive() || messageBusServer.isMessageBusSessionClosed()) {
-					logWarning("Server is not active. restarting...");
-					stop();
-					try {
-						messageBusServer.startServer();
-						messageBusServer.initialize();
-						logInfo("Server restarted");
-						init();
-					} catch (Exception e) {
-						logError("", new AgentSystemException("Server restart failed", e));
-					}
-				}
-
-				publishers.forEach((publisher, value) -> {
-					if (messageBusServer.isProducerClosed(publisher)) {
-						logWarning("Producer module for " + publisher + " stopped. restarting...");
-						value.close();
-						Route route = routes.get(publisher);
-						if (route == null || route.getReceivers() == null || route.getReceivers().size() == 0) {
-							publishers.remove(publisher);
-						} else {
-							try {
-								messageBusServer.createProducer(publisher);
-								publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
-								logInfo("Producer module restarted");
-							} catch (Exception e) {
-								logError("", new AgentSystemException("Unable to restart producer module for " + publisher, e));
-							}
-						}
-					}
-				});
-
-				receivers.forEach((receiver, value) -> {
-					if (messageBusServer.isConsumerClosed(receiver)) {
-						logWarning("Consumer module for " + receiver + " stopped. restarting...");
-						value.close();
-						try {
-							messageBusServer.createConsumer(receiver);
-							receivers.put(receiver, new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)));
-							logInfo("Consumer module restarted");
-						} catch (Exception e) {
-							logError("", new AgentSystemException("Unable to restart consumer module for " + receiver, e));
-						}
-					}
-				});
-			} catch (Exception exp) {
-				logError("", new AgentSystemException("Error Checking message bus server status", exp));
-			}
-			logInfo("Finished Check message bus server status");
-		}
-	};
-	
 	/**
 	 * updates routing, list of publishers and receivers
 	 * Field Agent calls this method when any changes applied
@@ -268,7 +222,9 @@ public class MessageBus implements IOFogModule {
 			publishers.forEach((key, value) -> {
 				if (!newPublishers.contains(key)) {
 					value.close();
-					messageBusServer.removeProducer(key);
+					try {
+						messageBusServer.removeProducer(key);
+					} catch (Exception e) { }
 				} else {
 					value.updateRoute(newRoutes.get(key));
 				}
@@ -283,7 +239,9 @@ public class MessageBus implements IOFogModule {
 			receivers.forEach((key, value) -> {
 				if (!newReceivers.contains(key)) {
 					value.close();
-					messageBusServer.removeConsumer(key);
+					try {
+						messageBusServer.removeConsumer(key);
+					} catch (Exception e) { }
 				}
 			});
 			receivers.entrySet().removeIf(entry -> !newReceivers.contains(entry.getKey()));
@@ -313,9 +271,39 @@ public class MessageBus implements IOFogModule {
 	 * 
 	 */
 	public void instanceConfigUpdated() {
-		messageBusServer.setMemoryLimit();
+		// TODO: Set router address if changed
 	}
-	
+
+	private Runnable startServer = new Runnable() {
+		@Override
+		public void run() {
+			while (true) {
+				try {
+					logInfo("STARTING MESSAGE BUS SERVER");
+					messageBusServer.startServer();
+					messageBusServer.initialize();
+
+					logInfo("MESSAGE BUS SERVER STARTED");
+					init();
+
+					new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED).start();
+
+					break;
+				} catch (Exception e) {
+					try {
+						Thread.sleep(2000);
+						messageBusServer.stopServer();
+					} catch (Exception exp) {
+					}
+					logError("Error starting message bus module",
+							new AgentSystemException("Error starting message bus module", e));
+					StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
+				}
+			}
+		}
+	};
+
+
 	/**
 	 * starts Message Bus module
 	 * 
@@ -324,28 +312,8 @@ public class MessageBus implements IOFogModule {
 		microserviceManager = MicroserviceManager.getInstance();
 
 		messageBusServer = new MessageBusServer();
-		try {
-			logInfo("STARTING MESSAGE BUS SERVER");
-			messageBusServer.startServer();
-			messageBusServer.initialize();
-		} catch (Exception e) {
-			try {
-				messageBusServer.stopServer();
-			} catch (Exception exp) {
-				 logError("Error stopping message bus module", 
-		            		new AgentSystemException("Error stopping message bus module", exp));
-			}
-			logError("Unable to start message bus server", e);
-			logError("Error starting message bus module", 
-            		new AgentSystemException("Error starting message bus module", e));
-			StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
-		}
 
-		logInfo("MESSAGE BUS SERVER STARTED");
-		init();
-
-		new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED).start();
-		new Thread(checkMessageServerStatus, Constants.MESSAGE_BUS_CHECK_MESSAGE_SERVER_STATUS).start();
+		new Thread(startServer).start();
 	}
 	
 	/**
@@ -403,5 +371,39 @@ public class MessageBus implements IOFogModule {
 	 */
 	public synchronized Map<String, Route> getRoutes() {
 		return microserviceManager.getRoutes();
+	}
+
+	public static class MessageBusExceptionListener implements ExceptionListener {
+		private MessageBusServer messageBusServer;
+		private Map<String, MessagePublisher> publishers;
+		private Map<String, MessageReceiver> receivers;
+		private Map<String, Route> routes;
+		private Runnable startServer;
+
+		public MessageBusExceptionListener(MessageBusServer messageBusServer, Map<String, MessagePublisher> publishers, Map<String, MessageReceiver> receivers, Map<String, Route> routes, Runnable startServer) {
+			this.messageBusServer = messageBusServer;
+			this.publishers = publishers;
+			this.receivers = receivers;
+			this.routes = routes;
+			this.startServer = startServer;
+		}
+
+		@Override
+		public void onException(JMSException exception) {
+			if (exception instanceof JmsConnectionClosedException
+					|| exception instanceof JmsConnectionFailedException
+					|| exception instanceof JmsConnectionRemotelyClosedException) {
+				LoggingService.logError("Message Bus", "Server is not active. restarting...", exception);
+
+				try {
+					Thread.sleep(2000);
+					publishers.forEach((key, publisher) -> { publisher.close(); });
+					receivers.forEach((key, receiver) -> { receiver.close(); });
+					messageBusServer.stopServer();
+				} catch (Exception e) {}
+
+				new Thread(startServer).start();
+			}
+		}
 	}
 }

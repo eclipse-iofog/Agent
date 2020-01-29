@@ -12,9 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import org.apache.activemq.artemis.api.core.client.ClientConsumer;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
-import org.apache.commons.collections.map.HashedMap;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
@@ -94,7 +91,7 @@ public class MessageBusTest {
         receivers.add(receiverValue);
         receivers.add("2");
         receivers.add("3");
-        route.setReceivers(receivers);
+        route.setMicroserviceIds(receivers);
         mapRoutes = new HashMap<>();
         mapRoutes.put("1", route);
         publishedMessagesPerMicroservice = new HashedMap();

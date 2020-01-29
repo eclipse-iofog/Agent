@@ -12,15 +12,20 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import javax.jms.BytesMessage;
+import javax.jms.MessageListener;
+import javax.jms.TextMessage;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+
+import java.io.StringReader;
+
 import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
-import static org.eclipse.iofog.utils.logging.LoggingService.logError;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
 
 /**
  * listener for real-time receiving
@@ -28,29 +33,34 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
  * @author saeid
  *
  */
-public class MessageListener implements MessageHandler{
+public class IOMessageListener implements MessageListener {
 	private static final String MODULE_NAME = "MessageListener";
 
 	private final MessageCallback callback;
 	
-	public MessageListener(MessageCallback callback) {
+	public IOMessageListener(MessageCallback callback) {
 		this.callback = callback;
 	}
 	
 	@Override
-	public void onMessage(ClientMessage msg) {
+	public void onMessage(javax.jms.Message msg) {
 		LoggingService.logInfo(MODULE_NAME, "Start acknowledging message onMessage");
 		try {
 			synchronized (messageBusSessionLock) {
-				msg.acknowledge();
+				TextMessage textMessage = (TextMessage) msg;
+				textMessage.acknowledge();
+				JsonReader jsonReader = Json.createReader(new StringReader(textMessage.getText()));
+				JsonObject json = jsonReader.readObject();
+				jsonReader.close();
+
+				Message message = new Message(json);
+				callback.sendRealtimeMessage(message);
 			}
 		} catch (Exception exp) {
 			LoggingService.logError(MODULE_NAME, "Error acknowledging message",
 					new AgentSystemException("Error acknowledging message", exp));
 		}
-		Message message = new Message(msg.getBytesProperty("message"));
-		callback.sendRealtimeMessage(message);
+
 		LoggingService.logInfo(MODULE_NAME, "Finish acknowledging message onMessage");
 	}
-
 }

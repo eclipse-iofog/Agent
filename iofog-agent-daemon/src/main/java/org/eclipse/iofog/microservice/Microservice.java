@@ -37,6 +37,7 @@ public class Microservice {
     private boolean isUpdating;
     private List<EnvVar> envVars;
     private List<String> args;
+    private boolean isConsumer;
 
     private boolean delete;
     private boolean deleteWithCleanup;
@@ -178,5 +179,13 @@ public class Microservice {
 
     public void setRoutes(List<String> routes) {
         this.routes = routes;
+    }
+
+    public boolean isConsumer() {
+        return isConsumer;
+    }
+
+    public void setConsumer(boolean consumer) {
+        isConsumer = consumer;
     }
 }
