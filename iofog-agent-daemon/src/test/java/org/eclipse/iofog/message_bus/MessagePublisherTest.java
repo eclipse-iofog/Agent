@@ -15,7 +15,6 @@ package org.eclipse.iofog.message_bus;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
@@ -80,7 +79,7 @@ public class MessagePublisherTest {
         PowerMockito.when(message.getTimestamp()).thenReturn(System.currentTimeMillis());
         PowerMockito.when(MessageBusServer.getSession()).thenReturn(clientSession);
         PowerMockito.when(clientSession.createMessage(anyBoolean())).thenReturn(clientMessage);
-        PowerMockito.when(route.getReceivers()).thenReturn(receivers);
+        PowerMockito.when(route.getMicroserviceIds()).thenReturn(receivers);
         PowerMockito.whenNew(MessageArchive.class).withArguments(anyString()).thenReturn(messageArchive);
         messagePublisher = spy(new MessagePublisher(name, route, clientProducer));
         PowerMockito.doNothing().when(messageArchive).save(Mockito.any(byte[].class), anyLong());
@@ -111,7 +110,7 @@ public class MessagePublisherTest {
         try {
             messagePublisher.publish(message);
             Mockito.verify(messageArchive, atLeastOnce()).save(any(byte[].class), anyLong());
-            Mockito.verify(route).getReceivers();
+            Mockito.verify(route).getMicroserviceIds();
             Mockito.verify(clientSession).createMessage(anyBoolean());
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Start publish message :name");
@@ -131,7 +130,7 @@ public class MessagePublisherTest {
             PowerMockito.doThrow(mock(Exception.class)).when(messageArchive).save(Mockito.any(byte[].class), anyLong());
             messagePublisher.publish(message);
             Mockito.verify(messageArchive, atLeastOnce()).save(any(byte[].class), anyLong());
-            Mockito.verify(route).getReceivers();
+            Mockito.verify(route).getMicroserviceIds();
             Mockito.verify(clientSession).createMessage(anyBoolean());
             verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Message Publisher (name)unable to archive message"),

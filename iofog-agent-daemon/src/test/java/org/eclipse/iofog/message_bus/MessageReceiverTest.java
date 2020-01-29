@@ -38,12 +38,12 @@ import static org.powermock.api.mockito.PowerMockito.*;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageReceiver.class, ClientConsumer.class, MessageListener.class, ClientMessage.class,
+@PrepareForTest({MessageReceiver.class, ClientConsumer.class, IOMessageListener.class, ClientMessage.class,
         LoggingService.class, Message.class, MessageHandler.class})
 public class MessageReceiverTest {
     private MessageReceiver messageReceiver;
     private ClientConsumer clientConsumer;
-    private MessageListener messageListener;
+    private IOMessageListener IOMessageListener;
     private ClientMessage clientMessage;
     private Message message;
     private MessageHandler messageHandler;
@@ -56,11 +56,11 @@ public class MessageReceiverTest {
         MODULE_NAME = "MessageReceiver";
         mockStatic(LoggingService.class);
         clientConsumer = mock(ClientConsumer.class);
-        messageListener = mock(MessageListener.class);
+        IOMessageListener = mock(IOMessageListener.class);
         clientMessage = mock(ClientMessage.class);
         messageHandler = mock(MessageHandler.class);
         message = mock(Message.class);
-        PowerMockito.whenNew(MessageListener.class).withArguments(any(MessageCallback.class)).thenReturn(messageListener);
+        PowerMockito.whenNew(IOMessageListener.class).withArguments(any(MessageCallback.class)).thenReturn(IOMessageListener);
         PowerMockito.whenNew(Message.class).withParameterTypes(byte[].class).withArguments(any()).thenReturn(message);
         PowerMockito.when(clientConsumer.receiveImmediate()).thenReturn(clientMessage,null);
         PowerMockito.when(clientConsumer.getMessageHandler()).thenReturn(messageHandler);
@@ -83,7 +83,7 @@ public class MessageReceiverTest {
             assertEquals(0, messageReceiver.getMessages().size());
             Mockito.verify(clientConsumer, times(1)).receiveImmediate();
             Mockito.verify(clientMessage, Mockito.never()).acknowledge();
-            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(IOMessageListener.class));
             PowerMockito.verifyPrivate(messageReceiver, times(1))
                     .invoke("getMessage");
             verifyStatic(LoggingService.class);
@@ -101,7 +101,7 @@ public class MessageReceiverTest {
             assertEquals(message, messageReceiver.getMessages().get(0));
             Mockito.verify(clientConsumer, times(2)).receiveImmediate();
             Mockito.verify(clientMessage).acknowledge();
-            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(IOMessageListener.class));
             PowerMockito.verifyPrivate(messageReceiver, times(2))
                     .invoke("getMessage");
         } catch (Exception e) {
@@ -120,7 +120,7 @@ public class MessageReceiverTest {
             assertEquals(0, messageReceiver.getMessages().size());
             Mockito.verify(clientConsumer, Mockito.never()).receiveImmediate();
             Mockito.verify(clientMessage, Mockito.never()).acknowledge();
-            Mockito.verify(clientConsumer).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer).setMessageHandler(any(IOMessageListener.class));
             PowerMockito.verifyPrivate(messageReceiver).invoke("getMessage");
         } catch (Exception e) {
             fail("This should not happen");
@@ -143,7 +143,7 @@ public class MessageReceiverTest {
         try {
             messageReceiver = spy(new MessageReceiver(name, null));
             messageReceiver.enableRealTimeReceiving();
-            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(IOMessageListener.class));
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Start enable real time receiving");
             verifyStatic(LoggingService.class, Mockito.never());
@@ -160,7 +160,7 @@ public class MessageReceiverTest {
     public void testEnableRealTimeReceivingWhenConsumerIsNotNull() {
         try {
             messageReceiver.enableRealTimeReceiving();
-            Mockito.verify(clientConsumer).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer).setMessageHandler(any(IOMessageListener.class));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -174,7 +174,7 @@ public class MessageReceiverTest {
         try {
             PowerMockito.when(clientConsumer.setMessageHandler(any())).thenThrow(mock(ActiveMQException.class));
             messageReceiver.enableRealTimeReceiving();
-            Mockito.verify(clientConsumer).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer).setMessageHandler(any(IOMessageListener.class));
             verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Error in enabling real time listener"), any());
         } catch (Exception e) {
@@ -192,7 +192,7 @@ public class MessageReceiverTest {
             messageReceiver.enableRealTimeReceiving();
             PowerMockito.when(clientConsumer.setMessageHandler(any())).thenThrow(mock(ActiveMQException.class));
             messageReceiver.disableRealTimeReceiving();
-            Mockito.verify(clientConsumer).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer).setMessageHandler(any(IOMessageListener.class));
             verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Error in disabling real time listener"), any());
         } catch (Exception e) {
@@ -208,7 +208,7 @@ public class MessageReceiverTest {
         try {
             messageReceiver = spy(new MessageReceiver(name, null));
             messageReceiver.disableRealTimeReceiving();
-            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer, Mockito.never()).setMessageHandler(any(IOMessageListener.class));
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Start disable real time receiving");
             verifyStatic(LoggingService.class, Mockito.never());
@@ -227,7 +227,7 @@ public class MessageReceiverTest {
         try {
             messageReceiver.enableRealTimeReceiving();
             messageReceiver.disableRealTimeReceiving();
-            Mockito.verify(clientConsumer).setMessageHandler(any(MessageListener.class));
+            Mockito.verify(clientConsumer).setMessageHandler(any(IOMessageListener.class));
         } catch (Exception e) {
             fail("This should not happen");
         }

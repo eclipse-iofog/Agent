@@ -12,14 +12,12 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
-import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import javax.jms.*;
 import java.util.List;
 
 import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
@@ -35,16 +33,14 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 public class MessagePublisher implements AutoCloseable{
 	private final MessageArchive archive;
 	private final String name;
-	private ClientProducer producer;
-	private ClientSession session;
+	private MessageProducer producer;
 	private Route route;
 	
-	public MessagePublisher(String name, Route route, ClientProducer producer) {
+	public MessagePublisher(String name, Route route, MessageProducer producer) {
 		this.archive = new MessageArchive(name);
 		this.route = route;
 		this.name = name;
 		this.producer = producer;
-		this.session = MessageBusServer.getSession();
 	}
 	
 	public String getName() {
@@ -69,11 +65,15 @@ public class MessagePublisher implements AutoCloseable{
 			
 		}
 		for (String receiver : route.getReceivers()) {
-			ClientMessage msg = session.createMessage(false);
-			msg.putObjectProperty("receiver", receiver);
-			msg.putBytesProperty("message", bytes);
-			synchronized (messageBusSessionLock) {
-				producer.send(msg);
+			try {
+				TextMessage msg = MessageBusServer.createMessage(message.toJson().toString());
+				msg.setObjectProperty("receiver", receiver);
+				synchronized (messageBusSessionLock) {
+					producer.send(msg, DeliveryMode.NON_PERSISTENT, javax.jms.Message.DEFAULT_PRIORITY, javax.jms.Message.DEFAULT_TIME_TO_LIVE);
+				}
+			} catch (Exception e) {
+				logError(MODULE_NAME, "Message Publisher (" + this.name + ") unable to send message to " + receiver,
+						new AgentSystemException("Message Publisher (" + this.name + ") unable to send message to " + receiver, e));
 			}
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finsihed publish message : " + this.name);
@@ -88,6 +88,7 @@ public class MessagePublisher implements AutoCloseable{
 		LoggingService.logInfo(MODULE_NAME, "Start closing publish");
 		try {
 			archive.close();
+			producer.close();
 		} catch (Exception exp) {
 			logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
 		}

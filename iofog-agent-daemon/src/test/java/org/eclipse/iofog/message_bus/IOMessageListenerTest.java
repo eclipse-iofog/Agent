@@ -35,9 +35,9 @@ import static org.powermock.api.mockito.PowerMockito.*;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageListener.class, MessageCallback.class, ClientMessage.class, Message.class, LoggingService.class})
-public class MessageListenerTest {
-    private MessageListener messageListener;
+@PrepareForTest({IOMessageListener.class, MessageCallback.class, ClientMessage.class, Message.class, LoggingService.class})
+public class IOMessageListenerTest {
+    private IOMessageListener IOMessageListener;
     private MessageCallback messageCallback;
     private ClientMessage clientMessage;
     private Message message;
@@ -50,7 +50,7 @@ public class MessageListenerTest {
         clientMessage = mock(ClientMessage.class);
         message = mock(Message.class);
         mockStatic(LoggingService.class);
-        messageListener = spy(new MessageListener(messageCallback));
+        IOMessageListener = spy(new IOMessageListener(messageCallback));
         PowerMockito.when(clientMessage.acknowledge()).thenReturn(clientMessage);
         PowerMockito.whenNew(Message.class).withArguments(anyString()).thenReturn(message);
         PowerMockito.doNothing().when(messageCallback).sendRealtimeMessage(any(Message.class));
@@ -68,7 +68,7 @@ public class MessageListenerTest {
     @Test
     public void testOnMessage() {
         try {
-            messageListener.onMessage(clientMessage);
+            IOMessageListener.onMessage(clientMessage);
             verify(clientMessage).acknowledge();
             verify(messageCallback).sendRealtimeMessage(any());
             verifyStatic(LoggingService.class);
@@ -88,7 +88,7 @@ public class MessageListenerTest {
         try {
             PowerMockito.when(clientMessage.acknowledge()).
                     thenThrow(spy(new ActiveMQException("Exception")));
-            messageListener.onMessage(clientMessage);
+            IOMessageListener.onMessage(clientMessage);
             verify(clientMessage).acknowledge();
             verify(messageCallback).sendRealtimeMessage(any());
             verifyStatic(LoggingService.class);

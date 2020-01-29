@@ -22,7 +22,6 @@ import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.enums.RequestType;
-import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.microservice.*;
@@ -663,6 +662,8 @@ public class FieldAgent implements IOFogModule {
             JsonValue routesValue = jsonObj.get("routes");
             microservice.setRoutes(getStringList(routesValue));
 
+            microservice.setConsumer(jsonObj.getBoolean("isConsumer"));
+
             JsonValue portMappingValue = jsonObj.get("portMappings");
             if (!portMappingValue.getValueType().equals(JsonValue.ValueType.NULL)) {
                 JsonArray portMappingObjs = (JsonArray) portMappingValue;
@@ -921,6 +922,9 @@ public class FieldAgent implements IOFogModule {
                         configs.getString(LOG_LEVEL.getJsonProperty()) :
                         LOG_LEVEL.getDefaultValue();
 
+                String routerHost = configs.getString(ROUTER_HOST.getJsonProperty(), ROUTER_HOST.getDefaultValue());
+                String routerPort = configs.getString(ROUTER_PORT.getJsonProperty(), ROUTER_PORT.getDefaultValue());
+
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -969,6 +973,9 @@ public class FieldAgent implements IOFogModule {
 
                 if (!Configuration.getLogLevel().equals(logLevel))
                     instanceConfig.put(LOG_LEVEL.getCommandName(), logLevel);
+
+                instanceConfig.put(ROUTER_HOST.getJsonProperty(), routerHost);
+                instanceConfig.put(ROUTER_PORT.getJsonProperty(), routerPort);
 
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);
