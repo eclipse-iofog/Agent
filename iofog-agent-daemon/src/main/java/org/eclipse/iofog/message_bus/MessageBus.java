@@ -261,7 +261,31 @@ public class MessageBus implements IOFogModule {
 					publishedMessagesPerMicroservice.put(e.getMicroserviceUuid(), 0L);
 				}
 			});
-		}
+
+            List<Microservice> microservices = microserviceManager.getLatestMicroservices();
+            microservices.forEach(microservice -> {
+                if (!microservice.isConsumer()) {
+                    return;
+                }
+
+                String id = microservice.getMicroserviceUuid();
+                if (messageBusServer.getConsumer(id) == null) {
+                    try {
+                        messageBusServer.createConsumer(id);
+                        MessageReceiver messageReceiver = new MessageReceiver(id, messageBusServer.getConsumer(id));
+                        receivers.put(id, messageReceiver);
+
+                        Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.getMessageWebsocketMap();
+                        if (messageSocketMap.containsKey(id)) {
+                            messageReceiver.enableRealTimeReceiving();
+                        }
+                    } catch (Exception e) {
+                        logError(MODULE_NAME,
+                                new AgentSystemException("unable to start receiver module " + id, e));
+                    }
+                }
+            });
+        }
 		logInfo("Finished update routes, list of publishers and receivers");
 	}
 	
