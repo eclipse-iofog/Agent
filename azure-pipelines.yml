@@ -29,11 +29,12 @@ jobs:
         inputs:
           workingDirectory: ''
           gradleWrapperFile: 'gradlew'
-          gradleOptions: '-x test -Xmx3072m'
+          gradleOptions: '-Xmx3072m'
           javaHomeOption: 'JDKVersion'
           jdkVersionOption: '1.8'
           jdkArchitectureOption: 'x64'
           tasks: 'build'
+          options: '-x test'
 
       # We need nodejs for Snyk
       - task: NodeTool@0
