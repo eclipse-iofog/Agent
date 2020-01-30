@@ -33,23 +33,8 @@ jobs:
           javaHomeOption: 'JDKVersion'
           jdkVersionOption: '1.8'
           jdkArchitectureOption: 'x64'
-          publishJUnitResults: true
-          testResultsFiles: '**/TEST-*.xml'
           tasks: 'build'
-
-      - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
-        displayName: ReportGenerator
-        inputs:
-          reports: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
-          targetdir: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
-          reporttypes: 'HtmlInline_AzurePipelines;Badges'
-
-      - task: PublishCodeCoverageResults@1
-        inputs:
-          codeCoverageTool: 'JaCoCo'
-          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
-          reportDirectory: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
-        displayName: 'Publish Code Coverage Results'
+          gradleOptions: '-x test'
 
       # We need nodejs for Snyk
       - task: NodeTool@0
