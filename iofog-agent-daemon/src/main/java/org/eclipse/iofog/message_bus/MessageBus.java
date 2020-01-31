@@ -29,6 +29,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -262,17 +263,16 @@ public class MessageBus implements IOFogModule {
 				}
 			});
 
-            List<Microservice> microservices = microserviceManager.getLatestMicroservices();
-            microservices.forEach(microservice -> {
+			latestMicroservices.forEach(microservice -> {
                 if (!microservice.isConsumer()) {
                     return;
                 }
 
                 String id = microservice.getMicroserviceUuid();
-                if (messageBusServer.getConsumer(id) == null) {
+				MessageConsumer consumer = messageBusServer.getConsumer(id);
+                if (consumer != null) {
                     try {
-                        messageBusServer.createConsumer(id);
-                        MessageReceiver messageReceiver = new MessageReceiver(id, messageBusServer.getConsumer(id));
+                        MessageReceiver messageReceiver = new MessageReceiver(id, consumer);
                         receivers.put(id, messageReceiver);
 
                         Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.getMessageWebsocketMap();
