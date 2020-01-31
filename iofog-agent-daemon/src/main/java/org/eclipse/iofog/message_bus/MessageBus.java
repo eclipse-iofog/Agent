@@ -283,7 +283,10 @@ public class MessageBus implements IOFogModule {
                         logError(MODULE_NAME,
                                 new AgentSystemException("unable to start receiver module " + id, e));
                     }
-                }
+                } else {
+					logError(MODULE_NAME,
+							new AgentSystemException("unable to create consumer " + id));
+				}
             });
         }
 		logInfo("Finished update routes, list of publishers and receivers");
