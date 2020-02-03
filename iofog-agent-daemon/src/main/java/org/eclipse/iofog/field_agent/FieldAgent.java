@@ -922,9 +922,6 @@ public class FieldAgent implements IOFogModule {
                         configs.getString(LOG_LEVEL.getJsonProperty()) :
                         LOG_LEVEL.getDefaultValue();
 
-                String routerHost = configs.getString(ROUTER_HOST.getJsonProperty(), ROUTER_HOST.getDefaultValue());
-                String routerPort = configs.getString(ROUTER_PORT.getJsonProperty(), ROUTER_PORT.getDefaultValue());
-
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -973,9 +970,6 @@ public class FieldAgent implements IOFogModule {
 
                 if (!Configuration.getLogLevel().equals(logLevel))
                     instanceConfig.put(LOG_LEVEL.getCommandName(), logLevel);
-
-                instanceConfig.put(ROUTER_HOST.getJsonProperty(), routerHost);
-                instanceConfig.put(ROUTER_PORT.getJsonProperty(), routerPort);
 
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);

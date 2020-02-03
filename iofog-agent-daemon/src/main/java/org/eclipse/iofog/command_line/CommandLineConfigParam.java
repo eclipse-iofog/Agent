@@ -52,9 +52,7 @@ public enum CommandLineConfigParam {
     GPS_COORDINATES ("", "", "gps_coordinates", "gpscoordinates"),
     POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
     FOG_TYPE ("auto", "ft", "fog_type", ""),
-    DEV_MODE ("on", "dev", "dev_mode", ""),
-    ROUTER_HOST ("localhost", "routerHost", "router_host", "routerHost"),
-    ROUTER_PORT ("5672", "routerPort", "router_port", "routerPort");
+    DEV_MODE ("on", "dev", "dev_mode", "");
 
     private final String commandName;
     private final String xmlTag;
