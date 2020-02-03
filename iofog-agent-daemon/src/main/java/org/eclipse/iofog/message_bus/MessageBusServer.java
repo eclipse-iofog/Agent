@@ -16,6 +16,7 @@ import org.apache.qpid.jms.JmsConnectionFactory;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.jms.*;
@@ -62,7 +63,9 @@ public class MessageBusServer {
      */
     void startServer() throws Exception {
         LoggingService.logInfo(MODULE_NAME, "starting server");
-        ConnectionFactory connectionFactory = new JmsConnectionFactory("amqp://localhost:5672");
+        String routerHost = Configuration.getRouterHost();
+        int routerPort = Configuration.getRouterPort();
+        ConnectionFactory connectionFactory = new JmsConnectionFactory(String.format("amqp://%s:%d", routerHost, routerPort));
         connection = connectionFactory.createConnection();
         LoggingService.logInfo(MODULE_NAME, "Finished starting server");
     }
