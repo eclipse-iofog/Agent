@@ -80,9 +80,6 @@ public class Constants {
 
     public static PrintStream systemOut;
 
-    public static final String ADDRESS = "org.eclipse.iofog.message_bus";
-    public static final String COMMAND_LINE_ADDRESS = "iofog.commandline";
-
     public static final int KiB = 1024;
     public static final int MiB = KiB * KiB;
     public static final int GiB = KiB * KiB * KiB;

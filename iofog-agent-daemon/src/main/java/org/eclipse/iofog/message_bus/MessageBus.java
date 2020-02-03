@@ -138,14 +138,14 @@ public class MessageBus implements IOFogModule {
 			.forEach(entry -> {
 					String publisher = entry.getKey();
 					Route route = entry.getValue();
-				
+
 					try {
-						messageBusServer.createProducer(publisher);
+						messageBusServer.createProducer(publisher, route.getReceivers());
 					} catch (Exception e) {
 						logError(MODULE_NAME,
 								new AgentSystemException("unable to start publisher module :" + publisher, e));
 					}
-					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher)));
+					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher, route.getReceivers())));
 			});
 
 		List<Microservice> microservices = microserviceManager.getLatestMicroservices();
@@ -253,8 +253,10 @@ public class MessageBus implements IOFogModule {
 			publishers.putAll(
 					newPublishers.stream()
 					.filter(publisher -> !publishers.containsKey(publisher))
-					.collect(Collectors.toMap(publisher -> publisher, 
-							publisher -> new MessagePublisher(publisher, newRoutes.get(publisher), messageBusServer.getProducer(publisher)))));
+					.collect(Collectors.toMap(publisher -> publisher, publisher -> {
+						Route route = newRoutes.get(publisher);
+						return new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher, route.getReceivers()));
+					})));
 
 			receivers.forEach((key, value) -> {
 				if (!newReceivers.contains(key)) {
