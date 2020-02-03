@@ -61,10 +61,8 @@ public class MessageBusServer {
      *
      * @throws Exception
      */
-    void startServer() throws Exception {
+    void startServer(String routerHost, int routerPort) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "starting server");
-        String routerHost = Configuration.getRouterHost();
-        int routerPort = Configuration.getRouterPort();
         ConnectionFactory connectionFactory = new JmsConnectionFactory(String.format("amqp://%s:%d", routerHost, routerPort));
         connection = connectionFactory.createConnection();
         LoggingService.logInfo(MODULE_NAME, "Finished starting server");

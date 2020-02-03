@@ -18,18 +18,21 @@ import org.apache.qpid.jms.exceptions.JmsConnectionClosedException;
 import org.apache.qpid.jms.exceptions.JmsConnectionFailedException;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.local_api.WebSocketMap;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +60,9 @@ public class MessageBus implements IOFogModule {
 	private static MessageBus instance;
 	private MicroserviceManager microserviceManager;
 	private final Object updateLock = new Object();
-	
+	private String routerHost;
+	private int routerPort;
+
 	private long lastSpeedTime, lastSpeedMessageCount;
 
 	private MessageBus() {}
@@ -205,6 +210,20 @@ public class MessageBus implements IOFogModule {
 	public void update() {
 		logInfo("Start update routes, list of publishers and receivers");
 		synchronized (updateLock) {
+			try {
+				String tempRouterHost = routerHost;
+				int tempRouterPort = routerPort;
+				getRouterAddress();
+				if (tempRouterHost != routerHost || tempRouterPort != routerPort) {
+					publishers.forEach((key, publisher) -> publisher.close());
+					receivers.forEach((key, receiver) -> receiver.close());
+					messageBusServer.stopServer();
+					new Thread(startServer).start();
+				}
+			} catch (Exception e) {
+				logError(MODULE_NAME, new AgentSystemException("unable to update Message Bus", e));
+			}
+
 			Map<String, Route> newRoutes = microserviceManager.getRoutes();
 			List<String> newPublishers = new ArrayList<>();
 			List<String> newReceivers = new ArrayList<>();
@@ -301,13 +320,23 @@ public class MessageBus implements IOFogModule {
 		// TODO: Set router address if changed
 	}
 
+	private void getRouterAddress() throws Exception {
+		Orchestrator orchestrator = new Orchestrator();
+		JsonObject configs = orchestrator.request("config", RequestType.GET, null, null);
+		routerHost = configs.getString("routerHost");
+		routerPort = configs.getJsonNumber("routerPort").intValue();
+	}
+
 	private Runnable startServer = new Runnable() {
 		@Override
 		public void run() {
 			while (true) {
 				try {
 					logInfo("STARTING MESSAGE BUS SERVER");
-					messageBusServer.startServer();
+
+					getRouterAddress();
+
+					messageBusServer.startServer(routerHost, routerPort);
 					messageBusServer.initialize();
 
 					logInfo("MESSAGE BUS SERVER STARTED");
@@ -424,8 +453,8 @@ public class MessageBus implements IOFogModule {
 
 				try {
 					Thread.sleep(2000);
-					publishers.forEach((key, publisher) -> { publisher.close(); });
-					receivers.forEach((key, receiver) -> { receiver.close(); });
+					publishers.forEach((key, publisher) -> publisher.close());
+					receivers.forEach((key, receiver) -> receiver.close());
 					messageBusServer.stopServer();
 				} catch (Exception e) {}
 
