@@ -15,11 +15,12 @@ package org.eclipse.iofog.message_bus;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
-import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.jms.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,10 +36,9 @@ public class MessageBusServer {
 
     private Connection connection;
     private static Session session;
-    private Destination messageQueue;
 
     private Map<String, MessageConsumer> consumers = new ConcurrentHashMap<>();
-    private Map<String, MessageProducer> producers = new ConcurrentHashMap<>();
+    private Map<String, List<MessageProducer>> producers = new ConcurrentHashMap<>();
 
 	static TextMessage createMessage(String text) throws Exception {
 		return session.createTextMessage(text);
@@ -78,7 +78,6 @@ public class MessageBusServer {
         LoggingService.logInfo(MODULE_NAME, "starting initialization");
         synchronized (messageBusSessionLock) {
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            messageQueue = session.createTopic(Constants.ADDRESS);
             connection.start();
         }
         LoggingService.logInfo(MODULE_NAME, "Finished initialization");
@@ -94,7 +93,8 @@ public class MessageBusServer {
         LoggingService.logInfo(MODULE_NAME, "Starting create consumer");
 
         synchronized (messageBusSessionLock) {
-            MessageConsumer consumer = session.createConsumer(messageQueue, String.format("receiver = '%s'", name));
+            Destination messageQueue = session.createQueue(name);
+            MessageConsumer consumer = session.createConsumer(messageQueue);
             consumers.put(name, consumer);
         }
 
@@ -144,12 +144,19 @@ public class MessageBusServer {
      * @param name - ID of {@link Microservice}
      * @throws Exception
      */
-    void createProducer(String name) throws Exception {
+    void createProducer(String name, List<String> receivers) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "Start create Producer");
 
         synchronized (messageBusSessionLock) {
-            MessageProducer producer = session.createProducer(messageQueue);
-			producers.put(name, producer);
+            if (receivers != null && receivers.size() > 0) {
+                List<MessageProducer> messageProducers = new ArrayList<>();
+                for (String receiver: receivers) {
+                    Destination messageQueue = session.createQueue(receiver);
+                    MessageProducer producer = session.createProducer(messageQueue);
+                    messageProducers.add(producer);
+                }
+                producers.put(name, messageProducers);
+            }
         }
 
         LoggingService.logInfo(MODULE_NAME, "Finish create Producer");
@@ -161,12 +168,12 @@ public class MessageBusServer {
      * @param publisher - ID of {@link Microservice}
      * @return {@link MessageProducer}
      */
-    MessageProducer getProducer(String publisher) {
+    List<MessageProducer> getProducer(String publisher, List<String> receivers) {
         LoggingService.logInfo(MODULE_NAME, "Start get Producer");
 
         if (producers == null || !producers.containsKey(publisher))
             try {
-                createProducer(publisher);
+                createProducer(publisher, receivers);
             } catch (Exception e) {
                 return null;
             }
@@ -185,8 +192,14 @@ public class MessageBusServer {
 
 		synchronized (messageBusSessionLock) {
 			if (producers != null && producers.containsKey(name)) {
-				MessageProducer producer = producers.remove(name);
-				producer.close();
+				List<MessageProducer> messageProducers = producers.remove(name);
+				messageProducers.forEach(producer -> {
+				    try {
+				        producer.close();
+                    } catch (Exception e) {
+                        LoggingService.logWarning(MODULE_NAME, "Unable to close producer");
+                    }
+                });
 			}
 		}
 
@@ -213,12 +226,14 @@ public class MessageBusServer {
         }
         if (producers != null) {
             producers.forEach((key, value) -> {
-                try {
-                    value.close();
-                } catch (Exception e) {
-                    LoggingService.logError(MODULE_NAME, "Error closing producer",
-                            new AgentSystemException("Error closing producer", e));
-                }
+                value.forEach(producer -> {
+                    try {
+                        producer.close();
+                    } catch (Exception e) {
+                        LoggingService.logError(MODULE_NAME, "Error closing producer",
+                                new AgentSystemException("Error closing producer", e));
+                    }
+                });
             });
             producers.clear();
         }

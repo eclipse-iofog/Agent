@@ -33,14 +33,14 @@ import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 public class MessagePublisher implements AutoCloseable{
 	private final MessageArchive archive;
 	private final String name;
-	private MessageProducer producer;
+	private List<MessageProducer> producers;
 	private Route route;
 	
-	public MessagePublisher(String name, Route route, MessageProducer producer) {
+	public MessagePublisher(String name, Route route, List<MessageProducer> producers) {
 		this.archive = new MessageArchive(name);
 		this.route = route;
 		this.name = name;
-		this.producer = producer;
+		this.producers = producers;
 	}
 	
 	public String getName() {
@@ -62,18 +62,17 @@ public class MessagePublisher implements AutoCloseable{
 		} catch (Exception e) {
 			logError(MODULE_NAME, "Message Publisher (" + this.name + ")unable to archive message",
 					new AgentSystemException("Message Publisher (" + this.name + ")unable to archive message", e));
-			
 		}
-		for (String receiver : route.getReceivers()) {
+
+		for (MessageProducer producer: producers) {
 			try {
 				TextMessage msg = MessageBusServer.createMessage(message.toJson().toString());
-				msg.setObjectProperty("receiver", receiver);
 				synchronized (messageBusSessionLock) {
 					producer.send(msg, DeliveryMode.NON_PERSISTENT, javax.jms.Message.DEFAULT_PRIORITY, javax.jms.Message.DEFAULT_TIME_TO_LIVE);
 				}
 			} catch (Exception e) {
-				logError(MODULE_NAME, "Message Publisher (" + this.name + ") unable to send message to " + receiver,
-						new AgentSystemException("Message Publisher (" + this.name + ") unable to send message to " + receiver, e));
+				logError(MODULE_NAME, "Message Publisher (" + this.name + ") unable to send message",
+						new AgentSystemException("Message Publisher (" + this.name + ") unable to send message", e));
 			}
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finsihed publish message : " + this.name);
@@ -88,7 +87,9 @@ public class MessagePublisher implements AutoCloseable{
 		LoggingService.logInfo(MODULE_NAME, "Start closing publish");
 		try {
 			archive.close();
-			producer.close();
+			for (MessageProducer producer: producers) {
+				producer.close();
+			}
 		} catch (Exception exp) {
 			logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
 		}
