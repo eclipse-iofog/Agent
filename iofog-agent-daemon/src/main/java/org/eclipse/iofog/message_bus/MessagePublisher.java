@@ -35,7 +35,7 @@ public class MessagePublisher implements AutoCloseable{
 	private final String name;
 	private List<MessageProducer> producers;
 	private Route route;
-	
+
 	public MessagePublisher(String name, Route route, List<MessageProducer> producers) {
 		this.archive = new MessageArchive(name);
 		this.route = route;
@@ -75,7 +75,7 @@ public class MessagePublisher implements AutoCloseable{
 						new AgentSystemException("Message Publisher (" + this.name + ") unable to send message", e));
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finsihed publish message : " + this.name);
+		LoggingService.logInfo(MODULE_NAME, "Finished publish message : " + this.name);
 	}
 
 	synchronized void updateRoute(Route route) {

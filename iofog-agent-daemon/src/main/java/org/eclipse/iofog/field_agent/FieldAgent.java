@@ -372,6 +372,9 @@ public class FieldAgent implements IOFogModule {
                     if (changes.getBoolean("diagnostics", false) && !initialization) {
                         updateDiagnostics();
                     }
+                    if (changes.getBoolean("routerChanged") && !initialization) {
+                        MessageBus.getInstance().update();
+                    }
                 }
 
                 initialization = false;

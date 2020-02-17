@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import org.apache.commons.collections.map.HashedMap;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -26,6 +25,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,14 +67,14 @@ public class MessageBusUtilTest {
         mockStatic(StatusReporter.class);
         messages = mock(ArrayList.class);
         receivers = mock(ArrayList.class);
-        routes = mock(HashedMap.class);
+        routes = mock(HashMap.class);
         messageBusStatus = mock(MessageBusStatus.class);
         PowerMockito.when(MessageBus.getInstance()).thenReturn(messageBus);
         PowerMockito.when(messageBus.getReceiver(any())).thenReturn(messageReceiver);
         PowerMockito.when(messageBus.getPublisher(any())).thenReturn(messagePublisher);
         PowerMockito.when(messageBus.getRoutes()).thenReturn(routes);
         PowerMockito.when(routes.get(any())).thenReturn(route);
-        PowerMockito.when(route.getMicroserviceIds()).thenReturn(receivers);
+        PowerMockito.when(route.getReceivers()).thenReturn(receivers);
         PowerMockito.when(messageReceiver.getMessages()).thenReturn(messages);
         PowerMockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
         PowerMockito.when(receivers.contains(eq("receiver"))).thenReturn(true);
@@ -246,7 +246,7 @@ public class MessageBusUtilTest {
             PowerMockito.when(receivers.contains(eq("receiver"))).thenReturn(false);
             assertNull(messageBusUtil.messageQuery("publisher", "receiver", 100l, currentTimeMillis()));
             Mockito.verify(messageBus).getRoutes();
-            Mockito.verify(route).getMicroserviceIds();
+            Mockito.verify(route).getReceivers();
             Mockito.verify(messageBus, Mockito.never()).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).messageQuery(anyLong(), anyLong());
         } catch (Exception e) {
@@ -264,7 +264,7 @@ public class MessageBusUtilTest {
             PowerMockito.when(messageBus.getPublisher(any())).thenReturn(null);
             assertNull(messageBusUtil.messageQuery("publisher", "receiver", 100l, currentTimeMillis()));
             Mockito.verify(messageBus).getRoutes();
-            Mockito.verify(route).getMicroserviceIds();
+            Mockito.verify(route).getReceivers();
             Mockito.verify(messageBus).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).messageQuery(anyLong(), anyLong());
         } catch (Exception e) {
