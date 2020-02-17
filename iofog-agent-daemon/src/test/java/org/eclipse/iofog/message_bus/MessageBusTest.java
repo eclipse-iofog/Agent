@@ -28,6 +28,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.jms.MessageConsumer;
+import javax.jms.MessageProducer;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,19 +46,19 @@ import static org.mockito.Mockito.*;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageBus.class, MicroserviceManager.class, MessageBusServer.class, ClientProducer.class,
-        LoggingService.class, MessageReceiver.class, ClientConsumer.class ,MessagePublisher.class,
+@PrepareForTest({MessageBus.class, MicroserviceManager.class, MessageBusServer.class, MessageProducer.class,
+        LoggingService.class, MessageReceiver.class, MessageConsumer.class ,MessagePublisher.class,
         StatusReporter.class, MessageBusStatus.class, SupervisorStatus.class, Thread.class})
 public class MessageBusTest {
     private MessageBus messageBus;
     private MicroserviceManager microserviceManager;
     private MessageBusServer messageBusServer;
-    private Thread thread;
+    private Thread speedThread;
     private Route route;
     private String MODULE_NAME;
     private String receiverValue;
     private MessageReceiver messageReceiver;
-    private ClientConsumer clientConsumer;
+    private MessageConsumer messageConsumer;
     private MessagePublisher messagePublisher;
     private MessageBusStatus messageBusStatus;
     private SupervisorStatus supervisorStatus;
@@ -75,15 +77,15 @@ public class MessageBusTest {
         microserviceManager = mock(MicroserviceManager.class);
         messageBusServer = mock(MessageBusServer.class);
         messageReceiver = mock(MessageReceiver.class);
-        clientConsumer = mock(ClientConsumer.class);
+        messageConsumer = mock(MessageConsumer.class);
         messagePublisher = mock(MessagePublisher.class);
         messageBusStatus = mock(MessageBusStatus.class);
         supervisorStatus = mock(SupervisorStatus.class);
         PowerMockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
         PowerMockito.whenNew(MessageBusServer.class).withNoArguments().thenReturn(messageBusServer);
-        PowerMockito.whenNew(MessageReceiver.class).withArguments(anyString(), any(ClientConsumer.class))
+        PowerMockito.whenNew(MessageReceiver.class).withArguments(anyString(), any(MessageConsumer.class))
                 .thenReturn(messageReceiver);
-        PowerMockito.whenNew(MessagePublisher.class).withArguments(anyString(), any(Route.class), any(ClientProducer.class))
+        PowerMockito.whenNew(MessagePublisher.class).withArguments(anyString(), any(Route.class), any(MessageProducer.class))
                 .thenReturn(messagePublisher);
         route = new Route();
         receivers = new ArrayList<>();
@@ -91,18 +93,17 @@ public class MessageBusTest {
         receivers.add(receiverValue);
         receivers.add("2");
         receivers.add("3");
-        route.setMicroserviceIds(receivers);
+        route.setReceivers(receivers);
         mapRoutes = new HashMap<>();
         mapRoutes.put("1", route);
-        publishedMessagesPerMicroservice = new HashedMap();
+        publishedMessagesPerMicroservice = new HashMap<>();
         publishedMessagesPerMicroservice.put("1", 100l);
         PowerMockito.when(microserviceManager.getRoutes()).thenReturn(mapRoutes);
         PowerMockito.when(messageBusStatus.getPublishedMessagesPerMicroservice()).thenReturn(publishedMessagesPerMicroservice);
-        PowerMockito.when(messageBusServer.getConsumer(any())).thenReturn(mock(ClientConsumer.class));
-        PowerMockito.when(messageBusServer.getProducer(any())).thenReturn(mock(ClientProducer.class));
+        PowerMockito.when(messageBusServer.getConsumer(any())).thenReturn(mock(MessageConsumer.class));
+        PowerMockito.when(messageBusServer.getProducer(any(), any())).thenReturn(mock(List.class));
         PowerMockito.doNothing().when(messageReceiver).enableRealTimeReceiving();
         PowerMockito.doNothing().when(messageReceiver).disableRealTimeReceiving();
-        PowerMockito.doNothing().when(messageBusServer).setMemoryLimit();
         PowerMockito.when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
         PowerMockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
         PowerMockito.when(StatusReporter.setSupervisorStatus()).thenReturn(supervisorStatus);
@@ -121,7 +122,7 @@ public class MessageBusTest {
         reset(messageBus);
         reset(messageBusServer);
         reset(messagePublisher);
-        reset(clientConsumer);
+        reset(messageConsumer);
         reset(messageReceiver);
         reset(microserviceManager);
     }
@@ -167,7 +168,7 @@ public class MessageBusTest {
     /**
      * Test enableRealTimeReceiving when receiver passed is null
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testEnableRealTimeReceivingWhenReceiverPassedIsNull() {
         initiateMockStart();
         messageBus.enableRealTimeReceiving(null);
@@ -181,7 +182,7 @@ public class MessageBusTest {
     /**
      * Test enableRealTimeReceiving when receiver is not found
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testEnableRealTimeReceivingWhenReceiverIsNotFound() {
         initiateMockStart();
         messageBus.enableRealTimeReceiving("receiver");
@@ -193,7 +194,7 @@ public class MessageBusTest {
     /**
      * Test enableRealTimeReceiving when receiver is found
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testEnableRealTimeReceivingWhenReceiverIsFound() {
         initiateMockStart();
         messageBus.enableRealTimeReceiving(receiverValue);
@@ -207,7 +208,7 @@ public class MessageBusTest {
     /**
      * Test disableRealTimeReceiving when receiver passed is null
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testDisableRealTimeReceivingWhenReceiverPassedIsNull() {
         initiateMockStart();
         messageBus.disableRealTimeReceiving(null);
@@ -219,7 +220,7 @@ public class MessageBusTest {
     /**
      * Test disableRealTimeReceiving when receiver is not null
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testDisableRealTimeReceivingWhenReceiverPassedIsNotFound() {
         initiateMockStart();
         messageBus.disableRealTimeReceiving("receiver");
@@ -230,7 +231,7 @@ public class MessageBusTest {
      * Test disableRealTimeReceiving when receivers is found
      * receiver passed is not null
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testDisableRealTimeReceivingWhenReceiverPassedIsFound() {
         initiateMockStart();
         messageBus.disableRealTimeReceiving(receiverValue);
@@ -258,21 +259,20 @@ public class MessageBusTest {
         LoggingService.logInfo(MODULE_NAME,"Finished update routes, list of publishers and receivers");
     }
 
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testInstanceConfigUpdated() {
         initiateMockStart();
         messageBus.instanceConfigUpdated();
-        Mockito.verify(messageBusServer, atLeastOnce()).setMemoryLimit();
     }
 
     /**
      * Test start
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testStart() {
         try {
             initiateMockStart();
-            Mockito.verify(messageBusServer, atLeastOnce()).startServer();
+            Mockito.verify(messageBusServer, atLeastOnce()).startServer("localhost", 5672);
             Mockito.verify(messageBusServer, atLeastOnce()).initialize();
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME,"STARTING MESSAGE BUS SERVER");
@@ -286,12 +286,12 @@ public class MessageBusTest {
     /**
      * Test start when messageBusServer.initialize() throws Exception
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void throwsExceptionWhenMessageBusServerInitializeIsCalledInStart() {
         try{
             PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).initialize();
             initiateMockStart();
-            Mockito.verify(messageBusServer, atLeastOnce()).startServer();
+            Mockito.verify(messageBusServer, atLeastOnce()).startServer("localhost", 5672);
             Mockito.verify(messageBusServer, atLeastOnce()).initialize();
             Mockito.verify(messageBusServer, atLeastOnce()).stopServer();
             PowerMockito.verifyStatic(LoggingService.class, never());
@@ -307,13 +307,13 @@ public class MessageBusTest {
      * Test start when messageBusServer.initialize() throws Exception &
      * messageBusServer.stopServer() also throws exception
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void throwsExceptionWhenMessageBusServerInitializeAndStopServerIsCalledInStart() {
         try{
             PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).initialize();
             PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).stopServer();
             initiateMockStart();
-            Mockito.verify(messageBusServer, atLeastOnce()).startServer();
+            Mockito.verify(messageBusServer, atLeastOnce()).startServer("localhost", 5672);
             Mockito.verify(messageBusServer, atLeastOnce()).initialize();
             Mockito.verify(messageBusServer, atLeastOnce()).stopServer();
             PowerMockito.verifyStatic(LoggingService.class);
@@ -328,7 +328,7 @@ public class MessageBusTest {
     /**
      * Test stop
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testStop() {
         try {
             initiateMockStart();
@@ -346,7 +346,7 @@ public class MessageBusTest {
     /**
      * Test stop when messageBusServer.stopServer() throws exception
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void throwsExceptionWhenMessageServerStopIsCalled() {
         try {
             PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).stopServer();
@@ -363,7 +363,7 @@ public class MessageBusTest {
     /**
      * test getPublisher
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testGetPublisher() {
         initiateMockStart();
         assertNotNull(messageBus.getPublisher("1"));
@@ -373,7 +373,7 @@ public class MessageBusTest {
     /**
      * Test get receiver
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testGetReceiver() {
         initiateMockStart();
         assertNotNull(messageBus.getReceiver(receiverValue));
@@ -393,7 +393,7 @@ public class MessageBusTest {
     /**
      * Test getRoutes
      */
-    @Test (timeout = 1000L)
+    @Test (timeout = 100000L)
     public void testGetRoutes() {
         initiateMockStart();
         assertNotNull(messageBus.getRoutes());
@@ -404,11 +404,14 @@ public class MessageBusTest {
      * Helper method
      */
     public void initiateMockStart() {
-        thread = mock(Thread.class);
+        speedThread = mock(Thread.class);
+        Thread startThread = mock(Thread.class);
         try {
-            PowerMockito.whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
-                    anyString()).thenReturn(thread);
-            PowerMockito.doNothing().when(thread).start();
+            PowerMockito.whenNew(Thread.class).withParameterTypes(Runnable.class).withArguments(Mockito.any(Runnable.class)).thenReturn(startThread);
+            PowerMockito.whenNew(Thread.class).withParameterTypes(Runnable.class, String.class).withArguments(Mockito.any(Runnable.class),
+                    anyString()).thenReturn(speedThread);
+            PowerMockito.doNothing().when(speedThread).start();
+            PowerMockito.doNothing().when(startThread).start();
             messageBus.start();
         } catch (Exception e) {
             fail("this should not happen");
