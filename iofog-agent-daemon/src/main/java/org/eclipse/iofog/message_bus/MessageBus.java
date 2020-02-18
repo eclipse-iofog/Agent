@@ -329,23 +329,26 @@ public class MessageBus implements IOFogModule {
 		routerPort = configs.getJsonNumber("routerPort").intValue();
 	}
 
+	public void startServer() throws Exception {
+		logInfo("STARTING MESSAGE BUS SERVER");
+
+		getRouterAddress();
+
+		messageBusServer.startServer(routerHost, routerPort);
+		messageBusServer.initialize();
+
+		logInfo("MESSAGE BUS SERVER STARTED");
+		init();
+
+		new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED).start();
+	}
+
 	private Runnable startServer = new Runnable() {
 		@Override
 		public void run() {
 			while (true) {
 				try {
-					logInfo("STARTING MESSAGE BUS SERVER");
-
-					getRouterAddress();
-
-					messageBusServer.startServer(routerHost, routerPort);
-					messageBusServer.initialize();
-
-					logInfo("MESSAGE BUS SERVER STARTED");
-					init();
-
-					new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED).start();
-
+					startServer();
 					break;
 				} catch (Exception e) {
 					try {
@@ -380,11 +383,17 @@ public class MessageBus implements IOFogModule {
 	 */
 	public void stop() {
 		logInfo("Start closing receivers and publishers and stops ActiveMQ server");
-		for (MessageReceiver receiver : receivers.values()) 
-			receiver.close();
-		
-		for (MessagePublisher publisher : publishers.values())
-			publisher.close();
+
+		if (receivers != null) {
+			for (MessageReceiver receiver : receivers.values())
+				receiver.close();
+		}
+
+		if (publishers != null) {
+			for (MessagePublisher publisher : publishers.values())
+				publisher.close();
+		}
+
 		try {
 			messageBusServer.stopServer();
 		} catch (Exception exp) {
