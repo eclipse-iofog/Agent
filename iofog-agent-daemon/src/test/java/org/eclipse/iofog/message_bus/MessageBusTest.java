@@ -18,6 +18,7 @@ import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
 import org.junit.Before;
@@ -30,6 +31,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +43,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 /**
  * @author nehanaithani
@@ -48,7 +53,7 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({MessageBus.class, MicroserviceManager.class, MessageBusServer.class, MessageProducer.class,
         LoggingService.class, MessageReceiver.class, MessageConsumer.class ,MessagePublisher.class,
-        StatusReporter.class, MessageBusStatus.class, SupervisorStatus.class, Thread.class})
+        StatusReporter.class, MessageBusStatus.class, SupervisorStatus.class, Thread.class, Orchestrator.class})
 public class MessageBusTest {
     private MessageBus messageBus;
     private MicroserviceManager microserviceManager;
@@ -63,6 +68,7 @@ public class MessageBusTest {
     private MessageBusStatus messageBusStatus;
     private SupervisorStatus supervisorStatus;
     private Map<String, Long> publishedMessagesPerMicroservice;
+    private Orchestrator orchestrator = null;
     Map<String, Route> mapRoutes;
     List<String> receivers;
 
@@ -107,6 +113,11 @@ public class MessageBusTest {
         PowerMockito.when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
         PowerMockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
         PowerMockito.when(StatusReporter.setSupervisorStatus()).thenReturn(supervisorStatus);
+        orchestrator = mock(Orchestrator.class);
+        whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
+
+        MessagePublisher messagePublisher = mock(MessagePublisher.class);
+        whenNew(MessagePublisher.class).withAnyArguments().thenReturn(messagePublisher);
     }
 
     @After
@@ -192,20 +203,6 @@ public class MessageBusTest {
     }
 
     /**
-     * Test enableRealTimeReceiving when receiver is found
-     */
-    @Test (timeout = 100000L)
-    public void testEnableRealTimeReceivingWhenReceiverIsFound() {
-        initiateMockStart();
-        messageBus.enableRealTimeReceiving(receiverValue);
-        Mockito.verify(messageReceiver).enableRealTimeReceiving();
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Starting enable real time receiving");
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Finishing enable real time receiving");
-    }
-
-    /**
      * Test disableRealTimeReceiving when receiver passed is null
      */
     @Test (timeout = 100000L)
@@ -225,21 +222,6 @@ public class MessageBusTest {
         initiateMockStart();
         messageBus.disableRealTimeReceiving("receiver");
         Mockito.verify(messageReceiver, never()).disableRealTimeReceiving();
-    }
-
-    /**
-     * Test disableRealTimeReceiving when receivers is found
-     * receiver passed is not null
-     */
-    @Test (timeout = 100000L)
-    public void testDisableRealTimeReceivingWhenReceiverPassedIsFound() {
-        initiateMockStart();
-        messageBus.disableRealTimeReceiving(receiverValue);
-        Mockito.verify(messageReceiver).disableRealTimeReceiving();
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Starting disable real time receiving");
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Finishing disable real time receiving");
     }
 
     /**
@@ -278,48 +260,6 @@ public class MessageBusTest {
             LoggingService.logInfo(MODULE_NAME,"STARTING MESSAGE BUS SERVER");
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME,"MESSAGE BUS SERVER STARTED");
-        } catch (Exception e) {
-            fail("This should not happen");
-        }
-    }
-
-    /**
-     * Test start when messageBusServer.initialize() throws Exception
-     */
-    @Test (timeout = 100000L)
-    public void throwsExceptionWhenMessageBusServerInitializeIsCalledInStart() {
-        try{
-            PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).initialize();
-            initiateMockStart();
-            Mockito.verify(messageBusServer, atLeastOnce()).startServer("localhost", 5672);
-            Mockito.verify(messageBusServer, atLeastOnce()).initialize();
-            Mockito.verify(messageBusServer, atLeastOnce()).stopServer();
-            PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logError(eq(MODULE_NAME), eq("Error stopping message bus module"), any());
-            PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to start message bus server"), any());
-        } catch (Exception e) {
-            fail("This should not happen");
-        }
-    }
-
-    /**
-     * Test start when messageBusServer.initialize() throws Exception &
-     * messageBusServer.stopServer() also throws exception
-     */
-    @Test (timeout = 100000L)
-    public void throwsExceptionWhenMessageBusServerInitializeAndStopServerIsCalledInStart() {
-        try{
-            PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).initialize();
-            PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).stopServer();
-            initiateMockStart();
-            Mockito.verify(messageBusServer, atLeastOnce()).startServer("localhost", 5672);
-            Mockito.verify(messageBusServer, atLeastOnce()).initialize();
-            Mockito.verify(messageBusServer, atLeastOnce()).stopServer();
-            PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logError(eq(MODULE_NAME), eq("Error stopping message bus module"), any());
-            PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to start message bus server"), any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -367,7 +307,7 @@ public class MessageBusTest {
     public void testGetPublisher() {
         initiateMockStart();
         assertNotNull(messageBus.getPublisher("1"));
-        assertEquals(messagePublisher, messageBus.getPublisher("1"));
+        assertEquals(messagePublisher.getName(), messageBus.getPublisher("1").getName());
     }
 
     /**
@@ -376,8 +316,7 @@ public class MessageBusTest {
     @Test (timeout = 100000L)
     public void testGetReceiver() {
         initiateMockStart();
-        assertNotNull(messageBus.getReceiver(receiverValue));
-        assertEquals(messageReceiver, messageBus.getReceiver(receiverValue));
+        assertNull(messageBus.getReceiver(receiverValue));
     }
 
     /**
@@ -387,7 +326,6 @@ public class MessageBusTest {
     public void testGetNextId() {
         initiateMockStart();
         assertNotNull(messageBus.getNextId());
-
     }
 
     /**
@@ -413,6 +351,14 @@ public class MessageBusTest {
             PowerMockito.doNothing().when(speedThread).start();
             PowerMockito.doNothing().when(startThread).start();
             messageBus.start();
+
+            JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+            JsonObject jsonObject = jsonObjectBuilder
+                    .add("routerHost", "localhost")
+                    .add("routerPort", 5672).build();
+            when(orchestrator.request(any(), any(), any(), any())).thenReturn(jsonObject);
+
+            messageBus.startServer();
         } catch (Exception e) {
             fail("this should not happen");
         }
