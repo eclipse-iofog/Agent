@@ -215,8 +215,14 @@ public class MessageBus implements IOFogModule {
 				int tempRouterPort = routerPort;
 				getRouterAddress();
 				if (tempRouterHost != routerHost || tempRouterPort != routerPort) {
-					publishers.forEach((key, publisher) -> publisher.close());
-					receivers.forEach((key, receiver) -> receiver.close());
+					if (publishers != null) {
+						publishers.forEach((key, publisher) -> publisher.close());
+					}
+
+					if (receivers != null) {
+						receivers.forEach((key, receiver) -> receiver.close());
+					}
+
 					messageBusServer.stopServer();
 					new Thread(startServer).start();
 				}
@@ -239,39 +245,43 @@ public class MessageBus implements IOFogModule {
 								.collect(Collectors.toList()));
 					});
 
-			publishers.forEach((key, value) -> {
-				if (!newPublishers.contains(key)) {
-					value.close();
-					try {
-						messageBusServer.removeProducer(key);
-					} catch (Exception e) { }
-				} else {
-					value.updateRoute(newRoutes.get(key));
-				}
-			});
-			publishers.entrySet().removeIf(entry -> !newPublishers.contains(entry.getKey()));
-			publishers.putAll(
-					newPublishers.stream()
-					.filter(publisher -> !publishers.containsKey(publisher))
-					.collect(Collectors.toMap(publisher -> publisher, publisher -> {
-						Route route = newRoutes.get(publisher);
-						return new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher, route.getReceivers()));
-					})));
+			if (publishers != null) {
+				publishers.forEach((key, value) -> {
+					if (!newPublishers.contains(key)) {
+						value.close();
+						try {
+							messageBusServer.removeProducer(key);
+						} catch (Exception e) { }
+					} else {
+						value.updateRoute(newRoutes.get(key));
+					}
+				});
+				publishers.entrySet().removeIf(entry -> !newPublishers.contains(entry.getKey()));
+				publishers.putAll(
+						newPublishers.stream()
+								.filter(publisher -> !publishers.containsKey(publisher))
+								.collect(Collectors.toMap(publisher -> publisher, publisher -> {
+									Route route = newRoutes.get(publisher);
+									return new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher, route.getReceivers()));
+								})));
+			}
 
-			receivers.forEach((key, value) -> {
-				if (!newReceivers.contains(key)) {
-					value.close();
-					try {
-						messageBusServer.removeConsumer(key);
-					} catch (Exception e) { }
-				}
-			});
-			receivers.entrySet().removeIf(entry -> !newReceivers.contains(entry.getKey()));
-			receivers.putAll(
-					newReceivers.stream()
-					.filter(receiver -> !receivers.containsKey(receiver))
-					.collect(Collectors.toMap(receiver -> receiver, 
-							receiver -> new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)))));
+			if (receivers != null) {
+				receivers.forEach((key, value) -> {
+					if (!newReceivers.contains(key)) {
+						value.close();
+						try {
+							messageBusServer.removeConsumer(key);
+						} catch (Exception e) { }
+					}
+				});
+				receivers.entrySet().removeIf(entry -> !newReceivers.contains(entry.getKey()));
+				receivers.putAll(
+						newReceivers.stream()
+								.filter(receiver -> !receivers.containsKey(receiver))
+								.collect(Collectors.toMap(receiver -> receiver,
+										receiver -> new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)))));
+			}
 
 			routes = newRoutes;
 

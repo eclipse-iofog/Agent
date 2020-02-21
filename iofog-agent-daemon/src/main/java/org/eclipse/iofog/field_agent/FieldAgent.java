@@ -377,12 +377,15 @@ public class FieldAgent implements IOFogModule {
                 }
 
                 if (lastUpdated != null) {
+                    logInfo("Resetting config changes flags");
                     try {
                         JsonObject req = Json.createObjectBuilder()
                                 .add("lastUpdated", lastUpdated)
                                 .build();
-                        orchestrator.request("config/changes", RequestType.DELETE, null, req);
-                    } catch (Exception e) {}
+                        orchestrator.request("config/changes", RequestType.PATCH, null, req);
+                    } catch (Exception e) {
+                        logError("Resetting config changes has failed", e);
+                    }
                 }
 
                 initialization = false;

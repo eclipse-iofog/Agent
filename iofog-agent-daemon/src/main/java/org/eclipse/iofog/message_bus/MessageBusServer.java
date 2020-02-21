@@ -238,8 +238,13 @@ public class MessageBusServer {
             producers.clear();
         }
 
-        session.close();
-        connection.close();
+        if (session != null) {
+            session.close();
+        }
+
+        if (connection != null) {
+            connection.close();
+        }
 
         LoggingService.logInfo(MODULE_NAME, "stopped server");
     }
