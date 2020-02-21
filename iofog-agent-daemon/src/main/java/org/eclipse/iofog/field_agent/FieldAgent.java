@@ -324,6 +324,8 @@ public class FieldAgent implements IOFogModule {
                 StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
                 JsonObject changes = result;
+                String lastUpdated = changes.getString("lastUpdated", null);
+
                 if (changes.getBoolean("deleteNode", false) && !initialization) {
                     deleteNode();
                 } else {
@@ -375,6 +377,15 @@ public class FieldAgent implements IOFogModule {
                     if (changes.getBoolean("routerChanged") && !initialization) {
                         MessageBus.getInstance().update();
                     }
+                }
+
+                if (lastUpdated != null) {
+                    try {
+                        JsonObject req = Json.createObjectBuilder()
+                                .add("lastUpdated", lastUpdated)
+                                .build();
+                        orchestrator.request("config/changes", RequestType.DELETE, null, req);
+                    } catch (Exception e) {}
                 }
 
                 initialization = false;
