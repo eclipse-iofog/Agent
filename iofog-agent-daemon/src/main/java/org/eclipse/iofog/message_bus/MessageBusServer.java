@@ -15,10 +15,10 @@ package org.eclipse.iofog.message_bus;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
-import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.jms.*;
+import javax.jms.IllegalStateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +39,8 @@ public class MessageBusServer {
 
     private Map<String, MessageConsumer> consumers = new ConcurrentHashMap<>();
     private Map<String, List<MessageProducer>> producers = new ConcurrentHashMap<>();
+
+    private boolean isConnected = false;
 
 	static TextMessage createMessage(String text) throws Exception {
 		return session.createTextMessage(text);
@@ -107,13 +109,14 @@ public class MessageBusServer {
      * @param receiver - ID of {@link Microservice}
      * @return {@link MessageConsumer}
      */
-    MessageConsumer getConsumer(String receiver) {
+    MessageConsumer getConsumer(String receiver) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "Start get consumer");
         if (consumers == null || !consumers.containsKey(receiver))
             try {
                 createConsumer(receiver);
-            } catch (Exception e) {
-                return null;
+            } catch (IllegalStateException e) {
+                setConnected(false);
+                throw e;
             }
 
         LoggingService.logInfo(MODULE_NAME, "Finished get consumer");
@@ -168,15 +171,17 @@ public class MessageBusServer {
      * @param publisher - ID of {@link Microservice}
      * @return {@link MessageProducer}
      */
-    List<MessageProducer> getProducer(String publisher, List<String> receivers) {
+    List<MessageProducer> getProducer(String publisher, List<String> receivers) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "Start get Producer");
 
-        if (producers == null || !producers.containsKey(publisher))
+        if (!producers.containsKey(publisher)) {
             try {
                 createProducer(publisher, receivers);
-            } catch (Exception e) {
-                return null;
+            } catch (IllegalStateException e) {
+                setConnected(false);
+                throw e;
             }
+        }
 
         LoggingService.logInfo(MODULE_NAME, "Finish get Producer");
         return producers.get(publisher);
@@ -247,5 +252,17 @@ public class MessageBusServer {
         }
 
         LoggingService.logInfo(MODULE_NAME, "stopped server");
+    }
+
+    public boolean isConnected() {
+        synchronized (messageBusSessionLock) {
+            return isConnected;
+        }
+    }
+
+    public void setConnected(boolean connected) {
+        synchronized (messageBusSessionLock) {
+            isConnected = connected;
+        }
     }
 }

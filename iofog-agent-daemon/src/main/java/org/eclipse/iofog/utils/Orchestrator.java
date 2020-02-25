@@ -52,6 +52,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -320,6 +321,10 @@ public class Orchestrator {
         if (!StringUtils.isEmpty(token)) {
             req.addHeader(new BasicHeader("Authorization", token));
         }
+
+        UUID requestId = UUID.randomUUID();
+        req.addHeader("Request-Id", requestId.toString());
+        logInfo("Orchestrator", String.format("(%s) %s %s", requestId, requestType.name(), uri.toString()));
 
         try (CloseableHttpResponse response = client.execute(req)) {
             String errorMessage = "";
