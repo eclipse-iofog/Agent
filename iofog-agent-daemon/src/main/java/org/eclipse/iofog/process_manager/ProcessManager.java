@@ -228,7 +228,7 @@ public class ProcessManager implements IOFogModule {
 			} else if (!isCurrentMicroserviceUuid && !isLatestMicroserviceUuid) {
 				String containerName = DockerUtil.getIoFogContainerName(uuid);
 				Map<String, String> labels = runningContainersLabels.get(containerName);
-				if ((labels != null && Configuration.getIofogUuid().equals(labels.get("iofog-uuid"))) || Configuration.isWatchdogEnabled()) {
+				if ((labels != null && labels.get("iofog-uuid") != "") || Configuration.isWatchdogEnabled()) {
 					unknownMicroserviceUuids.add(uuid);
 				}
 			}
