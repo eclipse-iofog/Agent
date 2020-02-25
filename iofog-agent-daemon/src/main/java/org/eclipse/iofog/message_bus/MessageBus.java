@@ -36,8 +36,9 @@ import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.eclipse.iofog.utils.Constants.MESSAGE_BUS;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STOPPED;
@@ -54,14 +55,15 @@ public class MessageBus implements IOFogModule {
 
 	private MessageBusServer messageBusServer;
 	private Map<String, Route> routes;
-	private Map<String, MessagePublisher> publishers;
-	private Map<String, MessageReceiver> receivers;
-	private MessageIdGenerator idGenerator;
+	private Map<String, MessagePublisher> publishers = new ConcurrentHashMap<>();
+	private Map<String, MessageReceiver> receivers = new ConcurrentHashMap<>();
+	private MessageIdGenerator idGenerator = new MessageIdGenerator();;
 	private static MessageBus instance;
 	private MicroserviceManager microserviceManager;
 	private final Object updateLock = new Object();
 	private String routerHost;
 	private int routerPort;
+	private ReentrantLock messageBusLock = new ReentrantLock();
 
 	private long lastSpeedTime, lastSpeedMessageCount;
 
@@ -125,52 +127,10 @@ public class MessageBus implements IOFogModule {
 		logInfo("Starting initialization of message bus publisher and receiver");
 		lastSpeedMessageCount = 0;
 		lastSpeedTime = System.currentTimeMillis();
-		routes = microserviceManager.getRoutes();
-		idGenerator = new MessageIdGenerator();
-		publishers = new ConcurrentHashMap<>();
-		receivers = new ConcurrentHashMap<>();
-		if (routes == null)
-			return;
 
-		routes.entrySet().stream()
-			.filter(route -> route.getValue() != null)
-			.filter(route -> route.getValue().getReceivers() != null)
-			.forEach(entry -> {
-					String publisher = entry.getKey();
-					Route route = entry.getValue();
+		updatePublishersAndReceivers();
 
-					try {
-						messageBusServer.createProducer(publisher, route.getReceivers());
-					} catch (Exception e) {
-						logError(MODULE_NAME,
-								new AgentSystemException("unable to start publisher module :" + publisher, e));
-					}
-					publishers.put(publisher, new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher, route.getReceivers())));
-			});
-
-		List<Microservice> microservices = microserviceManager.getLatestMicroservices();
-		microservices.forEach(microservice -> {
-			if (!microservice.isConsumer()) {
-				return;
-			}
-
-			String id = microservice.getMicroserviceUuid();
-			try {
-				messageBusServer.createConsumer(id);
-				MessageReceiver messageReceiver = new MessageReceiver(id, messageBusServer.getConsumer(id));
-				receivers.put(id, messageReceiver);
-
-				Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.getMessageWebsocketMap();
-				if (messageSocketMap.containsKey(id)) {
-					messageReceiver.enableRealTimeReceiving();
-				}
-			} catch (Exception e) {
-				logError(MODULE_NAME,
-						new AgentSystemException("unable to start receiver module " + id, e));
-			}
-		});
-
-		messageBusServer.setExceptionListener(new MessageBusExceptionListener(messageBusServer, publishers, receivers, routes, startServer));
+		messageBusServer.setExceptionListener(new MessageBusExceptionListener(messageBusServer, publishers, receivers, startServer));
 
 		logInfo("Finished initialization of message bus publisher and receiver");
 	}
@@ -202,19 +162,105 @@ public class MessageBus implements IOFogModule {
 		}
 	};
 
+	private void updatePublishersAndReceivers() throws Exception {
+		Map<String, Route> newRoutes = microserviceManager.getRoutes();
+		List<String> newPublishers = new ArrayList<>();
+		List<String> newReceivers = new ArrayList<>();
+
+		for (Map.Entry<String, Route> entry: newRoutes.entrySet()) {
+			if (entry.getValue() == null || entry.getValue().getReceivers() == null) {
+				continue;
+			}
+
+			newPublishers.add(entry.getKey());
+			for (String receiver: entry.getValue().getReceivers()) {
+				newReceivers.add(receiver);
+			}
+		}
+
+		Set<String> keys = publishers.keySet();
+		for (String key: keys) {
+			if (!newPublishers.contains(key)) {
+				publishers.get(key).close();
+				messageBusServer.removeProducer(key);
+				publishers.remove(key);
+			} else {
+				MessagePublisher publisher = publishers.get(key);
+				publisher.updateRoute(newRoutes.get(key));
+			}
+		}
+
+		for (String newPublisher: newPublishers) {
+			if (publishers.containsKey(newPublisher)) {
+				continue;
+			}
+			Route route = newRoutes.get(newPublisher);
+			MessagePublisher messagePublisher = new MessagePublisher(newPublisher, route, messageBusServer.getProducer(newPublisher, route.getReceivers()));
+			publishers.put(newPublisher, messagePublisher);
+		}
+
+		Set<String> recs = receivers.keySet();
+		for (String rec: recs) {
+			if (newReceivers.contains(rec)) {
+				continue;
+			}
+			receivers.get(rec).close();
+			messageBusServer.removeConsumer(rec);
+			publishers.remove(rec);
+		}
+
+		for (String newReceiver: newReceivers) {
+			if (receivers.containsKey(newReceiver)) {
+				continue;
+			}
+			MessageReceiver messageReceiver = new MessageReceiver(newReceiver, messageBusServer.getConsumer(newReceiver));
+			receivers.put(newReceiver, messageReceiver);
+		}
+
+		routes = newRoutes;
+
+		List<Microservice> latestMicroservices = microserviceManager.getLatestMicroservices();
+		Map<String, Long> publishedMessagesPerMicroservice = StatusReporter.getMessageBusStatus().getPublishedMessagesPerMicroservice();
+		publishedMessagesPerMicroservice.keySet().removeIf(key -> !microserviceManager.microserviceExists(latestMicroservices, key));
+
+		for (Microservice microservice: latestMicroservices) {
+			if (!publishedMessagesPerMicroservice.keySet().contains(microservice.getMicroserviceUuid())) {
+				publishedMessagesPerMicroservice.put(microservice.getMicroserviceUuid(), 0L);
+			}
+
+			if (!microservice.isConsumer()) {
+				continue;
+			}
+
+			String id = microservice.getMicroserviceUuid();
+			MessageConsumer consumer = messageBusServer.getConsumer(id);
+			if (consumer != null) {
+				MessageReceiver messageReceiver = new MessageReceiver(id, consumer);
+				receivers.put(id, messageReceiver);
+
+				Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.getMessageWebsocketMap();
+				if (messageSocketMap.containsKey(id)) {
+					messageReceiver.enableRealTimeReceiving();
+				}
+			} else {
+				throw new Exception("Unable to create consumer " + id);
+			}
+		}
+	}
+
 	/**
 	 * updates routing, list of publishers and receivers
 	 * Field Agent calls this method when any changes applied
 	 * 
 	 */
-	public void update() {
+	public void update() throws Exception {
 		logInfo("Start update routes, list of publishers and receivers");
 		synchronized (updateLock) {
-			try {
-				String tempRouterHost = routerHost;
-				int tempRouterPort = routerPort;
-				getRouterAddress();
-				if (tempRouterHost != routerHost || tempRouterPort != routerPort) {
+			String tempRouterHost = routerHost;
+			int tempRouterPort = routerPort;
+			getRouterAddress();
+			if (!tempRouterHost.equals(routerHost) || tempRouterPort != routerPort || !messageBusServer.isConnected()) {
+				try {
 					if (publishers != null) {
 						publishers.forEach((key, publisher) -> publisher.close());
 					}
@@ -222,104 +268,18 @@ public class MessageBus implements IOFogModule {
 					if (receivers != null) {
 						receivers.forEach((key, receiver) -> receiver.close());
 					}
-
 					messageBusServer.stopServer();
+				} catch (Exception ex) {
+					logError(MODULE_NAME, new AgentSystemException("unable to update router info", ex));
+				} finally {
+					messageBusServer.setConnected(false);
 					new Thread(startServer).start();
+					return;
 				}
-			} catch (Exception e) {
-				logError(MODULE_NAME, new AgentSystemException("unable to update Message Bus", e));
 			}
 
-			Map<String, Route> newRoutes = microserviceManager.getRoutes();
-			List<String> newPublishers = new ArrayList<>();
-			List<String> newReceivers = new ArrayList<>();
-			
-			newRoutes.entrySet()
-					.stream()
-					.filter(route -> route.getValue() != null)
-					.filter(route -> route.getValue().getReceivers() != null)
-					.forEach(entry -> {
-						newPublishers.add(entry.getKey());
-						newReceivers.addAll(entry.getValue().getReceivers()
-								.stream().filter(item -> !newReceivers.contains(item))
-								.collect(Collectors.toList()));
-					});
-
-			if (publishers != null) {
-				publishers.forEach((key, value) -> {
-					if (!newPublishers.contains(key)) {
-						value.close();
-						try {
-							messageBusServer.removeProducer(key);
-						} catch (Exception e) { }
-					} else {
-						value.updateRoute(newRoutes.get(key));
-					}
-				});
-				publishers.entrySet().removeIf(entry -> !newPublishers.contains(entry.getKey()));
-				publishers.putAll(
-						newPublishers.stream()
-								.filter(publisher -> !publishers.containsKey(publisher))
-								.collect(Collectors.toMap(publisher -> publisher, publisher -> {
-									Route route = newRoutes.get(publisher);
-									return new MessagePublisher(publisher, route, messageBusServer.getProducer(publisher, route.getReceivers()));
-								})));
-			}
-
-			if (receivers != null) {
-				receivers.forEach((key, value) -> {
-					if (!newReceivers.contains(key)) {
-						value.close();
-						try {
-							messageBusServer.removeConsumer(key);
-						} catch (Exception e) { }
-					}
-				});
-				receivers.entrySet().removeIf(entry -> !newReceivers.contains(entry.getKey()));
-				receivers.putAll(
-						newReceivers.stream()
-								.filter(receiver -> !receivers.containsKey(receiver))
-								.collect(Collectors.toMap(receiver -> receiver,
-										receiver -> new MessageReceiver(receiver, messageBusServer.getConsumer(receiver)))));
-			}
-
-			routes = newRoutes;
-
-			List<Microservice> latestMicroservices = microserviceManager.getLatestMicroservices();
-			Map<String, Long> publishedMessagesPerMicroservice = StatusReporter.getMessageBusStatus().getPublishedMessagesPerMicroservice();
-			publishedMessagesPerMicroservice.keySet().removeIf(key -> !microserviceManager.microserviceExists(latestMicroservices, key));
-			latestMicroservices.forEach(e -> {
-				if (!publishedMessagesPerMicroservice.keySet().contains(e.getMicroserviceUuid())) {
-					publishedMessagesPerMicroservice.put(e.getMicroserviceUuid(), 0L);
-				}
-			});
-
-			latestMicroservices.forEach(microservice -> {
-                if (!microservice.isConsumer()) {
-                    return;
-                }
-
-                String id = microservice.getMicroserviceUuid();
-				MessageConsumer consumer = messageBusServer.getConsumer(id);
-                if (consumer != null) {
-                    try {
-                        MessageReceiver messageReceiver = new MessageReceiver(id, consumer);
-                        receivers.put(id, messageReceiver);
-
-                        Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.getMessageWebsocketMap();
-                        if (messageSocketMap.containsKey(id)) {
-                            messageReceiver.enableRealTimeReceiving();
-                        }
-                    } catch (Exception e) {
-                        logError(MODULE_NAME,
-                                new AgentSystemException("unable to start receiver module " + id, e));
-                    }
-                } else {
-					logError(MODULE_NAME,
-							new AgentSystemException("unable to create consumer " + id));
-				}
-            });
-        }
+			updatePublishersAndReceivers();
+		}
 		logInfo("Finished update routes, list of publishers and receivers");
 	}
 	
@@ -348,32 +308,40 @@ public class MessageBus implements IOFogModule {
 		messageBusServer.initialize();
 
 		logInfo("MESSAGE BUS SERVER STARTED");
-		init();
-
-		new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED).start();
+		Thread speedCalc = new Thread(calculateSpeed, Constants.MESSAGE_BUS_CALCULATE_SPEED);
+		speedCalc.start();
 	}
 
 	private Runnable startServer = new Runnable() {
 		@Override
 		public void run() {
-			while (true) {
+			messageBusLock.lock();
+
+			if (messageBusServer.isConnected()) {
+				return;
+			}
+
+			try {
+				startServer();
+				init();
+
+				messageBusServer.setConnected(true);
+			} catch (Exception e) {
+				messageBusServer.setConnected(false);
 				try {
-					startServer();
-					break;
-				} catch (Exception e) {
-					try {
-						Thread.sleep(2000);
-						messageBusServer.stopServer();
-					} catch (Exception exp) {
-					}
-					logError("Error starting message bus module",
-							new AgentSystemException("Error starting message bus module", e));
-					StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
+					Thread.sleep(2000);
+					messageBusServer.stopServer();
+				} catch (Exception exp) {
 				}
+				logError("Error starting message bus module",
+						new AgentSystemException("Error starting message bus module", e));
+				StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
+				new Thread(startServer).start();
+			} finally {
+				messageBusLock.unlock();
 			}
 		}
 	};
-
 
 	/**
 	 * starts Message Bus module
@@ -454,14 +422,12 @@ public class MessageBus implements IOFogModule {
 		private MessageBusServer messageBusServer;
 		private Map<String, MessagePublisher> publishers;
 		private Map<String, MessageReceiver> receivers;
-		private Map<String, Route> routes;
 		private Runnable startServer;
 
-		public MessageBusExceptionListener(MessageBusServer messageBusServer, Map<String, MessagePublisher> publishers, Map<String, MessageReceiver> receivers, Map<String, Route> routes, Runnable startServer) {
+		public MessageBusExceptionListener(MessageBusServer messageBusServer, Map<String, MessagePublisher> publishers, Map<String, MessageReceiver> receivers, Runnable startServer) {
 			this.messageBusServer = messageBusServer;
 			this.publishers = publishers;
 			this.receivers = receivers;
-			this.routes = routes;
 			this.startServer = startServer;
 		}
 
@@ -473,6 +439,7 @@ public class MessageBus implements IOFogModule {
 				LoggingService.logError("Message Bus", "Server is not active. restarting...", exception);
 
 				try {
+					messageBusServer.setConnected(false);
 					Thread.sleep(2000);
 					publishers.forEach((key, publisher) -> publisher.close());
 					receivers.forEach((key, receiver) -> receiver.close());

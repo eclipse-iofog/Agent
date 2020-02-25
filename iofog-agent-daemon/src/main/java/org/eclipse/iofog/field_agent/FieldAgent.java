@@ -51,6 +51,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -291,6 +292,123 @@ public class FieldAgent implements IOFogModule {
         logInfo("Finished verification Failed of Controller");
     }
 
+    private final Future<Boolean> processChanges(JsonObject changes) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        return executor.submit(() -> {
+            boolean resetChanges = true;
+
+            if (changes.getBoolean("deleteNode") && !initialization) {
+                try {
+                    deleteNode();
+                } catch (Exception e) {
+                    logError("Unable to delete node", e);
+                    resetChanges = false;
+                }
+            } else {
+                if (changes.getBoolean("reboot") && !initialization) {
+                    try {
+                        reboot();
+                    } catch (Exception e) {
+                        logError("Unable to perform reboot", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("isImageSnapshot") && !initialization) {
+                    try {
+                        createImageSnapshot();
+                    } catch (Exception e) {
+                        logError("Unable to create snapshot", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("config") && !initialization) {
+                    try {
+                        getFogConfig();
+                    } catch (Exception e) {
+                        logError("Unable to get config", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("version") && !initialization) {
+                    try {
+                        changeVersion();
+                    } catch (Exception e) {
+                        logError("Unable to change version", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("registries") || initialization) {
+                    try {
+                        loadRegistries(false);
+                        ProcessManager.getInstance().update();
+                    } catch (Exception e) {
+                        logError("Unable to update registries", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("microserviceConfig") || changes.getBoolean("microserviceList") ||
+                        changes.getBoolean("routing") || initialization) {
+                    boolean microserviceConfig = changes.getBoolean("microserviceConfig");
+                    boolean routing = changes.getBoolean("routing");
+
+                    try {
+                        List<Microservice> microservices = loadMicroservices(false);
+
+                        if (microserviceConfig) {
+                            try {
+                                processMicroserviceConfig(microservices);
+                                LocalApi.getInstance().update();
+                            } catch (Exception e) {
+                                logError("Unable to update microservices config", e);
+                                resetChanges = false;
+                            }
+                        }
+
+                        if (routing) {
+                            try {
+                                processRoutes(microservices);
+                                MessageBus.getInstance().update();
+                            } catch (Exception e) {
+                                logError("Unable to update microservices routes", e);
+                                resetChanges = false;
+                            }
+                        }
+
+                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
+                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
+                    } catch (Exception e) {
+                        logError("Unable to get microservices list", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("tunnel") && !initialization) {
+                    try {
+                        sshProxyManager.update(getProxyConfig());
+                    } catch (Exception e) {
+                        logError("Unable to create tunnel", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("diagnostics") && !initialization) {
+                    try {
+                        updateDiagnostics();
+                    } catch (Exception e) {
+                        logError("Unable to update diagnostics", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("routerChanged") && !initialization) {
+                    try {
+                        MessageBus.getInstance().update();
+                    } catch (Exception e) {
+                        logError("Unable to update router info", e);
+                        resetChanges = false;
+                    }
+                }
+            }
+            return resetChanges;
+        });
+    }
 
     /**
      * retrieves IOFog changes list from IOFog controller
@@ -299,8 +417,10 @@ public class FieldAgent implements IOFogModule {
         while (true) {
         	logInfo("Get changes list");
             try {
-                Thread.sleep(Configuration.getChangeFrequency() * 1000);
+                int frequency = Configuration.getChangeFrequency() * 1000;
+                Thread.sleep(frequency);
                 logInfo("Start get IOFog changes list from IOFog controller");
+
                 if (notProvisioned() || !isControllerConnected(false)) {
                     logInfo("Cannot get change list due to controller status not provisioned or controller not connected");
                     continue;
@@ -323,63 +443,18 @@ public class FieldAgent implements IOFogModule {
 
                 StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
-                JsonObject changes = result;
-                String lastUpdated = changes.getString("lastUpdated", null);
+                String lastUpdated = result.getString("lastUpdated", null);
+                boolean resetChanges;
+                Future<Boolean> changesProcessor = processChanges(result);
 
-                if (changes.getBoolean("deleteNode", false) && !initialization) {
-                    deleteNode();
-                } else {
-                    if (changes.getBoolean("reboot", false) && !initialization) {
-                        reboot();
-                    }
-                    if (changes.getBoolean("isImageSnapshot", false) && !initialization) {
-                        createImageSnapshot();
-                    }
-                    if (changes.getBoolean("config", false) && !initialization) {
-                        getFogConfig();
-                    }
-                    if (changes.getBoolean("version", false) && !initialization) {
-                        changeVersion();
-                    }
-                    if (changes.getBoolean("registries", false) || initialization) {
-                        loadRegistries(false);
-                        ProcessManager.getInstance().update();
-                    }
-                    if (changes.getBoolean("prune", false) && !initialization) {
-                        DockerPruningManager.getInstance().pruneAgent();
-                    }
-                    if ((changes.getBoolean("microserviceConfig", false) || changes.getBoolean("microserviceList", false)
-                            || changes.getBoolean("routing", false) || initialization)) {
-                        boolean microserviceConfig = changes.getBoolean("microserviceConfig", false);
-                        boolean routing = changes.getBoolean("routing", false);
-
-                        List<Microservice> microservices = loadMicroservices(false);
-
-                        if (microserviceConfig) {
-                            processMicroserviceConfig(microservices);
-                            LocalApi.getInstance().update();
-                        }
-
-                        if (routing) {
-                            processRoutes(microservices);
-                            MessageBus.getInstance().update();
-                        }
-
-                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
-                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
-                    }
-                    if (changes.getBoolean("tunnel", false) && !initialization) {
-                        sshProxyManager.update(getProxyConfig());
-                    }
-                    if (changes.getBoolean("diagnostics", false) && !initialization) {
-                        updateDiagnostics();
-                    }
-                    if (changes.getBoolean("routerChanged") && !initialization) {
-                        MessageBus.getInstance().update();
-                    }
+                try {
+                    resetChanges = changesProcessor.get(frequency, TimeUnit.MILLISECONDS);
+                } catch (Exception e) {
+                    resetChanges = false;
+                    changesProcessor.cancel(true);
                 }
 
-                if (lastUpdated != null) {
+                if (lastUpdated != null && resetChanges) {
                     logInfo("Resetting config changes flags");
                     try {
                         JsonObject req = Json.createObjectBuilder()
@@ -391,7 +466,7 @@ public class FieldAgent implements IOFogModule {
                     }
                 }
 
-                initialization = false;
+                initialization = initialization && !resetChanges;
             } catch (Exception e) {
             	logError("Error getting changes list ", new AgentSystemException("Error getting changes list", e));
             }
@@ -1148,7 +1223,11 @@ public class FieldAgent implements IOFogModule {
      */
     private void notifyModules() {
     	logInfo("Start notiying modules for configuration update");
-        MessageBus.getInstance().update();
+    	try {
+            MessageBus.getInstance().update();
+        } catch (Exception e) {
+    	    logError("Unable to update Message Bus", e);
+        }
         LocalApi.getInstance().update();
         ProcessManager.getInstance().update();
         logInfo("Finished notiying modules for configuration update");

@@ -108,6 +108,7 @@ public class MessageBusTest {
         PowerMockito.when(messageBusStatus.getPublishedMessagesPerMicroservice()).thenReturn(publishedMessagesPerMicroservice);
         PowerMockito.when(messageBusServer.getConsumer(any())).thenReturn(mock(MessageConsumer.class));
         PowerMockito.when(messageBusServer.getProducer(any(), any())).thenReturn(mock(List.class));
+        PowerMockito.when(messageBusServer.isConnected()).thenReturn(true);
         PowerMockito.doNothing().when(messageReceiver).enableRealTimeReceiving();
         PowerMockito.doNothing().when(messageReceiver).disableRealTimeReceiving();
         PowerMockito.when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
@@ -230,15 +231,12 @@ public class MessageBusTest {
     @Test
     public void testUpdate() {
         initiateMockStart();
-        messageBus.update();
-        Mockito.verify(microserviceManager, atLeastOnce()).getRoutes();
-        Mockito.verify(microserviceManager, atLeastOnce()).getLatestMicroservices();
-        PowerMockito.verifyStatic(StatusReporter.class);
-        StatusReporter.getMessageBusStatus();
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Start update routes, list of publishers and receivers");
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Finished update routes, list of publishers and receivers");
+        try {
+            messageBus.update();
+            Mockito.verify(microserviceManager, atLeastOnce()).getLatestMicroservices();
+        } catch (Exception e) {
+            fail("Shouldn't have happened");
+        }
     }
 
     @Test (timeout = 100000L)
@@ -298,16 +296,6 @@ public class MessageBusTest {
         } catch (Exception e) {
             fail("This should not happen");
         }
-    }
-
-    /**
-     * test getPublisher
-     */
-    @Test (timeout = 100000L)
-    public void testGetPublisher() {
-        initiateMockStart();
-        assertNotNull(messageBus.getPublisher("1"));
-        assertEquals(messagePublisher.getName(), messageBus.getPublisher("1").getName());
     }
 
     /**
