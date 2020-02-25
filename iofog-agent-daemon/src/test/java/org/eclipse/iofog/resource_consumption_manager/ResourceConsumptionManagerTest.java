@@ -496,13 +496,9 @@ public class ResourceConsumptionManagerTest {
         method.setAccessible(true);
         method.invoke(resourceConsumptionManager, "1111");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME,
-                "Inisde parse Stat");
+        LoggingService.logInfo(MODULE_NAME, "Inisde parse Stat");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logError(any(), any(),  anyObject());
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME,
-                "Finished parse Stat");
+        LoggingService.logInfo(MODULE_NAME, "Finished parse Stat");
     }
 
     /**
