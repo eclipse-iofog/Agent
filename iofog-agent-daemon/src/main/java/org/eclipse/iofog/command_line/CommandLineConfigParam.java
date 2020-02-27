@@ -54,7 +54,7 @@ public enum CommandLineConfigParam {
     FOG_TYPE ("auto", "ft", "fog_type", ""),
     DEV_MODE ("on", "dev", "dev_mode", ""),
     ROUTER_HOST ("", "", "", "routerHost"),
-    ROUTER_PORT ("", "", "", "routerPort"),
+    ROUTER_PORT ("0", "", "", "routerPort"),
     DOCKER_PRUNING_FREQUENCY ("60", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
     AVAILABLE_DISK_THRESHOLD ("90", "dt", "available_disk_threshold", "availableDiskThreshold");
 
