@@ -389,6 +389,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
+
                 if (changes.getBoolean("tunnel",false) && !initialization) {
                     try {
                         sshProxyManager.update(getProxyConfig());
