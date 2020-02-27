@@ -297,7 +297,7 @@ public class FieldAgent implements IOFogModule {
         return executor.submit(() -> {
             boolean resetChanges = true;
 
-            if (changes.getBoolean("deleteNode") && !initialization) {
+            if (changes.getBoolean("deleteNode",false) && !initialization) {
                 try {
                     deleteNode();
                 } catch (Exception e) {
@@ -305,7 +305,7 @@ public class FieldAgent implements IOFogModule {
                     resetChanges = false;
                 }
             } else {
-                if (changes.getBoolean("reboot") && !initialization) {
+                if (changes.getBoolean("reboot",false) && !initialization) {
                     try {
                         reboot();
                     } catch (Exception e) {
@@ -313,7 +313,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("isImageSnapshot") && !initialization) {
+                if (changes.getBoolean("isImageSnapshot",false) && !initialization) {
                     try {
                         createImageSnapshot();
                     } catch (Exception e) {
@@ -321,7 +321,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("config") && !initialization) {
+                if (changes.getBoolean("config",false) && !initialization) {
                     try {
                         getFogConfig();
                     } catch (Exception e) {
@@ -329,7 +329,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("version") && !initialization) {
+                if (changes.getBoolean("version",false) && !initialization) {
                     try {
                         changeVersion();
                     } catch (Exception e) {
@@ -337,7 +337,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("registries") || initialization) {
+                if (changes.getBoolean("registries",false) || initialization) {
                     try {
                         loadRegistries(false);
                         ProcessManager.getInstance().update();
@@ -346,8 +346,16 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("microserviceConfig") || changes.getBoolean("microserviceList") ||
-                        changes.getBoolean("routing") || initialization) {
+                if (changes.getBoolean("prune", false) && !initialization) {
+                    try {
+                        DockerPruningManager.getInstance().pruneAgent();
+                    } catch (Exception e) {
+                        logError("Unable to update registries", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("microserviceConfig",false) || changes.getBoolean("microserviceList",false) ||
+                        changes.getBoolean("routing",false) || initialization) {
                     boolean microserviceConfig = changes.getBoolean("microserviceConfig");
                     boolean routing = changes.getBoolean("routing");
 
@@ -381,7 +389,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("tunnel") && !initialization) {
+                if (changes.getBoolean("tunnel",false) && !initialization) {
                     try {
                         sshProxyManager.update(getProxyConfig());
                     } catch (Exception e) {
@@ -389,7 +397,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("diagnostics") && !initialization) {
+                if (changes.getBoolean("diagnostics",false) && !initialization) {
                     try {
                         updateDiagnostics();
                     } catch (Exception e) {
@@ -397,7 +405,7 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
-                if (changes.getBoolean("routerChanged") && !initialization) {
+                if (changes.getBoolean("routerChanged",false) && !initialization) {
                     try {
                         MessageBus.getInstance().update();
                     } catch (Exception e) {
