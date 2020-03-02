@@ -318,6 +318,7 @@ public class MessageBus implements IOFogModule {
 			messageBusLock.lock();
 
 			if (messageBusServer.isConnected()) {
+				messageBusLock.unlock();
 				return;
 			}
 

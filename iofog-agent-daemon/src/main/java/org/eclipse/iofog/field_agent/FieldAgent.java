@@ -457,7 +457,7 @@ public class FieldAgent implements IOFogModule {
                 Future<Boolean> changesProcessor = processChanges(result);
 
                 try {
-                    resetChanges = changesProcessor.get(frequency, TimeUnit.MILLISECONDS);
+                    resetChanges = changesProcessor.get(30, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     resetChanges = false;
                     changesProcessor.cancel(true);
