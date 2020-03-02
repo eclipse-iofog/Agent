@@ -644,8 +644,6 @@ public class FieldAgentTest {
             Configuration.getGpsCoordinates();
             PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
             IOFogNetworkInterface.getNetworkInterface();
-            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME,"Loading of microservices in progress");
         } catch (AgentSystemException e) {
             fail("This should not happen");
         } catch (Exception e) {

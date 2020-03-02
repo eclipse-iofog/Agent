@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.iofog.message_bus;
 
-import org.apache.commons.collections.map.HashedMap;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -26,6 +25,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +67,7 @@ public class MessageBusUtilTest {
         mockStatic(StatusReporter.class);
         messages = mock(ArrayList.class);
         receivers = mock(ArrayList.class);
-        routes = mock(HashedMap.class);
+        routes = mock(HashMap.class);
         messageBusStatus = mock(MessageBusStatus.class);
         PowerMockito.when(MessageBus.getInstance()).thenReturn(messageBus);
         PowerMockito.when(messageBus.getReceiver(any())).thenReturn(messageReceiver);

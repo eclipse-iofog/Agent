@@ -36,6 +36,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class ResourceManagerTest {
     private ResourceManager resourceManager;
     private FieldAgent fieldAgent;
+    private Thread getUsageData;
 
     /**
      * @throws Exception
@@ -49,6 +50,10 @@ public class ResourceManagerTest {
         when(FieldAgent.getInstance()).thenReturn(fieldAgent);
         PowerMockito.doNothing().when(fieldAgent).sendUSBInfoFromHalToController();
         PowerMockito.doNothing().when(fieldAgent).sendHWInfoFromHalToController();
+
+        getUsageData = mock(Thread.class);
+        PowerMockito.whenNew(Thread.class).withParameterTypes(Runnable.class, String.class).withArguments(Mockito.any(Runnable.class),
+                anyString()).thenReturn(getUsageData);
     }
 
     /**
@@ -67,13 +72,10 @@ public class ResourceManagerTest {
     public void testStart() {
         resourceManager.start();
         verify(resourceManager, Mockito.times(1)).start();
-        verify(fieldAgent, atLeastOnce()).sendHWInfoFromHalToController();
-        verify(fieldAgent, atLeastOnce()).sendUSBInfoFromHalToController();
         assertEquals(Constants.RESOURCE_MANAGER, resourceManager.getModuleIndex());
         assertEquals("ResourceManager", resourceManager.getModuleName());
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo("ResourceManager", "Start getting usage data");
-        LoggingService.logInfo("ResourceManager", "Finished getting usage data");
+        LoggingService.logInfo("ResourceManager", "started");
     }
 
 }

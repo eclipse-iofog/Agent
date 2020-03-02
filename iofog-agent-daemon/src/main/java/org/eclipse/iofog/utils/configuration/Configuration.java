@@ -122,6 +122,24 @@ public final class Configuration {
     private static String dockerApiVersion;
     private static int setSystemTimeFreqSeconds;
     private static int monitorSshTunnelStatusFreqSeconds;
+    private static String routerHost;
+    private static int routerPort;
+
+    public static String getRouterHost() {
+        return routerHost;
+    }
+
+    public static void setRouterHost(String routerHost) {
+        Configuration.routerHost = routerHost;
+    }
+
+    public static int getRouterPort() {
+        return routerPort;
+    }
+
+    public static void setRouterPort(int routerPort) {
+        Configuration.routerPort = routerPort;
+    }
 
     private static void updateAutomaticConfigParams() {
     	LoggingService.logInfo(MODULE_NAME, "Start update Automatic ConfigParams ");
@@ -650,6 +668,14 @@ public final class Configuration {
                         setNode(DEV_MODE, value, configFile, configElement);
                         setDeveloperMode(!value.equals("off"));
                         break;
+                    case ROUTER_HOST:
+                        LoggingService.logInfo(MODULE_NAME, "Setting router host");
+                        setRouterHost(value);
+                        break;
+                    case ROUTER_PORT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting router port");
+                        setRouterPort(Integer.parseInt(value));
+                        break;
                     case DOCKER_PRUNING_FREQUENCY:
                         LoggingService.logInfo(MODULE_NAME, "Setting docker pruning frequency");
                         try {
@@ -929,9 +955,12 @@ public final class Configuration {
         configureFogType(getNode(FOG_TYPE, configFile));
         setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
         setIpAddressExternal(GpsWebHandler.getExternalIp());
+        setRouterHost(getNode(ROUTER_HOST, configFile));
+        setRouterPort(Integer.parseInt(getNode(ROUTER_PORT, configFile)));
+
         setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
-        
+
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
 
