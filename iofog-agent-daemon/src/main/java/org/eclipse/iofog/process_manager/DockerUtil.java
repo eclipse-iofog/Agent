@@ -548,7 +548,7 @@ public class DockerUtil {
             req.withTag(tag);
             PullImageResultCallback res = new PullImageResultCallback();
             res = req.exec(res);
-            res.awaitSuccess();
+            res.awaitCompletion();
 		} catch (NotFoundException e) {
 			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
 			throw new AgentSystemException("Image not found", e);
