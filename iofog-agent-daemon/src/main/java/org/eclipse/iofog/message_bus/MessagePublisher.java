@@ -88,7 +88,7 @@ public class MessagePublisher implements AutoCloseable{
 		try {
 			archive.close();
 		} catch (Exception exp) {
-			logError(MODULE_NAME, "Error closing message archiver", new AgentSystemException("Error closing message archiver", exp));
+			logError(MODULE_NAME, "Error closing message archive", new AgentSystemException("Error closing message archive", exp));
 		}
 
 		if (producers != null && producers.size() > 0) {
