@@ -87,12 +87,21 @@ public class MessagePublisher implements AutoCloseable{
 		LoggingService.logInfo(MODULE_NAME, "Start closing publish");
 		try {
 			archive.close();
-			for (MessageProducer producer: producers) {
-				producer.close();
-			}
 		} catch (Exception exp) {
-			logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
+			logError(MODULE_NAME, "Error closing message archiver", new AgentSystemException("Error closing message archiver", exp));
 		}
+
+		if (producers != null && producers.size() > 0) {
+			for (MessageProducer producer: producers) {
+				try {
+					producer.close();
+				} catch (Exception exp) {
+					logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
+				}
+			}
+			producers.clear();
+		}
+
 		LoggingService.logInfo(MODULE_NAME, "Finished closing publish");
 	}
 
