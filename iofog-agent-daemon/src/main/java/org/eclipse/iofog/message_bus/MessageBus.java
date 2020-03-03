@@ -256,10 +256,16 @@ public class MessageBus implements IOFogModule {
 	public void update() throws Exception {
 		logInfo("Start update routes, list of publishers and receivers");
 		synchronized (updateLock) {
+			if (!messageBusServer.isConnected()) {
+				messageBusServer.setConnected(false);
+				new Thread(startServer).start();
+				throw new JMSException("Not connected to router");
+			}
+
 			String tempRouterHost = routerHost;
 			int tempRouterPort = routerPort;
 			getRouterAddress();
-			if (!tempRouterHost.equals(routerHost) || tempRouterPort != routerPort || !messageBusServer.isConnected()) {
+			if (!tempRouterHost.equals(routerHost) || tempRouterPort != routerPort) {
 				try {
 					if (publishers != null) {
 						publishers.forEach((key, publisher) -> publisher.close());
@@ -268,13 +274,13 @@ public class MessageBus implements IOFogModule {
 					if (receivers != null) {
 						receivers.forEach((key, receiver) -> receiver.close());
 					}
-					messageBusServer.stopServer();
+					stop();
 				} catch (Exception ex) {
 					logError(MODULE_NAME, new AgentSystemException("unable to update router info", ex));
 				} finally {
 					messageBusServer.setConnected(false);
 					new Thread(startServer).start();
-					return;
+					throw new JMSException("Not connected to router");
 				}
 			}
 
@@ -331,7 +337,7 @@ public class MessageBus implements IOFogModule {
 				messageBusServer.setConnected(false);
 				try {
 					Thread.sleep(2000);
-					messageBusServer.stopServer();
+					stop();
 				} catch (Exception exp) {
 				}
 				logError("Error starting message bus module",
@@ -364,13 +370,25 @@ public class MessageBus implements IOFogModule {
 		logInfo("Start closing receivers and publishers and stops ActiveMQ server");
 
 		if (receivers != null) {
-			for (MessageReceiver receiver : receivers.values())
-				receiver.close();
+			for (MessageReceiver receiver : receivers.values()) {
+				try {
+					receiver.close();
+				} catch (Exception e) {
+					logError("Error closing receiver " + receiver.getName(), new AgentSystemException("Error closing receiver " + receiver.getName(), e));
+				}
+			}
+			receivers.clear();
 		}
 
 		if (publishers != null) {
-			for (MessagePublisher publisher : publishers.values())
-				publisher.close();
+			for (MessagePublisher publisher : publishers.values()) {
+				try {
+					publisher.close();
+				} catch (Exception e) {
+					logError("Error closing publisher " + publisher.getName(), new AgentSystemException("Error closing publisher " + publisher.getName(), e));
+				}
+			}
+			publishers.clear();
 		}
 
 		try {

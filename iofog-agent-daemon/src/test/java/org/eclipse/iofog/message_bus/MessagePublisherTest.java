@@ -172,7 +172,7 @@ public class MessagePublisherTest {
             messagePublisher.close();
             Mockito.verify(messageArchive, atLeastOnce()).close();
             verifyStatic(LoggingService.class);
-            logError(eq(MODULE_NAME), eq("Error closing message publisher"), any());
+            logError(eq(MODULE_NAME), eq("Error closing message archive"), any());
         } catch (Exception e) {
             fail("This should not happen");
         }
