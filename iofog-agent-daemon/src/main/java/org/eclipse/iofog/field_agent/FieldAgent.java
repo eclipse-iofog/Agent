@@ -52,6 +52,7 @@ import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -86,6 +87,7 @@ public class FieldAgent implements IOFogModule {
     private static FieldAgent instance;
     private boolean initialization;
     private boolean connected = false;
+    private ReentrantLock provisioningLock = new ReentrantLock();
 
     private FieldAgent() {
         lastGetChangesList = 0;
@@ -1175,7 +1177,16 @@ public class FieldAgent implements IOFogModule {
         logInfo("Provisioning");
         JsonObject provisioningResult;
 
+        if (!notProvisioned()) {
+            try {
+                logInfo("Agent is already provisioned. Deprovisioning...");
+                StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
+                deProvision(false);
+            } catch (Exception e) {}
+        }
+
         try {
+            provisioningLock.lock();
             provisioningResult = orchestrator.provision(key);
 
             microserviceManager.clear();
@@ -1214,6 +1225,8 @@ public class FieldAgent implements IOFogModule {
             provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         } catch (Exception e) {
             provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
+        } finally {
+            provisioningLock.unlock();
         }
         return provisioningResult;
     }
@@ -1250,42 +1263,52 @@ public class FieldAgent implements IOFogModule {
     public String deProvision(boolean isTokenExpired) {
         logInfo("Start Deprovisioning");
 
-        if (notProvisioned()) {
-        	logInfo("Finished Deprovisioning : Failure - not provisioned");
-            return "\nFailure - not provisioned";
+        if (!provisioningLock.tryLock()) {
+            String msg = "Provisioning in progress";
+            logInfo(msg);
+            return msg;
         }
 
-        if (!isTokenExpired) {
-            try {
-                orchestrator.request("deprovision", RequestType.POST, null, getDeprovisionBody());
-            } catch (CertificateException | SSLHandshakeException e) {
-                verificationFailed(e);
-                logError("Unable to make deprovision request due to broken certificate ",
-                		new AgentSystemException("Unable to make deprovision request due to broken certificate", e));
-            } catch (Exception e) {
-                logError("Unable to make deprovision request ",
-                		new AgentSystemException("Unable to make deprovision request", e));
-            }
-        }
-
-        StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
-        String iofogUuid = Configuration.getIofogUuid();
         try {
-            Configuration.setIofogUuid("");
-            Configuration.setAccessToken("");
-            Configuration.saveConfigUpdates();
-        } catch (Exception e) {
-            logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+            if (notProvisioned()) {
+                logInfo("Finished Deprovisioning : Failure - not provisioned");
+                return "\nFailure - not provisioned";
+            }
+
+            if (!isTokenExpired) {
+                try {
+                    orchestrator.request("deprovision", RequestType.POST, null, getDeprovisionBody());
+                } catch (CertificateException | SSLHandshakeException e) {
+                    verificationFailed(e);
+                    logError("Unable to make deprovision request due to broken certificate ",
+                            new AgentSystemException("Unable to make deprovision request due to broken certificate", e));
+                } catch (Exception e) {
+                    logError("Unable to make deprovision request ",
+                            new AgentSystemException("Unable to make deprovision request", e));
+                }
+            }
+
+            StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
+            String iofogUuid = Configuration.getIofogUuid();
+            try {
+                Configuration.setIofogUuid("");
+                Configuration.setAccessToken("");
+                Configuration.saveConfigUpdates();
+            } catch (Exception e) {
+                logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+            }
+            microserviceManager.clear();
+            try {
+                ProcessManager.getInstance().stopRunningMicroservices(false, iofogUuid);
+            } catch (Exception e) {
+                logError("Error stopping running microservices",
+                        new AgentSystemException("Error stopping remaining microservices", e));
+            }
+            notifyModules();
+            logInfo("Finished Deprovisioning : Success - tokens, identifiers and keys removed");
+        } finally {
+            provisioningLock.unlock();
         }
-        microserviceManager.clear();
-        try{
-            ProcessManager.getInstance().stopRunningMicroservices(false, iofogUuid);
-        } catch (Exception e) {
-            logError("Error stopping running microservices",
-                    new AgentSystemException("Error stopping remaining microservices", e));
-        }
-        notifyModules();
-        logInfo("Finished Deprovisioning : Success - tokens, identifiers and keys removed");
         return "\nSuccess - tokens, identifiers and keys removed";
     }
 
