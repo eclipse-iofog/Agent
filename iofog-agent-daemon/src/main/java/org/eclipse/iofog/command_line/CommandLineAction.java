@@ -371,7 +371,7 @@ public enum CommandLineAction {
 			"                 -cf <#seconds>          Set the get changes frequency\\n" +
 			"                 -df <#seconds>          Set the post diagnostics frequency\\n" +
 			"                 -sd <#seconds>          Set the scan devices frequency\\n" +
-			"                 -pf <#seconds>          Set the docker pruning frequency\\n" +
+			"                 -pf <#hours>            Set the docker pruning frequency\\n" +
 			"                 -dt <#percentage>       Set the available disk threshold\\n" +
 			"                 -idc <on/off>           Set the mode on which any not\\n" +
 			"										  registered docker container will be\\n" +

@@ -1028,6 +1028,14 @@ public class FieldAgent implements IOFogModule {
                         configs.getString(LOG_LEVEL.getJsonProperty()) :
                         LOG_LEVEL.getDefaultValue();
 
+                int dockerPruningFrequency = configs.containsKey(DOCKER_PRUNING_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(DOCKER_PRUNING_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(DOCKER_PRUNING_FREQUENCY.getDefaultValue());
+
+                int availableDiskThreshold = configs.containsKey(AVAILABLE_DISK_THRESHOLD.getJsonProperty()) ?
+                        configs.getInt(AVAILABLE_DISK_THRESHOLD.getJsonProperty()) :
+                        Integer.parseInt(AVAILABLE_DISK_THRESHOLD.getDefaultValue());
+
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -1076,6 +1084,12 @@ public class FieldAgent implements IOFogModule {
 
                 if (!Configuration.getLogLevel().equals(logLevel))
                     instanceConfig.put(LOG_LEVEL.getCommandName(), logLevel);
+
+                if (Configuration.getDockerPruningFrequency() != dockerPruningFrequency)
+                    instanceConfig.put(DOCKER_PRUNING_FREQUENCY.getCommandName(), dockerPruningFrequency);
+
+                if (Configuration.getAvailableDiskThreshold() != availableDiskThreshold)
+                    instanceConfig.put(AVAILABLE_DISK_THRESHOLD.getCommandName(), availableDiskThreshold);
 
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);
