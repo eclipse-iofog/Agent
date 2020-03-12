@@ -114,7 +114,7 @@ public class CommandLineConfigParamTest {
         assertEquals("logLimit", commandLineConfigParam.LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty());
         assertEquals("logDirectory", commandLineConfigParam.LOG_DISK_DIRECTORY.getJsonProperty());
         assertEquals("logFileCount", commandLineConfigParam.LOG_FILE_COUNT.getJsonProperty());
-        assertEquals("loglevel", commandLineConfigParam.LOG_LEVEL.getJsonProperty());
+        assertEquals("logLevel", commandLineConfigParam.LOG_LEVEL.getJsonProperty());
         assertEquals("statusFrequency", commandLineConfigParam.STATUS_FREQUENCY.getJsonProperty());
         assertEquals("changeFrequency", commandLineConfigParam.CHANGE_FREQUENCY.getJsonProperty());
         assertEquals("deviceScanFrequency", commandLineConfigParam.DEVICE_SCAN_FREQUENCY.getJsonProperty());
