@@ -59,7 +59,7 @@
 
 	<isolated_docker_container>off</isolated_docker_container>
 
-	<docker_pruning_freq>60</docker_pruning_freq>
+	<docker_pruning_freq>1</docker_pruning_freq>
 
 	<available_disk_threshold>90</available_disk_threshold>
 </config>
