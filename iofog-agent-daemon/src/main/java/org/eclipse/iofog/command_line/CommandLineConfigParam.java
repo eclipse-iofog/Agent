@@ -55,7 +55,7 @@ public enum CommandLineConfigParam {
     DEV_MODE ("on", "dev", "dev_mode", ""),
     ROUTER_HOST ("", "", "", "routerHost"),
     ROUTER_PORT ("0", "", "", "routerPort"),
-    DOCKER_PRUNING_FREQUENCY ("60", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
+    DOCKER_PRUNING_FREQUENCY ("1", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
     AVAILABLE_DISK_THRESHOLD ("90", "dt", "available_disk_threshold", "availableDiskThreshold");
 
     private final String commandName;
