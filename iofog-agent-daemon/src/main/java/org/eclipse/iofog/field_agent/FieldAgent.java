@@ -377,7 +377,9 @@ public class FieldAgent implements IOFogModule {
                         if (routing) {
                             try {
                                 processRoutes(microservices);
-                                MessageBus.getInstance().update();
+                                if (!changes.getBoolean("routerChanged",false) || initialization) {
+                                    MessageBus.getInstance().update();
+                                }
                             } catch (Exception e) {
                                 logError("Unable to update microservices routes", e);
                                 resetChanges = false;

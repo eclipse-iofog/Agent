@@ -21,7 +21,6 @@ import javax.jms.*;
 import java.util.List;
 
 import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
-import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
@@ -67,9 +66,7 @@ public class MessagePublisher implements AutoCloseable{
 		for (MessageProducer producer: producers) {
 			try {
 				TextMessage msg = MessageBusServer.createMessage(message.toJson().toString());
-				synchronized (messageBusSessionLock) {
-					producer.send(msg, DeliveryMode.NON_PERSISTENT, javax.jms.Message.DEFAULT_PRIORITY, javax.jms.Message.DEFAULT_TIME_TO_LIVE);
-				}
+				producer.send(msg, DeliveryMode.NON_PERSISTENT, javax.jms.Message.DEFAULT_PRIORITY, javax.jms.Message.DEFAULT_TIME_TO_LIVE);
 			} catch (Exception e) {
 				logError(MODULE_NAME, "Message Publisher (" + this.name + ") unable to send message",
 						new AgentSystemException("Message Publisher (" + this.name + ") unable to send message", e));
@@ -78,9 +75,10 @@ public class MessagePublisher implements AutoCloseable{
 		LoggingService.logInfo(MODULE_NAME, "Finished publish message : " + this.name);
 	}
 
-	synchronized void updateRoute(Route route) {
+	synchronized void updateRoute(Route route, List<MessageProducer> producers) {
 		LoggingService.logInfo(MODULE_NAME, "Updating route");
 		this.route = route;
+		this.producers = producers;
 	}
 
 	public synchronized void close() {
@@ -117,5 +115,8 @@ public class MessagePublisher implements AutoCloseable{
 		LoggingService.logInfo(MODULE_NAME, "Getting messages by query");
 		return archive.messageQuery(from, to);
 	}
-	
+
+	public Route getRoute() {
+		return route;
+	}
 }

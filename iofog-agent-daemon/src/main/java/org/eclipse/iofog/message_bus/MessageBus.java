@@ -186,7 +186,12 @@ public class MessageBus implements IOFogModule {
 				publishers.remove(key);
 			} else {
 				MessagePublisher publisher = publishers.get(key);
-				publisher.updateRoute(newRoutes.get(key));
+				Route route = newRoutes.get(key);
+				Route currentRoute = publisher.getRoute();
+				if (!currentRoute.equals(route)) {
+					messageBusServer.removeProducer(key);
+					publisher.updateRoute(route, messageBusServer.getProducer(key, route.getReceivers()));
+				}
 			}
 		}
 
@@ -267,13 +272,6 @@ public class MessageBus implements IOFogModule {
 			getRouterAddress();
 			if (!tempRouterHost.equals(routerHost) || tempRouterPort != routerPort) {
 				try {
-					if (publishers != null) {
-						publishers.forEach((key, publisher) -> publisher.close());
-					}
-
-					if (receivers != null) {
-						receivers.forEach((key, receiver) -> receiver.close());
-					}
 					stop();
 				} catch (Exception ex) {
 					logError(MODULE_NAME, new AgentSystemException("unable to update router info", ex));

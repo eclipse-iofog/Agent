@@ -26,7 +26,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
@@ -82,9 +81,7 @@ public class MessageReceiver implements AutoCloseable{
 
 		Message result = null;
 		TextMessage msg;
-		synchronized (messageBusSessionLock) {
-			msg = (TextMessage) consumer.receiveNoWait();
-		}
+		msg = (TextMessage) consumer.receiveNoWait();
 		if (msg != null) {
 			msg.acknowledge();
 			JsonReader jsonReader = Json.createReader(new StringReader(msg.getText()));

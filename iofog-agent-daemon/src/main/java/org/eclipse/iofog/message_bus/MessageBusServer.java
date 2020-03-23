@@ -32,6 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MessageBusServer {
 
     public static final Object messageBusSessionLock = new Object();
+    public static final Object consumerLock = new Object();
+    public static final Object producerLock = new Object();
     private static final String MODULE_NAME = "Message Bus Server";
 
     private Connection connection;
@@ -94,7 +96,7 @@ public class MessageBusServer {
     void createConsumer(String name) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "Starting create consumer");
 
-        synchronized (messageBusSessionLock) {
+        synchronized (consumerLock) {
             Destination messageQueue = session.createQueue(name);
             MessageConsumer consumer = session.createConsumer(messageQueue);
             consumers.put(name, consumer);
@@ -131,7 +133,7 @@ public class MessageBusServer {
     void removeConsumer(String name) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "Start remove consumer");
 
-        synchronized (messageBusSessionLock) {
+        synchronized (consumerLock) {
             if (consumers != null && consumers.containsKey(name)) {
                 MessageConsumer consumer = consumers.remove(name);
                 consumer.close();
@@ -150,7 +152,7 @@ public class MessageBusServer {
     void createProducer(String name, List<String> receivers) throws Exception {
         LoggingService.logInfo(MODULE_NAME, "Start create Producer");
 
-        synchronized (messageBusSessionLock) {
+        synchronized (producerLock) {
             if (receivers != null && receivers.size() > 0) {
                 List<MessageProducer> messageProducers = new ArrayList<>();
                 for (String receiver: receivers) {
@@ -192,10 +194,10 @@ public class MessageBusServer {
      *
      * @param name - ID of {@link Microservice}
      */
-    void removeProducer(String name) throws Exception {
+    void removeProducer(String name) {
         LoggingService.logInfo(MODULE_NAME, "Start remove Producer");
 
-		synchronized (messageBusSessionLock) {
+		synchronized (producerLock) {
 			if (producers != null && producers.containsKey(name)) {
 				List<MessageProducer> messageProducers = producers.remove(name);
 				messageProducers.forEach(producer -> {

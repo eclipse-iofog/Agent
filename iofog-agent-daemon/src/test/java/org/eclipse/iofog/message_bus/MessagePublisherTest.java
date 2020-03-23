@@ -137,7 +137,7 @@ public class MessagePublisherTest {
     @Test
     public void testUpdateRoute() {
         try {
-            messagePublisher.updateRoute(route);
+            messagePublisher.updateRoute(route, messageProducers);
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Updating route");
         } catch (Exception e) {
