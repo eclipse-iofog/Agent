@@ -13,6 +13,7 @@
 package org.eclipse.iofog.microservice;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,6 +35,7 @@ public class Route {
 
 	public void setReceivers(List<String> receivers) {
 		this.receivers = receivers;
+		this.receivers.sort(String::compareTo);
 	}
 
 	@Override
