@@ -60,7 +60,7 @@ public class MessageReceiverTest {
         message = mock(Message.class);
         PowerMockito.whenNew(IOMessageListener.class).withArguments(any(MessageCallback.class)).thenReturn(ioMessageListener);
         PowerMockito.whenNew(Message.class).withParameterTypes(byte[].class).withArguments(any()).thenReturn(message);
-        PowerMockito.when(messageConsumer.receiveNoWait()).thenReturn(textMessage);
+        PowerMockito.when(messageConsumer.receiveNoWait()).thenReturn(textMessage).thenReturn(null);
         PowerMockito.when(messageConsumer.getMessageListener()).thenReturn(ioMessageListener);
         PowerMockito.when(textMessage.getText()).thenReturn("{}");
         messageReceiver = spy(new MessageReceiver(name, messageConsumer));
