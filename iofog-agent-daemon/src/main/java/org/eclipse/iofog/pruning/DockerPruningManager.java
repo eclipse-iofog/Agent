@@ -51,8 +51,8 @@ public class DockerPruningManager {
         LoggingService.logInfo(MODULE_NAME, "Start Create and start local api server");
         scheduler = Executors.newScheduledThreadPool(1);
         // one hour
-        scheduler.scheduleAtFixedRate(pruneAgent, 60, Configuration.getDockerPruningFrequency(), TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, Configuration.getDockerPruningFrequency(), TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(pruneAgent, 60, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
+        scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
 
         LoggingService.logInfo(MODULE_NAME, "Finished Create and start local api server");
     }
@@ -76,6 +76,7 @@ public class DockerPruningManager {
             long availableDiskPercentage = StatusReporter.getResourceConsumptionManagerStatus().getAvailableDisk() * 100 /
                     StatusReporter.getResourceConsumptionManagerStatus().getTotalDiskSpace();
             if (Configuration.getAvailableDiskThreshold() >= availableDiskPercentage){
+                LoggingService.logInfo(MODULE_NAME, "Docker Prune when available disk is equal to or less than threshold");
                 docker.dockerPrune();
             }
         }
