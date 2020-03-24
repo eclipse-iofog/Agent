@@ -1400,7 +1400,7 @@ public class FieldAgent implements IOFogModule {
         new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
         new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
         new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
-        
+
         StatusReporter.setFieldAgentStatus().setReadyToUpgrade(VersionHandler.isReadyToUpgrade());
         StatusReporter.setFieldAgentStatus().setReadyToRollback(VersionHandler.isReadyToRollback());
         futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
