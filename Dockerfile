@@ -40,7 +40,7 @@ ENV PATH $PATH:$GRADLE_HOME/bin
 
 VOLUME $GRADLE_USER_HOME
 
-RUN gradle build copyJar
+RUN gradle build copyJar -x test
 
 FROM jpetazzo/dind
 
