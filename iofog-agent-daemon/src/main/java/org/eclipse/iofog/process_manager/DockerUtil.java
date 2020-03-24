@@ -614,7 +614,15 @@ public class DockerUtil {
                 volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
             });
         }
-        String[] extraHosts = {"iofog:" + host};
+        String[] hosts;
+        List<String> extraHosts = microservice.getExtraHosts();
+        if (extraHosts != null && extraHosts.size() > 0) {
+            hosts = new String[extraHosts.size() + 1];
+            hosts = extraHosts.toArray(hosts);
+        } else {
+            hosts = new String[1];
+        }
+        hosts[hosts.length - 1] = "iofog:" + host;
 
         Map<String, String> containerLogConfig = new HashMap<>();
         int logFiles = 1;
@@ -655,15 +663,15 @@ public class DockerUtil {
 
         if (SystemUtils.IS_OS_WINDOWS) {
             if(microservice.isRootHostAccess()){
-                hostConfig.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true);
+                hostConfig.withNetworkMode("host").withExtraHosts(hosts).withPrivileged(true);
             } else {
-                hostConfig.withExtraHosts(extraHosts).withPrivileged(true);
+                hostConfig.withExtraHosts(hosts).withPrivileged(true);
             }
         } else if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
             if(microservice.isRootHostAccess()){
                 hostConfig.withNetworkMode("host").withPrivileged(true);
             } else {
-                hostConfig.withExtraHosts(extraHosts).withPrivileged(true);
+                hostConfig.withExtraHosts(hosts).withPrivileged(true);
             }
         }
 

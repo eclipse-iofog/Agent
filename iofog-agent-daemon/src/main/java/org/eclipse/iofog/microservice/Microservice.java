@@ -37,6 +37,7 @@ public class Microservice {
     private boolean isUpdating;
     private List<EnvVar> envVars;
     private List<String> args;
+    private List<String> extraHosts;
     private boolean isConsumer;
 
     private boolean delete;
@@ -187,5 +188,13 @@ public class Microservice {
 
     public void setConsumer(boolean consumer) {
         isConsumer = consumer;
+    }
+
+    public List<String> getExtraHosts() {
+        return extraHosts;
+    }
+
+    public void setExtraHosts(List<String> extraHosts) {
+        this.extraHosts = extraHosts;
     }
 }

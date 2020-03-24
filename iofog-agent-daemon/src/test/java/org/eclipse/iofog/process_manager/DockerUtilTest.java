@@ -1077,6 +1077,27 @@ public class DockerUtilTest {
         Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd).withCmd(any(List.class));
     }
+
+    /**
+     * Test createContainer
+     * When microservice.getExtraHosts are present
+     */
+    @Test
+    public void testCreateContainerWhenExtraHostsIsPresent() {
+        List<String> extraHosts = new ArrayList<>();
+        String host = "extra-host:1.2.3.4";
+        extraHosts.add(host);
+        PowerMockito.when(microservice.isRootHostAccess()).thenReturn(false);
+        PowerMockito.when(microservice.getExtraHosts()).thenReturn(extraHosts);
+        PowerMockito.when(microservice.getImageName()).thenReturn("microserviceName");
+        PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
+        assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
+        Mockito.verify(createContainerCmd).withHostConfig(argThat((HostConfig hostConfig) -> {
+            String[] hosts = hostConfig.getExtraHosts();
+            return hosts.length == 2 && hosts[0].equals(host);
+        }));
+    }
+
     /**
      * Test createContainer
      * When microservice.getPortMappings are present
