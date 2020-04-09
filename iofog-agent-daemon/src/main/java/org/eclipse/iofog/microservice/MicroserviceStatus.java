@@ -111,17 +111,25 @@ public class MicroserviceStatus {
 			Optional<Statistics> statisticsAfter = docker.getContainerStats(containerId);
 
 			if (statisticsBefore.isPresent() && statisticsAfter.isPresent()) {
-				CpuStatsConfig usageBefore = statisticsBefore.get().getCpuStats();
-				float totalUsageBefore = extractTotalUsage(usageBefore);
-				float systemCpuUsageBefore = extractSystemCpuUsage(usageBefore);
+				Statistics before = statisticsBefore.get();
+				CpuStatsConfig usageBefore = before.getCpuStats();
+				if (usageBefore != null) {
+					float totalUsageBefore = extractTotalUsage(usageBefore);
+					float systemCpuUsageBefore = extractSystemCpuUsage(usageBefore);
 
-				CpuStatsConfig usageAfter = statisticsAfter.get().getCpuStats();
-				float totalUsageAfter = extractTotalUsage(usageAfter);
-				float systemCpuUsageAfter = extractSystemCpuUsage(usageAfter);
-				setCpuUsage(Math.abs(1000f * ((totalUsageAfter - totalUsageBefore) / (systemCpuUsageAfter - systemCpuUsageBefore))));
+					Statistics after = statisticsAfter.get();
+					CpuStatsConfig usageAfter = after.getCpuStats();
+					if (usageAfter != null) {
+						float totalUsageAfter = extractTotalUsage(usageAfter);
+						float systemCpuUsageAfter = extractSystemCpuUsage(usageAfter);
+						setCpuUsage(Math.abs(1000f * ((totalUsageAfter - totalUsageBefore) / (systemCpuUsageAfter - systemCpuUsageBefore))));
 
-				MemoryStatsConfig memoryUsage = statisticsAfter.get().getMemoryStats();
-				setMemoryUsage(extractMemoryUsage(memoryUsage));
+						MemoryStatsConfig memoryUsage = after.getMemoryStats();
+						if (memoryUsage != null) {
+							setMemoryUsage(extractMemoryUsage(memoryUsage));
+						}
+					}
+				}
 			}
 		}
 	}
