@@ -135,7 +135,12 @@ public class MicroserviceStatus {
 	}
 
 	private long extractMemoryUsage(MemoryStatsConfig memoryUsage) {
-		return memoryUsage.getUsage();
+		Long usage = memoryUsage.getUsage();
+		if (usage == null) {
+			return 0;
+		}
+
+		return usage;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -148,7 +153,12 @@ public class MicroserviceStatus {
 	}
 
 	private float extractSystemCpuUsage(CpuStatsConfig cpuStatsConfig) {
-		return cpuStatsConfig.getSystemCpuUsage();
+		Long usage = cpuStatsConfig.getSystemCpuUsage();
+		if (usage == null) {
+			return 0;
+		}
+
+		return usage;
 	}
 
 	@Override
