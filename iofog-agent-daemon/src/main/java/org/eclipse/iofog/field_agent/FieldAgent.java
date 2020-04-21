@@ -821,6 +821,9 @@ public class FieldAgent implements IOFogModule {
             JsonValue argsValue = jsonObj.get("cmd");
             microservice.setArgs(getStringList(argsValue));
 
+            JsonValue extraHostsValue = jsonObj.get("extraHosts");
+            microservice.setExtraHosts(getStringList(extraHostsValue));
+
             try {
                 LoggingService.setupMicroserviceLogger(microservice.getMicroserviceUuid(), microservice.getLogSize());
             } catch (IOException e) {
