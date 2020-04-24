@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.iofog.microservice;
 
+import java.util.Objects;
+
 /**
  * represents microservice volume mappings for Docker run options
  *
@@ -22,18 +24,13 @@ public class VolumeMapping {
     private final String hostDestination;
     private final String containerDestination;
     private final String accessMode;
+    private final VolumeMappingType type;
 
-    public VolumeMapping(String hostDestination, String containerDestination, String accessMode) {
+    public VolumeMapping(String hostDestination, String containerDestination, String accessMode, VolumeMappingType type) {
         this.hostDestination = hostDestination;
         this.containerDestination = containerDestination;
         this.accessMode = accessMode;
-    }
-
-    @Override
-    public String toString() {
-        return "{ hostDestination='" + hostDestination + "'" +
-                ", containerDestination='" + containerDestination + "'" +
-                ", accessMode='" + accessMode + "'}";
+        this.type = type;
     }
 
     public String getHostDestination() {
@@ -48,23 +45,33 @@ public class VolumeMapping {
         return accessMode;
     }
 
+    public VolumeMappingType getType() {
+        return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VolumeMapping that = (VolumeMapping) o;
+        return Objects.equals(hostDestination, that.hostDestination) &&
+                Objects.equals(containerDestination, that.containerDestination) &&
+                Objects.equals(accessMode, that.accessMode) &&
+                Objects.equals(type, that.type);
+    }
+
     @Override
     public int hashCode() {
-        int result = hostDestination.hashCode();
-        result = 31 * result + containerDestination.hashCode();
-        result = 31 * result + accessMode.hashCode();
-        return result;
+        return Objects.hash(hostDestination, containerDestination, accessMode, type);
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-
-        VolumeMapping o = (VolumeMapping) other;
-        return this.hostDestination.equals(o.hostDestination) &&
-                this.containerDestination.equals(o.containerDestination) &&
-                this.accessMode.equals(o.accessMode) ;
+    public String toString() {
+        return "VolumeMapping{" +
+                "hostDestination='" + hostDestination + '\'' +
+                ", containerDestination='" + containerDestination + '\'' +
+                ", accessMode='" + accessMode + '\'' +
+                ", type='" + type + '\'' +
+                '}';
     }
-
 }

@@ -794,11 +794,13 @@ public class FieldAgent implements IOFogModule {
                         ? IntStream.range(0, volumeMappingObj.size())
                         .boxed()
                         .map(volumeMappingObj::getJsonObject)
-                        .map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostDestination"),
-                                volumeMapping.getString("containerDestination"),
-                                volumeMapping.getString("accessMode")))
-                        .collect(toList())
-                        : null;
+                        .map(volumeMapping -> {
+                            VolumeMappingType volumeMappingType = volumeMapping.getString("type", "bind").equals("volume") ? VolumeMappingType.VOLUME : VolumeMappingType.BIND;
+                            return new VolumeMapping(volumeMapping.getString("hostDestination"),
+                                    volumeMapping.getString("containerDestination"),
+                                    volumeMapping.getString("accessMode"),
+                                    volumeMappingType);
+                        }).collect(toList()) : null;
 
                 microservice.setVolumeMappings(vms);
             }
