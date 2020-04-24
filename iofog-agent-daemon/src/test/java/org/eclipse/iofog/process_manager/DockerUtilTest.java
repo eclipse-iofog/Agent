@@ -232,6 +232,7 @@ public class DockerUtilTest {
         PowerMockito.when(volumeMapping.getAccessMode()).thenReturn("AUTO");
         PowerMockito.when(volumeMapping.getContainerDestination()).thenReturn("containerDestination");
         PowerMockito.when(volumeMapping.getHostDestination()).thenReturn("hostDestination");
+        PowerMockito.when(volumeMapping.getType()).thenReturn(VolumeMappingType.BIND);
         PowerMockito.whenNew(MicroserviceStatus.class).withNoArguments().thenReturn(microserviceStatus);
         PowerMockito.whenNew(CountDownLatch.class).withArguments(anyInt()).thenReturn(countDownLatch);
         PowerMockito.whenNew(StatsCallback.class).withArguments(any(CountDownLatch.class)).thenReturn(statsCallback);
@@ -1041,7 +1042,7 @@ public class DockerUtilTest {
      * microservice.isRootHostAccess false
      */
     @Test
-    public void testCreateContainerWhenPortMappingsAndVolumeMappingsArePresent() {
+    public void testCreateContainerWhenPortMappingsAndBindVolumeMappingsArePresent() {
         PowerMockito.when(microservice.getPortMappings()).thenReturn(portMappingList);
         PowerMockito.when(microservice.getVolumeMappings()).thenReturn(volumeMappingList);
         PowerMockito.when(microservice.getImageName()).thenReturn("microserviceName");
@@ -1050,7 +1051,6 @@ public class DockerUtilTest {
         Mockito.verify(microservice).isRootHostAccess();
         Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withCmd(any(List.class));
     }
 
@@ -1061,7 +1061,7 @@ public class DockerUtilTest {
      * microservice.isRootHostAccess true
      */
     @Test
-    public void testCreateContainerWhenPortMappingsAndVolumeMappingsArePresentWithRootAccess() {
+    public void testCreateContainerWhenPortMappingsAndBindVolumeMappingsArePresentWithRootAccess() {
         List<String> args = new ArrayList<>();
         args.add("args");
         PowerMockito.when(microservice.getPortMappings()).thenReturn(portMappingList);
@@ -1074,7 +1074,6 @@ public class DockerUtilTest {
         Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withExposedPorts(any(ExposedPort.class));
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd).withCmd(any(List.class));
     }
     /**
