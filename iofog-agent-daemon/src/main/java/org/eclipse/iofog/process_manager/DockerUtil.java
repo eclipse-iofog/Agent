@@ -599,19 +599,28 @@ public class DockerUtil {
                 exposedPorts.add(internal);
             });
         List<Volume> volumes = new ArrayList<>();
-        List<Bind> volumeBindings = new ArrayList<>();
+        List<Mount> volumeMounts = new ArrayList<>();
         if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size() != 0) {
             microservice.getVolumeMappings().forEach(volumeMapping -> {
-                Volume volume = new Volume(volumeMapping.getContainerDestination());
-                volumes.add(volume);
-                AccessMode accessMode;
-                try {
-                    accessMode = AccessMode.valueOf(volumeMapping.getAccessMode());
-                } catch (Exception e) {
-                    accessMode = AccessMode.DEFAULT;
-                    LoggingService.logInfo(MODULE_NAME , String.format("create container access Mode set to  \"%s\" ", accessMode));
+                if (volumeMapping.getType() == VolumeMappingType.VOLUME) {
+                    Volume volume = new Volume(volumeMapping.getContainerDestination());
+                    volumes.add(volume);
                 }
-                volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
+
+                boolean isReadOnly;
+                try {
+                    isReadOnly = volumeMapping.getAccessMode().toLowerCase() == "ro";
+                } catch (Exception e) {
+                    isReadOnly = false;
+                    LoggingService.logInfo(MODULE_NAME , String.format("volume access mode set to RW"));
+                }
+
+                Mount mount = (new Mount())
+                        .withSource(volumeMapping.getHostDestination())
+                        .withType(volumeMapping.getType() == VolumeMappingType.BIND ? MountType.BIND : MountType.VOLUME)
+                        .withTarget(volumeMapping.getContainerDestination())
+                        .withReadOnly(isReadOnly);
+                volumeMounts.add(mount);
             });
         }
         String[] hosts;
@@ -656,9 +665,12 @@ public class DockerUtil {
             .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
             .withLabels(labels);
 
-        if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size()!= 0) {
-            cmd = cmd.withVolumes(volumes.toArray(new Volume[volumes.size()]));
-            hostConfig.withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
+        if (volumes.size() > 0) {
+            cmd = cmd.withVolumes(volumes);
+        }
+
+        if (volumeMounts.size() > 0) {
+            hostConfig.withMounts(volumeMounts);
         }
 
         if (SystemUtils.IS_OS_WINDOWS) {
