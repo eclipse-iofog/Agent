@@ -56,15 +56,38 @@ public class Client {
      */
     private static boolean isAnotherInstanceRunning() {
         try {
-            URL url = new URL(LOCAL_API_ENDPOINT);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.getResponseCode();
+            HttpURLConnection conn = postRequest("status");
             conn.disconnect();
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static HttpURLConnection postRequest(String... args) throws Exception {
+        StringBuilder params = new StringBuilder("{\"command\":\"");
+        for (String arg : args) {
+            params.append(arg).append(" ");
+        }
+        params = new StringBuilder(params.toString().trim() + "\"}");
+        byte[] postData = params.toString().trim().getBytes(StandardCharsets.UTF_8);
+
+        String accessToken = fetchAccessToken();
+
+        URL url = new URL(LOCAL_API_ENDPOINT);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Accept", "text/plain");
+        conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
+        conn.setRequestProperty("Authorization", accessToken);
+        conn.setDoOutput(true);
+        try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+            wr.write(postData);
+            wr.flush();
+        }
+
+        return conn;
     }
 
     /**
@@ -74,28 +97,9 @@ public class Client {
      */
     private static boolean sendCommandlineParameters(String... args) {
         try {
-            StringBuilder params = new StringBuilder("{\"command\":\"");
+            HttpURLConnection conn = postRequest(args);
             int statusCode;
-            for (String arg : args) {
-                params.append(arg).append(" ");
-            }
-            params = new StringBuilder(params.toString().trim() + "\"}");
-            byte[] postData = params.toString().trim().getBytes(StandardCharsets.UTF_8);
 
-            String accessToken = fetchAccessToken();
-
-            URL url = new URL(LOCAL_API_ENDPOINT);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Accept", "text/plain");
-            conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
-            conn.setRequestProperty("Authorization", accessToken);
-            conn.setDoOutput(true);
-            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-                wr.write(postData);
-                wr.flush();
-            }
             BufferedReader br = null;
             if (conn.getResponseCode() == 200) {
                 br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
