@@ -209,6 +209,9 @@ jobs:
           do
               package_cloud yank iofog/iofog-agent-snapshots/debian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
               package_cloud push iofog/iofog-agent-snapshots/debian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+
+              package_cloud yank iofog/iofog-agent-snapshots/raspbian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+              package_cloud push iofog/iofog-agent-snapshots/raspbian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
           done
         displayName: 'publish deb develop package to package-cloud'
         condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop'))
