@@ -35,8 +35,10 @@
 * Fixed microservice move bug
 * Fixed deprovisioning and routing issues
 * Fixed message routing
+
+## [v1.3.0] - 2020-11-21
     
-    
-[Unreleased]: https://github.com/eclipse-iofog/helm/compare/v2.0.0-beta2..HEAD
-[v2.0.0-beta2]: https://github.com/eclipse-iofog/helm/compare/v2.0.0-beta..v2.0.0-beta2
-[v2.0.0-beta]: https://github.com/eclipse-iofog/helm/compare/v1.3.0..v2.0.0-beta
+[Unreleased]: https://github.com/eclipse-iofog/agent/compare/v2.0.0-beta2..HEAD
+[v2.0.0-beta2]: https://github.com/eclipse-iofog/agent/compare/v2.0.0-beta..v2.0.0-beta2
+[v2.0.0-beta]: https://github.com/eclipse-iofog/agent/compare/v1.3.0..v2.0.0-beta
+[v1.3.0]: https://github.com/eclipse-iofog/agent/tree/v1.3.0
