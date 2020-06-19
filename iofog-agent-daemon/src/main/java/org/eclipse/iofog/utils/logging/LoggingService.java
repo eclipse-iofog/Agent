@@ -32,6 +32,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.eclipse.iofog.utils.CmdProperties.getVersion;
+
 /**
  * sets up and starts logging
  * 
@@ -107,6 +109,7 @@ public final class LoggingService {
      */
     public static void logError(String moduleName, String msg, Throwable e) {
         if (newSentryException(e)) {
+            Sentry.getContext().addExtra("version", getVersion());
             Sentry.getStoredClient().getContext().setUser(new User(System.getProperty("user.name"), System.getProperty("user.name"), "", ""));
             Sentry.capture(e);
         }
