@@ -956,7 +956,7 @@ public final class Configuration {
         setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
         setIpAddressExternal(GpsWebHandler.getExternalIp());
         setRouterHost(getNode(ROUTER_HOST, configFile));
-        setRouterPort(Integer.parseInt(getNode(ROUTER_PORT, configFile)));
+        setRouterPort(!getNode(ROUTER_PORT, configFile).equals("") ? Integer.parseInt(getNode(ROUTER_PORT, configFile)) : 0);
 
         setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
