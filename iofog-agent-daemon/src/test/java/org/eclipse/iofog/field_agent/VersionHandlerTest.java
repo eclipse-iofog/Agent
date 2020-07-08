@@ -15,7 +15,6 @@ package org.eclipse.iofog.field_agent;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.field_agent.enums.VersionCommand;
-import org.eclipse.iofog.local_api.VersionApiHandler;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
 import org.junit.Before;
@@ -35,7 +34,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;

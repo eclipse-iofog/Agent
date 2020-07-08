@@ -109,6 +109,8 @@ public final class Configuration {
     private static String ipAddressExternal;
     private static long dockerPruningFrequency;
     private static long availableDiskThreshold;
+    private static int readyToUpgradeScanFrequency;
+
 
     public static boolean debugging = false;
 
@@ -708,6 +710,22 @@ public final class Configuration {
                         setAvailableDiskThreshold(Long.parseLong(value));
                         DockerPruningManager.getInstance().refreshSchedule();
                         break;
+                    case READY_TO_UPGRADE_SCAN_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting isReadyToUpgrade scan frequency");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1) {
+                            messageMap.put(option, "isReadyToUpgrade scan frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(READY_TO_UPGRADE_SCAN_FREQUENCY, value, configFile, configElement);
+                        setReadyToUpgradeScanFrequency(Integer.parseInt(value));
+                        FieldAgent.getInstance().changeReadInterval();
+                        break;
                     default:
                         throw new ConfigurationItemException("Invalid parameter -" + option);
                 }
@@ -960,6 +978,7 @@ public final class Configuration {
 
         setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
+        setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
 
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
@@ -1243,6 +1262,8 @@ public final class Configuration {
         result.append(buildReportLine(getConfigParamMessage(DOCKER_PRUNING_FREQUENCY), format("%d", dockerPruningFrequency)));
         // available disk threshold
         result.append(buildReportLine(getConfigParamMessage(AVAILABLE_DISK_THRESHOLD), format("%d", availableDiskThreshold)));
+        // is ready to upgrade scan frequency
+        result.append(buildReportLine(getConfigParamMessage(READY_TO_UPGRADE_SCAN_FREQUENCY), format("%d", readyToUpgradeScanFrequency)));
 
         LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
         
@@ -1407,4 +1428,13 @@ public final class Configuration {
     public static void setAvailableDiskThreshold(long availableDiskThreshold) {
         Configuration.availableDiskThreshold = availableDiskThreshold;
     }
+
+    public static int getReadyToUpgradeScanFrequency() {
+        return readyToUpgradeScanFrequency;
+    }
+
+    public static void setReadyToUpgradeScanFrequency(int readyToUpgradeScanFrequency) {
+        Configuration.readyToUpgradeScanFrequency = readyToUpgradeScanFrequency;
+    }
+
 }

@@ -82,7 +82,6 @@ public class Supervisor implements IOFogModule {
 	 */
 	public void start() throws Exception {
         Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, Constants.SHUTDOWN_HOOK));
-
         logInfo("Starting Supervisor");
         StatusReporter.start();
         StatusReporter.setSupervisorStatus().setModuleStatus(STATUS_REPORTER, RUNNING);

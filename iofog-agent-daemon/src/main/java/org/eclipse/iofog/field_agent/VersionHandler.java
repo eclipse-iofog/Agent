@@ -183,11 +183,16 @@ public class VersionHandler {
 	}
 
 	static boolean isReadyToUpgrade() {
-		LoggingService.logInfo(MODULE_NAME, "Checking is ready to upgrade");
-		boolean isReadyToUpgrade = isNotWindows()
-				&& isPackageRepositoryUpdated()
-				&& areNotVersionsSame();
-		LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : " + isReadyToUpgrade);
+		boolean isReadyToUpgrade = false;
+		try{
+			LoggingService.logInfo(MODULE_NAME, "Checking is ready to upgrade");
+			isReadyToUpgrade = isNotWindows()
+					&& isPackageRepositoryUpdated()
+					&& areNotVersionsSame();
+			LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : " + isReadyToUpgrade);
+		} catch (Exception e){
+			LoggingService.logError(MODULE_NAME, "Error getting is ready to upgrade", new AgentSystemException("Error getting is ready to upgrade", e));
+		}
 		return isReadyToUpgrade;
 	}
 

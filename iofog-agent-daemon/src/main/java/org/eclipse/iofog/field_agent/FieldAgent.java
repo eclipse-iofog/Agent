@@ -59,14 +59,16 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang.StringUtils.rightPad;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
-import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
-import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
-import static org.eclipse.iofog.utils.CmdProperties.getVersion;
+import static org.eclipse.iofog.utils.CmdProperties.*;
+import static org.eclipse.iofog.utils.CmdProperties.getConfigParamMessage;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.*;
 
@@ -88,6 +90,8 @@ public class FieldAgent implements IOFogModule {
     private boolean initialization;
     private boolean connected = false;
     private ReentrantLock provisioningLock = new ReentrantLock();
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
+    private ScheduledFuture<?> futureTask;
 
     private FieldAgent() {
         lastGetChangesList = 0;
@@ -156,8 +160,8 @@ public class FieldAgent implements IOFogModule {
                         "UNKNOWN" : StatusReporter.getSshManagerStatus().getJsonProxyStatus())
                 .add("version", getVersion() == null ?
                         "UNKNOWN" : getVersion())
-                .add("isReadyToUpgrade", isReadyToUpgrade())
-                .add("isReadyToRollback", isReadyToRollback())
+                .add("isReadyToUpgrade", StatusReporter.getFieldAgentStatus().isReadyToUpgrade())
+                .add("isReadyToRollback", StatusReporter.getFieldAgentStatus().isReadyToRollback())
                 .build();
     }
 
@@ -1043,6 +1047,10 @@ public class FieldAgent implements IOFogModule {
                         configs.getInt(AVAILABLE_DISK_THRESHOLD.getJsonProperty()) :
                         Integer.parseInt(AVAILABLE_DISK_THRESHOLD.getDefaultValue());
 
+                int readyToUpgradeScanFreq = configs.containsKey(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getDefaultValue());
+
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -1095,8 +1103,11 @@ public class FieldAgent implements IOFogModule {
                 if ((Configuration.getDockerPruningFrequency() != dockerPruningFrequency) && (dockerPruningFrequency >= 1))
                     instanceConfig.put(DOCKER_PRUNING_FREQUENCY.getCommandName(), dockerPruningFrequency);
 
-                if (Configuration.getAvailableDiskThreshold() != availableDiskThreshold)
+                if (Configuration.getAvailableDiskThreshold() != availableDiskThreshold) {
                     instanceConfig.put(AVAILABLE_DISK_THRESHOLD.getCommandName(), availableDiskThreshold);
+                }
+                if ((Configuration.getReadyToUpgradeScanFrequency() != readyToUpgradeScanFreq) && (readyToUpgradeScanFreq >= 1))
+                    instanceConfig.put(READY_TO_UPGRADE_SCAN_FREQUENCY.getCommandName(), readyToUpgradeScanFreq);
 
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);
@@ -1389,6 +1400,10 @@ public class FieldAgent implements IOFogModule {
         new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
         new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
         new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
+        
+        StatusReporter.setFieldAgentStatus().setReadyToUpgrade(VersionHandler.isReadyToUpgrade());
+        StatusReporter.setFieldAgentStatus().setReadyToRollback(VersionHandler.isReadyToRollback());
+        futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
         logInfo("Field Agent started");
     }
 
@@ -1544,5 +1559,58 @@ public class FieldAgent implements IOFogModule {
         }
         LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
     }
+    /**
+     * returns report for "info" about ready to upgrade and ready to rollback
+     *
+     * @return info getcheckUpgradeReadyReport
+     */
+    public String getcheckUpgradeReadyReport() {
+        LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
 
+        StringBuilder result = new StringBuilder();
+        boolean isReadyToUpgrade = VersionHandler.isReadyToUpgrade();
+        boolean isReadyToRollback = VersionHandler.isReadyToRollback();
+
+        // isReadyToUpgrade
+        result.append(buildReportLine("Ready To Upgrade", String.valueOf(isReadyToUpgrade)));
+        // isReadyToRollback
+        result.append(buildReportLine("Ready To Rollback", String.valueOf(isReadyToRollback)));
+
+        LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
+
+        return result.toString();
+    }
+
+    private String buildReportLine(String messageDescription, String value) {
+        LoggingService.logInfo(MODULE_NAME, "build Report Line");
+        return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
+    }
+
+    /**
+     *  get isReadyToUpgrade and isReadyToRollback Status
+     */
+    private Runnable getAgentReadyToUpgradeStatus = () -> {
+        LoggingService.logInfo(MODULE_NAME, "Start scan of isReadyToUpgrade and isReadyToRollback Status");
+        try {
+            boolean isReadyToRollback = VersionHandler.isReadyToRollback();
+            boolean isReadyToUpgrade = VersionHandler.isReadyToUpgrade();
+            StatusReporter.setFieldAgentStatus().setReadyToRollback(isReadyToRollback);
+            StatusReporter.setFieldAgentStatus().setReadyToUpgrade(isReadyToUpgrade);
+        } catch (Exception e){
+            LoggingService.logError(MODULE_NAME,"Error getting isReadyToUpgrade and isReadyToRollback Status", new AgentSystemException("Error in Agent Version Handler", e));
+        }
+        LoggingService.logInfo(MODULE_NAME, "Finished scan of isReadyToUpgrade and isReadyToRollback Status");
+
+    };
+    /**
+     * This method will reschedule "myTask" with the new param time
+     */
+    public void changeReadInterval()
+    {
+        if (futureTask != null)
+        {
+            futureTask.cancel(true);
+        }
+        futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
+    }
 }
