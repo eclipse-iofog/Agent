@@ -31,6 +31,7 @@ import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager
 import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.status_reporter.StatusReporterStatus;
+import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
@@ -61,6 +62,9 @@ import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.resource_manager.ResourceManager.COMMAND_USB_INFO;
@@ -69,6 +73,8 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
+import static org.powermock.api.support.membermodification.MemberMatcher.method;
+import static org.powermock.api.support.membermodification.MemberModifier.suppress;
 
 /**
  * @author nehanaithani
@@ -1575,6 +1581,7 @@ public class FieldAgentTest {
         when(Configuration.getChangeFrequency()).thenReturn(20);
         when(Configuration.getDeviceScanFrequency()).thenReturn(60);
         when(Configuration.isWatchdogEnabled()).thenReturn(false);
+        when(Configuration.getReadyToUpgradeScanFrequency()).thenReturn(24);
         when(Configuration.getGpsCoordinates()).thenReturn("4000.0, 2000.3");
         PowerMockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
     }
@@ -1597,6 +1604,10 @@ public class FieldAgentTest {
         when(StatusReporter.getResourceConsumptionManagerStatus()).thenReturn(resourceConsumptionManagerStatus);
         when(IOFogNetworkInterface.getCurrentIpAddress()).thenReturn("ip");
         when(supervisorStatus.getDaemonStatus()).thenReturn(Constants.ModulesStatus.RUNNING);
+        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+        ScheduledFuture future = mock(ScheduledFuture.class);
+        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), anyLong(), anyLong(), any(TimeUnit.class));
+        mock(Runnable.class);
 
     }
 

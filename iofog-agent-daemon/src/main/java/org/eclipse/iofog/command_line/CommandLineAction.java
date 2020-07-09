@@ -290,6 +290,17 @@ public enum CommandLineAction {
 		public String perform(String[] args) {
 			return DockerPruningManager.getInstance().pruneAgent();
 		}
+	},
+	CHECK_UPGRADE_READY_ACTION {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("checkUpgradeReady");
+		}
+
+		@Override
+		public String perform(String[] args) {
+			return FieldAgent.getInstance().getcheckUpgradeReadyReport();
+		}
 	};
 
 	public abstract List<String> getKeys();
@@ -372,6 +383,7 @@ public enum CommandLineAction {
 			"                 -df <#seconds>          Set the post diagnostics frequency\\n" +
 			"                 -sd <#seconds>          Set the scan devices frequency\\n" +
 			"                 -pf <#hours>            Set the docker pruning frequency\\n" +
+			"                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
 			"                 -dt <#percentage>       Set the available disk threshold\\n" +
 			"                 -idc <on/off>           Set the mode on which any not\\n" +
 			"										  registered docker container will be\\n" +

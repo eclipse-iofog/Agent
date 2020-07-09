@@ -26,6 +26,8 @@ public class FieldAgentStatus {
 	private Constants.ControllerStatus controllerStatus;
 	private long lastCommandTime;
 	private boolean controllerVerified;
+	private boolean readyToUpgrade;
+	private boolean readyToRollback;
 
 	public FieldAgentStatus() {
 		controllerStatus = ControllerStatus.NOT_CONNECTED;
@@ -53,6 +55,22 @@ public class FieldAgentStatus {
 
 	public void setControllerVerified(boolean controllerVerified) {
 		this.controllerVerified = controllerVerified;
+	}
+
+	public boolean isReadyToUpgrade() {
+		return readyToUpgrade;
+	}
+
+	public void setReadyToUpgrade(boolean readyToUpgrade) {
+		this.readyToUpgrade = readyToUpgrade;
+	}
+
+	public boolean isReadyToRollback() {
+		return readyToRollback;
+	}
+
+	public void setReadyToRollback(boolean readyToRollback) {
+		this.readyToRollback = readyToRollback;
 	}
 
 }
