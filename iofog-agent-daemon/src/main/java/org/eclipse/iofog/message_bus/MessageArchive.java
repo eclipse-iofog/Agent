@@ -135,10 +135,14 @@ public class MessageArchive implements AutoCloseable{
 	public void close() {
 		try {
 			currentFileName = "";
-			if (indexFile != null)
+			if (indexFile != null){
 				indexFile.close();
-			if (dataFile != null)
+				indexFile = null;
+			}
+			if (dataFile != null){
 				dataFile.close();
+				dataFile = null;
+			}
 			currentFileName = "";
 		} catch (Exception exp) {
 			LoggingService.logError(MODULE_NAME, exp.getMessage(), exp);
