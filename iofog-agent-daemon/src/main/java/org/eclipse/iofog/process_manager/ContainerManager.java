@@ -116,6 +116,7 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
 		startContainer(microservice);
 		microservice.setRebuild(false);
+		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.RUNNING);
 	}
 
 	/**

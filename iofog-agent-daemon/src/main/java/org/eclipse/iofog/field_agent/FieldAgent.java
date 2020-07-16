@@ -225,11 +225,16 @@ public class FieldAgent implements IOFogModule {
     private final Runnable postStatus = () -> {
         while (true) {
             try {
-                Thread.sleep(Configuration.getStatusFrequency() * 1000);
+                if (microserviceManager.getCurrentMicroservices().size() == StatusReporter.getProcessManagerStatus().getRunningMicroservicesCount()) {
+                    Thread.sleep(Configuration.getStatusFrequency() * 1000);
+                } else {
+                    Thread.sleep(1 * 1000);
+                }
                 postStatusHelper();
             } catch (Exception e) {
                 logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
             }
+
         }
     };
 
@@ -364,7 +369,8 @@ public class FieldAgent implements IOFogModule {
                         changes.getBoolean("routing",false) || initialization) {
                     boolean microserviceConfig = changes.getBoolean("microserviceConfig");
                     boolean routing = changes.getBoolean("routing");
-
+                    int defaultFreq = Configuration.getStatusFrequency();
+                    Configuration.setStatusFrequency(1);
                     try {
                         List<Microservice> microservices = loadMicroservices(false);
 
@@ -395,6 +401,8 @@ public class FieldAgent implements IOFogModule {
                     } catch (Exception e) {
                         logError("Unable to get microservices list", e);
                         resetChanges = false;
+                    } finally {
+                        Configuration.setStatusFrequency(defaultFreq);
                     }
                 }
 

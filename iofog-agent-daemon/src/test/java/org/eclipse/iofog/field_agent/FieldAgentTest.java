@@ -410,12 +410,12 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-            PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-            PowerMockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-            PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-            PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-            PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("sendHWInfoFromHalToController");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processMicroserviceConfig", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processRoutes", any());
             PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -1598,6 +1598,7 @@ public class FieldAgentTest {
         ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = mock(ResourceConsumptionManagerStatus.class);
         when(StatusReporter.getSupervisorStatus()).thenReturn(supervisorStatus);
         when(StatusReporter.getProcessManagerStatus()).thenReturn(processManagerStatus);
+        when(processManagerStatus.getRunningMicroservicesCount()).thenReturn(2);
         when(StatusReporter.getStatusReporterStatus()).thenReturn(statusReporterStatus);
         when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
         when(StatusReporter.getSshManagerStatus()).thenReturn(sshProxyManagerStatus);

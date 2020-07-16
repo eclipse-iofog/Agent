@@ -76,7 +76,7 @@ public class DockerPruningManager {
             long availableDiskPercentage = StatusReporter.getResourceConsumptionManagerStatus().getAvailableDisk() * 100 /
                     StatusReporter.getResourceConsumptionManagerStatus().getTotalDiskSpace();
             if (Configuration.getAvailableDiskThreshold() >= availableDiskPercentage){
-                LoggingService.logInfo(MODULE_NAME, "Docker Prune when available disk is equal to or less than threshold");
+                LoggingService.logDebug(MODULE_NAME, "Docker Prune when available disk is equal to or less than threshold");
                 docker.dockerPrune();
             }
         }
