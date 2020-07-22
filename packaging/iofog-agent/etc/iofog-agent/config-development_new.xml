@@ -31,7 +31,7 @@
 	
 	<docker_url>unix:///var/run/docker.sock</docker_url>
 	
-	<disk_consumption_limit>1</disk_consumption_limit>
+	<disk_consumption_limit>10</disk_consumption_limit>
 	
 	<disk_directory>/var/lib/iofog-agent/</disk_directory>
 	

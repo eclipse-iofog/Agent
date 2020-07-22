@@ -137,7 +137,7 @@ public class CommandLineConfigParamTest {
     public void testGetDefaultValue() {
         assertEquals("", commandLineConfigParam.ACCESS_TOKEN.getDefaultValue());
         assertEquals("", commandLineConfigParam.IOFOG_UUID.getDefaultValue());
-        assertEquals("1", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getDefaultValue());
+        assertEquals("10", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getDefaultValue());
         assertEquals("/var/lib/iofog-agent/", commandLineConfigParam.DISK_DIRECTORY.getDefaultValue());
         assertEquals("4096", commandLineConfigParam.MEMORY_CONSUMPTION_LIMIT.getDefaultValue());
         assertEquals("80", commandLineConfigParam.PROCESSOR_CONSUMPTION_LIMIT.getDefaultValue());

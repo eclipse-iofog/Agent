@@ -408,8 +408,8 @@ public class CommandLineActionTest {
             "                                         according to the options provided\\n" +
             "                 defaults                Reset configuration to default values\\n" +
             "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
-            "                                         that the software is allowed to use\\n" +
-            "                 -dl <dir>               Set the directory to use for disk\\n" +
+            "                                         that the message archive is allowed to use\\n" +
+            "                 -dl <dir>               Set the message archive directory to use for disk\\n" +
             "                                         storage\\n" +
             "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
             "                                         the software is allowed to use for\\n" +

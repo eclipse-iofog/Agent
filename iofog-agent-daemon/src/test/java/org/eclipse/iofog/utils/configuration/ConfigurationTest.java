@@ -152,7 +152,7 @@ public class ConfigurationTest {
             assertEquals("http://localhost:54421/api/v3/",Configuration.getControllerUrl());
             assertEquals("unix:///var/run/docker.sock", Configuration.getDockerUrl());
             assertEquals("/var/lib/iofog-agent/", Configuration.getDiskDirectory());
-            assertEquals(1, Configuration.getDiskLimit(), 0);
+            assertEquals(10, Configuration.getDiskLimit(), 0);
             assertEquals(4096, Configuration.getMemoryLimit(), 0);
             assertEquals(80.0, Configuration.getCpuLimit(), 0);
             assertEquals(10.0, Configuration.getLogFileCount(), 0);
