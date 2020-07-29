@@ -6,7 +6,7 @@ plugins {
 description = 'iofog-agent-daemon'
 
 dependencies {
-    compile 'com.github.docker-java:docker-java:3.1.5'
+    compile 'com.github.docker-java:docker-java:3.2.5'
     compile 'io.netty:netty-all:4.1.34.Final'
     compile 'org.jboss.logmanager:jboss-logmanager:2.0.3.Final'
     compile 'com.jcraft:jsch:0.1.55'

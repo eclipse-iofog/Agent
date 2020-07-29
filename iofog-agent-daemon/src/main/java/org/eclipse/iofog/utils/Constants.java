@@ -22,6 +22,7 @@ import java.io.PrintStream;
  * @author saeid
  */
 public class Constants {
+
     public enum ModulesStatus {
         STARTING, RUNNING, STOPPED
     }
@@ -136,4 +137,5 @@ public class Constants {
 	public static final String NETWORK_INTERFACE_MANAGER = "INIM";
 
     public static final float MAX_DISK_CONSUMPTION_LIMIT = 100;
+    public static final String PERCENTAGE_COMPLETION = "100";
 }

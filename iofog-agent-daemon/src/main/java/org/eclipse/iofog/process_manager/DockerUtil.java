@@ -23,7 +23,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
-import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
@@ -38,6 +38,7 @@ import javax.json.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -79,10 +80,10 @@ public class DockerUtil {
      * initializes docker client
      */
     private void initDockerClient() {
-    	LoggingService.logInfo(MODULE_NAME , "Start Docker Client initialization");
+        LoggingService.logInfo(MODULE_NAME , "Start Docker Client initialization");
         try {
             DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .withDockerHost(Configuration.getDockerUrl());
+                  .withDockerHost(Configuration.getDockerUrl());
             if (!Configuration.getDockerApiVersion().isEmpty()) {
                 configBuilder = configBuilder.withApiVersion(Configuration.getDockerApiVersion());
             }
@@ -100,7 +101,7 @@ public class DockerUtil {
      * reinitialization of docker client
      */
     public void reInitDockerClient() {
-    	LoggingService.logInfo(MODULE_NAME , "Start Docker Client re-initialization");
+        LoggingService.logInfo(MODULE_NAME , "Start Docker Client re-initialization");
         try {
             if (null != dockerClient) {
                 dockerClient.close();
@@ -110,7 +111,7 @@ public class DockerUtil {
         }
         initDockerClient();
         LoggingService.logInfo(MODULE_NAME , "Finished Docker Client re-initialization");
-        
+
     }
 
 
@@ -118,7 +119,7 @@ public class DockerUtil {
      * starts docker events handler
      */
     private void addDockerEventHandler() {
-    	LoggingService.logInfo(MODULE_NAME , "Starting docker events handler");
+        LoggingService.logInfo(MODULE_NAME , "Starting docker events handler");
         dockerClient.eventsCmd().exec(new EventsResultCallback() {
             @Override
             public void onNext(Event item) {
@@ -126,7 +127,7 @@ public class DockerUtil {
                     case CONTAINER:
                     case IMAGE:
                         StatusReporter.setProcessManagerStatus().getMicroserviceStatus(item.getId()).setStatus(
-                            fromText(item.getStatus()));
+                              fromText(item.getStatus()));
                 }
             }
         });
@@ -141,13 +142,13 @@ public class DockerUtil {
      * @return base64 encoded string
      */
     private String getAuth(Registry registry) {
-    	LoggingService.logInfo(MODULE_NAME , "get auth");
+        LoggingService.logInfo(MODULE_NAME , "get auth");
         JsonObject auth = Json.createObjectBuilder()
-            .add("username", registry.getUserName())
-            .add("password", registry.getPassword())
-            .add("email", registry.getUserEmail())
-            .add("auth", EMPTY)
-            .build();
+              .add("username", registry.getUserName())
+              .add("password", registry.getPassword())
+              .add("email", registry.getUserEmail())
+              .add("auth", EMPTY)
+              .build();
         return Base64.getEncoder().encodeToString(auth.toString().getBytes(StandardCharsets.US_ASCII));
     }
 
@@ -157,14 +158,14 @@ public class DockerUtil {
      * @return String default bridge name
      */
     public String getDockerBridgeName() {
-    	LoggingService.logInfo(MODULE_NAME , "get docker bridge name");
+        LoggingService.logInfo(MODULE_NAME , "get docker bridge name");
         List<Network> networks = dockerClient.listNetworksCmd().exec();
 
         Network dockerBridge = networks
-                .stream()
-                .filter(network -> network.getOptions().getOrDefault("com.docker.network.bridge.default_bridge", "false").equals("true"))
-                .findFirst()
-                .orElse(null);
+              .stream()
+              .filter(network -> network.getOptions().getOrDefault("com.docker.network.bridge.default_bridge", "false").equals("true"))
+              .findFirst()
+              .orElse(null);
 
         if (dockerBridge == null) {
             return null;
@@ -185,7 +186,7 @@ public class DockerUtil {
 //
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
-    	LoggingService.logInfo(MODULE_NAME , "start Container");
+        LoggingService.logInfo(MODULE_NAME , "start Container");
         dockerClient.startContainerCmd(microservice.getContainerId()).exec();
     }
 
@@ -195,7 +196,7 @@ public class DockerUtil {
      * @param id - id of {@link Container}
      */
     public void stopContainer(String id) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME , "stop Container");
+        LoggingService.logInfo(MODULE_NAME , "stop Container");
         if (isContainerRunning(id)) {
             dockerClient.stopContainerCmd(id).exec();
         }
@@ -208,8 +209,8 @@ public class DockerUtil {
      * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
      */
     public void removeContainer(String id, Boolean withRemoveVolumes) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME , "remove Container");
-    	dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
+        LoggingService.logInfo(MODULE_NAME , "remove Container");
+        dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
     }
 
     /**
@@ -219,23 +220,23 @@ public class DockerUtil {
      * @return ip address
      */
     @SuppressWarnings("deprecation")
-	public String getContainerIpAddress(String id) throws  AgentSystemException {
-    	LoggingService.logInfo(MODULE_NAME , "get Container IpAddress");
+    public String getContainerIpAddress(String id) throws  AgentSystemException {
+        LoggingService.logInfo(MODULE_NAME , "get Container IpAddress");
         try {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
             LoggingService.logInfo(MODULE_NAME , "Finished get Container IpAddress");
             return inspect.getNetworkSettings().getIpAddress();
         } catch (NotModifiedException exp) {
-            logError(MODULE_NAME, "Error getting container ipAddress", 
-            		new AgentSystemException("Error getting container ipAddress", exp));
+            logError(MODULE_NAME, "Error getting container ipAddress",
+                  new AgentSystemException("Error getting container ipAddress", exp));
             throw new AgentSystemException("Error getting container ipAddress", exp);
         }catch (NotFoundException exp) {
-            logError(MODULE_NAME, "Error getting container ipAddress", 
-            		new AgentSystemException("Error getting container ipAddress", exp));
+            logError(MODULE_NAME, "Error getting container ipAddress",
+                  new AgentSystemException("Error getting container ipAddress", exp));
             throw new AgentSystemException("Error getting container ipAddress", exp);
         }catch (Exception exp) {
-            logError(MODULE_NAME, "Error getting container ipAddress", 
-            		new AgentSystemException("Error getting container ipAddress", exp));
+            logError(MODULE_NAME, "Error getting container ipAddress",
+                  new AgentSystemException("Error getting container ipAddress", exp));
             throw new AgentSystemException("Error getting container ipAddress", exp);
         }
     }
@@ -253,8 +254,8 @@ public class DockerUtil {
     public String getContainerMicroserviceUuid(Container container) {
         String containerName = getContainerName(container);
         return containerName.startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX)
-            ? getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length())
-            : containerName;
+              ? getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length())
+              : containerName;
     }
 
     /**
@@ -264,7 +265,7 @@ public class DockerUtil {
      * @return container name
      */
     public static String getIoFogContainerName(String microserviceUuid) {
-    	LoggingService.logInfo(MODULE_NAME , "get ioFog Container name");
+        LoggingService.logInfo(MODULE_NAME , "get ioFog Container name");
         return Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microserviceUuid;
     }
 
@@ -275,11 +276,11 @@ public class DockerUtil {
      * @return Optional<Container>
      */
     public Optional<Container> getContainer(String microserviceUuid) {
-    	LoggingService.logInfo(MODULE_NAME , "get container");
+        LoggingService.logInfo(MODULE_NAME , "get container");
         List<Container> containers = getContainers();
         return containers.stream()
-            .filter(c -> getContainerMicroserviceUuid(c).equals(microserviceUuid))
-            .findAny();
+              .filter(c -> getContainerMicroserviceUuid(c).equals(microserviceUuid))
+              .findAny();
     }
 
     /**
@@ -289,7 +290,7 @@ public class DockerUtil {
      * @return started time in milliseconds
      */
     private long getStartedTime(String startedTime) {
-    	LoggingService.logInfo(MODULE_NAME , "get started time of container");
+        LoggingService.logInfo(MODULE_NAME , "get started time of container");
         int milli = startedTime.length() > 22 ? Integer.parseInt(startedTime.substring(20, 23)) : 0;
         startedTime = startedTime.substring(0, 10) + " " + startedTime.substring(11, 19);
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -299,8 +300,8 @@ public class DockerUtil {
             LoggingService.logInfo(MODULE_NAME , "Finished get started time of container");
             return local.getTime() + milli;
         } catch (Exception e) {
-        	logError(MODULE_NAME, "Error getting started time of container", 
-            		new AgentSystemException("Error getting started time of container", e));
+            logError(MODULE_NAME, "Error getting started time of container",
+                  new AgentSystemException("Error getting started time of container", e));
             return 0;
         }
     }
@@ -312,7 +313,7 @@ public class DockerUtil {
      * @return {@link MicroserviceStatus}
      */
     public MicroserviceStatus getMicroserviceStatus(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME , "get microservice status");
+        LoggingService.logInfo(MODULE_NAME , "get microservice status");
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
         ContainerState containerState = inspectInfo.getState();
         MicroserviceStatus result = new MicroserviceStatus();
@@ -322,9 +323,9 @@ public class DockerUtil {
             }
 
             MicroserviceState microserviceState = containerToMicroserviceState(containerState);
-             result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId)
-                ? MicroserviceState.STUCK_IN_RESTART
-                : microserviceState);
+            result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId)
+                  ? MicroserviceState.STUCK_IN_RESTART
+                  : microserviceState);
 
             result.setContainerId(containerId);
             result.setUsage(containerId);
@@ -359,26 +360,26 @@ public class DockerUtil {
     }
 
     public List<Container> getRunningContainers() {
-    	LoggingService.logInfo(MODULE_NAME ,"get Running list of Containers");
+        LoggingService.logInfo(MODULE_NAME ,"get Running list of Containers");
         return getContainers().stream()
-            .filter(container -> {
-                InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
-                ContainerState containerState = inspectInfo.getState();
-                return containerToMicroserviceState(containerState) == MicroserviceState.RUNNING;
-            })
-            .collect(Collectors.toList());
+              .filter(container -> {
+                  InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
+                  ContainerState containerState = inspectInfo.getState();
+                  return containerToMicroserviceState(containerState) == MicroserviceState.RUNNING;
+              })
+              .collect(Collectors.toList());
     }
 
     public List<Container> getRunningIofogContainers() {
-    	LoggingService.logInfo(MODULE_NAME ,"get Running list of ioFog Containers");
+        LoggingService.logInfo(MODULE_NAME ,"get Running list of ioFog Containers");
         return getRunningContainers().stream()
-            .filter(container -> getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
-            .collect(Collectors.toList());
+              .filter(container -> getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
+              .collect(Collectors.toList());
     }
 
     public Optional<Statistics> getContainerStats(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME ,"get Container Stats");
-    	LoggingService.logInfo(MODULE_NAME ,"Start get Container Stats");
+        LoggingService.logInfo(MODULE_NAME ,"get Container Stats");
+        LoggingService.logInfo(MODULE_NAME ,"Start get Container Stats");
         StatsCmd statsCmd = dockerClient.statsCmd(containerId);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         StatsCallback stats = new StatsCallback(countDownLatch);
@@ -398,7 +399,7 @@ public class DockerUtil {
      * @return long epoch time
      */
     public long getContainerStartedAt(String id) {
-    	LoggingService.logInfo(MODULE_NAME ,"get Container Started At");
+        LoggingService.logInfo(MODULE_NAME ,"get Container Started At");
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
         String startedAt = inspectInfo.getState().getStartedAt();
         LoggingService.logInfo(MODULE_NAME ,"Finished get Container Started At");
@@ -413,7 +414,7 @@ public class DockerUtil {
      * @return boolean
      */
     public boolean areMicroserviceAndContainerEqual(String containerId, Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"are Microservice And Container Equal");
+        LoggingService.logInfo(MODULE_NAME ,"are Microservice And Container Equal");
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
         return isPortMappingEqual(inspectInfo, microservice) && isNetworkModeEqual(inspectInfo, microservice);
     }
@@ -427,11 +428,11 @@ public class DockerUtil {
      * @return boolean
      */
     private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"is NetworkMode Equal");
+        LoggingService.logInfo(MODULE_NAME ,"is NetworkMode Equal");
         boolean isRootHostAccess = microservice.isRootHostAccess();
         HostConfig hostConfig = inspectInfo.getHostConfig();
         return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
-            || !isRootHostAccess && (hostConfig != null && hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
+              || !isRootHostAccess && (hostConfig != null && hostConfig.getExtraHosts() != null && hostConfig.getExtraHosts().length > 0);
     }
 
     /**
@@ -442,7 +443,7 @@ public class DockerUtil {
      * @return boolean true if port mappings are the same
      */
     private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"is PortMapping Equal");
+        LoggingService.logInfo(MODULE_NAME ,"is PortMapping Equal");
 
         List<PortMapping> microservicePorts = getMicroservicePorts(microservice);
         Collections.sort(microservicePorts);
@@ -457,30 +458,30 @@ public class DockerUtil {
     }
 
     private List<PortMapping> getMicroservicePorts(Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"get list of Microservice Ports");
+        LoggingService.logInfo(MODULE_NAME ,"get list of Microservice Ports");
         return microservice.getPortMappings() != null ? microservice.getPortMappings() : new ArrayList<>();
     }
 
     private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
-    	LoggingService.logInfo(MODULE_NAME ,"get list of Container Ports");
+        LoggingService.logInfo(MODULE_NAME ,"get list of Container Ports");
         HostConfig hostConfig = inspectInfo.getHostConfig();
         Ports ports = hostConfig != null ? hostConfig.getPortBindings() : null;
         return ports != null ? ports.getBindings().entrySet().stream()
-            .flatMap(entity -> {
-                int exposedPort = entity.getKey().getPort();
-                return Arrays.stream(entity.getValue())
-                    .map(Binding::getHostPortSpec)
-                    .map(hostPort -> new PortMapping(Integer.valueOf(hostPort), exposedPort));
-            })
-            .collect(Collectors.toList()) :
-                new ArrayList<>();
+              .flatMap(entity -> {
+                  int exposedPort = entity.getKey().getPort();
+                  return Arrays.stream(entity.getValue())
+                        .map(Binding::getHostPortSpec)
+                        .map(hostPort -> new PortMapping(Integer.valueOf(hostPort), exposedPort));
+              })
+              .collect(Collectors.toList()) :
+              new ArrayList<>();
     }
 
     public Optional<String> getContainerStatus(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME ,"get Container status");
+        LoggingService.logInfo(MODULE_NAME ,"get Container status");
         Optional<String> result = Optional.empty();
         try {
-        	LoggingService.logInfo(MODULE_NAME ,"Started get Container status");
+            LoggingService.logInfo(MODULE_NAME ,"Started get Container status");
             InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
             ContainerState status = inspectInfo.getState();
             result = Optional.ofNullable(status.getStatus());
@@ -492,7 +493,7 @@ public class DockerUtil {
     }
 
     public boolean isContainerRunning(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME ,"is Container Running");
+        LoggingService.logInfo(MODULE_NAME ,"is Container Running");
         Optional<String> status = getContainerStatus(containerId);
         return status.isPresent() && status.get().equalsIgnoreCase(MicroserviceState.RUNNING.toString());
     }
@@ -503,12 +504,12 @@ public class DockerUtil {
      * @return list of {@link Container}
      */
     public List<Container> getContainers() {
-    	LoggingService.logInfo(MODULE_NAME ,"get list of container running");
+        LoggingService.logInfo(MODULE_NAME ,"get list of container running");
         return dockerClient.listContainersCmd().withShowAll(true).exec();
     }
 
     public void removeImageById(String imageId) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME ,"removing image by id");
+        LoggingService.logInfo(MODULE_NAME ,"removing image by id");
         dockerClient.removeImageCmd(imageId).withForce(true).exec();
         LoggingService.logInfo(MODULE_NAME, String.format("image \"%s\" removed", imageId));
     }
@@ -520,8 +521,10 @@ public class DockerUtil {
      * @param registry  - {@link Registry} where image is placed
      */
     @SuppressWarnings("resource")
-	public void pullImage(String imageName, Registry registry) throws AgentSystemException {
-    	LoggingService.logInfo(MODULE_NAME , String.format("pull image \"%s\" ", imageName));
+    public void pullImage(String imageName, String microserviceUuid, Registry registry) throws AgentSystemException {
+        LoggingService.logInfo(MODULE_NAME, String.format("pull image name \"%s\" ", imageName));
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        Map<String, ItemStatus> statuses = new HashMap();
         String tag = null, image;
         String[] sp = imageName.split(":");
         image = sp[0];
@@ -533,31 +536,42 @@ public class DockerUtil {
         }
 
         try {
-        	PullImageCmd req =
-                    registry.getIsPublic() ?
-                            dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
-                            dockerClient.pullImageCmd(image).withAuthConfig(
-                                    new AuthConfig()
-                                            .withRegistryAddress(registry.getUrl())
-                                            .withEmail(registry.getUserEmail())
-                                            .withUsername(registry.getUserName())
-                                            .withPassword(registry.getPassword())
-                            );
+            PullImageCmd req =
+                  registry.getIsPublic() ?
+                        dockerClient.pullImageCmd(image).withRegistry(registry.getUrl()) :
+                        dockerClient.pullImageCmd(image).withAuthConfig(
+                              new AuthConfig()
+                                    .withRegistryAddress(registry.getUrl())
+                                    .withEmail(registry.getUserEmail())
+                                    .withUsername(registry.getUserName())
+                                    .withPassword(registry.getPassword())
+                        );
             req.withTag(tag);
-            PullImageResultCallback res = new PullImageResultCallback();
-            res = req.exec(res);
-            res.awaitCompletion();
-		} catch (NotFoundException e) {
-			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException("Image not found", e);
-		} catch (NotModifiedException e) {
-			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException(e.getMessage(), e);
-		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException(e.getMessage(), e);
-		}
-        LoggingService.logInfo(MODULE_NAME ,String.format("Finished pull image \"%s\" ", imageName));
+            PullImageResultCallback resultCallback = new PullImageResultCallback() {
+                @Override
+                public void onNext(PullResponseItem item) {
+                    update(item, statuses);
+                    double average = calculatePullPercentage(statuses);
+                    StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microserviceUuid, decimalFormat.format(average));
+                    super.onNext(item);
+                }
+            };
+            resultCallback = req.exec(resultCallback);
+            resultCallback.awaitCompletion();
+
+        } catch (NotFoundException e) {
+            LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
+            throw new AgentSystemException("Image not found", e);
+        } catch (NotModifiedException e) {
+            LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
+            throw new AgentSystemException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            throw new AgentSystemException("Interrupted while pulling image", new AgentSystemException(e.getMessage(), e));
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
+            throw new AgentSystemException(e.getMessage(), e);
+        }
+        LoggingService.logInfo(MODULE_NAME, String.format("Finished pull image \"%s\" ", imageName));
     }
 
     /**
@@ -583,9 +597,9 @@ public class DockerUtil {
      * @return id of created {@link Container}
      */
     public String createContainer(Microservice microservice, String host) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME ,"create container");
-    	LoggingService.logInfo(MODULE_NAME ,"start create container");
-    	RestartPolicy restartPolicy = RestartPolicy.noRestart();
+        LoggingService.logInfo(MODULE_NAME ,"create container");
+        LoggingService.logInfo(MODULE_NAME ,"start create container");
+        RestartPolicy restartPolicy = RestartPolicy.noRestart();
 
         Ports portBindings = new Ports();
         List<ExposedPort> exposedPorts = new ArrayList<>();
@@ -614,10 +628,10 @@ public class DockerUtil {
                 }
 
                 Mount mount = (new Mount())
-                        .withSource(volumeMapping.getHostDestination())
-                        .withType(volumeMapping.getType() == VolumeMappingType.BIND ? MountType.BIND : MountType.VOLUME)
-                        .withTarget(volumeMapping.getContainerDestination())
-                        .withReadOnly(isReadOnly);
+                      .withSource(volumeMapping.getHostDestination())
+                      .withType(volumeMapping.getType() == VolumeMappingType.BIND ? MountType.BIND : MountType.VOLUME)
+                      .withTarget(volumeMapping.getContainerDestination())
+                      .withReadOnly(isReadOnly);
                 volumeMounts.add(mount);
             });
         }
@@ -643,10 +657,10 @@ public class DockerUtil {
         List<String> envVars = new ArrayList<>(Arrays.asList("SELFNAME=" + microservice.getMicroserviceUuid()));
         if (microservice.getEnvVars() != null) {
             envVars.addAll(microservice
-                    .getEnvVars()
-                    .stream()
-                    .map(env -> env.getKey() + "=" + env.getValue())
-                    .collect(Collectors.toList()));
+                  .getEnvVars()
+                  .stream()
+                  .map(env -> env.getKey() + "=" + env.getValue())
+                  .collect(Collectors.toList()));
         }
 
         Map<String, String> labels = new HashMap<>();
@@ -658,10 +672,10 @@ public class DockerUtil {
         hostConfig.withRestartPolicy(restartPolicy);
 
         CreateContainerCmd cmd = dockerClient.createContainerCmd(microservice.getImageName())
-            .withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
-            .withEnv(envVars)
-            .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
-            .withLabels(labels);
+              .withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
+              .withEnv(envVars)
+              .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
+              .withLabels(labels);
 
         if (volumes.size() > 0) {
             cmd = cmd.withVolumes(volumes);
@@ -700,5 +714,111 @@ public class DockerUtil {
     public void dockerPrune() throws NotModifiedException {
         LoggingService.logInfo(MODULE_NAME , "docker image prune");
         dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
+    }
+    /**
+     * Updates the item status of docker pull Layer
+     *
+     * @param item
+     * @param statuses
+     */
+    public void update(PullResponseItem item, Map<String, ItemStatus> statuses) {
+        if (item != null && item.getId() != null) {
+            statuses.put(item.getId(), createStatusItem(item, statuses.get(item.getId())));
+        }
+    }
+
+    /**
+     * Creates the status of each docker pull layer
+     *
+     * @param item
+     * @param previousStatus
+     * @return
+     */
+    private ItemStatus createStatusItem(PullResponseItem item, ItemStatus previousStatus) {
+        ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
+        if (previousStatus != null) {
+            if (progressDetail != null && progressDetail.getTotal() != null && progressDetail.getTotal() > 0) {
+                int currentPct = computePercentage(previousStatus, progressDetail);
+                previousStatus.setPercentage(currentPct);
+                previousStatus.setPullStatus(statusNotNull(item.getStatus()) ? item.getStatus() : "");
+                return previousStatus;
+            }
+            previousStatus.setPullStatus(statusNotNull(item.getStatus()) ? item.getStatus() : "");
+            return previousStatus;
+        }
+        ItemStatus status = new ItemStatus();
+        status.setId(item.getId());
+        status.setPullStatus(statusNotNull(item.getStatus()) ? item.getStatus() : "");
+        return status;
+
+    }
+
+    /**
+     * Compute percentage at each layer of docker pull
+     *
+     * @param previousStatus
+     * @param progressDetail
+     * @return
+     */
+    private int computePercentage(ItemStatus previousStatus, ResponseItem.ProgressDetail progressDetail) {
+        int currentPct = (int) (
+              ((float) progressDetail.getCurrent()) /
+                    ((float) progressDetail.getTotal())
+                    * 100);
+        currentPct = (previousStatus != null && previousStatus.getPercentage() > currentPct) ?
+              previousStatus.getPercentage()
+              :
+              currentPct;
+        return currentPct;
+    }
+
+    private boolean statusNotNull(String status) {
+        return status != null && !status.trim().equals("null");
+    }
+
+    /**
+     * Calculate the average percentage pull completion
+     *
+     * @param statuses
+     * @return
+     */
+    private double calculatePullPercentage(Map<String, ItemStatus> statuses) {
+        List<ItemStatus> stateList = new ArrayList<ItemStatus>(statuses.values());
+        double total = 0;
+        for (ItemStatus status : stateList) {
+            total = total + status.getPercentage();
+        }
+        return (total / (stateList.size() > 1 ? (stateList.size() - 1) : stateList.size()));
+
+    }
+
+    class ItemStatus {
+        private String id;
+        private int percentage;
+        private String pullStatus;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public int getPercentage() {
+            return percentage;
+        }
+
+        public void setPercentage(int percentage) {
+            this.percentage = percentage;
+        }
+
+        public String getPullStatus() {
+            return pullStatus;
+        }
+
+        public void setPullStatus(String pullStatus) {
+            this.pullStatus = pullStatus;
+        }
     }
 }
