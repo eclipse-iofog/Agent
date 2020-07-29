@@ -23,7 +23,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
-import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
@@ -35,6 +35,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -512,6 +513,26 @@ public class DockerUtil {
         dockerClient.removeImageCmd(imageId).withForce(true).exec();
         LoggingService.logInfo(MODULE_NAME, String.format("image \"%s\" removed", imageId));
     }
+    private void createStatusItem(PullResponseItem item) {
+        ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
+        if (progressDetail != null && progressDetail.getTotal() != null  && progressDetail.getTotal() > 0) {
+            int currentPct = computePercentage(progressDetail);
+            LoggingService.logInfo("DockerPullStatusManager" , String.format("createStatusItem \"%s\" ", item.getId() + ":::::" + currentPct + "::::::" + (statusNotNull(item.getStatus())? item.getStatus() : "") ));
+        }
+        LoggingService.logInfo("DockerPullStatusManager" , String.format("createStatusItem \"%s\" ", item.getId() + ":::::" + 0 + "::::::" + (statusNotNull(item.getStatus())? item.getStatus() : "") ));
+    }
+
+    private int computePercentage(ResponseItem.ProgressDetail progressDetail) {
+        int currentPct = (int)(
+                ((float) progressDetail.getCurrent()) /
+                        ((float) progressDetail.getTotal())
+                        * 100);
+        return currentPct;
+    }
+
+    private boolean statusNotNull(String status) {
+        return status != null && !status.trim().equals("null");
+    }
 
     /**
      * pulls {@link Image} from {@link Registry}
@@ -521,7 +542,9 @@ public class DockerUtil {
      */
     @SuppressWarnings("resource")
 	public void pullImage(String imageName, Registry registry) throws AgentSystemException {
-    	LoggingService.logInfo(MODULE_NAME , String.format("pull image \"%s\" ", imageName));
+
+    	LoggingService.logInfo(MODULE_NAME , String.format("pull image name \"%s\" ", imageName));
+    	LoggingService.logInfo(MODULE_NAME , String.format("pull registry \"%s\" ", registry!= null ?registry.toString() : "empty"));
         String tag = null, image;
         String[] sp = imageName.split(":");
         image = sp[0];
@@ -544,16 +567,37 @@ public class DockerUtil {
                                             .withPassword(registry.getPassword())
                             );
             req.withTag(tag);
-            PullImageResultCallback res = new PullImageResultCallback();
-            res = req.exec(res);
-            res.awaitCompletion();
+//            PullImageResultCallback res = new PullImageResultCallback();
+//            res = req.exec(res);
+//            res.awaitCompletion();
+
+            PullImageResultCallback resultCallback = new PullImageResultCallback() {
+                @Override
+                public void onNext(PullResponseItem item) {
+                    createStatusItem(item);
+//                    if (item.getStatus() != null && item.getProgress() == null) {
+//                        LoggingService.logInfo(MODULE_NAME , String.format("pull image progress status \"%s\" ", item.getId() + ":" + item.getStatus()));
+//                        LoggingService.logInfo(MODULE_NAME , String.format("pull image progress status \"%s\" ", item.getId() + ":" + item.getProgressDetail()));
+//                        llog.print(item.getId() + ":" + item.getStatus());
+//                        LOG.info("{} : {}", item.getId(), item.getStatus());
+//                    }
+                    super.onNext(item);
+                }
+            };
+
+            resultCallback = req.exec(resultCallback);
+            resultCallback.awaitCompletion();
+            //
+
 		} catch (NotFoundException e) {
 			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
 			throw new AgentSystemException("Image not found", e);
 		} catch (NotModifiedException e) {
 			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
 			throw new AgentSystemException(e.getMessage(), e);
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
+            throw new AgentSystemException("Interrupted while pulling image", new AgentSystemException(e.getMessage(), e));
+        } catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
 			throw new AgentSystemException(e.getMessage(), e);
 		}
