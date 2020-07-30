@@ -241,7 +241,6 @@ public class DockerUtil {
     }
 
     public String getContainerName(Container container) {
-    	LoggingService.logInfo(MODULE_NAME , "get Container name");
         return container.getNames()[0].substring(1);
     }
 
@@ -252,7 +251,6 @@ public class DockerUtil {
      * @return microsreviceUuid
      */
     public String getContainerMicroserviceUuid(Container container) {
-    	LoggingService.logInfo(MODULE_NAME , "get Container microservice uuid");
         String containerName = getContainerName(container);
         return containerName.startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX)
             ? getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length())
@@ -587,7 +585,7 @@ public class DockerUtil {
     public String createContainer(Microservice microservice, String host) throws NotFoundException, NotModifiedException {
     	LoggingService.logInfo(MODULE_NAME ,"create container");
     	LoggingService.logInfo(MODULE_NAME ,"start create container");
-    	RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
+    	RestartPolicy restartPolicy = RestartPolicy.noRestart();
 
         Ports portBindings = new Ports();
         List<ExposedPort> exposedPorts = new ArrayList<>();

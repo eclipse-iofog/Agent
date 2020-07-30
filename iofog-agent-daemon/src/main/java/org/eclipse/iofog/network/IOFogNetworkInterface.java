@@ -82,7 +82,7 @@ public class IOFogNetworkInterface {
             NetworkInterface networkInterface = NetworkInterface.getByName(configNetworkInterface);
             return getConnectedAddress(controllerUrl, networkInterface);
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, "Unable to get Network Interface", new AgentSystemException(e.getMessage(), e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to get Network Interface : " + e.getMessage());
             return null;
         }
     }
@@ -101,7 +101,7 @@ public class IOFogNetworkInterface {
         try {
             future.get(1, TimeUnit.SECONDS);
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, "Unable to set Docker Bridge Interface Name", new AgentSystemException(e.getMessage(), e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name");
             dockerBridgeInterfaceName = null;
         }
     }
@@ -136,7 +136,7 @@ public class IOFogNetworkInterface {
 
             return null;
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, "Unable to Get OS Network Interface", new AgentSystemException(e.getMessage(), e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + e.getMessage());
             return null;
         }
     }
@@ -166,7 +166,7 @@ public class IOFogNetworkInterface {
                 soc.close();
                 return Pair.of(networkInterface, nifAddress);
             } catch (Exception e) {
-                LoggingService.logError(MODULE_NAME, "Unable to Get Connected Address", new AgentSystemException(e.getMessage(), e));
+                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " +  e.getMessage());
             }
         }
 
