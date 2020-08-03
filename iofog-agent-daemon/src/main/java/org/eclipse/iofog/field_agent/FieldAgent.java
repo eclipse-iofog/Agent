@@ -1288,7 +1288,7 @@ public class FieldAgent implements IOFogModule {
     	try {
             MessageBus.getInstance().update();
         } catch (Exception e) {
-    	    logError("Unable to update Message Bus", e);
+    	    logWarning("Unable to update Message Bus" + " : " + e.getMessage());
         }
         LocalApi.getInstance().update();
         ProcessManager.getInstance().update();
