@@ -86,7 +86,7 @@ iofog -v
 
 <pre>
 ioFog 1.0
-Copyright (C) 2018 Edgeworx, Inc.
+Copyright (C) 2018-2020 Edgeworx, Inc.
 License ######### http://iofog.org/license
 This is open-source software with a commercial license: your usage is free until you use it in production commercially.
 There is NO WARRANTY, to the extent permitted by law.
