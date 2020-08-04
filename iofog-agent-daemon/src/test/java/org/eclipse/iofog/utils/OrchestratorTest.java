@@ -29,6 +29,7 @@ import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -78,7 +79,7 @@ import javax.ws.rs.NotFoundException;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Orchestrator.class, Configuration.class, SSLConnectionSocketFactory.class, LoggingService.class,
-        HttpClients.class, CloseableHttpClient.class, LoggingService.class, IOFogNetworkInterface.class,
+        HttpClients.class, CloseableHttpClient.class, LoggingService.class, IOFogNetworkInterfaceManager.class,
         InetAddress.class, HttpGet.class, BufferedReader.class, InputStreamReader.class, CloseableHttpResponse.class,
         HttpEntity.class, InputStream.class, StatusLine.class, JsonReader.class, Json.class, File.class,
         FileInputStream.class, CertificateFactory.class, Certificate.class, CertificateFactorySpi.class, Provider.class,
@@ -112,6 +113,7 @@ public class OrchestratorTest {
     private String provisionKey;
     private File file;
     private MultipartEntityBuilder multipartEntityBuilder;
+    private IOFogNetworkInterfaceManager iOFogNetworkInterfaceManager;
 
     @Before
     public void setUp() throws Exception {
@@ -120,12 +122,12 @@ public class OrchestratorTest {
         mockStatic(LoggingService.class);
         mockStatic(HttpClients.class);
         mockStatic(LoggingService.class);
-        mockStatic(IOFogNetworkInterface.class);
         mockStatic(Json.class);
         mockStatic(CertificateFactory.class);
         mockStatic(SSLContext.class);
         mockStatic(FieldAgent.class);
         mockStatic(MultipartEntityBuilder.class);
+        mockStatic(IOFogNetworkInterfaceManager.class);
         sslConnectionSocketFactory = mock(SSLConnectionSocketFactory.class);
         file = mock(File.class);
         multipartEntityBuilder = mock(MultipartEntityBuilder.class);
@@ -151,6 +153,7 @@ public class OrchestratorTest {
         httpClientBuilder = mock(HttpClientBuilder.class);
         stringEntity = Mockito.mock(StringEntity.class);
         fieldAgent = PowerMockito.mock(FieldAgent.class);
+        iOFogNetworkInterfaceManager = PowerMockito.mock(IOFogNetworkInterfaceManager.class);
         PowerMockito.when(file.getName()).thenReturn("fileName");
         PowerMockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
         PowerMockito.when(fieldAgent.deProvision(Mockito.anyBoolean())).thenReturn("success");
@@ -162,7 +165,8 @@ public class OrchestratorTest {
         PowerMockito.when(Configuration.getControllerUrl()).thenReturn("http://controller/");
         PowerMockito.when(Configuration.isDeveloperMode()).thenReturn(true);
         PowerMockito.when(Configuration.getControllerCert()).thenReturn("controllerCert");
-        PowerMockito.when(IOFogNetworkInterface.getInetAddress()).thenReturn(inetAddress);
+        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(iOFogNetworkInterfaceManager);
+        PowerMockito.when(iOFogNetworkInterfaceManager.getInetAddress()).thenReturn(inetAddress);
         PowerMockito.whenNew(SSLConnectionSocketFactory.class)
                 .withParameterTypes(SSLContext.class)
                 .withArguments(Mockito.any()).thenReturn(sslConnectionSocketFactory);

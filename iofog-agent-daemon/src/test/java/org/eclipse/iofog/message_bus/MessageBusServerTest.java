@@ -83,6 +83,7 @@ public class MessageBusServerTest {
 
     @After
     public void tearDown() throws Exception {
+        messageBusServer.stopServer();
         reset(messageBusServer);
         reset(connection);
         reset(connectionFactory);
