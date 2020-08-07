@@ -7,6 +7,7 @@ import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
@@ -40,11 +41,12 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Supervisor.class, StatusReporter.class, ResourceConsumptionManager.class,
         FieldAgent.class, ProcessManager.class, Tracker.class, SecurityManager.class,
-        MessageBus.class, LocalApi.class, LoggingService.class, Configuration.class})
+        MessageBus.class, LocalApi.class, LoggingService.class, Configuration.class, IOFogNetworkInterfaceManager.class})
 public class SupervisorTest {
     private Supervisor supervisor;
     private Method method = null;
     private ResourceManager resourceManager;
+    private IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager;
 
     @Before
     public void initialization() {
@@ -59,6 +61,8 @@ public class SupervisorTest {
             mockStatic(MessageBus.class);
             mockStatic(LocalApi.class);
             mockStatic(LoggingService.class);
+            mockStatic(IOFogNetworkInterfaceManager.class);
+            ioFogNetworkInterfaceManager = PowerMockito.mock(IOFogNetworkInterfaceManager.class);
 
             PowerMockito.when(StatusReporter.setSupervisorStatus()).thenReturn(new SupervisorStatus());
             PowerMockito.when(StatusReporter.setLocalApiStatus()).thenReturn(new LocalApiStatus());
@@ -67,6 +71,8 @@ public class SupervisorTest {
             PowerMockito.when(ProcessManager.getInstance()).thenReturn(null);
             PowerMockito.when(Tracker.getInstance()).thenReturn(new Tracker());
             PowerMockito.when(MessageBus.getInstance()).thenReturn(null);
+            PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);
+            PowerMockito.doNothing().when(ioFogNetworkInterfaceManager).start();
             // PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
 
         } catch (Exception e) {

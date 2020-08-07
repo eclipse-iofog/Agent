@@ -23,6 +23,7 @@ import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
@@ -1207,7 +1208,7 @@ public final class Configuration {
      */
     public static String getConfigReport() {
     	LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
-        String ipAddress = IOFogNetworkInterface.getCurrentIpAddress();
+        String ipAddress = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
         String networkInterface = getNetworkInterfaceInfo();
         ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
@@ -1281,7 +1282,7 @@ public final class Configuration {
             return networkInterface;
         }
 
-        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
+        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterfaceManager.getInstance().getNetworkInterface();
         String networkInterfaceName = connectedAddress == null ? "not found" : connectedAddress._1().getName();
         return networkInterfaceName + "(" + NETWORK_INTERFACE.getDefaultValue() + ")";
     }

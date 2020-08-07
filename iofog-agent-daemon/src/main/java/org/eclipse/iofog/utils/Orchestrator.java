@@ -30,7 +30,9 @@ import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
 import javax.json.Json;
@@ -44,6 +46,7 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import java.io.*;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -123,7 +126,7 @@ public class Orchestrator {
     private RequestConfig getRequestConfig() throws Exception {
     	logInfo(MODULE_NAME, "get request config");
         return RequestConfig.copy(RequestConfig.DEFAULT)
-                .setLocalAddress(IOFogNetworkInterface.getInetAddress())
+                .setLocalAddress(IOFogNetworkInterfaceManager.getInstance().getInetAddress())
                 .setConnectTimeout(CONNECTION_TIMEOUT)
                 .build();
     }
@@ -238,7 +241,12 @@ public class Orchestrator {
     		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
     		
     	} catch (IOException e) {
-    		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
+            try {
+                IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+            } catch (SocketException ex) {
+                LoggingService.logWarning(MODULE_NAME, "Unable to update network interface : " + ex.getMessage());
+            }
+            logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
         			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
     		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
     		

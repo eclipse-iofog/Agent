@@ -17,6 +17,7 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
@@ -90,13 +91,12 @@ public class Supervisor implements IOFogModule {
                 .setDaemonStatus(STARTING)
                 .setDaemonLastStart(currentTimeMillis())
                 .setOperationDuration(0);
-
+		IOFogNetworkInterfaceManager.getInstance().start();
 		startModule(ResourceConsumptionManager.getInstance());
 		startModule(FieldAgent.getInstance());
 		startModule(ProcessManager.getInstance());
 		startModule(new ResourceManager());
 		startModule(Tracker.getInstance());
-
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
 

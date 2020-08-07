@@ -19,6 +19,7 @@ import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -109,7 +110,7 @@ public class ContainerManager {
 		}
 		LoggingService.logInfo(MODULE_NAME, "creating container \"" + microservice.getImageName() + "\"");
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
-		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
+		String hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));

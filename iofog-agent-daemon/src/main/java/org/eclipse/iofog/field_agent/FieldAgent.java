@@ -26,6 +26,7 @@ import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
@@ -147,8 +148,8 @@ public class FieldAgent implements IOFogModule {
                         "UNKNOWN" : StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus())
                 .add("systemTime", StatusReporter.getStatusReporterStatus().getSystemTime())
                 .add("lastStatusTime", StatusReporter.getStatusReporterStatus().getLastUpdate())
-                .add("ipAddress", IOFogNetworkInterface.getCurrentIpAddress() == null ?
-                        "UNKNOWN" : IOFogNetworkInterface.getCurrentIpAddress())
+                .add("ipAddress", IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress() == null ?
+                        "UNKNOWN" : IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress())
                 .add("ipAddressExternal", Configuration.getIpAddressExternal() == null ?
                         "UNKNOWN" : Configuration.getIpAddressExternal())
                 .add("processedMessages", StatusReporter.getMessageBusStatus().getProcessedMessages())
@@ -216,6 +217,12 @@ public class FieldAgent implements IOFogModule {
             deProvision(true);
             logError("Unable to send status due to broken certificate",
                     new AgentSystemException("Unable to send status due to broken certificate", e));
+        }catch (SocketTimeoutException e) {
+            try {
+                IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+            } catch (SocketException ex) {
+                logError("Unable to update Network interface", new AgentSystemException(ex.getMessage(), ex));
+            }
         } catch (Exception e) {
             logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
         }
@@ -232,7 +239,7 @@ public class FieldAgent implements IOFogModule {
                 }
                 postStatusHelper();
             } catch (Exception e) {
-                logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
+                logError("Unable to send status ", new AgentSystemException(e.getMessage(), e));
             }
 
         }
@@ -459,6 +466,9 @@ public class FieldAgent implements IOFogModule {
                     verificationFailed(e);
                     logError("Unable to get changes",
                     		new AgentSystemException("Unable to get changes due to broken certificate", e));
+                    continue;
+                } catch (SocketTimeoutException e) {
+                    IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
                     continue;
                 } catch (Exception e) {
                     logError("Unable to get changes ", new AgentSystemException("Unable to get changes", e));
@@ -868,10 +878,10 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
             logError("Error pinging controller due to broken certificate",
-            		new AgentSystemException("Error pinging controller due to broken certificate", e));
+            		new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
             verificationFailed(e);
-            logError("Error pinging controller", new AgentUserException("Error pinging controller", e));
+            logError("Error pinging controller", new AgentUserException(e.getMessage(), e));
         }
         logInfo("Finished Ping : " + false);
         return false;
@@ -1152,7 +1162,7 @@ public class FieldAgent implements IOFogModule {
             logError("Error while parsing GPS coordinates", new AgentSystemException(e.getMessage(), e));
         }
 
-        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
+        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterfaceManager.getInstance().getNetworkInterface();
         JsonObject json = Json.createObjectBuilder()
                 .add(NETWORK_INTERFACE.getJsonProperty(), connectedAddress == null ? "UNKNOWN" : connectedAddress._1().getName())
                 .add(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl() == null ? "UNKNOWN" : Configuration.getDockerUrl())

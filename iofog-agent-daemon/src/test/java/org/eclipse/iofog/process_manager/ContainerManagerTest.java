@@ -21,7 +21,7 @@ import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.Registry;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ContainerManager.class, MicroserviceManager.class, ContainerTask.class, LoggingService.class,
         DockerUtil.class, Microservice.class, Container.class, StatusReporter.class, ProcessManagerStatus.class,
-        Registry.class, IOFogNetworkInterface.class})
+        Registry.class, IOFogNetworkInterfaceManager.class})
 public class ContainerManagerTest {
     private ContainerManager containerManager;
     private MicroserviceManager microserviceManager;
@@ -56,6 +56,7 @@ public class ContainerManagerTest {
     private Microservice microservice;
     private Container container;
     private Registry registry;
+    private IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager;
     private Optional<Container> optionalContainer;
     private Optional<Microservice> optionalMicroservice;
 
@@ -68,6 +69,7 @@ public class ContainerManagerTest {
         microservice = mock(Microservice.class);
         container = mock(Container.class);
         registry = mock(Registry.class);
+        ioFogNetworkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
         processManagerStatus = mock(ProcessManagerStatus.class);
         optionalContainer = Optional.of(container);
         optionalMicroservice = Optional.of(microservice);
@@ -75,11 +77,12 @@ public class ContainerManagerTest {
         PowerMockito.mockStatic(LoggingService.class);
         PowerMockito.mockStatic(DockerUtil.class);
         PowerMockito.mockStatic(StatusReporter.class);
-        PowerMockito.mockStatic(IOFogNetworkInterface.class);
+        PowerMockito.mockStatic(IOFogNetworkInterfaceManager.class);
         PowerMockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
         PowerMockito.when(DockerUtil.getInstance()).thenReturn(dockerUtil);
         PowerMockito.when(StatusReporter.setProcessManagerStatus()).thenReturn(processManagerStatus);
-        PowerMockito.when(IOFogNetworkInterface.getCurrentIpAddress()).thenReturn("url");
+        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);
+        PowerMockito.when(ioFogNetworkInterfaceManager.getCurrentIpAddress()).thenReturn("url");
         PowerMockito.when(processManagerStatus.setMicroservicesState(any(), any())).thenReturn(processManagerStatus);
         containerManager = PowerMockito.spy(new ContainerManager());
     }
