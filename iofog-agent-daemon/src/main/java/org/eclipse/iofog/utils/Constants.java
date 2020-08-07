@@ -133,4 +133,5 @@ public class Constants {
 	public static final String SHUTDOWN_HOOK = "SDHK";
 
 	public static final String SUPERVISOR_CHECK_LOCAL_API_STATUS = "SCLA";
+    public static final float MAX_DISK_CONSUMPTION_LIMIT = 100;
 }

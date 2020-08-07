@@ -56,7 +56,7 @@ public enum CommandLineConfigParam {
     ROUTER_HOST ("", "", "router_host", "routerHost"),
     ROUTER_PORT ("0", "", "router_port", "routerPort"),
     DOCKER_PRUNING_FREQUENCY ("1", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
-    AVAILABLE_DISK_THRESHOLD ("90", "dt", "available_disk_threshold", "availableDiskThreshold"),
+    AVAILABLE_DISK_THRESHOLD ("20", "dt", "available_disk_threshold", "availableDiskThreshold"),
     READY_TO_UPGRADE_SCAN_FREQUENCY ("24", "uf", "upgrade_scan_frequency", "readyToUpgradeScanFrequency");
 
     private final String commandName;

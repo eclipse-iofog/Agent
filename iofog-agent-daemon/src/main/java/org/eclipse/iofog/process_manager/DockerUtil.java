@@ -699,6 +699,6 @@ public class DockerUtil {
      */
     public void dockerPrune() throws NotModifiedException {
         LoggingService.logInfo(MODULE_NAME , "docker image prune");
-        dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).withLabelFilter("iofog-uuid").exec();
+        dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
     }
 }
