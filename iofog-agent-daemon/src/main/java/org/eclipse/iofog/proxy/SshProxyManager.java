@@ -187,7 +187,7 @@ public class SshProxyManager {
         String rsaKey = configs.getString("rsakey");
         int rport = configs.getInt("rport", DEFAULT_REMOTE_PORT);
         int lport = configs.getInt("lport", DEFAULT_LOCAL_PORT);
-        boolean closeFlag = (configs.getBoolean("close"));
+        boolean closeFlag = (configs.getBoolean("closed"));
         connection.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
     }
 }
