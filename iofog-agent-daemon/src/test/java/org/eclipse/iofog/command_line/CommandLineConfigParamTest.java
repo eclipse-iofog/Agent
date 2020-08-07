@@ -159,7 +159,7 @@ public class CommandLineConfigParamTest {
         assertEquals("auto", commandLineConfigParam.FOG_TYPE.getDefaultValue());
         assertEquals("on", commandLineConfigParam.DEV_MODE.getDefaultValue());
         assertEquals("1", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getDefaultValue());
-        assertEquals("90", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getDefaultValue());
+        assertEquals("20", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getDefaultValue());
     }
 
     @SuppressWarnings("static-access")

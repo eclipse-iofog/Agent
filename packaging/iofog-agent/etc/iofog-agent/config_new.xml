@@ -63,7 +63,7 @@
 
 	<docker_pruning_freq>1</docker_pruning_freq>
 
-	<available_disk_threshold>90</available_disk_threshold>
+	<available_disk_threshold>20</available_disk_threshold>
 
 	<upgrade_scan_frequency>24</upgrade_scan_frequency>
 </config>

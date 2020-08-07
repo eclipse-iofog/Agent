@@ -869,7 +869,7 @@ public class ConfigurationTest {
     @Test
     public void testSetConfigForLogDiskConsumptionLimitWithInValidRange() {
         try {
-            String value = "100";
+            String value = "110";
             initializeConfiguration();
             suppress(method(Configuration.class, "saveConfigUpdates"));
             Map<String, Object> config = new HashMap<>();
@@ -878,7 +878,7 @@ public class ConfigurationTest {
             assertEquals(1, messageMap.size());
             messageMap.forEach((k, v) -> {
                 assertEquals("l", k);
-                assertEquals("Log disk limit range must be 0.5 to 2 GB", v);
+                assertEquals("Log disk limit range must be 0.5 to 100 GB", v);
             });
         } catch (Exception e) {
             fail("This should not happen");

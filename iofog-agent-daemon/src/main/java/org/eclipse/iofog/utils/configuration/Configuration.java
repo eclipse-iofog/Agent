@@ -537,8 +537,8 @@ public final class Configuration {
                             messageMap.put(option, "Option -" + option + " has invalid value: " + value);
                             break;
                         }
-                        if (Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 2) {
-                            messageMap.put(option, "Log disk limit range must be 0.5 to 2 GB");
+                        if (Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > Constants.MAX_DISK_CONSUMPTION_LIMIT) {
+                            messageMap.put(option, "Log disk limit range must be 0.5 to 100 GB");
                             break;
                         }
                         setNode(LOG_DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
