@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.exception.ConflictException;
@@ -21,7 +21,7 @@ import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.Registry;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ContainerManager.class, MicroserviceManager.class, ContainerTask.class, LoggingService.class,
         DockerUtil.class, Microservice.class, Container.class, StatusReporter.class, ProcessManagerStatus.class,
-        Registry.class, IOFogNetworkInterface.class})
+        Registry.class, IOFogNetworkInterfaceManager.class})
 public class ContainerManagerTest {
     private ContainerManager containerManager;
     private MicroserviceManager microserviceManager;
@@ -56,6 +56,7 @@ public class ContainerManagerTest {
     private Microservice microservice;
     private Container container;
     private Registry registry;
+    private IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager;
     private Optional<Container> optionalContainer;
     private Optional<Microservice> optionalMicroservice;
 
@@ -68,6 +69,7 @@ public class ContainerManagerTest {
         microservice = mock(Microservice.class);
         container = mock(Container.class);
         registry = mock(Registry.class);
+        ioFogNetworkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
         processManagerStatus = mock(ProcessManagerStatus.class);
         optionalContainer = Optional.of(container);
         optionalMicroservice = Optional.of(microservice);
@@ -75,11 +77,12 @@ public class ContainerManagerTest {
         PowerMockito.mockStatic(LoggingService.class);
         PowerMockito.mockStatic(DockerUtil.class);
         PowerMockito.mockStatic(StatusReporter.class);
-        PowerMockito.mockStatic(IOFogNetworkInterface.class);
+        PowerMockito.mockStatic(IOFogNetworkInterfaceManager.class);
         PowerMockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
         PowerMockito.when(DockerUtil.getInstance()).thenReturn(dockerUtil);
         PowerMockito.when(StatusReporter.setProcessManagerStatus()).thenReturn(processManagerStatus);
-        PowerMockito.when(IOFogNetworkInterface.getCurrentIpAddress()).thenReturn("url");
+        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);
+        PowerMockito.when(ioFogNetworkInterfaceManager.getCurrentIpAddress()).thenReturn("url");
         PowerMockito.when(processManagerStatus.setMicroservicesState(any(), any())).thenReturn(processManagerStatus);
         containerManager = PowerMockito.spy(new ContainerManager());
     }
@@ -168,7 +171,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(false));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq(null), eq(null), eq(false));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(2)).invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(3)).invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -197,7 +200,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(false));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq("containerID"), eq(null), eq(false));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(2))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Error stopping container \"containerID\""), any());
@@ -242,7 +245,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(true));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq(null), eq(null), eq(true));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(2))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
         } catch (Exception e) {
             fail("This should not happen");
@@ -272,7 +275,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(true));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq("containerID"), eq(null), eq(true));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(2))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Image for container \"containerID\" cannot be removed"), any());
@@ -304,7 +307,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(true));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq("containerID"), eq(null), eq(true));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(2))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Image for container \"containerID\" cannot be removed"), any());

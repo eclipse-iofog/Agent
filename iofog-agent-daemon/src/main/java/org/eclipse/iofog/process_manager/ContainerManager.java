@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.exception.ConflictException;
@@ -19,6 +19,7 @@ import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -109,13 +110,14 @@ public class ContainerManager {
 		}
 		LoggingService.logInfo(MODULE_NAME, "creating container \"" + microservice.getImageName() + "\"");
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
-		String hostName = IOFogNetworkInterface.getCurrentIpAddress();
+		String hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
 		LoggingService.logInfo(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
 		startContainer(microservice);
 		microservice.setRebuild(false);
+		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.RUNNING);
 	}
 
 	/**
@@ -158,6 +160,7 @@ public class ContainerManager {
 						new AgentSystemException(String.format("Error stopping container \"%s\"", container.getId()), e));
 			}
 		});
+		setMicroserviceStatus(microserviceUuid, MicroserviceState.STOPPED);
 		LoggingService.logInfo(MODULE_NAME, "Stopped container by microserviceuuid : " + microserviceUuid);
 
 	}
@@ -231,12 +234,20 @@ public class ContainerManager {
 				case REMOVE_WITH_CLEAN_UP:
 					removeContainerByMicroserviceUuid(task.getMicroserviceUuid(), true);
 					break;
+				case STOP:
+					stopContainerByMicroserviceUuid(task.getMicroserviceUuid());
+					break;
 			}
 		} else {
 			LoggingService.logError(MODULE_NAME, "Container Task cannot be null",
 					new AgentSystemException("Container Task container be null"));
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished executes assigned task");
+	}
+
+	private void stopContainerByMicroserviceUuid(String microserviceUuid) {
+		LoggingService.logInfo(MODULE_NAME, String.format("stopping container with microserviceId \"%s\"", microserviceUuid));
+		stopContainer(microserviceUuid);
 	}
 
 	private void setMicroserviceStatus(String uuid, MicroserviceState state) {

@@ -1,18 +1,17 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.message_bus;
 
-import org.apache.commons.collections.map.HashedMap;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -26,6 +25,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +67,7 @@ public class MessageBusUtilTest {
         mockStatic(StatusReporter.class);
         messages = mock(ArrayList.class);
         receivers = mock(ArrayList.class);
-        routes = mock(HashedMap.class);
+        routes = mock(HashMap.class);
         messageBusStatus = mock(MessageBusStatus.class);
         PowerMockito.when(MessageBus.getInstance()).thenReturn(messageBus);
         PowerMockito.when(messageBus.getReceiver(any())).thenReturn(messageReceiver);

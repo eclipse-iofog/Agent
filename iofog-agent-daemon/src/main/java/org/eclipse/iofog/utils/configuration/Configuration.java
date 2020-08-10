@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.utils.configuration;
 
 import org.apache.commons.lang.StringUtils;
@@ -23,7 +23,9 @@ import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.tracking.Tracker;
@@ -53,6 +55,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import static java.io.File.separatorChar;
@@ -105,6 +108,10 @@ public final class Configuration {
     private static final Map<String, Object> defaultConfig;
     private static boolean developerMode;
     private static String ipAddressExternal;
+    private static long dockerPruningFrequency;
+    private static long availableDiskThreshold;
+    private static int readyToUpgradeScanFrequency;
+
 
     public static boolean debugging = false;
 
@@ -118,6 +125,24 @@ public final class Configuration {
     private static String dockerApiVersion;
     private static int setSystemTimeFreqSeconds;
     private static int monitorSshTunnelStatusFreqSeconds;
+    private static String routerHost;
+    private static int routerPort;
+
+    public static String getRouterHost() {
+        return routerHost;
+    }
+
+    public static void setRouterHost(String routerHost) {
+        Configuration.routerHost = routerHost;
+    }
+
+    public static int getRouterPort() {
+        return routerPort;
+    }
+
+    public static void setRouterPort(int routerPort) {
+        Configuration.routerPort = routerPort;
+    }
 
     private static void updateAutomaticConfigParams() {
     	LoggingService.logInfo(MODULE_NAME, "Start update Automatic ConfigParams ");
@@ -289,7 +314,7 @@ public final class Configuration {
             	 LoggingService.logError(MODULE_NAME, "Error getting node", e);
                  System.out.println("[" + MODULE_NAME + "] <" + param.getXmlTag() + "> "
                          + " item not found or defined more than once. Default value - " + param.getDefaultValue() + " will be used");
-
+             
             }catch (Exception e) {
                 LoggingService.logError(MODULE_NAME, "Error getting node", e);
                 System.out.println("[" + MODULE_NAME + "] <" + param.getXmlTag() + "> "
@@ -345,7 +370,7 @@ public final class Configuration {
     public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters, Document document) throws ConfigurationItemException {
 
     	LoggingService.logInfo(MODULE_NAME, "Start get Old Node Values For Parameters : ");
-
+    	
         HashMap<String, String> result = new HashMap<>();
 
         for (String option : parameters) {
@@ -355,7 +380,7 @@ public final class Configuration {
         }
 
         LoggingService.logInfo(MODULE_NAME, "Finished get Old Node Values For Parameters : ");
-
+        
         return result;
     }
 
@@ -367,7 +392,7 @@ public final class Configuration {
      */
     public static void saveConfigUpdates() throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Start saving configuration data to config.xml");
-
+    	
         FieldAgent.getInstance().instanceConfigUpdated();
         ProcessManager.getInstance().instanceConfigUpdated();
         ResourceConsumptionManager.getInstance().instanceConfigUpdated();
@@ -401,248 +426,324 @@ public final class Configuration {
      */
     public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Starting setting configuration base on commandline parameters");
-
+    	
         HashMap<String, String> messageMap = new HashMap<>();
+        if (commandLineMap != null) {
+            for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
+                String option = command.getKey();
+                CommandLineConfigParam cmdOption = CommandLineConfigParam.getCommandByName(option).get();
+                String value = command.getValue().toString();
 
-        for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
-            String option = command.getKey();
-            CommandLineConfigParam cmdOption = CommandLineConfigParam.getCommandByName(option).get();
-            String value = command.getValue().toString();
+                if (value.startsWith("+")) value = value.substring(1);
 
-            if (value.startsWith("+")) value = value.substring(1);
-
-            if (isBlank(option) || isBlank(value)) {
-                if (!option.equals(CONTROLLER_CERT.getCommandName())) {
-                	LoggingService.logInfo(MODULE_NAME, "Parameter error : Command or value is invalid");
-                    messageMap.put("Parameter error", "Command or value is invalid");
-                    break;
+                if (isBlank(option) || isBlank(value)) {
+                    if (!option.equals(CONTROLLER_CERT.getCommandName())) {
+                        LoggingService.logInfo(MODULE_NAME, "Parameter error : Command or value is invalid");
+                        messageMap.put("Parameter error", "Command or value is invalid");
+                        continue;
+                    }
                 }
+
+                int intValue;
+                long longValue;
+                switch (cmdOption) {
+                    case DISK_CONSUMPTION_LIMIT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting disk consumption limit");
+                        try {
+                            Float.parseFloat(value);
+                        } catch (Exception e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+
+                        if (Float.parseFloat(value) < 1 || Float.parseFloat(value) > 1048576) {
+                            messageMap.put(option, "Disk limit range must be 1 to 1048576 GB");
+                            break;
+                        }
+                        setDiskLimit(Float.parseFloat(value));
+                        setNode(DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
+                        break;
+
+                    case DISK_DIRECTORY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting disk directory");
+                        value = addSeparator(value);
+                        setDiskDirectory(value);
+                        setNode(DISK_DIRECTORY, value, configFile, configElement);
+                        break;
+                    case MEMORY_CONSUMPTION_LIMIT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting memory consumption limit");
+                        try {
+                            Float.parseFloat(value);
+                        } catch (Exception e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (Float.parseFloat(value) < 128 || Float.parseFloat(value) > 1048576) {
+                            messageMap.put(option, "Memory limit range must be 128 to 1048576 MB");
+                            break;
+                        }
+                        setMemoryLimit(Float.parseFloat(value));
+                        setNode(MEMORY_CONSUMPTION_LIMIT, value, configFile, configElement);
+                        break;
+                    case PROCESSOR_CONSUMPTION_LIMIT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting processor consumption limit");
+                        try {
+                            Float.parseFloat(value);
+                        } catch (Exception e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (Float.parseFloat(value) < 5 || Float.parseFloat(value) > 100) {
+                            messageMap.put(option, "CPU limit range must be 5% to 100%");
+                            break;
+                        }
+                        setCpuLimit(Float.parseFloat(value));
+                        setNode(PROCESSOR_CONSUMPTION_LIMIT, value, configFile, configElement);
+                        break;
+                    case CONTROLLER_URL:
+                        LoggingService.logInfo(MODULE_NAME, "Setting controller url");
+                        setNode(CONTROLLER_URL, value, configFile, configElement);
+                        setControllerUrl(value);
+                        break;
+                    case CONTROLLER_CERT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting controller cert");
+                        setNode(CONTROLLER_CERT, value, configFile, configElement);
+                        setControllerCert(value);
+                        break;
+                    case DOCKER_URL:
+                        LoggingService.logInfo(MODULE_NAME, "Setting docker url");
+                        if (value.startsWith("tcp://") || value.startsWith("unix://")) {
+                            setNode(DOCKER_URL, value, configFile, configElement);
+                            setDockerUrl(value);
+                        } else {
+                            messageMap.put(option, "Unsupported protocol scheme. Only 'tcp://' or 'unix://' supported.\n");
+                            break;
+                        }
+                        break;
+                    case NETWORK_INTERFACE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting disk network interface");
+                        if (defaults || isValidNetworkInterface(value.trim())) {
+                            setNode(NETWORK_INTERFACE, value, configFile, configElement);
+                            setNetworkInterface(value);
+                        } else {
+                            messageMap.put(option, "Invalid network interface");
+                            break;
+                        }
+                        break;
+                    case LOG_DISK_CONSUMPTION_LIMIT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting log disk consumption limit");
+                        try {
+                            Float.parseFloat(value);
+                        } catch (Exception e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > Constants.MAX_DISK_CONSUMPTION_LIMIT) {
+                            messageMap.put(option, "Log disk limit range must be 0.5 to 100 GB");
+                            break;
+                        }
+                        setNode(LOG_DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
+                        setLogDiskLimit(Float.parseFloat(value));
+                        break;
+                    case LOG_DISK_DIRECTORY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting log disk directory");
+                        value = addSeparator(value);
+                        setNode(LOG_DISK_DIRECTORY, value, configFile, configElement);
+                        setLogDiskDirectory(value);
+                        break;
+                    case LOG_FILE_COUNT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting log file count");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1 || intValue > 100) {
+                            messageMap.put(option, "Log file count range must be 1 to 100");
+                            break;
+                        }
+                        setNode(LOG_FILE_COUNT, value, configFile, configElement);
+                        setLogFileCount(Integer.parseInt(value));
+                        break;
+                    case LOG_LEVEL:
+                        LoggingService.logInfo(MODULE_NAME, "Setting log level");
+                        try {
+                            Level.parse(value.toUpperCase());
+                        } catch (Exception e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        setNode(LOG_LEVEL, value.toUpperCase(), configFile, configElement);
+                        setLogLevel(value.toUpperCase());
+                        break;
+                    case STATUS_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting status frequency");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1) {
+                            messageMap.put(option, "Status update frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(STATUS_FREQUENCY, value, configFile, configElement);
+                        setStatusFrequency(Integer.parseInt(value));
+                        break;
+                    case CHANGE_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting change frequency");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1) {
+                            messageMap.put(option, "Get changes frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(CHANGE_FREQUENCY, value, configFile, configElement);
+                        setChangeFrequency(Integer.parseInt(value));
+                        break;
+                    case DEVICE_SCAN_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting device scan frequency");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1) {
+                            messageMap.put(option, "Get scan devices frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(DEVICE_SCAN_FREQUENCY, value, configFile, configElement);
+                        setDeviceScanFrequency(Integer.parseInt(value));
+                        break;
+                    case POST_DIAGNOSTICS_FREQ:
+                        LoggingService.logInfo(MODULE_NAME, "Setting post diagnostic frequency");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1) {
+                            messageMap.put(option, "Post diagnostics frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(POST_DIAGNOSTICS_FREQ, value, configFile, configElement);
+                        setPostDiagnosticsFreq(Integer.parseInt(value));
+                        break;
+                    case WATCHDOG_ENABLED:
+                        LoggingService.logInfo(MODULE_NAME, "Setting watchdog enabled");
+                        if (!"off".equalsIgnoreCase(value) && !"on".equalsIgnoreCase(value)) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        setNode(WATCHDOG_ENABLED, value, configFile, configElement);
+                        setWatchdogEnabled(!value.equals("off"));
+                        break;
+                    case GPS_MODE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting gps mode");
+                        try {
+                            configureGps(value, gpsCoordinates);
+                            writeGpsToConfigFile();
+                        } catch (ConfigurationItemException e){
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        break;
+                    case FOG_TYPE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting fogtype");
+                        try {
+                            configureFogType(value);
+                            setNode(FOG_TYPE, value, configFile, configElement);
+                        } catch (ConfigurationItemException e){
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        break;
+                    case DEV_MODE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
+                        setNode(DEV_MODE, value, configFile, configElement);
+                        setDeveloperMode(!value.equals("off"));
+                        break;
+                    case ROUTER_HOST:
+                        LoggingService.logInfo(MODULE_NAME, "Setting router host");
+                        setRouterHost(value);
+                        break;
+                    case ROUTER_PORT:
+                        LoggingService.logInfo(MODULE_NAME, "Setting router port");
+                        setRouterPort(Integer.parseInt(value));
+                        break;
+                    case DOCKER_PRUNING_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting docker pruning frequency");
+                        try {
+                            longValue = Long.parseLong(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (longValue < 1) {
+                            messageMap.put(option, "Docker pruning frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(DOCKER_PRUNING_FREQUENCY, value, configFile, configElement);
+                        setDockerPruningFrequency(Long.parseLong(value));
+                        DockerPruningManager.getInstance().refreshSchedule();
+                        break;
+                    case AVAILABLE_DISK_THRESHOLD:
+                        LoggingService.logInfo(MODULE_NAME, "Setting available disk threshold");
+                        try {
+                            longValue = Long.parseLong(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (longValue < 1) {
+                            messageMap.put(option, "Available disk threshold must be greater than 1");
+                            break;
+                        }
+                        setNode(AVAILABLE_DISK_THRESHOLD, value, configFile, configElement);
+                        setAvailableDiskThreshold(Long.parseLong(value));
+                        DockerPruningManager.getInstance().refreshSchedule();
+                        break;
+                    case READY_TO_UPGRADE_SCAN_FREQUENCY:
+                        LoggingService.logInfo(MODULE_NAME, "Setting isReadyToUpgrade scan frequency");
+                        try {
+                            intValue = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            messageMap.put(option, "Option -" + option + " has invalid value: " + value);
+                            break;
+                        }
+                        if (intValue < 1) {
+                            messageMap.put(option, "isReadyToUpgrade scan frequency must be greater than 1");
+                            break;
+                        }
+                        setNode(READY_TO_UPGRADE_SCAN_FREQUENCY, value, configFile, configElement);
+                        setReadyToUpgradeScanFrequency(Integer.parseInt(value));
+                        FieldAgent.getInstance().changeReadInterval();
+                        break;
+                    default:
+                        throw new ConfigurationItemException("Invalid parameter -" + option);
+                }
+
+                //to correct info in tracking event
+                if (cmdOption.equals(GPS_COORDINATES)) {
+                    value = Configuration.getGpsCoordinates();
+                }
+                Tracker.getInstance().handleEvent(TrackingEventType.CONFIG,
+                        TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
             }
-
-            int intValue;
-            switch (cmdOption) {
-                case DISK_CONSUMPTION_LIMIT:
-                	LoggingService.logInfo(MODULE_NAME, "Setting disk consumption limit");
-                    try {
-                        Float.parseFloat(value);
-                    } catch (Exception e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-
-                    if (Float.parseFloat(value) < 1 || Float.parseFloat(value) > 1048576) {
-                        messageMap.put(option, "Disk limit range must be 1 to 1048576 GB");
-                        break;
-                    }
-                    setDiskLimit(Float.parseFloat(value));
-                    setNode(DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
-                    break;
-
-                case DISK_DIRECTORY:
-                	LoggingService.logInfo(MODULE_NAME, "Setting disk directory");
-                    value = addSeparator(value);
-                    setDiskDirectory(value);
-                    setNode(DISK_DIRECTORY, value, configFile, configElement);
-                    break;
-                case MEMORY_CONSUMPTION_LIMIT:
-                	LoggingService.logInfo(MODULE_NAME, "Setting memory consumption limit");
-                    try {
-                        Float.parseFloat(value);
-                    } catch (Exception e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (Float.parseFloat(value) < 128 || Float.parseFloat(value) > 1048576) {
-                        messageMap.put(option, "Memory limit range must be 128 to 1048576 MB");
-                        break;
-                    }
-                    setMemoryLimit(Float.parseFloat(value));
-                    setNode(MEMORY_CONSUMPTION_LIMIT, value, configFile, configElement);
-                    break;
-                case PROCESSOR_CONSUMPTION_LIMIT:
-                	LoggingService.logInfo(MODULE_NAME, "Setting processor consumption limit");
-                    try {
-                        Float.parseFloat(value);
-                    } catch (Exception e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (Float.parseFloat(value) < 5 || Float.parseFloat(value) > 100) {
-                        messageMap.put(option, "CPU limit range must be 5% to 100%");
-                        break;
-                    }
-                    setCpuLimit(Float.parseFloat(value));
-                    setNode(PROCESSOR_CONSUMPTION_LIMIT, value, configFile, configElement);
-                    break;
-                case CONTROLLER_URL:
-                	LoggingService.logInfo(MODULE_NAME, "Setting controller url");
-                    setNode(CONTROLLER_URL, value, configFile, configElement);
-                    setControllerUrl(value);
-                    break;
-                case CONTROLLER_CERT:
-                	LoggingService.logInfo(MODULE_NAME, "Setting controller cert");
-                    setNode(CONTROLLER_CERT, value, configFile, configElement);
-                    setControllerCert(value);
-                    break;
-                case DOCKER_URL:
-                	LoggingService.logInfo(MODULE_NAME, "Setting docker url");
-                    if (value.startsWith("tcp://") || value.startsWith("unix://")) {
-                        setNode(DOCKER_URL, value, configFile, configElement);
-                        setDockerUrl(value);
-                    } else {
-                        messageMap.put(option, "Unsupported protocol scheme. Only 'tcp://' or 'unix://' supported.\n");
-                        break;
-                    }
-                    break;
-                case NETWORK_INTERFACE:
-                	LoggingService.logInfo(MODULE_NAME, "Setting disk network interface");
-                    if (defaults || isValidNetworkInterface(value.trim())) {
-                        setNode(NETWORK_INTERFACE, value, configFile, configElement);
-                        setNetworkInterface(value);
-                    } else {
-                        messageMap.put(option, "Invalid network interface");
-                        break;
-                    }
-                    break;
-                case LOG_DISK_CONSUMPTION_LIMIT:
-                	LoggingService.logInfo(MODULE_NAME, "Setting log disk consumption limit");
-                    try {
-                        Float.parseFloat(value);
-                    } catch (Exception e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (Float.parseFloat(value) < 0.5 || Float.parseFloat(value) > 2) {
-                        messageMap.put(option, "Log disk limit range must be 0.5 to 2 GB");
-                        break;
-                    }
-                    setNode(LOG_DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
-                    setLogDiskLimit(Float.parseFloat(value));
-                    break;
-                case LOG_DISK_DIRECTORY:
-                	LoggingService.logInfo(MODULE_NAME, "Setting log disk directory");
-                    value = addSeparator(value);
-                    setNode(LOG_DISK_DIRECTORY, value, configFile, configElement);
-                    setLogDiskDirectory(value);
-                    break;
-                case LOG_FILE_COUNT:
-                	LoggingService.logInfo(MODULE_NAME, "Setting log file count");
-                    try {
-                        intValue = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (intValue < 1 || intValue > 100) {
-                        messageMap.put(option, "Log file count range must be 1 to 100");
-                        break;
-                    }
-                    setNode(LOG_FILE_COUNT, value, configFile, configElement);
-                    setLogFileCount(Integer.parseInt(value));
-                    break;
-                case LOG_LEVEL:
-                	LoggingService.logInfo(MODULE_NAME, "Setting log level");
-                    setNode(LOG_LEVEL, value, configFile, configElement);
-                    setLogLevel(value);
-                    break;
-                case STATUS_FREQUENCY:
-                	LoggingService.logInfo(MODULE_NAME, "Setting status frequency");
-                    try {
-                        intValue = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (intValue < 1) {
-                        messageMap.put(option, "Status update frequency must be greater than 1");
-                        break;
-                    }
-                    setNode(STATUS_FREQUENCY, value, configFile, configElement);
-                    setStatusFrequency(Integer.parseInt(value));
-                    break;
-                case CHANGE_FREQUENCY:
-                	LoggingService.logInfo(MODULE_NAME, "Setting change frequency");
-                    try {
-                        intValue = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (intValue < 1) {
-                        messageMap.put(option, "Get changes frequency must be greater than 1");
-                        break;
-                    }
-                    setNode(CHANGE_FREQUENCY, value, configFile, configElement);
-                    setChangeFrequency(Integer.parseInt(value));
-                    break;
-                case DEVICE_SCAN_FREQUENCY:
-                	LoggingService.logInfo(MODULE_NAME, "Setting device scan frequency");
-                    try {
-                        intValue = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (intValue < 1) {
-                        messageMap.put(option, "Get scan devices frequency must be greater than 1");
-                        break;
-                    }
-                    setNode(DEVICE_SCAN_FREQUENCY, value, configFile, configElement);
-                    setDeviceScanFrequency(Integer.parseInt(value));
-                    break;
-                case POST_DIAGNOSTICS_FREQ:
-                	LoggingService.logInfo(MODULE_NAME, "Setting post diagnostic frequency");
-                    try {
-                        intValue = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    if (intValue < 1) {
-                        messageMap.put(option, "Post diagnostics frequency must be greater than 1");
-                        break;
-                    }
-                    setNode(POST_DIAGNOSTICS_FREQ, value, configFile, configElement);
-                    setPostDiagnosticsFreq(Integer.parseInt(value));
-                    break;
-                case WATCHDOG_ENABLED:
-                	LoggingService.logInfo(MODULE_NAME, "Setting watchdog enabled");
-                    if (!"off".equalsIgnoreCase(value) && !"on".equalsIgnoreCase(value)) {
-                        messageMap.put(option, "Option -" + option + " has invalid value: " + value);
-                        break;
-                    }
-                    setNode(WATCHDOG_ENABLED, value, configFile, configElement);
-                    setWatchdogEnabled(!value.equals("off"));
-                    break;
-                case GPS_MODE:
-                	LoggingService.logInfo(MODULE_NAME, "Setting gps mode");
-                    configureGps(value, gpsCoordinates);
-                    writeGpsToConfigFile();
-                    break;
-                case FOG_TYPE:
-                	LoggingService.logInfo(MODULE_NAME, "Setting fogtype");
-                    configureFogType(value);
-                    setNode(FOG_TYPE, value, configFile, configElement);
-                    break;
-                case DEV_MODE:
-                	LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
-                    setNode(DEV_MODE, value, configFile, configElement);
-                    setDeveloperMode(!value.equals("off"));
-                    break;
-                default:
-                    throw new ConfigurationItemException("Invalid parameter -" + option);
-            }
-
-            //to correct info in tracking event
-            if (cmdOption.equals(GPS_COORDINATES)) {
-                value = Configuration.getGpsCoordinates();
-            }
-            Tracker.getInstance().handleEvent(TrackingEventType.CONFIG,
-                    TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
+            saveConfigUpdates();
+        } else {
+            messageMap.put("invalid", "Option and value are null");
         }
-        saveConfigUpdates();
         LoggingService.logInfo(MODULE_NAME, "Finished setting configuration base on commandline parameters");
-
+        
         return messageMap;
     }
 
@@ -732,12 +833,12 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     public static void writeGpsToConfigFile() throws ConfigurationItemException {
-
+    	
     	LoggingService.logInfo(MODULE_NAME, "Start Writes GPS coordinates and GPS mode to config file ");
-
+    	
         setNode(GPS_MODE, gpsMode.name().toLowerCase(), configFile, configElement);
         setNode(GPS_COORDINATES, gpsCoordinates, configFile, configElement);
-
+        
         LoggingService.logInfo(MODULE_NAME, "Finished Writes GPS coordinates and GPS mode to config file ");
     }
 
@@ -748,7 +849,7 @@ public final class Configuration {
      * @return
      */
     private static boolean isValidCoordinates(String gpsCoordinates) {
-
+    	
     	LoggingService.logInfo(MODULE_NAME, "Start is Valid Coordinates ");
 
         boolean isValid = true;
@@ -768,9 +869,9 @@ public final class Configuration {
         } else {
             isValid = gpsCoordinates.isEmpty();
         }
-
+        
         LoggingService.logInfo(MODULE_NAME, "Start is Valid Coordinates : " + isValid);
-
+        
         return isValid;
     }
 
@@ -782,7 +883,7 @@ public final class Configuration {
      */
     private static boolean isValidNetworkInterface(String eth) {
     	LoggingService.logInfo(MODULE_NAME, "Start is Valid network interface ");
-
+    	
         if (SystemUtils.IS_OS_WINDOWS) { // any name could be used for network interface on Win
             return true;
         }
@@ -826,7 +927,7 @@ public final class Configuration {
      */
     public static void loadConfig() throws ConfigurationItemException {
     	LoggingService.logInfo(MODULE_NAME, "Start load Config");
-
+    	
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = null;
         try {
@@ -845,7 +946,7 @@ public final class Configuration {
 			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
 			throw new ConfigurationItemException("Error while parsing config xml", e);
 		}
-
+        
         configFile.getDocumentElement().normalize();
 
         configElement = (Element) getFirstNodeByTagName("config", configFile);
@@ -873,6 +974,12 @@ public final class Configuration {
         configureFogType(getNode(FOG_TYPE, configFile));
         setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
         setIpAddressExternal(GpsWebHandler.getExternalIp());
+        setRouterHost(getNode(ROUTER_HOST, configFile));
+        setRouterPort(!getNode(ROUTER_PORT, configFile).equals("") ? Integer.parseInt(getNode(ROUTER_PORT, configFile)) : 0);
+
+        setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
+        setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
+        setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
 
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
@@ -884,7 +991,7 @@ public final class Configuration {
      */
     public static void loadConfigSwitcher() throws ConfigurationItemException {
     	LoggingService.logInfo(MODULE_NAME, "Start loads configuration about current config from config-switcher.xml");
-
+    	
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = null;
 		try {
@@ -1007,7 +1114,7 @@ public final class Configuration {
 
     private static void verifySwitcherNode(String switcher, String defaultValue) throws ConfigurationItemException {
     	LoggingService.logInfo(MODULE_NAME, "Start verify Switcher Node");
-
+    	
         NodeList nodes = configSwitcherElement.getElementsByTagName(switcher);
         if (nodes.getLength() == 0) {
             configSwitcherElement.appendChild(configSwitcherFile.createElement(switcher));
@@ -1020,7 +1127,7 @@ public final class Configuration {
             } catch (IllegalArgumentException e) {
                 currentSwitcherState = ConfigSwitcherState.DEFAULT;
                 System.out.println("Error while reading current switcher state, using default config");
-                LoggingService.logError(MODULE_NAME, "Error while reading current switcher state, using default config",
+                LoggingService.logError(MODULE_NAME, "Error while reading current switcher state, using default config", 
                 		new ConfigurationItemException("Error while reading current switcher state, using default config", e));
                 throw new ConfigurationItemException("Error while reading current switcher state, using default config", e);
             }
@@ -1101,7 +1208,7 @@ public final class Configuration {
      */
     public static String getConfigReport() {
     	LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
-        String ipAddress = IOFogNetworkInterface.getCurrentIpAddress();
+        String ipAddress = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
         String networkInterface = getNetworkInterfaceInfo();
         ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
 
@@ -1139,7 +1246,7 @@ public final class Configuration {
         // status update frequency
         result.append(buildReportLine(getConfigParamMessage(STATUS_FREQUENCY), format("%d", statusFrequency)));
         // status update frequency
-        result.append(buildReportLine(getConfigParamMessage(CHANGE_FREQUENCY), format("%d", changeFrequency)));
+        result.append(buildReportLine(getConfigParamMessage(CHANGE_FREQUENCY), format("%d", changeFrequency))); 
         // scan devices frequency
         result.append(buildReportLine(getConfigParamMessage(DEVICE_SCAN_FREQUENCY), format("%d", deviceScanFrequency)));
         // post diagnostics frequency
@@ -1152,9 +1259,15 @@ public final class Configuration {
         result.append(buildReportLine(getConfigParamMessage(GPS_COORDINATES), gpsCoordinates));
         //fog type
         result.append(buildReportLine(getConfigParamMessage(FOG_TYPE), fogType.name().toLowerCase()));
+        // docker pruning frequency
+        result.append(buildReportLine(getConfigParamMessage(DOCKER_PRUNING_FREQUENCY), format("%d", dockerPruningFrequency)));
+        // available disk threshold
+        result.append(buildReportLine(getConfigParamMessage(AVAILABLE_DISK_THRESHOLD), format("%d", availableDiskThreshold)));
+        // is ready to upgrade scan frequency
+        result.append(buildReportLine(getConfigParamMessage(READY_TO_UPGRADE_SCAN_FREQUENCY), format("%d", readyToUpgradeScanFrequency)));
 
         LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
-
+        
         return result.toString();
     }
 
@@ -1169,7 +1282,7 @@ public final class Configuration {
             return networkInterface;
         }
 
-        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
+        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterfaceManager.getInstance().getNetworkInterface();
         String networkInterfaceName = connectedAddress == null ? "not found" : connectedAddress._1().getName();
         return networkInterfaceName + "(" + NETWORK_INTERFACE.getDefaultValue() + ")";
     }
@@ -1271,7 +1384,7 @@ public final class Configuration {
 
     public static void setupSupervisor() {
         LoggingService.logInfo(MODULE_NAME, "Starting supervisor");
-
+        
         try {
             Supervisor supervisor = new Supervisor();
             supervisor.start();
@@ -1300,4 +1413,29 @@ public final class Configuration {
 		Configuration.logLevel = logLevel;
 		LoggingService.logInfo(MODULE_NAME, "Finished set log level");
 	}
+
+    public static long getDockerPruningFrequency() {
+        return dockerPruningFrequency;
+    }
+
+    public static void setDockerPruningFrequency(long dockerPruningFrequency) {
+        Configuration.dockerPruningFrequency = dockerPruningFrequency;
+    }
+
+    public static long getAvailableDiskThreshold() {
+        return availableDiskThreshold;
+    }
+
+    public static void setAvailableDiskThreshold(long availableDiskThreshold) {
+        Configuration.availableDiskThreshold = availableDiskThreshold;
+    }
+
+    public static int getReadyToUpgradeScanFrequency() {
+        return readyToUpgradeScanFrequency;
+    }
+
+    public static void setReadyToUpgradeScanFrequency(int readyToUpgradeScanFrequency) {
+        Configuration.readyToUpgradeScanFrequency = readyToUpgradeScanFrequency;
+    }
+
 }

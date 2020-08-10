@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.DockerClient;
@@ -32,24 +32,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 import static org.powermock.api.mockito.PowerMockito.*;
 
@@ -183,12 +179,7 @@ public class DockerUtilTest {
         PowerMockito.when(DockerClientBuilder.getInstance(any(DockerClientConfig.class))).thenReturn(dockerClientBuilder);
         PowerMockito.when(dockerClientBuilder.build()).thenReturn(dockerClient);
         PowerMockito.when(dockerClient.eventsCmd()).thenReturn(eventsCmd);
-        PowerMockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).when(eventsCmd).exec(any());
+        PowerMockito.doAnswer((Answer) invocation -> null).when(eventsCmd).exec(any());
         PowerMockito.when(dockerClient.listNetworksCmd()).thenReturn(listNetworksCmd);
         PowerMockito.when(listNetworksCmd.exec()).thenReturn(networkList);
         PowerMockito.when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
@@ -204,32 +195,20 @@ public class DockerUtilTest {
         PowerMockito.doNothing().when(stopContainerCmd).exec();
         PowerMockito.when(dockerClient.pullImageCmd(anyString())).thenReturn(pullImageCmd);
         PowerMockito.when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
-        PowerMockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).when(inspectImageCmd).exec();
+        PowerMockito.doAnswer((Answer) invocation -> null).when(inspectImageCmd).exec();
         PowerMockito.when(pullImageCmd.withRegistry(anyString())).thenReturn(pullImageCmd);
         PowerMockito.when(pullImageCmd.withTag(anyString())).thenReturn(pullImageCmd);
         PowerMockito.when(pullImageCmd.withAuthConfig(any())).thenReturn(pullImageCmd);
         PowerMockito.when(pullImageCmd.exec(any())).thenReturn(pullImageResultCallback);
         PowerMockito.when(dockerClient.inspectContainerCmd(anyString())).thenReturn(inspectContainerCmd);
         PowerMockito.when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withLogConfig(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withEnv(any(List.class))).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withName(any())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withCpusetCpus(any())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withRestartPolicy(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withLabels(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withExposedPorts(any(ExposedPort.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withPortBindings(any(Ports.class))).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withVolumes(any(Volume.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withBinds(any(Bind.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withExtraHosts(any(String.class))).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withPrivileged(any())).thenReturn(createContainerCmd);
-        PowerMockito.when(createContainerCmd.withNetworkMode(any())).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.withCmd(any(List.class))).thenReturn(createContainerCmd);
+        PowerMockito.when(createContainerCmd.withHostConfig(any(HostConfig.class))).thenReturn(createContainerCmd);
         PowerMockito.when(createContainerCmd.exec()).thenReturn(createContainerResponse);
         PowerMockito.when(createContainerResponse.getId()).thenReturn(containerID);
         PowerMockito.when(inspectContainerCmd.exec()).thenReturn(inspectContainerResponse);
@@ -253,6 +232,7 @@ public class DockerUtilTest {
         PowerMockito.when(volumeMapping.getAccessMode()).thenReturn("AUTO");
         PowerMockito.when(volumeMapping.getContainerDestination()).thenReturn("containerDestination");
         PowerMockito.when(volumeMapping.getHostDestination()).thenReturn("hostDestination");
+        PowerMockito.when(volumeMapping.getType()).thenReturn(VolumeMappingType.BIND);
         PowerMockito.whenNew(MicroserviceStatus.class).withNoArguments().thenReturn(microserviceStatus);
         PowerMockito.whenNew(CountDownLatch.class).withArguments(anyInt()).thenReturn(countDownLatch);
         PowerMockito.whenNew(StatsCallback.class).withArguments(any(CountDownLatch.class)).thenReturn(statsCallback);
@@ -267,14 +247,13 @@ public class DockerUtilTest {
         reset(dockerUtil, dockerClient, dockerClientConfig, defaultDockerClientConfig, processManagerStatus, inspectContainerResponse,
                 hostConfig, inspectContainerCmd, stopContainerCmd, removeContainerCmd, startContainerCmd, listNetworksCmd, statsCmd, statsCallback, containerState,
                 microservice, container, microserviceStatus) ;
-        Field instance = ProcessManager.class.getDeclaredField("instance");
+        Field instance = DockerUtil.class.getDeclaredField("instance");
         instance.setAccessible(true);
         instance.set(null, null);
         containerList = null;
         networkList = null;
         if (method != null)
             method.setAccessible(false);
-
     }
 
     /**
@@ -1050,10 +1029,8 @@ public class DockerUtilTest {
         PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
         assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
         Mockito.verify(createContainerCmd).exec();
-        Mockito.verify(createContainerCmd).withExtraHosts(any(String.class));
-        Mockito.verify(createContainerCmd).withRestartPolicy(any());
+        Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withPortBindings(any(Ports.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withCmd(any(List.class));
     }
@@ -1065,18 +1042,15 @@ public class DockerUtilTest {
      * microservice.isRootHostAccess false
      */
     @Test
-    public void testCreateContainerWhenPortMappingsAndVolumeMappingsArePresent() {
+    public void testCreateContainerWhenPortMappingsAndBindVolumeMappingsArePresent() {
         PowerMockito.when(microservice.getPortMappings()).thenReturn(portMappingList);
         PowerMockito.when(microservice.getVolumeMappings()).thenReturn(volumeMappingList);
         PowerMockito.when(microservice.getImageName()).thenReturn("microserviceName");
         PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
         assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
         Mockito.verify(microservice).isRootHostAccess();
-        Mockito.verify(createContainerCmd).withExtraHosts(any(String.class));
-        Mockito.verify(createContainerCmd).withRestartPolicy(any());
+        Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withPortBindings(any(Ports.class));
-        Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd, Mockito.never()).withCmd(any(List.class));
     }
 
@@ -1087,7 +1061,7 @@ public class DockerUtilTest {
      * microservice.isRootHostAccess true
      */
     @Test
-    public void testCreateContainerWhenPortMappingsAndVolumeMappingsArePresentWithRootAccess() {
+    public void testCreateContainerWhenPortMappingsAndBindVolumeMappingsArePresentWithRootAccess() {
         List<String> args = new ArrayList<>();
         args.add("args");
         PowerMockito.when(microservice.getPortMappings()).thenReturn(portMappingList);
@@ -1097,15 +1071,32 @@ public class DockerUtilTest {
         PowerMockito.when(microservice.getImageName()).thenReturn("microserviceName");
         PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
         assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
-        Mockito.verify(createContainerCmd).withLogConfig(any());
+        Mockito.verify(createContainerCmd).withHostConfig(any(HostConfig.class));
         Mockito.verify(createContainerCmd).withExposedPorts(any(ExposedPort.class));
-        Mockito.verify(createContainerCmd).withBinds(any(Bind.class));
-        Mockito.verify(createContainerCmd).withRestartPolicy(any());
         Mockito.verify(createContainerCmd).withLabels(any());
-        Mockito.verify(createContainerCmd).withPortBindings(any(Ports.class));
-        Mockito.verify(createContainerCmd).withVolumes(any(Volume.class));
         Mockito.verify(createContainerCmd).withCmd(any(List.class));
     }
+
+    /**
+     * Test createContainer
+     * When microservice.getExtraHosts are present
+     */
+    @Test
+    public void testCreateContainerWhenExtraHostsIsPresent() {
+        List<String> extraHosts = new ArrayList<>();
+        String host = "extra-host:1.2.3.4";
+        extraHosts.add(host);
+        PowerMockito.when(microservice.isRootHostAccess()).thenReturn(false);
+        PowerMockito.when(microservice.getExtraHosts()).thenReturn(extraHosts);
+        PowerMockito.when(microservice.getImageName()).thenReturn("microserviceName");
+        PowerMockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
+        assertEquals(containerID, dockerUtil.createContainer(microservice, "host"));
+        Mockito.verify(createContainerCmd).withHostConfig(argThat((HostConfig hostConfig) -> {
+            String[] hosts = hostConfig.getExtraHosts();
+            return hosts.length == 2 && hosts[0].equals(host);
+        }));
+    }
+
     /**
      * Test createContainer
      * When microservice.getPortMappings are present

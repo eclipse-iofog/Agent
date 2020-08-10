@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.utils.Constants;
@@ -26,6 +26,8 @@ public class FieldAgentStatus {
 	private Constants.ControllerStatus controllerStatus;
 	private long lastCommandTime;
 	private boolean controllerVerified;
+	private boolean readyToUpgrade;
+	private boolean readyToRollback;
 
 	public FieldAgentStatus() {
 		controllerStatus = ControllerStatus.NOT_CONNECTED;
@@ -53,6 +55,22 @@ public class FieldAgentStatus {
 
 	public void setControllerVerified(boolean controllerVerified) {
 		this.controllerVerified = controllerVerified;
+	}
+
+	public boolean isReadyToUpgrade() {
+		return readyToUpgrade;
+	}
+
+	public void setReadyToUpgrade(boolean readyToUpgrade) {
+		this.readyToUpgrade = readyToUpgrade;
+	}
+
+	public boolean isReadyToRollback() {
+		return readyToRollback;
+	}
+
+	public void setReadyToRollback(boolean readyToRollback) {
+		this.readyToRollback = readyToRollback;
 	}
 
 }

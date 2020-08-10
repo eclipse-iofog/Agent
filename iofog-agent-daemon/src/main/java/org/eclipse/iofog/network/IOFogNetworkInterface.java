@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.network;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Pair;
@@ -50,7 +51,7 @@ public class IOFogNetworkInterface {
         try {
             inetAddress = Optional.of(getInetAddress());
         } catch (SocketException exp) {
-            LoggingService.logError(MODULE_NAME, "Unable to find the IP address of the machine running ioFog", exp);
+            LoggingService.logError(MODULE_NAME, "Unable to find the IP address of the machine running ioFog", new AgentSystemException(exp.getMessage(), exp));
         }
         return inetAddress;
     }
@@ -81,6 +82,7 @@ public class IOFogNetworkInterface {
             NetworkInterface networkInterface = NetworkInterface.getByName(configNetworkInterface);
             return getConnectedAddress(controllerUrl, networkInterface);
         } catch (Exception e) {
+            LoggingService.logWarning(MODULE_NAME, "Unable to get Network Interface : " + e.getMessage());
             return null;
         }
     }
@@ -99,6 +101,7 @@ public class IOFogNetworkInterface {
         try {
             future.get(1, TimeUnit.SECONDS);
         } catch (Exception e) {
+            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name");
             dockerBridgeInterfaceName = null;
         }
     }
@@ -133,6 +136,7 @@ public class IOFogNetworkInterface {
 
             return null;
         } catch (Exception e) {
+            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + e.getMessage());
             return null;
         }
     }
@@ -161,7 +165,9 @@ public class IOFogNetworkInterface {
                 soc.connect(new InetSocketAddress(controllerHost, controllerPort), 1000);
                 soc.close();
                 return Pair.of(networkInterface, nifAddress);
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " +  e.getMessage());
+            }
         }
 
         return null;

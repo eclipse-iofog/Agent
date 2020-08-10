@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.supervisor;
 
 import org.eclipse.iofog.IOFogModule;
@@ -17,7 +17,9 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
@@ -81,7 +83,6 @@ public class Supervisor implements IOFogModule {
 	 */
 	public void start() throws Exception {
         Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, Constants.SHUTDOWN_HOOK));
-
         logInfo("Starting Supervisor");
         StatusReporter.start();
         StatusReporter.setSupervisorStatus().setModuleStatus(STATUS_REPORTER, RUNNING);
@@ -90,13 +91,12 @@ public class Supervisor implements IOFogModule {
                 .setDaemonStatus(STARTING)
                 .setDaemonLastStart(currentTimeMillis())
                 .setOperationDuration(0);
-
+		IOFogNetworkInterfaceManager.getInstance().start();
 		startModule(ResourceConsumptionManager.getInstance());
 		startModule(FieldAgent.getInstance());
 		startModule(ProcessManager.getInstance());
 		startModule(new ResourceManager());
 		startModule(Tracker.getInstance());
-
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
 
@@ -108,7 +108,7 @@ public class Supervisor implements IOFogModule {
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
 		logInfo("Started Supervisor");
         Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
-
+		DockerPruningManager.getInstance().start();
         operationDuration();
     }
 

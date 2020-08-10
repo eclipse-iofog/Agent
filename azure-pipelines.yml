@@ -145,7 +145,7 @@ jobs:
           echo "package..."
           echo $package
 
-          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic") #Support ubuntu versions
+          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic" "focal") #Support ubuntu versions
           declare -a DEBIAN_VERS=("wheezy" "jessie" "stretch" "buster") #Also appplies to Raspbian, See related for loop
 
           for version in "${UBUNTU_VERS[@]}"
@@ -187,6 +187,34 @@ jobs:
               package_cloud push iofog/iofog-agent-snapshots/el/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
           done
         displayName: 'publish rpm to package-cloud'
+
+      - script: |
+          cd packaging/iofog-agent
+          fpm -s dir -t deb -n iofog-agent -v 0.0.0-dev -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          echo "pkg maybe created"
+          echo $(ls | grep *.deb)
+          echo "package..."
+          package=$(ls | grep *.deb)
+          echo $package
+
+          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic") #Support ubuntu versions
+          declare -a DEBIAN_VERS=("wheezy" "jessie" "stretch" "buster") #Also appplies to Raspbian, See related for loop
+
+          for version in "${UBUNTU_VERS[@]}"
+          do
+              package_cloud yank iofog/iofog-agent-snapshots/ubuntu/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+              package_cloud push iofog/iofog-agent-snapshots/ubuntu/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          done
+          for version in "${DEBIAN_VERS[@]}"
+          do
+              package_cloud yank iofog/iofog-agent-snapshots/debian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+              package_cloud push iofog/iofog-agent-snapshots/debian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+
+              package_cloud yank iofog/iofog-agent-snapshots/raspbian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+              package_cloud push iofog/iofog-agent-snapshots/raspbian/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          done
+        displayName: 'publish deb develop package to package-cloud'
+        condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop'))
 
       - task: CopyFiles@2
         inputs:

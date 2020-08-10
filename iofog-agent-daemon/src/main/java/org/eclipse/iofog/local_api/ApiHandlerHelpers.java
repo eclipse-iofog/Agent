@@ -86,7 +86,7 @@ public class ApiHandlerHelpers {
 
     private static FullHttpResponse createResponse(ByteBuf outputBuffer, String content, HttpResponseStatus status) {
     	LoggingService.logInfo(MODULE_NAME, "Start create response");
-    	if (outputBuffer != null) {
+    	if (outputBuffer != null && content != null) {
             outputBuffer.writeBytes(content.getBytes(UTF_8));
             FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, status, outputBuffer);
             HttpUtil.setContentLength(res, outputBuffer.readableBytes());

@@ -12,30 +12,30 @@
 SERVICE_NAME=iofog-agentd
 PATH_TO_JAR=/usr/bin
 JAR_FILE_NAME=$PATH_TO_JAR/$SERVICE_NAME.jar
+JAVA_VERSION="$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')"
 
 if [ "$(id -u)" != '0' ]; then
-	log_failure_msg "$SERVICE_NAME must be run as root"
-	exit 1
+        log_failure_msg "$SERVICE_NAME must be run as root"
+        exit 1
 fi
-case $1 in
-    start)
-	mv /dev/random /dev/random.real
-	ln -s /dev/urandom /dev/random
 
-	echo "Starting iofog-agent service..."
+case $1 in
+start)
+        mv /dev/random /dev/random.real
+        ln -s /dev/urandom /dev/random
+
+        echo "Starting iofog-agent service..."
+        echo "Using Java version ${JAVA_VERSION} found at '$(command -v java)'"
         cd $PATH_TO_JAR
-        java -jar $JAR_FILE_NAME start &
-    ;;
-    stop)
+        java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=54322 -jar $JAR_FILE_NAME start &
+        ;;
+stop)
         cd $PATH_TO_JAR
         java -jar $JAR_FILE_NAME stop
-    ;;
- #   restart)
- #echo "Restarting iofog-agent service..."
- #   cd $PATH_TO_JAR
- #  sudo java -jar $JAR_FILE_NAME stop R
- # sudo java -jar $JAR_FILE_NAME start &
- #  ;;
+        ;;
+restart)
+        echo "Restarting iofog-agent service..."
+        service iofog-agent stop
+        service iofog-agent start
+        ;;
 esac
-
-

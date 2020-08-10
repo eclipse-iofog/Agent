@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.utils;
 
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +30,9 @@ import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
+import org.eclipse.iofog.utils.logging.LoggingService;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
 import javax.json.Json;
@@ -44,6 +46,7 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import java.io.*;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -52,6 +55,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
@@ -122,7 +126,7 @@ public class Orchestrator {
     private RequestConfig getRequestConfig() throws Exception {
     	logInfo(MODULE_NAME, "get request config");
         return RequestConfig.copy(RequestConfig.DEFAULT)
-                .setLocalAddress(IOFogNetworkInterface.getInetAddress())
+                .setLocalAddress(IOFogNetworkInterfaceManager.getInstance().getInetAddress())
                 .setConnectTimeout(CONNECTION_TIMEOUT)
                 .build();
     }
@@ -203,7 +207,7 @@ public class Orchestrator {
             get.setConfig(config);
         	CloseableHttpResponse response = client.execute(get);
 
-            if (response.getStatusLine().getStatusCode() != 200) {
+            if (response !=null && response.getStatusLine().getStatusCode() != 200) {
                 if (response.getStatusLine().getStatusCode() == 404) {
                 	logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
                 			new AgentUserException("unable to connect to IOFog Controller endpoint", null));
@@ -237,7 +241,12 @@ public class Orchestrator {
     		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
 
     	} catch (IOException e) {
-    		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
+            try {
+                IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+            } catch (SocketException ex) {
+                LoggingService.logWarning(MODULE_NAME, "Unable to update network interface : " + ex.getMessage());
+            }
+            logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
         			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
     		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
 
@@ -320,6 +329,10 @@ public class Orchestrator {
         if (!StringUtils.isEmpty(token)) {
             req.addHeader(new BasicHeader("Authorization", token));
         }
+
+        UUID requestId = UUID.randomUUID();
+        req.addHeader("Request-Id", requestId.toString());
+        logInfo("Orchestrator", String.format("(%s) %s %s", requestId, requestType.name(), uri.toString()));
 
         try (CloseableHttpResponse response = client.execute(req)) {
             String errorMessage = "";

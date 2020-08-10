@@ -1,19 +1,17 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.message_bus;
 
-import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
@@ -23,6 +21,9 @@ import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import javax.jms.JMSException;
+import javax.jms.TextMessage;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -35,11 +36,11 @@ import static org.powermock.api.mockito.PowerMockito.*;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageListener.class, MessageCallback.class, ClientMessage.class, Message.class, LoggingService.class})
-public class MessageListenerTest {
-    private MessageListener messageListener;
+@PrepareForTest({IOMessageListener.class, MessageCallback.class, TextMessage.class, Message.class, LoggingService.class})
+public class IOMessageListenerTest {
+    private IOMessageListener ioMessageListener;
     private MessageCallback messageCallback;
-    private ClientMessage clientMessage;
+    private TextMessage textMessage;
     private Message message;
     private String MODULE_NAME = "MessageListener";
 
@@ -47,11 +48,12 @@ public class MessageListenerTest {
     public void setUp() throws Exception {
         MODULE_NAME = "MessageListener";
         messageCallback = mock(MessageCallback.class);
-        clientMessage = mock(ClientMessage.class);
+        textMessage = mock(TextMessage.class);
         message = mock(Message.class);
         mockStatic(LoggingService.class);
-        messageListener = spy(new MessageListener(messageCallback));
-        PowerMockito.when(clientMessage.acknowledge()).thenReturn(clientMessage);
+        ioMessageListener = spy(new IOMessageListener(messageCallback));
+        doNothing().when(textMessage).acknowledge();
+        PowerMockito.when(textMessage.getText()).thenReturn("{}");
         PowerMockito.whenNew(Message.class).withArguments(anyString()).thenReturn(message);
         PowerMockito.doNothing().when(messageCallback).sendRealtimeMessage(any(Message.class));
     }
@@ -68,8 +70,8 @@ public class MessageListenerTest {
     @Test
     public void testOnMessage() {
         try {
-            messageListener.onMessage(clientMessage);
-            verify(clientMessage).acknowledge();
+            ioMessageListener.onMessage(textMessage);
+            verify(textMessage).acknowledge();
             verify(messageCallback).sendRealtimeMessage(any());
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Start acknowledging message onMessage");
@@ -81,17 +83,13 @@ public class MessageListenerTest {
     }
 
     /**
-     * Test onMessage success scenario
+     * Test onMessage error scenario
      */
     @Test
-    public void throwsActiveMQExceptionOnMessage() {
+    public void throwsExceptionOnMessage() {
         try {
-            PowerMockito.when(clientMessage.acknowledge()).
-                    thenThrow(spy(new ActiveMQException("Exception")));
-            messageListener.onMessage(clientMessage);
-            verify(clientMessage).acknowledge();
-            verify(messageCallback).sendRealtimeMessage(any());
-            verifyStatic(LoggingService.class);
+            PowerMockito.doThrow(mock(JMSException.class)).when(textMessage).acknowledge();
+            ioMessageListener.onMessage(textMessage);
             LoggingService.logError(eq(MODULE_NAME), eq("Error acknowledging message"), any());
         } catch (Exception e) {
             fail("This should not happen");

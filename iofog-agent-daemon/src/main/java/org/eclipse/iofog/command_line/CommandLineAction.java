@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,8 +13,11 @@
 
 package org.eclipse.iofog.command_line;
 
+import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
@@ -53,6 +56,20 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
+			try {
+				Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				LoggingService.logError(MODULE_NAME, "Error stopping running microservices", e);
+				return "Error stopping running microservices.";
+			}
+			if(Configuration.getIofogUuid() != ""){
+				try {
+					ProcessManager.getInstance().stopRunningMicroservices(true, Configuration.getIofogUuid());
+				} catch (Exception e) {
+					LoggingService.logError(MODULE_NAME, "Error stopping running microservices", e);
+					return "Error stopping running microservices.";
+				}
+			}
 			System.setOut(systemOut);
 			System.exit(0);
 			return EMPTY;
@@ -262,6 +279,28 @@ public enum CommandLineAction {
 
 			return result.toString();
 		}
+	},
+	PRUNE_ACTION {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("prune");
+		}
+
+		@Override
+		public String perform(String[] args) {
+			return DockerPruningManager.getInstance().pruneAgent();
+		}
+	},
+	CHECK_UPGRADE_READY_ACTION {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("checkUpgradeReady");
+		}
+
+		@Override
+		public String perform(String[] args) {
+			return FieldAgent.getInstance().getcheckUpgradeReadyReport();
+		}
 	};
 
 	public abstract List<String> getKeys();
@@ -312,8 +351,8 @@ public enum CommandLineAction {
 			"                                         according to the options provided\\n" +
 			"                 defaults                Reset configuration to default values\\n" +
 			"                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
-			"                                         that the software is allowed to use\\n" +
-			"                 -dl <dir>               Set the directory to use for disk\\n" +
+			"                                         that the message archive is allowed to use\\n" +
+			"                 -dl <dir>               Set the message archive directory to use for disk\\n" +
 			"                                         storage\\n" +
 			"                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
 			"                                         the software is allowed to use for\\n" +
@@ -343,6 +382,9 @@ public enum CommandLineAction {
 			"                 -cf <#seconds>          Set the get changes frequency\\n" +
 			"                 -df <#seconds>          Set the post diagnostics frequency\\n" +
 			"                 -sd <#seconds>          Set the scan devices frequency\\n" +
+			"                 -pf <#hours>            Set the docker pruning frequency\\n" +
+			"                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
+			"                 -dt <#percentage>       Set the available disk threshold\\n" +
 			"                 -idc <on/off>           Set the mode on which any not\\n" +
 			"										  registered docker container will be\\n" +
 			"										  shut down\\n" +

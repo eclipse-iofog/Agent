@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -187,7 +187,7 @@ public class SshProxyManager {
         String rsaKey = configs.getString("rsakey");
         int rport = configs.getInt("rport", DEFAULT_REMOTE_PORT);
         int lport = configs.getInt("lport", DEFAULT_LOCAL_PORT);
-        boolean closeFlag = (configs.getBoolean("close"));
+        boolean closeFlag = (configs.getBoolean("closed"));
         connection.setProxyInfo(username, password, host, rport, lport, rsaKey, closeFlag);
     }
 }

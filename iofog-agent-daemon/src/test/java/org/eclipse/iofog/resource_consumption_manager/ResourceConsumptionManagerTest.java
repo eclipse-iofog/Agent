@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.resource_consumption_manager;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
@@ -496,13 +496,9 @@ public class ResourceConsumptionManagerTest {
         method.setAccessible(true);
         method.invoke(resourceConsumptionManager, "1111");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME,
-                "Inisde parse Stat");
+        LoggingService.logInfo(MODULE_NAME, "Inisde parse Stat");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logError(any(), any(),  anyObject());
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME,
-                "Finished parse Stat");
+        LoggingService.logInfo(MODULE_NAME, "Finished parse Stat");
     }
 
     /**

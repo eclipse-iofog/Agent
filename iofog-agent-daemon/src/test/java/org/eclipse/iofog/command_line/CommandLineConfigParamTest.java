@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.command_line;
 
 import org.junit.After;
@@ -68,6 +68,8 @@ public class CommandLineConfigParamTest {
         assertEquals("df", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getCommandName());
         assertEquals("ft", commandLineConfigParam.FOG_TYPE.getCommandName());
         assertEquals("dev", commandLineConfigParam.DEV_MODE.getCommandName());
+        assertEquals("pf", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getCommandName());
+        assertEquals("dt", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getCommandName());
     }
 
     @SuppressWarnings("static-access")
@@ -96,6 +98,8 @@ public class CommandLineConfigParamTest {
         assertEquals("post_diagnostics_freq", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getXmlTag());
         assertEquals("fog_type", commandLineConfigParam.FOG_TYPE.getXmlTag());
         assertEquals("dev_mode", commandLineConfigParam.DEV_MODE.getXmlTag());
+        assertEquals("docker_pruning_freq", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getXmlTag());
+        assertEquals("available_disk_threshold", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getXmlTag());
     }
 
     @SuppressWarnings("static-access")
@@ -114,7 +118,7 @@ public class CommandLineConfigParamTest {
         assertEquals("logLimit", commandLineConfigParam.LOG_DISK_CONSUMPTION_LIMIT.getJsonProperty());
         assertEquals("logDirectory", commandLineConfigParam.LOG_DISK_DIRECTORY.getJsonProperty());
         assertEquals("logFileCount", commandLineConfigParam.LOG_FILE_COUNT.getJsonProperty());
-        assertEquals("loglevel", commandLineConfigParam.LOG_LEVEL.getJsonProperty());
+        assertEquals("logLevel", commandLineConfigParam.LOG_LEVEL.getJsonProperty());
         assertEquals("statusFrequency", commandLineConfigParam.STATUS_FREQUENCY.getJsonProperty());
         assertEquals("changeFrequency", commandLineConfigParam.CHANGE_FREQUENCY.getJsonProperty());
         assertEquals("deviceScanFrequency", commandLineConfigParam.DEVICE_SCAN_FREQUENCY.getJsonProperty());
@@ -124,6 +128,8 @@ public class CommandLineConfigParamTest {
         assertEquals("postdiagnosticsfreq", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getJsonProperty());
         assertEquals("", commandLineConfigParam.FOG_TYPE.getJsonProperty());
         assertEquals("", commandLineConfigParam.DEV_MODE.getJsonProperty());
+        assertEquals("dockerPruningFrequency", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getJsonProperty());
+        assertEquals("availableDiskThreshold", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getJsonProperty());
     }
 
     @SuppressWarnings("static-access")
@@ -131,7 +137,7 @@ public class CommandLineConfigParamTest {
     public void testGetDefaultValue() {
         assertEquals("", commandLineConfigParam.ACCESS_TOKEN.getDefaultValue());
         assertEquals("", commandLineConfigParam.IOFOG_UUID.getDefaultValue());
-        assertEquals("50", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getDefaultValue());
+        assertEquals("10", commandLineConfigParam.DISK_CONSUMPTION_LIMIT.getDefaultValue());
         assertEquals("/var/lib/iofog-agent/", commandLineConfigParam.DISK_DIRECTORY.getDefaultValue());
         assertEquals("4096", commandLineConfigParam.MEMORY_CONSUMPTION_LIMIT.getDefaultValue());
         assertEquals("80", commandLineConfigParam.PROCESSOR_CONSUMPTION_LIMIT.getDefaultValue());
@@ -152,6 +158,8 @@ public class CommandLineConfigParamTest {
         assertEquals("10", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getDefaultValue());
         assertEquals("auto", commandLineConfigParam.FOG_TYPE.getDefaultValue());
         assertEquals("on", commandLineConfigParam.DEV_MODE.getDefaultValue());
+        assertEquals("1", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getDefaultValue());
+        assertEquals("20", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getDefaultValue());
     }
 
     @SuppressWarnings("static-access")
@@ -180,6 +188,8 @@ public class CommandLineConfigParamTest {
         assertEquals("-df", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getCmdText());
         assertEquals("-ft", commandLineConfigParam.FOG_TYPE.getCmdText());
         assertEquals("-dev", commandLineConfigParam.DEV_MODE.getCmdText());
+        assertEquals("-pf", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getCmdText());
+        assertEquals("-dt", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getCmdText());
     }
 
     @Test

@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.DockerClient;
@@ -241,7 +241,6 @@ public class DockerUtil {
     }
 
     public String getContainerName(Container container) {
-    	LoggingService.logInfo(MODULE_NAME , "get Container name");
         return container.getNames()[0].substring(1);
     }
 
@@ -252,7 +251,6 @@ public class DockerUtil {
      * @return microsreviceUuid
      */
     public String getContainerMicroserviceUuid(Container container) {
-    	LoggingService.logInfo(MODULE_NAME , "get Container microservice uuid");
         String containerName = getContainerName(container);
         return containerName.startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX)
             ? getContainerName(container).substring(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX.length())
@@ -548,7 +546,7 @@ public class DockerUtil {
             req.withTag(tag);
             PullImageResultCallback res = new PullImageResultCallback();
             res = req.exec(res);
-            res.awaitSuccess();
+            res.awaitCompletion();
 		} catch (NotFoundException e) {
 			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
 			throw new AgentSystemException("Image not found", e);
@@ -587,7 +585,7 @@ public class DockerUtil {
     public String createContainer(Microservice microservice, String host) throws NotFoundException, NotModifiedException {
     	LoggingService.logInfo(MODULE_NAME ,"create container");
     	LoggingService.logInfo(MODULE_NAME ,"start create container");
-    	RestartPolicy restartPolicy = RestartPolicy.onFailureRestart(10);
+    	RestartPolicy restartPolicy = RestartPolicy.noRestart();
 
         Ports portBindings = new Ports();
         List<ExposedPort> exposedPorts = new ArrayList<>();
@@ -599,22 +597,39 @@ public class DockerUtil {
                 exposedPorts.add(internal);
             });
         List<Volume> volumes = new ArrayList<>();
-        List<Bind> volumeBindings = new ArrayList<>();
+        List<Mount> volumeMounts = new ArrayList<>();
         if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size() != 0) {
             microservice.getVolumeMappings().forEach(volumeMapping -> {
-                Volume volume = new Volume(volumeMapping.getContainerDestination());
-                volumes.add(volume);
-                AccessMode accessMode;
-                try {
-                    accessMode = AccessMode.valueOf(volumeMapping.getAccessMode());
-                } catch (Exception e) {
-                    accessMode = AccessMode.DEFAULT;
-                    LoggingService.logInfo(MODULE_NAME , String.format("create container access Mode set to  \"%s\" ", accessMode));
+                if (volumeMapping.getType() == VolumeMappingType.VOLUME) {
+                    Volume volume = new Volume(volumeMapping.getContainerDestination());
+                    volumes.add(volume);
                 }
-                volumeBindings.add(new Bind(volumeMapping.getHostDestination(), volume, accessMode));
+
+                boolean isReadOnly;
+                try {
+                    isReadOnly = volumeMapping.getAccessMode().toLowerCase() == "ro";
+                } catch (Exception e) {
+                    isReadOnly = false;
+                    LoggingService.logInfo(MODULE_NAME , String.format("volume access mode set to RW"));
+                }
+
+                Mount mount = (new Mount())
+                        .withSource(volumeMapping.getHostDestination())
+                        .withType(volumeMapping.getType() == VolumeMappingType.BIND ? MountType.BIND : MountType.VOLUME)
+                        .withTarget(volumeMapping.getContainerDestination())
+                        .withReadOnly(isReadOnly);
+                volumeMounts.add(mount);
             });
         }
-        String[] extraHosts = {"iofog:" + host};
+        String[] hosts;
+        List<String> extraHosts = microservice.getExtraHosts();
+        if (extraHosts != null && extraHosts.size() > 0) {
+            hosts = new String[extraHosts.size() + 1];
+            hosts = extraHosts.toArray(hosts);
+        } else {
+            hosts = new String[1];
+        }
+        hosts[hosts.length - 1] = "iofog:" + host;
 
         Map<String, String> containerLogConfig = new HashMap<>();
         int logFiles = 1;
@@ -636,39 +651,54 @@ public class DockerUtil {
 
         Map<String, String> labels = new HashMap<>();
         labels.put("iofog-uuid", Configuration.getIofogUuid());
+        HostConfig hostConfig = HostConfig.newHostConfig();
+        hostConfig.withPortBindings(portBindings);
+        hostConfig.withLogConfig(containerLog);
+        hostConfig.withCpusetCpus("0");
+        hostConfig.withRestartPolicy(restartPolicy);
 
         CreateContainerCmd cmd = dockerClient.createContainerCmd(microservice.getImageName())
-            .withLogConfig(containerLog)
-            .withCpusetCpus("0")
             .withExposedPorts(exposedPorts.toArray(new ExposedPort[0]))
-            .withPortBindings(portBindings)
             .withEnv(envVars)
             .withName(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microservice.getMicroserviceUuid())
-            .withRestartPolicy(restartPolicy)
             .withLabels(labels);
 
-        if (microservice.getVolumeMappings() != null && microservice.getVolumeMappings().size()!= 0) {
-            cmd = cmd
-                .withVolumes(volumes.toArray(new Volume[volumes.size()]))
-                .withBinds(volumeBindings.toArray(new Bind[volumeBindings.size()]));
+        if (volumes.size() > 0) {
+            cmd = cmd.withVolumes(volumes);
+        }
+
+        if (volumeMounts.size() > 0) {
+            hostConfig.withMounts(volumeMounts);
         }
 
         if (SystemUtils.IS_OS_WINDOWS) {
-            cmd = microservice.isRootHostAccess()
-                ? cmd.withNetworkMode("host").withExtraHosts(extraHosts).withPrivileged(true)
-                : cmd.withExtraHosts(extraHosts).withPrivileged(true);
+            if(microservice.isRootHostAccess()){
+                hostConfig.withNetworkMode("host").withExtraHosts(hosts).withPrivileged(true);
+            } else {
+                hostConfig.withExtraHosts(hosts).withPrivileged(true);
+            }
         } else if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
-            cmd = microservice.isRootHostAccess()
-                ? cmd.withNetworkMode("host").withPrivileged(true)
-                : cmd.withExtraHosts(extraHosts).withPrivileged(true);
+            if(microservice.isRootHostAccess()){
+                hostConfig.withNetworkMode("host").withPrivileged(true);
+            } else {
+                hostConfig.withExtraHosts(hosts).withPrivileged(true);
+            }
         }
 
         if (microservice.getArgs() != null && microservice.getArgs().size() > 0) {
             cmd = cmd.withCmd(microservice.getArgs());
         }
-
+        cmd = cmd.withHostConfig(hostConfig);
         CreateContainerResponse resp = cmd.exec();
         LoggingService.logInfo(MODULE_NAME , "Finished create container");
         return resp.getId();
+    }
+
+    /**
+     * docker prune a {@link Image}
+     */
+    public void dockerPrune() throws NotModifiedException {
+        LoggingService.logInfo(MODULE_NAME , "docker image prune");
+        dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
     }
 }

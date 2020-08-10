@@ -1,28 +1,31 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.message_bus;
 
-import org.apache.activemq.artemis.api.core.client.ClientConsumer;
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
+import javax.jms.MessageConsumer;
+import javax.jms.TextMessage;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.eclipse.iofog.message_bus.MessageBusServer.messageBusSessionLock;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
@@ -36,10 +39,10 @@ public class MessageReceiver implements AutoCloseable{
 
 	private final String name;
 
-	private MessageListener listener;
-	private final ClientConsumer consumer;
+	private IOMessageListener listener;
+	private final MessageConsumer consumer;
 
-	public MessageReceiver(String name, ClientConsumer consumer) {
+	public MessageReceiver(String name, MessageConsumer consumer) {
 		this.name = name;
 		this.consumer = consumer;
 		this.listener = null;
@@ -77,13 +80,15 @@ public class MessageReceiver implements AutoCloseable{
 			return null;
 
 		Message result = null;
-		ClientMessage msg;
-		synchronized (messageBusSessionLock) {
-			msg = consumer.receiveImmediate();
-		}
+		TextMessage msg;
+		msg = (TextMessage) consumer.receiveNoWait();
 		if (msg != null) {
 			msg.acknowledge();
-			result = new Message(msg.getBytesProperty("message"));
+			JsonReader jsonReader = Json.createReader(new StringReader(msg.getText()));
+			JsonObject json = jsonReader.readObject();
+			jsonReader.close();
+
+			result = new Message(json);
 		}
 		return result;
 	}
@@ -98,11 +103,10 @@ public class MessageReceiver implements AutoCloseable{
 	 */
 	void enableRealTimeReceiving() {
 		LoggingService.logInfo(MODULE_NAME, "Start enable real time receiving");
-		if (consumer == null || consumer.isClosed())
-			return;
-		listener = new MessageListener(new MessageCallback(name));
+
+		listener = new IOMessageListener(new MessageCallback(name));
 		try {
-			consumer.setMessageHandler(listener);
+			consumer.setMessageListener(listener);
 		} catch (Exception e) {
 			listener = null;
 			LoggingService.logError(MODULE_NAME, "Error in enabling real time listener",
@@ -118,10 +122,10 @@ public class MessageReceiver implements AutoCloseable{
 	void disableRealTimeReceiving() {
 		LoggingService.logInfo(MODULE_NAME, "Start disable real time receiving");
 		try {
-			if (consumer == null || listener == null || consumer.getMessageHandler() == null)
+			if (consumer == null || listener == null || consumer.getMessageListener() == null)
 				return;
 			listener = null;
-			consumer.setMessageHandler(null);
+			consumer.setMessageListener(null);
 		} catch (Exception exp) {
 			logError(MODULE_NAME, "Error in disabling real time listener",
 					new AgentSystemException("Error in disabling real time listener", exp));

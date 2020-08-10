@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.local_api;
 
 import io.netty.buffer.ByteBuf;
@@ -52,34 +52,39 @@ public class ControlWebsocketHandler {
 	 * @return void
 	 */
 	public void handle(ChannelHandlerContext ctx, HttpRequest req) {
-		LoggingService.logInfo(MODULE_NAME, "Start Handler to open the websocket for the real-time control signals");
-		String uri = req.uri();
-		uri = uri.substring(1);
-		String[] tokens = uri.split("/");
+		try {
+			LoggingService.logInfo(MODULE_NAME, "Start Handler to open the websocket for the real-time control signals");
+			String uri = req.uri();
+			uri = uri.substring(1);
+			String[] tokens = uri.split("/");
 
-		String id;
+			String id;
 
-		if (tokens.length < 5) {
-			LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ",
-					new AgentSystemException(" Missing ID or ID value in URL", null));
-			return;
-		} else {
-			id = tokens[4].trim();
+			if (tokens.length < 5) {
+				LoggingService.logError(MODULE_NAME, " Missing ID or ID value in URL ",
+						new AgentSystemException(" Missing ID or ID value in URL", null));
+				return;
+			} else {
+				id = tokens[4].trim();
+			}
+
+			// Handshake
+			WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(req),
+					null, true, Integer.MAX_VALUE);
+			WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
+			if (handshaker == null) {
+				WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
+			} else {
+				handshaker.handshake(ctx.channel(), req);
+			}
+
+			WebSocketMap.addWebsocket('C', id, ctx);
+			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
+			LoggingService.logInfo(MODULE_NAME, "Finished Handler to open the websocket for the real-time control signals");
+		} catch (Exception e) {
+			LoggingService.logError(MODULE_NAME, "Error in Handler to open the websocket for the real-time control signals",
+					new AgentSystemException("Error in Handler to open the websocket for the real-time control signals"));
 		}
-
-		// Handshake
-		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(req),
-				null, true, Integer.MAX_VALUE);
-		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
-		if (handshaker == null) {
-			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
-		} else {
-			handshaker.handshake(ctx.channel(), req);
-		}
-
-		WebSocketMap.addWebsocket('C', id, ctx);
-		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
-		LoggingService.logInfo(MODULE_NAME, "Finished Handler to open the websocket for the real-time control signals");
 	}
 
 	/**
@@ -142,20 +147,22 @@ public class ControlWebsocketHandler {
 		// Compare the old and new config map
 		Map<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
 		ArrayList<String> changedConfigElmtsList = new ArrayList<>();
-
-		for (Map.Entry<String, String> newEntry : newConfigMap.entrySet()) {
-			String newMapKey = newEntry.getKey();
-			if (!oldConfigMap.containsKey(newMapKey)) {
-				changedConfigElmtsList.add(newMapKey);
-			} else {
-
-				String newConfigValue = newEntry.getValue();
-				String oldConfigValue = oldConfigMap.get(newMapKey);
-				if (!newConfigValue.equals(oldConfigValue)) {
+		if (newConfigMap != null && newConfigMap.size() > 0) {
+			for (Map.Entry<String, String> newEntry : newConfigMap.entrySet()) {
+				String newMapKey = newEntry.getKey();
+				if (!oldConfigMap.containsKey(newMapKey)) {
 					changedConfigElmtsList.add(newMapKey);
+				} else {
+
+					String newConfigValue = newEntry.getValue();
+					String oldConfigValue = oldConfigMap.get(newMapKey);
+					if (!newConfigValue.equals(oldConfigValue)) {
+						changedConfigElmtsList.add(newMapKey);
+					}
 				}
 			}
 		}
+
 
 		for (String changedConfigElmtId : changedConfigElmtsList) {
 			if (controlMap.containsKey(changedConfigElmtId)) {

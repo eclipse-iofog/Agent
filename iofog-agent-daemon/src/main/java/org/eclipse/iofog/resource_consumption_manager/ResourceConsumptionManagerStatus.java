@@ -1,15 +1,16 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
+
 package org.eclipse.iofog.resource_consumption_manager;
 
 /**
@@ -28,6 +29,8 @@ public class ResourceConsumptionManagerStatus {
 	private long availableMemory;
 	private float totalCpu;
 	private long availableDisk;
+
+	private long totalDiskSpace;
 	
 	public ResourceConsumptionManagerStatus() {
 	}
@@ -111,5 +114,13 @@ public class ResourceConsumptionManagerStatus {
 	public ResourceConsumptionManagerStatus setAvailableDisk(long availableDisk) {
 		this.availableDisk = availableDisk;
 		return this;
+	}
+
+	public long getTotalDiskSpace() {
+		return totalDiskSpace;
+	}
+
+	public void setTotalDiskSpace(long totalDiskSpace) {
+		this.totalDiskSpace = totalDiskSpace;
 	}
 }

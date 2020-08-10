@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 
 package org.eclipse.iofog.command_line;
 
@@ -374,7 +374,7 @@ public class CommandLineActionTest {
             "0.00 MB\\nSystem Total CPU            : 0.00 %";
 
     private String version = "ioFog 1 \n" +
-            "Copyright (C) 2018 Edgeworx, Inc. \n" +
+            "Copyright (C) 2018-2020 Edgeworx, Inc. \n" +
             "Eclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \n" +
             "https://www.eclipse.org/legal/epl-v20.html";
 
@@ -408,8 +408,8 @@ public class CommandLineActionTest {
             "                                         according to the options provided\\n" +
             "                 defaults                Reset configuration to default values\\n" +
             "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
-            "                                         that the software is allowed to use\\n" +
-            "                 -dl <dir>               Set the directory to use for disk\\n" +
+            "                                         that the message archive is allowed to use\\n" +
+            "                 -dl <dir>               Set the message archive directory to use for disk\\n" +
             "                                         storage\\n" +
             "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
             "                                         the software is allowed to use for\\n" +
@@ -439,6 +439,9 @@ public class CommandLineActionTest {
             "                 -cf <#seconds>          Set the get changes frequency\\n" +
             "                 -df <#seconds>          Set the post diagnostics frequency\\n" +
             "                 -sd <#seconds>          Set the scan devices frequency\\n" +
+            "                 -pf <#hours>            Set the docker pruning frequency\\n" +
+            "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
+            "                 -dt <#percentage>       Set the available disk threshold\\n" +
             "                 -idc <on/off>           Set the mode on which any not\\n" +
             "										  registered docker container will be\\n" +
             "										  shut down\\n" +

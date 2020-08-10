@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.local_api;
 
 import io.netty.bootstrap.Bootstrap;
@@ -92,7 +92,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
                 ReferenceCountUtil.release(requestContent);
             }
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, e.getMessage(), e);
+            LoggingService.logError(MODULE_NAME, "Error unable to reach RESTblue container!", e);
         } finally {
             group.shutdownGracefully();
         }

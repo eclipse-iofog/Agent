@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.resource_consumption_manager;
 
 import org.apache.commons.lang.SystemUtils;
@@ -89,6 +89,7 @@ public class ResourceConsumptionManager implements IOFogModule {
 				long availableMemory = getSystemAvailableMemory();
 				float totalCpu = getTotalCpu();
 				long availableDisk = getAvailableDisk();
+				long totalDiskSpace = getTotalDiskSpace();
 
 				StatusReporter.setResourceConsumptionManagerStatus()
 						.setMemoryUsage(memoryUsage / 1_000_000)
@@ -99,7 +100,9 @@ public class ResourceConsumptionManager implements IOFogModule {
 						.setCpuViolation(cpuUsage > cpuLimit)
 						.setAvailableMemory(availableMemory)
 						.setAvailableDisk(availableDisk)
-						.setTotalCpu(totalCpu);
+						.setTotalCpu(totalCpu)
+						.setTotalDiskSpace(totalDiskSpace);
+
 
 				if (diskUsage > diskLimit) {
 					float amount = diskUsage - (diskLimit * 0.75f);
@@ -210,7 +213,7 @@ public class ResourceConsumptionManager implements IOFogModule {
             return 0;
         }
         // @see https://github.com/Leo-G/DevopsWiki/wiki/How-Linux-CPU-Usage-Time-and-Percentage-is-calculated
-		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {print usage}'";
+		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {printf (\"%d\", usage)}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
 		float totalCpu = 0f;
 		if(resultSet != null && !parseOneLineResult(resultSet).isEmpty()){
@@ -338,4 +341,14 @@ public class ResourceConsumptionManager implements IOFogModule {
 		logInfo("started");
 	}
 
+	private long getTotalDiskSpace() {
+		logInfo("Start get available disk");
+		File[] roots = File.listRoots();
+		long totalDiskSpace = 0;
+		for (File f : roots) {
+			totalDiskSpace += f.getTotalSpace();
+		}
+		logInfo("Finished get available disk : " + totalDiskSpace);
+		return totalDiskSpace;
+	}
 }

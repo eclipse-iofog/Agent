@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.utils;
 
 import org.apache.commons.lang.SystemUtils;
@@ -80,9 +80,6 @@ public class Constants {
 
     public static PrintStream systemOut;
 
-    public static final String ADDRESS = "iofog.message_bus";
-    public static final String COMMAND_LINE_ADDRESS = "iofog.commandline";
-
     public static final int KiB = 1024;
     public static final int MiB = KiB * KiB;
     public static final int GiB = KiB * KiB * KiB;
@@ -122,7 +119,6 @@ public class Constants {
     public static final String FIELD_AGENT_POST_STATUS = "FAPS";
     public static final String FIELD_AGENT_POST_DIAGNOSTIC = "FAPD";
 	public static final String MESSAGE_BUS_CALCULATE_SPEED = "MBCS";
-	public static final String MESSAGE_BUS_CHECK_MESSAGE_SERVER_STATUS = "MBSS";
 	public static final String STATUS_REPORTER_SET_STATUS_REPORTER_SYSTEM_TIME = "SRST";
 	public static final String LOCAL_API_EVENT = "LAPI";
 	public static final String RESOURCE_CONSUMPTION_MANAGER_GET_USAGE_DATA = "RCUD";
@@ -137,4 +133,7 @@ public class Constants {
 	public static final String SHUTDOWN_HOOK = "SDHK";
 
 	public static final String SUPERVISOR_CHECK_LOCAL_API_STATUS = "SCLA";
+	public static final String NETWORK_INTERFACE_MANAGER = "INIM";
+
+    public static final float MAX_DISK_CONSUMPTION_LIMIT = 100;
 }

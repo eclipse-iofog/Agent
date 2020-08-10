@@ -1,18 +1,19 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.utils.logging;
 
 import io.sentry.Sentry;
+import io.sentry.event.User;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
@@ -30,6 +31,8 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.eclipse.iofog.utils.CmdProperties.getVersion;
 
 /**
  * sets up and starts logging
@@ -106,6 +109,8 @@ public final class LoggingService {
      */
     public static void logError(String moduleName, String msg, Throwable e) {
         if (newSentryException(e)) {
+            Sentry.getContext().addExtra("version", getVersion());
+            Sentry.getStoredClient().getContext().setUser(new User(System.getProperty("user.name"), System.getProperty("user.name"), "", ""));
             Sentry.capture(e);
         }
 

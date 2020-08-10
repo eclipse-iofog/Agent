@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- *   Saeid Baghbidi
- *   Kilton Hopkins
- *   Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog;
 
 import java.io.*;
@@ -56,15 +56,38 @@ public class Client {
      */
     private static boolean isAnotherInstanceRunning() {
         try {
-            URL url = new URL(LOCAL_API_ENDPOINT);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.getResponseCode();
+            HttpURLConnection conn = postRequest("status");
             conn.disconnect();
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static HttpURLConnection postRequest(String... args) throws Exception {
+        StringBuilder params = new StringBuilder("{\"command\":\"");
+        for (String arg : args) {
+            params.append(arg).append(" ");
+        }
+        params = new StringBuilder(params.toString().trim() + "\"}");
+        byte[] postData = params.toString().trim().getBytes(StandardCharsets.UTF_8);
+
+        String accessToken = fetchAccessToken();
+
+        URL url = new URL(LOCAL_API_ENDPOINT);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Accept", "text/plain");
+        conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
+        conn.setRequestProperty("Authorization", accessToken);
+        conn.setDoOutput(true);
+        try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+            wr.write(postData);
+            wr.flush();
+        }
+
+        return conn;
     }
 
     /**
@@ -74,28 +97,9 @@ public class Client {
      */
     private static boolean sendCommandlineParameters(String... args) {
         try {
-            StringBuilder params = new StringBuilder("{\"command\":\"");
+            HttpURLConnection conn = postRequest(args);
             int statusCode;
-            for (String arg : args) {
-                params.append(arg).append(" ");
-            }
-            params = new StringBuilder(params.toString().trim() + "\"}");
-            byte[] postData = params.toString().trim().getBytes(StandardCharsets.UTF_8);
 
-            String accessToken = fetchAccessToken();
-
-            URL url = new URL(LOCAL_API_ENDPOINT);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Accept", "text/plain");
-            conn.setRequestProperty("Content-Length", Integer.toString(postData.length));
-            conn.setRequestProperty("Authorization", accessToken);
-            conn.setDoOutput(true);
-            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-                wr.write(postData);
-                wr.flush();
-            }
             BufferedReader br = null;
             if (conn.getResponseCode() == 200) {
                 br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -169,8 +173,8 @@ public class Client {
                 "                                         according to the options provided\n" +
                 "                 defaults                Reset configuration to default values\n" +
                 "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\n" +
-                "                                         that the software is allowed to use\n" +
-                "                 -dl <dir>               Set the directory to use for disk\n" +
+                "                                         that the message archive is allowed to use\n" +
+                "                 -dl <dir>               Set the message archive directory to use for disk\n" +
                 "                                         storage\n" +
                 "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\n" +
                 "                                         the software is allowed to use for\n" +
@@ -200,6 +204,9 @@ public class Client {
                 "                 -cf <#seconds>          Set the get changes frequency\n" +
                 "                 -df <#seconds>          Set the post diagnostics frequency\n" +
                 "                 -sd <#seconds>          Set the scan devices frequency\n" +
+                "                 -pf <#hours>            Set the docker pruning frequency\\n" +
+                "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
+                "                 -dt <#percentage>       Set the available disk threshold\\n" +
                 "                 -idc <on/off>           Set the mode on which any not\n" +
                 "										  registered docker container will be\n" +
                 "										  shut down\n" +
@@ -221,7 +228,7 @@ public class Client {
 
     private static String version() {
         return "ioFog Agent " + getVersion() + " " +
-                "\nCopyright (C) 2018 Edgeworx, Inc." +
+                "\nCopyright (C) 2018-2020 Edgeworx, Inc." +
                 "\nEclipse ioFog is provided under the Eclipse Public License (EPL2)" +
                 "\nhttps://www.eclipse.org/legal/epl-v20.html";
     }

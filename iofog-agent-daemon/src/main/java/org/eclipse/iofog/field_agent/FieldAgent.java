@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.field_agent;
 
 import org.apache.commons.lang.SystemUtils;
@@ -22,14 +22,15 @@ import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.enums.RequestType;
-import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.tracking.TrackingEventType;
@@ -51,15 +52,20 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang.StringUtils.rightPad;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToRollback;
 import static org.eclipse.iofog.field_agent.VersionHandler.isReadyToUpgrade;
@@ -85,6 +91,9 @@ public class FieldAgent implements IOFogModule {
     private static FieldAgent instance;
     private boolean initialization;
     private boolean connected = false;
+    private ReentrantLock provisioningLock = new ReentrantLock();
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
+    private ScheduledFuture<?> futureTask;
 
     private FieldAgent() {
         lastGetChangesList = 0;
@@ -140,8 +149,8 @@ public class FieldAgent implements IOFogModule {
                         "UNKNOWN" : StatusReporter.getProcessManagerStatus().getJsonRegistriesStatus())
                 .add("systemTime", StatusReporter.getStatusReporterStatus().getSystemTime())
                 .add("lastStatusTime", StatusReporter.getStatusReporterStatus().getLastUpdate())
-                .add("ipAddress", IOFogNetworkInterface.getCurrentIpAddress() == null ?
-                        "UNKNOWN" : IOFogNetworkInterface.getCurrentIpAddress())
+                .add("ipAddress", IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress() == null ?
+                        "UNKNOWN" : IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress())
                 .add("ipAddressExternal", Configuration.getIpAddressExternal() == null ?
                         "UNKNOWN" : Configuration.getIpAddressExternal())
                 .add("processedMessages", StatusReporter.getMessageBusStatus().getProcessedMessages())
@@ -153,8 +162,8 @@ public class FieldAgent implements IOFogModule {
                         "UNKNOWN" : StatusReporter.getSshManagerStatus().getJsonProxyStatus())
                 .add("version", getVersion() == null ?
                         "UNKNOWN" : getVersion())
-                .add("isReadyToUpgrade", isReadyToUpgrade())
-                .add("isReadyToRollback", isReadyToRollback())
+                .add("isReadyToUpgrade", StatusReporter.getFieldAgentStatus().isReadyToUpgrade())
+                .add("isReadyToRollback", StatusReporter.getFieldAgentStatus().isReadyToRollback())
                 .build();
     }
 
@@ -209,6 +218,12 @@ public class FieldAgent implements IOFogModule {
             deProvision(true);
             logError("Unable to send status due to broken certificate",
                     new AgentSystemException("Unable to send status due to broken certificate", e));
+        }catch (SocketTimeoutException e) {
+            try {
+                IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+            } catch (SocketException ex) {
+                logError("Unable to update Network interface", new AgentSystemException(ex.getMessage(), ex));
+            }
         } catch (Exception e) {
             logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
         }
@@ -218,11 +233,16 @@ public class FieldAgent implements IOFogModule {
     private final Runnable postStatus = () -> {
         while (true) {
             try {
-                Thread.sleep(Configuration.getStatusFrequency() * 1000);
+                if (microserviceManager.getCurrentMicroservices().size() == StatusReporter.getProcessManagerStatus().getRunningMicroservicesCount()) {
+                    Thread.sleep(Configuration.getStatusFrequency() * 1000);
+                } else {
+                    Thread.sleep(1 * 1000);
+                }
                 postStatusHelper();
             } catch (Exception e) {
-                logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
+                logError("Unable to send status ", new AgentSystemException(e.getMessage(), e));
             }
+
         }
     };
 
@@ -291,6 +311,137 @@ public class FieldAgent implements IOFogModule {
         logInfo("Finished verification Failed of Controller");
     }
 
+    private final Future<Boolean> processChanges(JsonObject changes) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        return executor.submit(() -> {
+            boolean resetChanges = true;
+
+            if (changes.getBoolean("deleteNode",false) && !initialization) {
+                try {
+                    deleteNode();
+                } catch (Exception e) {
+                    logError("Unable to delete node", e);
+                    resetChanges = false;
+                }
+            } else {
+                if (changes.getBoolean("reboot",false) && !initialization) {
+                    try {
+                        reboot();
+                    } catch (Exception e) {
+                        logError("Unable to perform reboot", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("isImageSnapshot",false) && !initialization) {
+                    try {
+                        createImageSnapshot();
+                    } catch (Exception e) {
+                        logError("Unable to create snapshot", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("config",false) && !initialization) {
+                    try {
+                        getFogConfig();
+                    } catch (Exception e) {
+                        logError("Unable to get config", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("version",false) && !initialization) {
+                    try {
+                        changeVersion();
+                    } catch (Exception e) {
+                        logError("Unable to change version", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("registries",false) || initialization) {
+                    try {
+                        loadRegistries(false);
+                        ProcessManager.getInstance().update();
+                    } catch (Exception e) {
+                        logError("Unable to update registries", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("prune", false) && !initialization) {
+                    try {
+                        DockerPruningManager.getInstance().pruneAgent();
+                    } catch (Exception e) {
+                        logError("Unable to update registries", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("microserviceConfig",false) || changes.getBoolean("microserviceList",false) ||
+                        changes.getBoolean("routing",false) || initialization) {
+                    boolean microserviceConfig = changes.getBoolean("microserviceConfig");
+                    boolean routing = changes.getBoolean("routing");
+                    int defaultFreq = Configuration.getStatusFrequency();
+                    Configuration.setStatusFrequency(1);
+                    try {
+                        List<Microservice> microservices = loadMicroservices(false);
+
+                        if (microserviceConfig) {
+                            try {
+                                processMicroserviceConfig(microservices);
+                                LocalApi.getInstance().update();
+                            } catch (Exception e) {
+                                logError("Unable to update microservices config", e);
+                                resetChanges = false;
+                            }
+                        }
+
+                        if (routing) {
+                            try {
+                                processRoutes(microservices);
+                                if (!changes.getBoolean("routerChanged",false) || initialization) {
+                                    MessageBus.getInstance().update();
+                                }
+                            } catch (Exception e) {
+                                logError("Unable to update microservices routes", e);
+                                resetChanges = false;
+                            }
+                        }
+
+                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
+                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
+                    } catch (Exception e) {
+                        logError("Unable to get microservices list", e);
+                        resetChanges = false;
+                    } finally {
+                        Configuration.setStatusFrequency(defaultFreq);
+                    }
+                }
+
+                if (changes.getBoolean("tunnel",false) && !initialization) {
+                    try {
+                        sshProxyManager.update(getProxyConfig());
+                    } catch (Exception e) {
+                        logError("Unable to create tunnel", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("diagnostics",false) && !initialization) {
+                    try {
+                        updateDiagnostics();
+                    } catch (Exception e) {
+                        logError("Unable to update diagnostics", e);
+                        resetChanges = false;
+                    }
+                }
+                if (changes.getBoolean("routerChanged",false) && !initialization) {
+                    try {
+                        MessageBus.getInstance().update();
+                    } catch (Exception e) {
+                        logError("Unable to update router info", e);
+                        resetChanges = false;
+                    }
+                }
+            }
+            return resetChanges;
+        });
+    }
 
     /**
      * retrieves IOFog changes list from IOFog controller
@@ -299,7 +450,8 @@ public class FieldAgent implements IOFogModule {
         while (true) {
         	logInfo("Get changes list");
             try {
-                Thread.sleep(Configuration.getChangeFrequency() * 1000);
+                int frequency = Configuration.getChangeFrequency() * 1000;
+                Thread.sleep(frequency);
                 logInfo("Start get IOFog changes list from IOFog controller");
 
                 if (notProvisioned() || !isControllerConnected(false)) {
@@ -316,6 +468,9 @@ public class FieldAgent implements IOFogModule {
                     logError("Unable to get changes",
                     		new AgentSystemException("Unable to get changes due to broken certificate", e));
                     continue;
+                } catch (SocketTimeoutException e) {
+                    IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+                    continue;
                 } catch (Exception e) {
                     logError("Unable to get changes ", new AgentSystemException("Unable to get changes", e));
                     continue;
@@ -324,55 +479,30 @@ public class FieldAgent implements IOFogModule {
 
                 StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
-                JsonObject changes = result;
-                if (changes.getBoolean("deleteNode") && !initialization) {
-                    deleteNode();
-                } else {
-                    if (changes.getBoolean("reboot") && !initialization) {
-                        reboot();
-                    }
-                    if (changes.getBoolean("isImageSnapshot") && !initialization) {
-                        createImageSnapshot();
-                    }
-                    if (changes.getBoolean("config") && !initialization) {
-                        getFogConfig();
-                    }
-                    if (changes.getBoolean("version") && !initialization) {
-                        changeVersion();
-                    }
-                    if (changes.getBoolean("registries") || initialization) {
-                        loadRegistries(false);
-                        ProcessManager.getInstance().update();
-                    }
-                    if (changes.getBoolean("microserviceConfig") || changes.getBoolean("microserviceList") ||
-                            changes.getBoolean("routing") || initialization) {
-                        boolean microserviceConfig = changes.getBoolean("microserviceConfig");
-                        boolean routing = changes.getBoolean("routing");
+                String lastUpdated = result.getString("lastUpdated", null);
+                boolean resetChanges;
+                Future<Boolean> changesProcessor = processChanges(result);
 
-                        List<Microservice> microservices = loadMicroservices(false);
+                try {
+                    resetChanges = changesProcessor.get(30, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    resetChanges = false;
+                    changesProcessor.cancel(true);
+                }
 
-                        if (microserviceConfig) {
-                            processMicroserviceConfig(microservices);
-                            LocalApi.getInstance().update();
-                        }
-
-                        if (routing) {
-                            processRoutes(microservices);
-                            MessageBus.getInstance().update();
-                        }
-
-                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
-                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
-                    }
-                    if (changes.getBoolean("tunnel") && !initialization) {
-                        sshProxyManager.update(getProxyConfig());
-                    }
-                    if (changes.getBoolean("diagnostics") && !initialization) {
-                        updateDiagnostics();
+                if (lastUpdated != null && resetChanges) {
+                    logInfo("Resetting config changes flags");
+                    try {
+                        JsonObject req = Json.createObjectBuilder()
+                                .add("lastUpdated", lastUpdated)
+                                .build();
+                        orchestrator.request("config/changes", RequestType.PATCH, null, req);
+                    } catch (Exception e) {
+                        logError("Resetting config changes has failed", e);
                     }
                 }
 
-                initialization = false;
+                initialization = initialization && !resetChanges;
             } catch (Exception e) {
             	logError("Error getting changes list ", new AgentSystemException("Error getting changes list", e));
             }
@@ -663,6 +793,8 @@ public class FieldAgent implements IOFogModule {
             JsonValue routesValue = jsonObj.get("routes");
             microservice.setRoutes(getStringList(routesValue));
 
+            microservice.setConsumer(jsonObj.getBoolean("isConsumer"));
+
             JsonValue portMappingValue = jsonObj.get("portMappings");
             if (!portMappingValue.getValueType().equals(JsonValue.ValueType.NULL)) {
                 JsonArray portMappingObjs = (JsonArray) portMappingValue;
@@ -685,11 +817,13 @@ public class FieldAgent implements IOFogModule {
                         ? IntStream.range(0, volumeMappingObj.size())
                         .boxed()
                         .map(volumeMappingObj::getJsonObject)
-                        .map(volumeMapping -> new VolumeMapping(volumeMapping.getString("hostDestination"),
-                                volumeMapping.getString("containerDestination"),
-                                volumeMapping.getString("accessMode")))
-                        .collect(toList())
-                        : null;
+                        .map(volumeMapping -> {
+                            VolumeMappingType volumeMappingType = volumeMapping.getString("type", "bind").equals("volume") ? VolumeMappingType.VOLUME : VolumeMappingType.BIND;
+                            return new VolumeMapping(volumeMapping.getString("hostDestination"),
+                                    volumeMapping.getString("containerDestination"),
+                                    volumeMapping.getString("accessMode"),
+                                    volumeMappingType);
+                        }).collect(toList()) : null;
 
                 microservice.setVolumeMappings(vms);
             }
@@ -711,6 +845,9 @@ public class FieldAgent implements IOFogModule {
 
             JsonValue argsValue = jsonObj.get("cmd");
             microservice.setArgs(getStringList(argsValue));
+
+            JsonValue extraHostsValue = jsonObj.get("extraHosts");
+            microservice.setExtraHosts(getStringList(extraHostsValue));
 
             try {
                 LoggingService.setupMicroserviceLogger(microservice.getMicroserviceUuid(), microservice.getLogSize());
@@ -742,10 +879,10 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
             logError("Error pinging controller due to broken certificate",
-            		new AgentSystemException("Error pinging controller due to broken certificate", e));
+            		new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
             verificationFailed(e);
-            logError("Error pinging controller", new AgentUserException("Error pinging controller", e));
+            logError("Error pinging controller", new AgentUserException(e.getMessage(), e));
         }
         logInfo("Finished Ping : " + false);
         return false;
@@ -921,6 +1058,18 @@ public class FieldAgent implements IOFogModule {
                         configs.getString(LOG_LEVEL.getJsonProperty()) :
                         LOG_LEVEL.getDefaultValue();
 
+                int dockerPruningFrequency = configs.containsKey(DOCKER_PRUNING_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(DOCKER_PRUNING_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(DOCKER_PRUNING_FREQUENCY.getDefaultValue());
+
+                int availableDiskThreshold = configs.containsKey(AVAILABLE_DISK_THRESHOLD.getJsonProperty()) ?
+                        configs.getInt(AVAILABLE_DISK_THRESHOLD.getJsonProperty()) :
+                        Integer.parseInt(AVAILABLE_DISK_THRESHOLD.getDefaultValue());
+
+                int readyToUpgradeScanFreq = configs.containsKey(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty()) ?
+                        configs.getInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty()) :
+                        Integer.parseInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getDefaultValue());
+
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -970,6 +1119,15 @@ public class FieldAgent implements IOFogModule {
                 if (!Configuration.getLogLevel().equals(logLevel))
                     instanceConfig.put(LOG_LEVEL.getCommandName(), logLevel);
 
+                if ((Configuration.getDockerPruningFrequency() != dockerPruningFrequency) && (dockerPruningFrequency >= 1))
+                    instanceConfig.put(DOCKER_PRUNING_FREQUENCY.getCommandName(), dockerPruningFrequency);
+
+                if (Configuration.getAvailableDiskThreshold() != availableDiskThreshold) {
+                    instanceConfig.put(AVAILABLE_DISK_THRESHOLD.getCommandName(), availableDiskThreshold);
+                }
+                if ((Configuration.getReadyToUpgradeScanFrequency() != readyToUpgradeScanFreq) && (readyToUpgradeScanFreq >= 1))
+                    instanceConfig.put(READY_TO_UPGRADE_SCAN_FREQUENCY.getCommandName(), readyToUpgradeScanFreq);
+
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);
             }
@@ -1005,7 +1163,7 @@ public class FieldAgent implements IOFogModule {
             logError("Error while parsing GPS coordinates", new AgentSystemException(e.getMessage(), e));
         }
 
-        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterface.getNetworkInterface();
+        Pair<NetworkInterface, InetAddress> connectedAddress = IOFogNetworkInterfaceManager.getInstance().getNetworkInterface();
         JsonObject json = Json.createObjectBuilder()
                 .add(NETWORK_INTERFACE.getJsonProperty(), connectedAddress == null ? "UNKNOWN" : connectedAddress._1().getName())
                 .add(DOCKER_URL.getJsonProperty(), Configuration.getDockerUrl() == null ? "UNKNOWN" : Configuration.getDockerUrl())
@@ -1048,7 +1206,7 @@ public class FieldAgent implements IOFogModule {
             try {
             	logInfo("Started get proxy config");
                 JsonObject response = orchestrator.request("tunnel", RequestType.GET, null, null);
-                result = response.getJsonObject("proxy");
+                result = response.getJsonObject("tunnel");
             } catch (Exception e) {
             	logError("Unable to get proxy config ", new AgentSystemException(e.getMessage(), e));
             }
@@ -1070,7 +1228,16 @@ public class FieldAgent implements IOFogModule {
         logInfo("Provisioning");
         JsonObject provisioningResult;
 
+        if (!notProvisioned()) {
+            try {
+                logInfo("Agent is already provisioned. Deprovisioning...");
+                StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
+                deProvision(false);
+            } catch (Exception e) {}
+        }
+
         try {
+            provisioningLock.lock();
             provisioningResult = orchestrator.provision(key);
 
             microserviceManager.clear();
@@ -1109,6 +1276,8 @@ public class FieldAgent implements IOFogModule {
             provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         } catch (Exception e) {
             provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
+        } finally {
+            provisioningLock.unlock();
         }
         return provisioningResult;
     }
@@ -1127,7 +1296,11 @@ public class FieldAgent implements IOFogModule {
      */
     private void notifyModules() {
     	logInfo("Start notiying modules for configuration update");
-        MessageBus.getInstance().update();
+    	try {
+            MessageBus.getInstance().update();
+        } catch (Exception e) {
+    	    logWarning("Unable to update Message Bus" + " : " + e.getMessage());
+        }
         LocalApi.getInstance().update();
         ProcessManager.getInstance().update();
         logInfo("Finished notiying modules for configuration update");
@@ -1141,35 +1314,52 @@ public class FieldAgent implements IOFogModule {
     public String deProvision(boolean isTokenExpired) {
         logInfo("Start Deprovisioning");
 
-        if (notProvisioned()) {
-        	logInfo("Finished Deprovisioning : Failure - not provisioned");
-            return "\nFailure - not provisioned";
+        if (!provisioningLock.tryLock()) {
+            String msg = "Provisioning in progress";
+            logInfo(msg);
+            return msg;
         }
 
-        if (!isTokenExpired) {
-            try {
-                orchestrator.request("deprovision", RequestType.POST, null, getDeprovisionBody());
-            } catch (CertificateException | SSLHandshakeException e) {
-                verificationFailed(e);
-                logError("Unable to make deprovision request due to broken certificate ",
-                		new AgentSystemException("Unable to make deprovision request due to broken certificate", e));
-            } catch (Exception e) {
-                logError("Unable to make deprovision request ",
-                		new AgentSystemException("Unable to make deprovision request", e));
-            }
-        }
-
-        StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
         try {
-            Configuration.setIofogUuid("");
-            Configuration.setAccessToken("");
-            Configuration.saveConfigUpdates();
-        } catch (Exception e) {
-            logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+            if (notProvisioned()) {
+                logInfo("Finished Deprovisioning : Failure - not provisioned");
+                return "\nFailure - not provisioned";
+            }
+
+            if (!isTokenExpired) {
+                try {
+                    orchestrator.request("deprovision", RequestType.POST, null, getDeprovisionBody());
+                } catch (CertificateException | SSLHandshakeException e) {
+                    verificationFailed(e);
+                    logError("Unable to make deprovision request due to broken certificate ",
+                            new AgentSystemException("Unable to make deprovision request due to broken certificate", e));
+                } catch (Exception e) {
+                    logError("Unable to make deprovision request ",
+                            new AgentSystemException("Unable to make deprovision request", e));
+                }
+            }
+
+            StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
+            String iofogUuid = Configuration.getIofogUuid();
+            try {
+                Configuration.setIofogUuid("");
+                Configuration.setAccessToken("");
+                Configuration.saveConfigUpdates();
+            } catch (Exception e) {
+                logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+            }
+            microserviceManager.clear();
+            try {
+                ProcessManager.getInstance().stopRunningMicroservices(false, iofogUuid);
+            } catch (Exception e) {
+                logError("Error stopping running microservices",
+                        new AgentSystemException("Error stopping remaining microservices", e));
+            }
+            notifyModules();
+            logInfo("Finished Deprovisioning : Success - tokens, identifiers and keys removed");
+        } finally {
+            provisioningLock.unlock();
         }
-        microserviceManager.clear();
-        notifyModules();
-        logInfo("Finished Deprovisioning : Success - tokens, identifiers and keys removed");
         return "\nSuccess - tokens, identifiers and keys removed";
     }
 
@@ -1229,6 +1419,10 @@ public class FieldAgent implements IOFogModule {
         new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
         new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
         new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
+
+        StatusReporter.setFieldAgentStatus().setReadyToUpgrade(VersionHandler.isReadyToUpgrade());
+        StatusReporter.setFieldAgentStatus().setReadyToRollback(VersionHandler.isReadyToRollback());
+        futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
         logInfo("Field Agent started");
     }
 
@@ -1384,5 +1578,58 @@ public class FieldAgent implements IOFogModule {
         }
         LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
     }
+    /**
+     * returns report for "info" about ready to upgrade and ready to rollback
+     *
+     * @return info getcheckUpgradeReadyReport
+     */
+    public String getcheckUpgradeReadyReport() {
+        LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
 
+        StringBuilder result = new StringBuilder();
+        boolean isReadyToUpgrade = VersionHandler.isReadyToUpgrade();
+        boolean isReadyToRollback = VersionHandler.isReadyToRollback();
+
+        // isReadyToUpgrade
+        result.append(buildReportLine("Ready To Upgrade", String.valueOf(isReadyToUpgrade)));
+        // isReadyToRollback
+        result.append(buildReportLine("Ready To Rollback", String.valueOf(isReadyToRollback)));
+
+        LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
+
+        return result.toString();
+    }
+
+    private String buildReportLine(String messageDescription, String value) {
+        LoggingService.logInfo(MODULE_NAME, "build Report Line");
+        return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
+    }
+
+    /**
+     *  get isReadyToUpgrade and isReadyToRollback Status
+     */
+    private Runnable getAgentReadyToUpgradeStatus = () -> {
+        LoggingService.logInfo(MODULE_NAME, "Start scan of isReadyToUpgrade and isReadyToRollback Status");
+        try {
+            boolean isReadyToRollback = VersionHandler.isReadyToRollback();
+            boolean isReadyToUpgrade = VersionHandler.isReadyToUpgrade();
+            StatusReporter.setFieldAgentStatus().setReadyToRollback(isReadyToRollback);
+            StatusReporter.setFieldAgentStatus().setReadyToUpgrade(isReadyToUpgrade);
+        } catch (Exception e){
+            LoggingService.logError(MODULE_NAME,"Error getting isReadyToUpgrade and isReadyToRollback Status", new AgentSystemException("Error in Agent Version Handler", e));
+        }
+        LoggingService.logInfo(MODULE_NAME, "Finished scan of isReadyToUpgrade and isReadyToRollback Status");
+
+    };
+    /**
+     * This method will reschedule "myTask" with the new param time
+     */
+    public void changeReadInterval()
+    {
+        if (futureTask != null)
+        {
+            futureTask.cancel(true);
+        }
+        futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
+    }
 }

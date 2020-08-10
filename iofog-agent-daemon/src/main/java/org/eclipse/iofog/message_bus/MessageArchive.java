@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.message_bus;
 
 import java.io.File;
@@ -135,10 +135,14 @@ public class MessageArchive implements AutoCloseable{
 	public void close() {
 		try {
 			currentFileName = "";
-			if (indexFile != null)
+			if (indexFile != null){
 				indexFile.close();
-			if (dataFile != null)
+				indexFile = null;
+			}
+			if (dataFile != null){
 				dataFile.close();
+				dataFile = null;
+			}
 			currentFileName = "";
 		} catch (Exception exp) {
 			LoggingService.logError(MODULE_NAME, exp.getMessage(), exp);

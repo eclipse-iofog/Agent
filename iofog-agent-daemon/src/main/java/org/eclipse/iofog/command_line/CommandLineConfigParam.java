@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -32,7 +32,7 @@ public enum CommandLineConfigParam {
     ACCESS_TOKEN("", "", "access_token", ""),
     IOFOG_UUID("", "", "iofog_uuid", ""),
 
-    DISK_CONSUMPTION_LIMIT ("50", "d","disk_consumption_limit", "diskLimit"),
+    DISK_CONSUMPTION_LIMIT ("10", "d","disk_consumption_limit", "diskLimit"),
     DISK_DIRECTORY ("/var/lib/iofog-agent/", "dl","disk_directory", "diskDirectory"),
     MEMORY_CONSUMPTION_LIMIT ("4096", "m", "memory_consumption_limit", "memoryLimit"),
     PROCESSOR_CONSUMPTION_LIMIT ("80", "p","processor_consumption_limit", "cpuLimit"),
@@ -43,7 +43,7 @@ public enum CommandLineConfigParam {
     LOG_DISK_CONSUMPTION_LIMIT ("10", "l","log_disk_consumption_limit", "logLimit"),
     LOG_DISK_DIRECTORY ("/var/log/iofog-agent/", "ld","log_disk_directory", "logDirectory"),
     LOG_FILE_COUNT ("10", "lc","log_file_count", "logFileCount"),
-    LOG_LEVEL ("INFO", "ll","log_level", "loglevel"),
+    LOG_LEVEL ("INFO", "ll","log_level", "logLevel"),
     STATUS_FREQUENCY("10", "sf", "status_update_freq", "statusFrequency"),
     CHANGE_FREQUENCY("20", "cf", "get_changes_freq", "changeFrequency"),
     DEVICE_SCAN_FREQUENCY("60", "sd", "scan_devices_freq", "deviceScanFrequency"),
@@ -52,7 +52,12 @@ public enum CommandLineConfigParam {
     GPS_COORDINATES ("", "", "gps_coordinates", "gpscoordinates"),
     POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
     FOG_TYPE ("auto", "ft", "fog_type", ""),
-    DEV_MODE ("on", "dev", "dev_mode", "");
+    DEV_MODE ("on", "dev", "dev_mode", ""),
+    ROUTER_HOST ("", "", "router_host", "routerHost"),
+    ROUTER_PORT ("0", "", "router_port", "routerPort"),
+    DOCKER_PRUNING_FREQUENCY ("1", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
+    AVAILABLE_DISK_THRESHOLD ("20", "dt", "available_disk_threshold", "availableDiskThreshold"),
+    READY_TO_UPGRADE_SCAN_FREQUENCY ("24", "uf", "upgrade_scan_frequency", "readyToUpgradeScanFrequency");
 
     private final String commandName;
     private final String xmlTag;

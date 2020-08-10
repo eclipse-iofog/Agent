@@ -1,21 +1,17 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.message_bus;
 
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
-import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
@@ -27,6 +23,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,19 +42,18 @@ import static org.powermock.api.mockito.PowerMockito.*;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({MessagePublisher.class, Route.class, ClientProducer.class, Message.class,
-        MessageArchive.class, LoggingService.class, MessageBusServer.class, ClientSession.class,
-        ClientMessage.class})
+@PrepareForTest({MessagePublisher.class, Route.class, MessageProducer.class, Message.class,
+        MessageArchive.class, LoggingService.class, MessageBusServer.class, Session.class,
+        TextMessage.class})
 public class MessagePublisherTest {
+    private final List<MessageProducer> messageProducers = new ArrayList<>();
     private MessagePublisher messagePublisher;
     private String name;
     private Route route;
-    private ClientProducer clientProducer;
     private Message message;
     private MessageArchive messageArchive;
     private MessageBusServer messageBusServer;
-    private ClientSession clientSession;
-    private ClientMessage clientMessage;
+    private TextMessage textMessage;
     private byte[] bytes;
     private List<String> receivers;
     private List<Message> messageList;
@@ -65,12 +63,10 @@ public class MessagePublisherTest {
         name = "name";
         bytes = new byte[20];
         route = mock(Route.class);
-        clientProducer = mock(ClientProducer.class);
         message = mock(Message.class);
-        clientMessage = mock(ClientMessage.class);
+        textMessage = mock(TextMessage.class);
         messageArchive = mock(MessageArchive.class);
         messageBusServer = mock(MessageBusServer.class);
-        clientSession = mock(ClientSession.class);
         receivers = new ArrayList<>();
         receivers.add("receivers");
         messageList = mock(ArrayList.class);
@@ -78,11 +74,10 @@ public class MessagePublisherTest {
         mockStatic(MessageBusServer.class);
         PowerMockito.when(message.getBytes()).thenReturn(bytes);
         PowerMockito.when(message.getTimestamp()).thenReturn(System.currentTimeMillis());
-        PowerMockito.when(MessageBusServer.getSession()).thenReturn(clientSession);
-        PowerMockito.when(clientSession.createMessage(anyBoolean())).thenReturn(clientMessage);
+        PowerMockito.when(MessageBusServer.createMessage(anyString())).thenReturn(textMessage);
         PowerMockito.when(route.getReceivers()).thenReturn(receivers);
         PowerMockito.whenNew(MessageArchive.class).withArguments(anyString()).thenReturn(messageArchive);
-        messagePublisher = spy(new MessagePublisher(name, route, clientProducer));
+        messagePublisher = spy(new MessagePublisher(name, route, messageProducers));
         PowerMockito.doNothing().when(messageArchive).save(Mockito.any(byte[].class), anyLong());
         PowerMockito.doNothing().when(messageArchive).close();
         PowerMockito.when(messageArchive.messageQuery(anyLong(), anyLong())).thenReturn(messageList);
@@ -91,7 +86,6 @@ public class MessagePublisherTest {
     @After
     public void tearDown() throws Exception {
         reset(messagePublisher);
-        reset(clientProducer);
         reset(route);
     }
 
@@ -111,12 +105,10 @@ public class MessagePublisherTest {
         try {
             messagePublisher.publish(message);
             Mockito.verify(messageArchive, atLeastOnce()).save(any(byte[].class), anyLong());
-            Mockito.verify(route).getReceivers();
-            Mockito.verify(clientSession).createMessage(anyBoolean());
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Start publish message :name");
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finsihed publish message : name");
+            LoggingService.logInfo(MODULE_NAME, "Finished publish message : name");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -131,8 +123,6 @@ public class MessagePublisherTest {
             PowerMockito.doThrow(mock(Exception.class)).when(messageArchive).save(Mockito.any(byte[].class), anyLong());
             messagePublisher.publish(message);
             Mockito.verify(messageArchive, atLeastOnce()).save(any(byte[].class), anyLong());
-            Mockito.verify(route).getReceivers();
-            Mockito.verify(clientSession).createMessage(anyBoolean());
             verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Message Publisher (name)unable to archive message"),
                     any());
@@ -147,7 +137,7 @@ public class MessagePublisherTest {
     @Test
     public void testUpdateRoute() {
         try {
-            messagePublisher.updateRoute(route);
+            messagePublisher.updateRoute(route, messageProducers);
             verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Updating route");
         } catch (Exception e) {
@@ -182,7 +172,7 @@ public class MessagePublisherTest {
             messagePublisher.close();
             Mockito.verify(messageArchive, atLeastOnce()).close();
             verifyStatic(LoggingService.class);
-            logError(eq(MODULE_NAME), eq("Error closing message publisher"), any());
+            logError(eq(MODULE_NAME), eq("Error closing message archive"), any());
         } catch (Exception e) {
             fail("This should not happen");
         }

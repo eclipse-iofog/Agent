@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
   ~ /********************************************************************************
-  ~  * Copyright (c) 2018 Edgeworx, Inc.
+  ~  * Copyright (c) 2018-2020 Edgeworx, Inc.
   ~  *
   ~  * This program and the accompanying materials are made available under the
   ~  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,6 +14,8 @@
 
 <config>
 	<access_token/>
+	<router_host />
+	<router_port/>
 
 	<controller_url>http://localhost:54421/api/v3/</controller_url>
 	
@@ -29,7 +31,7 @@
 	
 	<docker_url>unix:///var/run/docker.sock</docker_url>
 	
-	<disk_consumption_limit>50</disk_consumption_limit>
+	<disk_consumption_limit>10</disk_consumption_limit>
 	
 	<disk_directory>/var/lib/iofog-agent/</disk_directory>
 	
@@ -58,4 +60,10 @@
 	<gps_coordinates>0,0</gps_coordinates>
 
 	<isolated_docker_container>off</isolated_docker_container>
+
+	<docker_pruning_freq>1</docker_pruning_freq>
+
+	<available_disk_threshold>20</available_disk_threshold>
+
+	<upgrade_scan_frequency>24</upgrade_scan_frequency>
 </config>
