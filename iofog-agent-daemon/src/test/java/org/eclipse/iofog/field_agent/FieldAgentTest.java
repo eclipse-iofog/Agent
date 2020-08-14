@@ -419,7 +419,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processRoutes", any());
-            PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());

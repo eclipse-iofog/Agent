@@ -25,6 +25,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -43,7 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LoggingService.class, Configuration.class, Logger.class, File.class, FileHandler.class, FileSystems.class, FileSystem.class,
-        UserPrincipalLookupService.class, Files.class, PosixFileAttributeView.class, Handler.class})
+        UserPrincipalLookupService.class, Files.class, PosixFileAttributeView.class, Handler.class, InetAddress.class})
 public class LoggingServiceTest {
     private String MODULE_NAME;
     private String message;
@@ -57,6 +58,10 @@ public class LoggingServiceTest {
     private Files files;
     private PosixFileAttributeView posixFileAttributeView;
     private Handler handler;
+    private String controllerUrl;
+    private String hostname;
+    private InetAddress inetAddress;
+    private String urlString;
 
     @Before
     public void setUp() throws Exception {
@@ -64,6 +69,7 @@ public class LoggingServiceTest {
         PowerMockito.mockStatic(Configuration.class);
         PowerMockito.mockStatic(FileSystems.class);
         PowerMockito.mockStatic(Files.class);
+        PowerMockito.mockStatic(InetAddress.class);
         mockStatic(Logger.class);
         file = Mockito.mock(File.class);
         logger = Mockito.mock(Logger.class);
@@ -75,6 +81,9 @@ public class LoggingServiceTest {
         MODULE_NAME = "LoggingService";
         message = "message to be logged";
         microUuid = "microserviceUuid";
+        controllerUrl = "http://100.0.0.0:51121/api/v3/";
+        hostname = "hostname";
+        inetAddress = Mockito.mock(InetAddress.class);
         logSize = 10;
         Handler[] handlers = new Handler[1];
         handlers[0] = handler;
@@ -89,11 +98,16 @@ public class LoggingServiceTest {
         PowerMockito.when(file.getPath()).thenReturn("/log/");
         PowerMockito.when(Logger.getLogger(Mockito.anyString())).thenReturn(logger);
         PowerMockito.doNothing().when(logger).addHandler(Mockito.any());
+        PowerMockito.doNothing().when(logger).setLevel(Mockito.any());
         PowerMockito.when(logger.getHandlers()).thenReturn(handlers);
         PowerMockito.doNothing().when(handler).close();
         PowerMockito.when(FileSystems.getDefault()).thenReturn(fileSystem);
         PowerMockito.when(fileSystem.getUserPrincipalLookupService()).thenReturn(userPrincipalLookupService);
         PowerMockito.when(Files.getFileAttributeView(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(posixFileAttributeView);
+        PowerMockito.when(Configuration.getControllerUrl()).thenReturn(controllerUrl);
+        PowerMockito.when(InetAddress.getLocalHost()).thenReturn(inetAddress);
+        PowerMockito.when(inetAddress.getHostName()).thenReturn(hostname);
+        urlString = !Configuration.getControllerUrl().equals("")? Configuration.getControllerUrl().split("/api/v3/")[0] : "";
     }
 
     @After
@@ -102,6 +116,8 @@ public class LoggingServiceTest {
         message = null;
         microUuid = null;
         logger = null;
+        controllerUrl = null;
+        urlString = null;
     }
 
     /**
@@ -112,7 +128,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             LoggingService.logInfo(MODULE_NAME, message);
-            Mockito.verify(logger).log(Level.INFO, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, message));
+            Mockito.verify(logger).log(Level.INFO, String.format("[%s] [%s] [%s] [%s] : %s", hostname, urlString, Thread.currentThread().getName(), MODULE_NAME, message));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -126,7 +142,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             LoggingService.logWarning(MODULE_NAME, message);
-            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, message));
+            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] [%s] [%s] : %s", hostname, urlString, Thread.currentThread().getName(), MODULE_NAME, message));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -140,7 +156,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             LoggingService.logDebug(MODULE_NAME, message);
-            Mockito.verify(logger).log(Level.FINE, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, message));
+            Mockito.verify(logger).log(Level.FINE, String.format("[%s] [%s] [%s] [%s] : %s", hostname, urlString, Thread.currentThread().getName(), MODULE_NAME, message));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -155,8 +171,8 @@ public class LoggingServiceTest {
             LoggingService.setupLogger();
             Exception e = new Exception("This is exception");
             LoggingService.logError(MODULE_NAME, message, e);
-            Mockito.verify(logger).log(Level.SEVERE, String.format("[%s] [%s] : %s - Exception: %s - Stack trace: %s",
-                    Thread.currentThread().getName(), MODULE_NAME, message, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
+            Mockito.verify(logger).log(Level.SEVERE, String.format("[%s] [%s] [%s] [%s] : %s - Exception: %s - Stack trace: %s",
+                    hostname, urlString, Thread.currentThread().getName(), MODULE_NAME, message, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -206,7 +222,7 @@ public class LoggingServiceTest {
             assertFalse(LoggingService.microserviceLogInfo("uuid", message));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logWarning(MODULE_NAME, errorMsg);
-            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, errorMsg));
+            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] [%s] [%s] : %s", hostname, urlString, Thread.currentThread().getName(), MODULE_NAME, errorMsg));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -234,7 +250,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             assertFalse(LoggingService.microserviceLogWarning("uuid", message));
-            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, " Log message parsing error, Logger initialized null"));
+            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] [%s] [%s] : %s", hostname, urlString, Thread.currentThread().getName(), MODULE_NAME," Log message parsing error, Logger initialized null"));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -280,7 +296,7 @@ public class LoggingServiceTest {
         LoggingService.setupLogger();
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(MODULE_NAME, e.getMessage(), e);
-        Mockito.verify(logger).log(Level.SEVERE, String.format("[%s] [%s] : %s - Exception: %s - Stack trace: %s",
-                Thread.currentThread().getName(), MODULE_NAME, e.getMessage(), e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
+        Mockito.verify(logger).log(Level.SEVERE, String.format("[%s] [%s] [%s] [%s] : %s - Exception: %s - Stack trace: %s",
+                hostname, urlString, Thread.currentThread().getName(), MODULE_NAME, e.getMessage(), e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
     }
 }

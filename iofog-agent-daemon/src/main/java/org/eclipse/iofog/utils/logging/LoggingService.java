@@ -22,6 +22,7 @@ import org.eclipse.iofog.utils.configuration.Configuration;
 
 import javax.json.*;
 import java.io.*;
+import java.net.InetAddress;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -48,7 +49,8 @@ public final class LoggingService {
     private static final Map<String, Logger> microserviceLogger = new HashMap<>();
 
     private static List<String> sentryExceptionCache = new ArrayList<>();
-
+    private static String hostname;
+    private static String controllerUrl;
     private LoggingService() {
 
     }
@@ -61,9 +63,9 @@ public final class LoggingService {
      */
     public static void logInfo(String moduleName, String msg) {
         if (Configuration.debugging || logger == null)
-            System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
+            System.out.println(String.format("%s %s : %s %s %s (%s)", hostname, controllerUrl, Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         else
-            logger.log(Level.INFO, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
+            logger.log(Level.INFO, String.format("[%s] [%s] [%s] [%s] : %s", hostname, controllerUrl, Thread.currentThread().getName(), moduleName,  msg));
     }
 
     /**
@@ -83,9 +85,9 @@ public final class LoggingService {
 //        Sentry.capture(event);
 
         if (Configuration.debugging || logger == null) {
-            System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
+            System.out.println(String.format("%s %s [%s] [%s] : %s (%s)", hostname, controllerUrl, Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         } else {
-            logger.log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
+            logger.log(Level.WARNING, String.format("[%s] [%s] [%s] [%s] : %s", hostname, controllerUrl, Thread.currentThread().getName(), moduleName, msg));
         }
     }
     /**
@@ -96,9 +98,9 @@ public final class LoggingService {
      */
     public static void logDebug(String moduleName, String msg) {
         if (Configuration.debugging)
-            System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
+            System.out.println(String.format("%s %s %s %s : %s (%s)", hostname, controllerUrl, Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         else
-            logger.log(Level.FINE, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
+            logger.log(Level.FINE, String.format("[%s] [%s] [%s] [%s] : %s", hostname, controllerUrl, Thread.currentThread().getName(), moduleName, msg));
     }
     /**
      * logs Level.Error message
@@ -117,7 +119,7 @@ public final class LoggingService {
         if (Configuration.debugging || logger == null) {
             System.out.println(String.format("%s %s : %s (%s) - Exception: %s - Stack trace: %s", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis()), e.getMessage(), ExceptionUtils.getStackTrace(e)));
         } else {
-            logger.log(Level.SEVERE, String.format("[%s] [%s] : %s - Exception: %s - Stack trace: %s", Thread.currentThread().getName(), moduleName, msg, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
+            logger.log(Level.SEVERE, String.format("[%s] [%s] [%s] [%s] : %s - Exception: %s - Stack trace: %s", hostname, controllerUrl, Thread.currentThread().getName(), moduleName, msg, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
         }
     }
 
@@ -170,6 +172,8 @@ public final class LoggingService {
      * @throws IOException
      */
     public static void setupLogger() throws IOException {
+        hostname = InetAddress.getLocalHost().getHostName();
+        controllerUrl = !Configuration.getControllerUrl().equals("")? Configuration.getControllerUrl().split("/api/v3/")[0] : "";
         int maxFileSize = (int) (Configuration.getLogDiskLimit() * Constants.MiB);
         int logFileCount = Configuration.getLogFileCount();
         String logLevel = Configuration.getLogLevel().toUpperCase();
