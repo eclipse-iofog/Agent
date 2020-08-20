@@ -913,7 +913,7 @@ public class DockerUtilTest {
      */
     @Test (expected = AgentSystemException.class)
     public void testPullImageWhenRegistryIsNull() throws AgentSystemException {
-        dockerUtil.pullImage(imageID, null);
+        dockerUtil.pullImage(imageID, containerID,null);
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Image not found"), any());
 
@@ -930,7 +930,7 @@ public class DockerUtilTest {
             PowerMockito.when(registry.getUrl()).thenReturn("url");
             PowerMockito.when(registry.getIsPublic()).thenReturn(true);
             imageID = "agent:1.3.0-beta";
-            dockerUtil.pullImage(imageID, registry);
+            dockerUtil.pullImage(imageID, containerID, registry);
             Mockito.verify(dockerClient).pullImageCmd(any());
             Mockito.verify(pullImageCmd).withRegistry(any());
             Mockito.verify(pullImageCmd).withTag(any());
@@ -954,7 +954,8 @@ public class DockerUtilTest {
             PowerMockito.when(registry.getUrl()).thenReturn("registryUrl");
             PowerMockito.when(registry.getIsPublic()).thenReturn(false);
             imageID = "agent:1.3.0-beta";
-            dockerUtil.pullImage(imageID, registry);
+            containerID ="id";
+            dockerUtil.pullImage(imageID, containerID, registry);
             Mockito.verify(dockerClient).pullImageCmd(any());
             Mockito.verify(pullImageCmd, Mockito.never()).withRegistry(any());
             Mockito.verify(pullImageCmd).withTag(any());
@@ -976,7 +977,7 @@ public class DockerUtilTest {
         PowerMockito.when(registry.getUrl()).thenReturn("url");
         PowerMockito.when(registry.getIsPublic()).thenReturn(true);
         imageID = "agent:1.3.0-beta";
-        dockerUtil.pullImage(imageID, registry);
+        dockerUtil.pullImage(imageID, containerID, registry);
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Image not found"), any());
     }
@@ -992,7 +993,7 @@ public class DockerUtilTest {
         PowerMockito.when(registry.getUrl()).thenReturn("url");
         PowerMockito.when(registry.getIsPublic()).thenReturn(true);
         imageID = "agent:1.3.0-beta";
-        dockerUtil.pullImage(imageID, registry);
+        dockerUtil.pullImage(imageID, containerID, registry);
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Image not found"), any());
     }

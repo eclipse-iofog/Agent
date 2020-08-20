@@ -372,7 +372,7 @@ public class ContainerManagerTest {
             PowerMockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             PowerMockito.when(registry.getUrl()).thenReturn("from_cache");
             containerManager.execute(containerTask);
-            verify(dockerUtil, never()).pullImage(any(), any());
+            verify(dockerUtil, never()).pullImage(any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             Mockito.verify(dockerUtil).getContainer(eq(microservice.getMicroserviceUuid()));
@@ -402,7 +402,7 @@ public class ContainerManagerTest {
             PowerMockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             PowerMockito.when(registry.getUrl()).thenReturn("url");
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             Mockito.verify(dockerUtil).getContainer(eq(microservice.getMicroserviceUuid()));
@@ -432,7 +432,7 @@ public class ContainerManagerTest {
         PowerMockito.when(containerTask.getMicroserviceUuid()).thenReturn("uuid");
         PowerMockito.when(dockerUtil.getContainer(anyString())).thenReturn(optionalContainer);
         PowerMockito.when(dockerUtil.findLocalImage(anyString())).thenReturn(false);
-        PowerMockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any());
+        PowerMockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any(), any());
         PowerMockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
         PowerMockito.when(registry.getUrl()).thenReturn("url");
         containerManager.execute(containerTask);
@@ -456,11 +456,11 @@ public class ContainerManagerTest {
             PowerMockito.when(containerTask.getMicroserviceUuid()).thenReturn("uuid");
             PowerMockito.when(dockerUtil.getContainer(anyString())).thenReturn(optionalContainer);
             PowerMockito.when(dockerUtil.findLocalImage(anyString())).thenReturn(true);
-            PowerMockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any());
+            PowerMockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any(), any());
             PowerMockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             PowerMockito.when(registry.getUrl()).thenReturn("url");
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             PowerMockito.verifyPrivate(containerManager).invoke("addContainer",  eq(microservice));
@@ -503,7 +503,7 @@ public class ContainerManagerTest {
             PowerMockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             PowerMockito.when(registry.getUrl()).thenReturn("url");
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             PowerMockito.verifyPrivate(containerManager).invoke("updateContainer", eq(microservice), eq(false));
@@ -544,7 +544,7 @@ public class ContainerManagerTest {
             PowerMockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             PowerMockito.when(registry.getUrl()).thenReturn("url");
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             PowerMockito.verifyPrivate(containerManager).invoke("updateContainer", eq(microservice), eq(false));
