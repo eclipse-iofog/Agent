@@ -102,15 +102,9 @@ public class TrackerTest {
             PowerMockito.when(Files.notExists(any())).thenReturn(true);
             tracker.start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start Tracker");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File ");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start generating random string");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
+            LoggingService.logDebug(MODULE_NAME, "Start create Tracking Uuid File ");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -128,18 +122,11 @@ public class TrackerTest {
             PowerMockito.when( Files.readAllLines(any())).thenReturn(line);
             tracker.start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start Tracker");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished initializing tracking uuid :" + line.get(0));
             PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File ");
-            PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "Start generating random string");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
-
+            LoggingService.logDebug(MODULE_NAME, "Start create Tracking Uuid File ");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -157,16 +144,9 @@ public class TrackerTest {
             PowerMockito.when( Files.readAllLines(any())).thenReturn(line);
             tracker.start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start Tracker");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File " );
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start generating random string");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
-
+            LoggingService.logDebug(MODULE_NAME, "Start create Tracking Uuid File " );
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -184,18 +164,11 @@ public class TrackerTest {
             PowerMockito.when( Files.readAllLines(any())).thenReturn(line);
             tracker.start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start Tracker");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished initializing tracking uuid :" + line.get(0));
             PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File " );
-            PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "Start generating random string");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
-
+            LoggingService.logDebug(MODULE_NAME, "Start create Tracking Uuid File " );
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -213,16 +186,9 @@ public class TrackerTest {
             PowerMockito.when( Files.readAllLines(any())).thenReturn(line);
             tracker.start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start Tracker");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start create Tracking Uuid File " );
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start generating random string");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
-
+            LoggingService.logDebug(MODULE_NAME, "Start create Tracking Uuid File " );
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -238,13 +204,9 @@ public class TrackerTest {
             PowerMockito.when(Files.write(any(), (byte[]) any(), any())).thenThrow(mock(IOException.class));
             tracker.start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start Tracker");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start initializing tracking uuid");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Error while getting tracking UUID"), any());
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting Tracker");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -273,13 +235,13 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(TrackingEventType.TIME, "123555");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -296,13 +258,13 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(TrackingEventType.PROVISION, "assdffghhggfffyfsddf");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -319,13 +281,13 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(TrackingEventType.DEPROVISION, "assdffghhggfffyfsddf");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -342,13 +304,13 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(TrackingEventType.ERROR, "assdffghhggfffyfsddf");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -365,16 +327,16 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(null, "assdffghhggfffyfsddf");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logError(eq(MODULE_NAME), eq("Error handling Event : Tracking event type and value cannot be null"),
                 any());
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -391,16 +353,16 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(TrackingEventType.DEPROVISION, (String) null);
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logError(eq(MODULE_NAME), eq("Error handling Event : Tracking event type and value cannot be null"),
                 any());
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -417,7 +379,7 @@ public class TrackerTest {
         privateUuid.set(tracker, "dsafasfeafewafwfffffffffwweeeddswdcdsddad");
         tracker.handleEvent(TrackingEventType.MICROSERVICE, "microservices were updated");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "start handle event");
+        LoggingService.logDebug(MODULE_NAME, "start handle event");
         privateUuid.setAccessible(false);
     }
 
@@ -436,11 +398,11 @@ public class TrackerTest {
         JsonObject value = jsonObjectBuilder.add("message", "message").build();
         tracker.handleEvent(TrackingEventType.DEPROVISION, value);
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Handle event pushed task to event storage");
+        LoggingService.logDebug(MODULE_NAME, "Handle event pushed task to event storage");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         privateUuid.setAccessible(false);
     }
 
@@ -458,14 +420,14 @@ public class TrackerTest {
         JsonObject value = null;
         tracker.handleEvent(TrackingEventType.DEPROVISION, value);
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logError(eq(MODULE_NAME), eq("Error handling Event : Tracking event type and jsonObject cannot be null"),
                 any());
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Handle event pushed task");
+        LoggingService.logDebug(MODULE_NAME, "Handle event pushed task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
         privateUuid.setAccessible(false);
     }
 
@@ -478,13 +440,13 @@ public class TrackerTest {
         JsonObject value = jsonObjectBuilder.add("message", "message").build();
         tracker.handleEvent(TrackingEventType.DEPROVISION, value);
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logError(eq(MODULE_NAME), eq("Error creating TrackingEvent object : arguments cannot be null"), any());
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Handle event pushed task");
+        LoggingService.logDebug(MODULE_NAME, "Handle event pushed task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
     }
 
     /**
@@ -500,13 +462,13 @@ public class TrackerTest {
         JsonObject value = jsonObjectBuilder.add("message", "message").build();
         tracker.handleEvent(null, value);
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Start handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Start handle event by pushing task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logError(eq(MODULE_NAME), eq("Error handling Event : Tracking event type and jsonObject cannot be null"),
                 any());
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Handle event pushed task");
+        LoggingService.logDebug(MODULE_NAME, "Handle event pushed task");
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Finished handle event by pushing task");
+        LoggingService.logDebug(MODULE_NAME, "Finished handle event by pushing task");
     }
 }

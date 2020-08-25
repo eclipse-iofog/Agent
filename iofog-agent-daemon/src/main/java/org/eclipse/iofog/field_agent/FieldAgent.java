@@ -125,7 +125,7 @@ public class FieldAgent implements IOFogModule {
      * @return Map
      */
     private JsonObject getFogStatus() {
-    	logInfo("get Fog Status");
+    	logDebug("get Fog Status");
         return Json.createObjectBuilder()
                 .add("daemonStatus", StatusReporter.getSupervisorStatus().getDaemonStatus().toString() == null ?
                         "UNKNOWN" : StatusReporter.getSupervisorStatus().getDaemonStatus().toString())
@@ -170,9 +170,7 @@ public class FieldAgent implements IOFogModule {
      * executes actions after successful status post request
      */
     private void onPostStatusSuccess() {
-    	logInfo("Start executes actions after successful status post request");
         StatusReporter.getProcessManagerStatus().removeNotRunningMicroserviceStatus();
-        logInfo("Finished executes actions after successful status post request");
     }
 
     /**
@@ -181,12 +179,12 @@ public class FieldAgent implements IOFogModule {
      * @return boolean
      */
     private boolean notProvisioned() {
-    	logInfo("Started checking provisioned");
+    	logDebug("Started checking provisioned");
         boolean notProvisioned = StatusReporter.getFieldAgentStatus().getControllerStatus().equals(NOT_PROVISIONED);
         if (notProvisioned) {
             logWarning("Not provisioned");
         }
-        logInfo("Finished checking provisioned : " + notProvisioned);
+        logDebug("Finished checking provisioned : " + notProvisioned);
         return notProvisioned;
     }
 
@@ -194,7 +192,7 @@ public class FieldAgent implements IOFogModule {
      * sends IOFog instance status to IOFog controller
      */
     private void postStatusHelper() {
-        logInfo("posting ioFog status");
+        logDebug("posting ioFog status");
         try {
             logInfo("Start posting ioFog status");
             JsonObject status = getFogStatus();
@@ -204,19 +202,17 @@ public class FieldAgent implements IOFogModule {
             connected = isControllerConnected(false);
             if (!connected)
                 return;
-            logInfo("Controller connection verified");
 
-            logInfo("Sending ioFog status...");
             orchestrator.request("status", RequestType.PUT, null, status);
             onPostStatusSuccess();
         } catch (CertificateException | SSLHandshakeException | ConnectException e) {
             verificationFailed(e);
             logError("Unable to send status due to broken certificate",
-                    new AgentSystemException("Unable to send status due to broken certificate", e));
+                    new AgentSystemException(e.getMessage(), e));
         } catch (ForbiddenException e) {
             deProvision(true);
             logError("Unable to send status due to broken certificate",
-                    new AgentSystemException("Unable to send status due to broken certificate", e));
+                    new AgentSystemException(e.getMessage(), e));
         }catch (SocketTimeoutException e) {
             try {
                 IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
@@ -224,9 +220,9 @@ public class FieldAgent implements IOFogModule {
                 logError("Unable to update Network interface", new AgentSystemException(ex.getMessage(), ex));
             }
         } catch (Exception e) {
-            logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
+            logError("Unable to send status ", new AgentSystemException(e.getMessage(), e));
         }
-        logInfo("Finished posting ioFog status");
+        logDebug("Finished posting ioFog status");
     }
 
     private final Runnable postStatus = () -> {
@@ -247,7 +243,7 @@ public class FieldAgent implements IOFogModule {
 
     private final Runnable postDiagnostics = () -> {
         while (true) {
-        	logInfo("Start posting diagnostic");
+        	logDebug("Start posting diagnostic");
             if (StraceDiagnosticManager.getInstance().getMonitoringMicroservices().size() > 0) {
                 JsonBuilderFactory factory = Json.createBuilderFactory(null);
                 JsonArrayBuilder arrayBuilder = factory.createArrayBuilder();
@@ -273,20 +269,20 @@ public class FieldAgent implements IOFogModule {
             try {
                 Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
             } catch (InterruptedException e) {
-                logError("Error posting diagnostic", new AgentSystemException("Error posting diagnostic", e));
+                logError("Error posting diagnostic", new AgentSystemException(e.getMessage(), e));
             }
-            logInfo("Finished posting diagnostic");
+            logDebug("Finished posting diagnostic");
         }
     };
 
     public final void postTracking(JsonObject events) {
-    	logInfo("Start posting tracking");
+    	logDebug("Start posting tracking");
         try {
             orchestrator.request("tracking", RequestType.POST, null, events);
         } catch (Exception e) {
-        	logError("Unable send tracking logs", new AgentSystemException("Unable send tracking logs", e));
+        	logError("Unable send tracking logs", new AgentSystemException(e.getMessage(), e));
         }
-        logInfo("Finished posting tracking");
+        logDebug("Finished posting tracking");
     }
 
     /**
@@ -294,7 +290,7 @@ public class FieldAgent implements IOFogModule {
      * certificate is not verified
      */
     private void verificationFailed(Exception e) {
-    	logInfo("Start verification Failed of controller");
+    	logDebug("Start verification Failed of controller");
         connected = false;
         if (!notProvisioned()) {
             ControllerStatus controllerStatus;
@@ -307,7 +303,7 @@ public class FieldAgent implements IOFogModule {
             logWarning("controller verification failed: " + controllerStatus.name());
         }
         StatusReporter.setFieldAgentStatus().setControllerVerified(false);
-        logInfo("Finished verification Failed of Controller");
+        logDebug("Finished verification Failed of Controller");
     }
 
     private final Future<Boolean> processChanges(JsonObject changes) {
@@ -447,14 +443,13 @@ public class FieldAgent implements IOFogModule {
      */
     private final Runnable getChangesList = () -> {
         while (true) {
-        	logInfo("Get changes list");
             try {
                 int frequency = Configuration.getChangeFrequency() * 1000;
                 Thread.sleep(frequency);
-                logInfo("Start get IOFog changes list from IOFog controller");
+                logDebug("Start get IOFog changes list from IOFog controller");
 
                 if (notProvisioned() || !isControllerConnected(false)) {
-                    logInfo("Cannot get change list due to controller status not provisioned or controller not connected");
+                    logDebug("Cannot get change list due to controller status not provisioned or controller not connected");
                     continue;
                 }
 
@@ -464,14 +459,14 @@ public class FieldAgent implements IOFogModule {
                     result = orchestrator.request("config/changes", RequestType.GET, null, null);
                 } catch (CertificateException | SSLHandshakeException e) {
                     verificationFailed(e);
-                    logError("Unable to get changes",
-                    		new AgentSystemException("Unable to get changes due to broken certificate", e));
+                    logError("Unable to get changes due to broken certificate",
+                    		new AgentSystemException(e.getMessage(), e));
                     continue;
                 } catch (SocketTimeoutException e) {
                     IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
                     continue;
                 } catch (Exception e) {
-                    logError("Unable to get changes ", new AgentSystemException("Unable to get changes", e));
+                    logError("Unable to get changes ", new AgentSystemException(e.getMessage(), e));
                     continue;
                 }
 
@@ -503,9 +498,9 @@ public class FieldAgent implements IOFogModule {
 
                 initialization = initialization && !resetChanges;
             } catch (Exception e) {
-            	logError("Error getting changes list ", new AgentSystemException("Error getting changes list", e));
+            	logError("Error getting changes list ", new AgentSystemException(e.getMessage(), e));
             }
-            logInfo("Finish get IOFog changes list from IOFog controller");
+            logDebug("Finish get IOFog changes list from IOFog controller");
         }
     };
 
@@ -513,7 +508,7 @@ public class FieldAgent implements IOFogModule {
      * Deletes current fog node from controller and makes deprovision
      */
     private void deleteNode() {
-        logInfo("start deleting current fog node from controller and make it deprovision");
+        logDebug("start deleting current fog node from controller and make it deprovision");
         try {
             orchestrator.request("delete-node", RequestType.DELETE, null, null);
         } catch (Exception e) {
@@ -521,7 +516,7 @@ public class FieldAgent implements IOFogModule {
             		new AgentSystemException("Can't send delete node command", e));
         }
         deProvision(false);
-        logInfo("Finish deleting current fog node from controller and make it deprovision");
+        logDebug("Finish deleting current fog node from controller and make it deprovision");
     }
 
     /**
@@ -549,7 +544,7 @@ public class FieldAgent implements IOFogModule {
      * performs change version operation, received from ioFog controller
      */
     private void changeVersion() {
-        LoggingService.logInfo(MODULE_NAME, "Get change version action");
+        LoggingService.logInfo(MODULE_NAME, "Starting change version action");
 
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
@@ -557,16 +552,15 @@ public class FieldAgent implements IOFogModule {
 
         try {
             JsonObject result = orchestrator.request("version", RequestType.GET, null, null);
-            LoggingService.logInfo(MODULE_NAME, "Start change version operation, received from ioFog controller");
             VersionHandler.changeVersion(result);
 
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
-            LoggingService.logError(MODULE_NAME, "Unable to get version command",
-            		new AgentSystemException("Unable to get version command due to broken certificate", e));
+            LoggingService.logError(MODULE_NAME, "Unable to get version command due to broken certificate",
+            		new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
             LoggingService.logError(MODULE_NAME, "Unable to get version command",
-            		new AgentSystemException("Unable to get version command", e));
+            		new AgentSystemException(e.getMessage(), e));
         }
         LoggingService.logInfo(MODULE_NAME, "Finished change version operation, received from ioFog controller");
     }
@@ -588,11 +582,11 @@ public class FieldAgent implements IOFogModule {
 
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
-            LoggingService.logError(MODULE_NAME, "Unable to get diagnostics update",
-            		new AgentSystemException("Unable to get diagnostics update due to broken certificate", e));
+            LoggingService.logError(MODULE_NAME, "Unable to get diagnostics update due to broken certificate",
+            		new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
         	LoggingService.logError(MODULE_NAME, "Unable to get diagnostics update",
-            		new AgentSystemException("Unable to get diagnostics update", e));
+            		new AgentSystemException(e.getMessage(), e));
         }
         LoggingService.logInfo(MODULE_NAME, "Finished update diagnostics");
     }
@@ -603,7 +597,7 @@ public class FieldAgent implements IOFogModule {
      * @param fromFile - load from file
      */
     private void loadRegistries(boolean fromFile) {
-        logInfo("get registries");
+        logDebug("get registries");
         if (notProvisioned() || !isControllerConnected(fromFile)) {
             return;
         }
@@ -641,7 +635,6 @@ public class FieldAgent implements IOFogModule {
                                 .setUserEmail(registry.getString("userEmail"));
 
                     }
-                    logInfo("loading registries in progress");
                     registries.add(registryBuilder.build());
                 }
                 microserviceManager.setRegistries(registries);
@@ -650,32 +643,32 @@ public class FieldAgent implements IOFogModule {
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
-            logError("Unable to get registries",
-            		new AgentUserException("Unable to get registries due to broken certificate", e));
+            logError("Unable to get registries due to broken certificate",
+            		new AgentUserException(e.getMessage(), e));
         }  catch (AgentUserException e) {
             logError("Unable to get registries",
-            		new AgentUserException("Unable to get registries", e));
+            		new AgentUserException(e.getMessage(), e));
         } catch (AgentSystemException e) {
             logError("Unable to get registries",
-            		new AgentUserException("Unable to get registries", e));
+            		new AgentUserException(e.getMessage(), e));
         } catch (Exception e) {
-            logError("Unable to get registries", new AgentSystemException("Unable to get registries", e));
+            logError("Unable to get registries", new AgentSystemException(e.getMessage(), e));
         }
-        logInfo("Finished get registries");
+        logDebug("Finished get registries");
     }
 
     /**
      * gets list of Microservice configurations from file or IOFog controller
      */
     private void processMicroserviceConfig(List<Microservice> microservices) {
-    	logInfo("Start process microservice configuration");
+    	logDebug("Start process microservice configuration");
         Map<String, String> configs = new HashMap<>();
         for (Microservice microservice : microservices) {
             configs.put(microservice.getMicroserviceUuid(), microservice.getConfig());
         }
 
         microserviceManager.setConfigs(configs);
-        logInfo("Finished process microservice configuration");
+        logDebug("Finished process microservice configuration");
     }
 
     /**
@@ -700,7 +693,7 @@ public class FieldAgent implements IOFogModule {
         }
 
         microserviceManager.setRoutes(routes);
-        logInfo("Finished process routes");
+        logDebug("Finished process routes");
     }
 
     private JsonArray loadMicroservicesJsonFile() {
@@ -715,7 +708,7 @@ public class FieldAgent implements IOFogModule {
      * @param fromFile - load from file
      */
     private List<Microservice> loadMicroservices(boolean fromFile) {
-        logInfo("Start Loading microservices...");
+        logDebug("Start Loading microservices...");
         List<Microservice> microserviceList = new ArrayList<>();
         if (notProvisioned() || !isControllerConnected(fromFile)) {
             return microserviceList;
@@ -747,20 +740,19 @@ public class FieldAgent implements IOFogModule {
                             .map(containerJsonObjectToMicroserviceFunction())
                             .collect(toList());
                     microserviceManager.setLatestMicroservices(microservices);
-                    logInfo("Loading of microservices in progress");
                     microserviceList.addAll(microservices);
                 }
             } catch (Exception e) {
-                logError("Unable to parse microservices", new AgentSystemException("Unable to parse microservices", e));
+                logError("Unable to parse microservices", new AgentSystemException(e.getMessage(), e));
             }
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
-            logError("Unable to get microservices",
-            		new AgentSystemException("Unable to get microservices due to broken certicate", e));
+            logError("Unable to get microservices due to broken certificate",
+            		new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
-            logError("Unable to get microservices", new AgentSystemException("Unable to get microservices", e));
+            logError("Unable to get microservices", new AgentSystemException(e.getMessage(), e));
         }
-        logInfo("Finished Loading microservices...");
+        logDebug("Finished Loading microservices...");
         return microserviceList;
     }
 
@@ -852,7 +844,7 @@ public class FieldAgent implements IOFogModule {
                 LoggingService.setupMicroserviceLogger(microservice.getMicroserviceUuid(), microservice.getLogSize());
             } catch (IOException e) {
                 logError("Error at setting up microservice logger",
-                		new AgentSystemException("Error at setting up microservice logger", e));
+                		new AgentSystemException(e.getMessage(), e));
             }
             return microservice;
         };
@@ -862,7 +854,7 @@ public class FieldAgent implements IOFogModule {
      * pings IOFog controller
      */
     private boolean ping() {
-    	logInfo("Started Ping");
+    	logDebug("Started Ping");
         if (notProvisioned()) {
         	logInfo("Finished Ping : " + false);
             return false;
@@ -872,7 +864,7 @@ public class FieldAgent implements IOFogModule {
             if (orchestrator.ping()) {
                 StatusReporter.setFieldAgentStatus().setControllerStatus(OK);
                 StatusReporter.setFieldAgentStatus().setControllerVerified(true);
-                logInfo("Finished Ping : " + true);
+                logDebug("Finished Ping : " + true);
                 return true;
             }
         } catch (CertificateException | SSLHandshakeException e) {
@@ -883,7 +875,7 @@ public class FieldAgent implements IOFogModule {
             verificationFailed(e);
             logError("Error pinging controller", new AgentUserException(e.getMessage(), e));
         }
-        logInfo("Finished Ping : " + false);
+        logDebug("Finished Ping : " + false);
         return false;
     }
 
@@ -893,14 +885,13 @@ public class FieldAgent implements IOFogModule {
     private final Runnable pingController = () -> {
         while (true) {
             try {
-            	logInfo("Ping controller");
                 Thread.sleep(Configuration.getPingControllerFreqSeconds() * 1000);
-                logInfo("Start Ping controller");
+                logDebug("Start Ping controller");
                 ping();
             } catch (Exception e) {
-                logError("Exception pinging controller", new AgentUserException("Exception pinging controller", e));
+                logError("Exception pinging controller", new AgentUserException(e.getMessage(), e));
             }
-            logInfo("Finished Ping controller");
+            logDebug("Finished Ping controller");
         }
     };
 
@@ -911,7 +902,6 @@ public class FieldAgent implements IOFogModule {
      * @return String
      */
     private String checksum(String data) {
-    	logInfo("Start get checksum");
         try {
             byte[] base64 = Base64.getEncoder().encode(data.getBytes(UTF_8));
             MessageDigest md = MessageDigest.getInstance("SHA1");
@@ -921,10 +911,9 @@ public class FieldAgent implements IOFogModule {
             for (byte mdbyte : mdbytes) {
                 sb.append(Integer.toString((mdbyte & 0xff) + 0x100, 16).substring(1));
             }
-            logInfo("Finished get checksum");
             return sb.toString();
         } catch (Exception e) {
-            logError("Error computing checksum", new AgentSystemException("Error computing checksum", e));
+            logError("Error computing checksum", new AgentSystemException(e.getMessage(), e));
             return "";
         }
     }
@@ -937,7 +926,7 @@ public class FieldAgent implements IOFogModule {
      * @return JsonArray
      */
     private JsonArray readFile(String filename) {
-    	logInfo(String.format("Start read file %s :", filename));
+    	logDebug(String.format("Start read file %s :", filename));
         if (!Files.exists(Paths.get(filename), NOFOLLOW_LINKS))
             return null;
 
@@ -951,19 +940,17 @@ public class FieldAgent implements IOFogModule {
             lastGetChangesList = timestamp;
         else
             lastGetChangesList = Long.min(timestamp, lastGetChangesList);
-        logInfo("Finished read file");
+        logDebug("Finished read file");
         return data;
     }
 
     private JsonObject readObject(String filename) {
-    	logInfo("Start read object");
         JsonObject object = null;
         try (JsonReader reader = Json.createReader(new InputStreamReader(new FileInputStream(filename), UTF_8))) {
             object = reader.readObject();
         } catch (FileNotFoundException ex) {
-            LoggingService.logError(MODULE_NAME, "Invalid file: " + filename, new AgentUserException("Invalid file: " + filename, ex));
+            LoggingService.logError(MODULE_NAME, "Invalid file: " + filename, new AgentUserException(ex.getMessage(), ex));
         }
-        logInfo("Finished  read object");
         return object;
     }
 
@@ -974,7 +961,7 @@ public class FieldAgent implements IOFogModule {
      * @param filename - file name
      */
     private void saveFile(JsonArray data, String filename) {
-    	logInfo("Start save file");
+    	logDebug("Start save file");
         String checksum = checksum(data.toString());
         JsonObject object = Json.createObjectBuilder()
                 .add("checksum", checksum)
@@ -985,9 +972,9 @@ public class FieldAgent implements IOFogModule {
              writer.writeObject(object);
         } catch (IOException e) {
             logError("Error saving data to file '" + filename + "'",
-                    new AgentUserException("Error saving data to file '" + filename + "'", e));
+                    new AgentUserException(e.getMessage(), e));
         }
-        logInfo("Finished save file");
+        logDebug("Finished save file");
     }
 
     /**
@@ -1133,9 +1120,9 @@ public class FieldAgent implements IOFogModule {
         } catch (CertificateException | SSLHandshakeException e) {
             verificationFailed(e);
             logError("Unable to get ioFog config due to broken certificate",
-            		new AgentUserException("Unable to get ioFog config due to broken certificate", e));
+            		new AgentUserException(e.getMessage(), e));
         } catch (Exception e) {
-            logError("Unable to get ioFog config ", new AgentUserException("Unable to get ioFog config", e));
+            logError("Unable to get ioFog config ", new AgentUserException(e.getMessage(), e));
         }
         logInfo("Finished Get ioFog config");
     }
@@ -1149,7 +1136,6 @@ public class FieldAgent implements IOFogModule {
             return;
         }
 
-        logInfo("posting ioFog config");
         double latitude = 0, longitude = 0;
         try {
             String gpsCoordinates = Configuration.getGpsCoordinates();
@@ -1198,19 +1184,16 @@ public class FieldAgent implements IOFogModule {
      * gets IOFog proxy configuration from IOFog controller
      */
     private JsonObject getProxyConfig() {
-        logInfo("get proxy config");
         JsonObject result = null;
 
         if (!notProvisioned() && isControllerConnected(false)) {
             try {
-            	logInfo("Started get proxy config");
                 JsonObject response = orchestrator.request("tunnel", RequestType.GET, null, null);
                 result = response.getJsonObject("tunnel");
             } catch (Exception e) {
             	logError("Unable to get proxy config ", new AgentSystemException(e.getMessage(), e));
             }
         }
-        logInfo("Finished get proxy config");
         return result;
     }
 
@@ -1224,7 +1207,7 @@ public class FieldAgent implements IOFogModule {
      * @return String
      */
     public JsonObject provision(String key) {
-        logInfo("Provisioning");
+        logInfo("Provisioning ioFog agent");
         JsonObject provisioningResult;
 
         if (!notProvisioned()) {
@@ -1244,7 +1227,7 @@ public class FieldAgent implements IOFogModule {
                 ProcessManager.getInstance().deleteRemainingMicroservices();
             } catch (Exception e) {
                 logError("Error deleting remaining microservices",
-                        new AgentSystemException("Error deleting remaining microservices", e));
+                        new AgentSystemException(e.getMessage(), e));
             }
             StatusReporter.setFieldAgentStatus().setControllerStatus(OK);
             Configuration.setIofogUuid(provisioningResult.getString("uuid"));
@@ -1294,7 +1277,7 @@ public class FieldAgent implements IOFogModule {
      * notifies other modules
      */
     private void notifyModules() {
-    	logInfo("Start notiying modules for configuration update");
+    	logInfo("Notifying modules for configuration update");
     	try {
             MessageBus.getInstance().update();
         } catch (Exception e) {
@@ -1302,7 +1285,6 @@ public class FieldAgent implements IOFogModule {
         }
         LocalApi.getInstance().update();
         ProcessManager.getInstance().update();
-        logInfo("Finished notiying modules for configuration update");
     }
 
     /**
@@ -1331,10 +1313,10 @@ public class FieldAgent implements IOFogModule {
                 } catch (CertificateException | SSLHandshakeException e) {
                     verificationFailed(e);
                     logError("Unable to make deprovision request due to broken certificate ",
-                            new AgentSystemException("Unable to make deprovision request due to broken certificate", e));
+                            new AgentSystemException(e.getMessage(), e));
                 } catch (Exception e) {
                     logError("Unable to make deprovision request ",
-                            new AgentSystemException("Unable to make deprovision request", e));
+                            new AgentSystemException(e.getMessage(), e));
                 }
             }
 
@@ -1345,14 +1327,14 @@ public class FieldAgent implements IOFogModule {
                 Configuration.setAccessToken("");
                 Configuration.saveConfigUpdates();
             } catch (Exception e) {
-                logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+                logError("Error saving config updates", new AgentSystemException(e.getMessage(), e));
             }
             microserviceManager.clear();
             try {
                 ProcessManager.getInstance().stopRunningMicroservices(false, iofogUuid);
             } catch (Exception e) {
                 logError("Error stopping running microservices",
-                        new AgentSystemException("Error stopping remaining microservices", e));
+                        new AgentSystemException(e.getMessage(), e));
             }
             notifyModules();
             logInfo("Finished Deprovisioning : Success - tokens, identifiers and keys removed");
@@ -1383,21 +1365,21 @@ public class FieldAgent implements IOFogModule {
      * sends IOFog configuration when any changes applied
      */
     public void instanceConfigUpdated() {
-        logInfo("Start IOFog configuration update");
+        logDebug("Start IOFog configuration update");
         try {
             postFogConfig();
         } catch (Exception e) {
             logError("Error posting updated for config ", e);
         }
         orchestrator.update();
-        logInfo("Finished IOFog configuration update");
+        logDebug("Finished IOFog configuration update");
     }
 
     /**
      * starts Field Agent module
      */
     public void start() {
-        logInfo("Start the Field Agent");
+        logDebug("Start the Field Agent");
         if (isNullOrEmpty(Configuration.getIofogUuid()) || isNullOrEmpty(Configuration.getAccessToken()))
             StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
 
@@ -1422,7 +1404,7 @@ public class FieldAgent implements IOFogModule {
         StatusReporter.setFieldAgentStatus().setReadyToUpgrade(VersionHandler.isReadyToUpgrade());
         StatusReporter.setFieldAgentStatus().setReadyToRollback(VersionHandler.isReadyToRollback());
         futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
-        logInfo("Field Agent started");
+        logDebug("Field Agent started");
     }
 
     /**
@@ -1432,30 +1414,30 @@ public class FieldAgent implements IOFogModule {
      * @return boolean
      */
     private boolean isControllerConnected(boolean fromFile) {
-    	logInfo("check is Controller Connected");
+    	logDebug("check is Controller Connected");
         boolean isConnected = false;
         if ((!StatusReporter.getFieldAgentStatus().getControllerStatus().equals(OK) && !ping()) && !fromFile) {
             handleBadControllerStatus();
         } else {
             isConnected = true;
         }
-        logInfo(String.format("checked is Controller Connected : %s ", isConnected) );
+        logDebug(String.format("checked is Controller Connected : %s ", isConnected) );
         return isConnected;
     }
 
     private void handleBadControllerStatus() {
-    	logInfo("Start handle Bad Controller Status");
+    	logDebug("Start handle Bad Controller Status");
         String errMsg = "Connection to controller has broken";
         if (StatusReporter.getFieldAgentStatus().isControllerVerified()) {
             logWarning(errMsg);
         } else {
             verificationFailed(new Exception(errMsg));
         }
-        logInfo("Finished handling Bad Controller Status");
+        logDebug("Finished handling Bad Controller Status");
     }
 
     public void sendUSBInfoFromHalToController() {
-    	logInfo("Start send USB Info from hal To Controller");
+    	logDebug("Start send USB Info from hal To Controller");
         if (notProvisioned()) {
             return;
         }
@@ -1471,14 +1453,14 @@ public class FieldAgent implements IOFogModule {
                 orchestrator.request(COMMAND_USB_INFO, RequestType.PUT, null, json);
             } catch (Exception e) {
                 LoggingService.logError(MODULE_NAME, "Error while sending USBInfo from hal to controller",
-                		new AgentSystemException("Error while sending USBInfo from hal to controller", e));
+                		new AgentSystemException(e.getMessage(), e));
             }
         }
-        logInfo("Finished send USB Info from hal To Controller");
+        logDebug("Finished send USB Info from hal To Controller");
     }
 
     public void sendHWInfoFromHalToController() {
-    	logInfo("Start send HW Info from HAL To Controller");
+    	logDebug("Start send HW Info from HAL To Controller");
         if (notProvisioned()) {
             return;
         }
@@ -1496,23 +1478,22 @@ public class FieldAgent implements IOFogModule {
                 jsonSendHWInfoResult = orchestrator.request(COMMAND_HW_INFO, RequestType.PUT, null, json);
             } catch (Exception e) {
             	LoggingService.logError(MODULE_NAME, "Error while sending HW Info from hal to controller",
-                		new AgentSystemException("Error while sending HW Info from hal to controller", e));
+                		new AgentSystemException(e.getMessage(), e));
             }
 
             if (jsonSendHWInfoResult == null) {
                 LoggingService.logInfo(MODULE_NAME, "Can't get HW Info from HAL.");
             }
         }
-        logInfo("Finished send HW Info from HAL To Controller");
+        logDebug("Finished send HW Info from HAL To Controller");
     }
 
     private boolean isResponseValid(Optional<StringBuilder> response) {
-    	logInfo("Checking is response valid");
         return response.isPresent() && !response.get().toString().isEmpty();
     }
 
     private Optional<StringBuilder> getResponse(String spec) {
-    	logInfo("Start get response");
+    	logDebug("Start get response");
         Optional<HttpURLConnection> connection = sendHttpGetReq(spec);
         StringBuilder content = null;
         if (connection.isPresent()) {
@@ -1529,12 +1510,12 @@ public class FieldAgent implements IOFogModule {
             }
             connection.get().disconnect();
         }
-        logInfo("Finished get response");
+        logDebug("Finished get response");
         return Optional.ofNullable(content);
     }
 
     private Optional<HttpURLConnection> sendHttpGetReq(String spec) {
-    	logInfo("Start sending Http request");
+    	logDebug("Start sending Http request");
         HttpURLConnection connection;
         try {
             URL url = new URL(spec);
@@ -1547,7 +1528,7 @@ public class FieldAgent implements IOFogModule {
             connection = null;
             logWarning("HAL is not enabled for this Iofog Agent at the moment");
         }
-        logInfo("Finished sending Http request");
+        logDebug("Finished sending Http request");
         return Optional.ofNullable(connection);
     }
 
@@ -1556,7 +1537,7 @@ public class FieldAgent implements IOFogModule {
             return;
         }
 
-        LoggingService.logInfo(MODULE_NAME, "Create image snapshot");
+        LoggingService.logDebug(MODULE_NAME, "Create image snapshot");
 
         String microserviceUuid = null;
 
@@ -1565,7 +1546,7 @@ public class FieldAgent implements IOFogModule {
             microserviceUuid = jsonObject.getString("uuid");
         } catch (Exception e) {
         	LoggingService.logError(MODULE_NAME, "Unable get name of image snapshot",
-            		new AgentSystemException("Unable get name of image snapshot", e));
+            		new AgentSystemException(e.getMessage(), e));
         }
 
         if (SystemUtils.IS_OS_WINDOWS) {
@@ -1575,15 +1556,15 @@ public class FieldAgent implements IOFogModule {
         if (microserviceUuid != null) {
             ImageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
+        LoggingService.logDebug(MODULE_NAME, "Finished Create image snapshot");
     }
     /**
      * returns report for "info" about ready to upgrade and ready to rollback
      *
-     * @return info getcheckUpgradeReadyReport
+     * @return info getCheckUpgradeReadyReport
      */
-    public String getcheckUpgradeReadyReport() {
-        LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
+    public String getCheckUpgradeReadyReport() {
+        LoggingService.logDebug(MODULE_NAME, "Start get upgrade ready report");
 
         StringBuilder result = new StringBuilder();
         boolean isReadyToUpgrade = VersionHandler.isReadyToUpgrade();
@@ -1594,13 +1575,12 @@ public class FieldAgent implements IOFogModule {
         // isReadyToRollback
         result.append(buildReportLine("Ready To Rollback", String.valueOf(isReadyToRollback)));
 
-        LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
+        LoggingService.logInfo(MODULE_NAME, "Finished get upgrade ready report");
 
         return result.toString();
     }
 
     private String buildReportLine(String messageDescription, String value) {
-        LoggingService.logInfo(MODULE_NAME, "build Report Line");
         return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
     }
 
@@ -1608,16 +1588,16 @@ public class FieldAgent implements IOFogModule {
      *  get isReadyToUpgrade and isReadyToRollback Status
      */
     private Runnable getAgentReadyToUpgradeStatus = () -> {
-        LoggingService.logInfo(MODULE_NAME, "Start scan of isReadyToUpgrade and isReadyToRollback Status");
+        LoggingService.logDebug(MODULE_NAME, "Start scan of isReadyToUpgrade and isReadyToRollback Status");
         try {
             boolean isReadyToRollback = VersionHandler.isReadyToRollback();
             boolean isReadyToUpgrade = VersionHandler.isReadyToUpgrade();
             StatusReporter.setFieldAgentStatus().setReadyToRollback(isReadyToRollback);
             StatusReporter.setFieldAgentStatus().setReadyToUpgrade(isReadyToUpgrade);
         } catch (Exception e){
-            LoggingService.logError(MODULE_NAME,"Error getting isReadyToUpgrade and isReadyToRollback Status", new AgentSystemException("Error in Agent Version Handler", e));
+            LoggingService.logError(MODULE_NAME,"Error getting isReadyToUpgrade and isReadyToRollback Status", new AgentSystemException(e.getMessage(), e));
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished scan of isReadyToUpgrade and isReadyToRollback Status");
+        LoggingService.logDebug(MODULE_NAME, "Finished scan of isReadyToUpgrade and isReadyToRollback Status");
 
     };
     /**

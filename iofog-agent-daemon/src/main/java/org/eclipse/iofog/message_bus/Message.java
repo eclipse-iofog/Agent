@@ -646,7 +646,7 @@ public class Message {
 			dataBaos.writeTo(result);
 			return result.toByteArray();
 		} catch (IOException exc) {
-			logError(MODULE_NAME, "Error in getBytes", new AgentSystemException("Error in getBytes", exc));
+			logError(MODULE_NAME, "Error in getBytes", new AgentSystemException(exc.getMessage(), exc));
 		}
 
 		return new byte[] {};
@@ -715,7 +715,7 @@ public class Message {
 		try {
 			return Base64.getEncoder().encode(this.getBytes());
 		} catch (Exception exp) {
-			logError(MODULE_NAME, "Error in encodeBase64", new AgentSystemException("Error in encodeBase64", exp));
+			logError(MODULE_NAME, "Error in encodeBase64", new AgentSystemException(exp.getMessage(), exp));
 			return new byte[] {};
 		}
 	}

@@ -74,9 +74,9 @@ public class IOMessageListenerTest {
             verify(textMessage).acknowledge();
             verify(messageCallback).sendRealtimeMessage(any());
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start acknowledging message onMessage");
+            LoggingService.logDebug(MODULE_NAME, "Start acknowledging message onMessage");
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finish acknowledging message onMessage");
+            LoggingService.logDebug(MODULE_NAME, "Finish acknowledging message onMessage");
         } catch (Exception e) {
             fail("This should not happen");
         }

@@ -158,9 +158,9 @@ public class MessageBusUtilTest {
             Mockito.verify(messageBus).getReceiver(any());
             Mockito.verify(messageReceiver, Mockito.never()).getMessages();
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Starting get message");
+            LoggingService.logDebug(MODULE_NAME, "Starting get message");
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finishing get message");
+            LoggingService.logDebug(MODULE_NAME, "Finishing get message");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -210,9 +210,9 @@ public class MessageBusUtilTest {
             Mockito.verify(messageBus, Mockito.never()).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).messageQuery(anyLong(), anyLong());
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Starting message query");
+            LoggingService.logDebug(MODULE_NAME, "Starting message query");
             PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
-            LoggingService.logInfo(MODULE_NAME, "Finishing message query");
+            LoggingService.logDebug(MODULE_NAME, "Finishing message query");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -229,9 +229,9 @@ public class MessageBusUtilTest {
             Mockito.verify(messageBus, Mockito.never()).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).messageQuery(anyLong(), anyLong());
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Starting message query");
+            LoggingService.logDebug(MODULE_NAME, "Starting message query");
             PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
-            LoggingService.logInfo(MODULE_NAME, "Finishing message query");
+            LoggingService.logDebug(MODULE_NAME, "Finishing message query");
         } catch (Exception e) {
             fail("This should not happen");
         }

@@ -129,9 +129,9 @@ public class VersionHandlerTest {
         verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logInfo(MODULE_NAME, "Start performing change version operation, received from ioFog controller");
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Checking is ready to rollback");
+        LoggingService.logDebug(MODULE_NAME, "Checking is ready to rollback");
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to rollback : false");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : false");
         verifyStatic(LoggingService.class, atLeastOnce());
         LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
     }
@@ -202,9 +202,9 @@ public class VersionHandlerTest {
         verifyStatic(CommandShellExecutor.class, atLeastOnce());
         CommandShellExecutor.executeCommand(any());
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : false");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : false");
         verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME, "Performing change version operation");
+        LoggingService.logDebug(MODULE_NAME, "Performing change version operation");
     }
 
     /**
@@ -233,9 +233,9 @@ public class VersionHandlerTest {
         verifyStatic(CommandShellExecutor.class, atLeastOnce());
         CommandShellExecutor.executeCommand(any());
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Checking is ready to upgrade");
+        LoggingService.logDebug(MODULE_NAME, "Checking is ready to upgrade");
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : true");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : true");
     }
 
     /**
@@ -255,7 +255,7 @@ public class VersionHandlerTest {
         verifyStatic(CommandShellExecutor.class, atLeastOnce());
         CommandShellExecutor.executeCommand(any());
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : false");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : false");
     }
 
     /**
@@ -280,9 +280,9 @@ public class VersionHandlerTest {
         verifyStatic(CommandShellExecutor.class, atLeastOnce());
         CommandShellExecutor.executeCommand(any());
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Checking is ready to upgrade");
+        LoggingService.logDebug(MODULE_NAME, "Checking is ready to upgrade");
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : true");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : true");
     }
 
     /**
@@ -307,7 +307,7 @@ public class VersionHandlerTest {
         verifyStatic(CommandShellExecutor.class, atLeastOnce());
         CommandShellExecutor.executeCommand(any());
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : false");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : false");
     }
 
     /**
@@ -319,7 +319,7 @@ public class VersionHandlerTest {
         assertFalse(VersionHandler.isReadyToRollback());
         Mockito.verify(file).list();
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to rollback : false");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : false");
     }
 
     /**
@@ -330,6 +330,6 @@ public class VersionHandlerTest {
         assertTrue(VersionHandler.isReadyToRollback());
         Mockito.verify(file).list();
         verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo(MODULE_NAME, "Is ready to rollback : true");
+        LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : true");
     }
 }

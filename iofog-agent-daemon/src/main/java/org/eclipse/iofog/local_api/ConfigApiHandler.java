@@ -72,7 +72,7 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Starting config Api Handler call");
+    	LoggingService.logDebug(MODULE_NAME, "Handle config Api Handler http request");
     	
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
             LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
@@ -123,7 +123,7 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
                     String result = objectMapper.writeValueAsString(errorMessages);
                     FullHttpResponse res = ApiHandlerHelpers.successResponse(outputBuffer, result);
                     res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
-                    LoggingService.logInfo(MODULE_NAME, "Finsihed config Api Handler call");
+                    LoggingService.logDebug(MODULE_NAME, "Finished config Api Handler http request");
                     return res;
                 } else {
                     String errMsg = "Request not valid";
@@ -132,7 +132,7 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
                 }
             } catch (Exception e) {
                 String errMsg = "Error updating new config ";
-                LoggingService.logError(MODULE_NAME, errMsg, new AgentSystemException(errMsg, e));
+                LoggingService.logError(MODULE_NAME, errMsg, new AgentSystemException(e.getMessage(), e));
                 return ApiHandlerHelpers.badRequestResponse(outputBuffer, errMsg + e.getMessage());
             }
         } catch (Exception e) {

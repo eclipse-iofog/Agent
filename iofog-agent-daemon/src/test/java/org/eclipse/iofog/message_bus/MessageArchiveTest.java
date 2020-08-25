@@ -27,10 +27,12 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.reset;
 import static org.powermock.api.mockito.PowerMockito.*;
@@ -143,21 +145,6 @@ public class MessageArchiveTest {
         } catch (Exception e) {
             fail("This shall never happen");
         }
-    }
-
-    /**
-     * Test messageQuery
-     */
-    @Test
-    public void testMessageQuery() {
-       try {
-           messageArchive.messageQuery(0, 0);
-           Mockito.verify(file, Mockito.atLeastOnce()).listFiles(any(FilenameFilter.class));
-           verifyStatic(LoggingService.class);
-           LoggingService.logInfo(MODULE_NAME, "Start message query");
-       } catch (Exception e) {
-           fail("This should not happen");
-       }
     }
 
     /**

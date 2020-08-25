@@ -49,7 +49,6 @@ public class LocalApi implements Runnable {
 				localInstance = instance;
 				if (localInstance == null) {
 					instance = localInstance = new LocalApi();
-					LoggingService.logInfo("LOCAL API ","Local Api Instantiated");
 				}
 			}
 		}
@@ -94,7 +93,7 @@ public class LocalApi implements Runnable {
 	 */
 	private void retrieveContainerConfig() {
 			ConfigurationMap.containerConfigMap = MicroserviceManager.getInstance().getConfigs();
-			LoggingService.logInfo(MODULE_NAME, "Container configuration retrieved");
+			LoggingService.logDebug(MODULE_NAME, "Container configuration retrieved");
 	}
 
 	/**
@@ -102,7 +101,7 @@ public class LocalApi implements Runnable {
 	 */
 	private void updateContainerConfig() {
 		ConfigurationMap.containerConfigMap = MicroserviceManager.getInstance().getConfigs();
-		LoggingService.logInfo(MODULE_NAME, "Container configuration updated");
+		LoggingService.logDebug(MODULE_NAME, "Container configuration updated");
 	}
 
 	/**
@@ -110,7 +109,7 @@ public class LocalApi implements Runnable {
 	 * Called by field-agtent.
 	 */
 	public void update(){
-		LoggingService.logInfo(MODULE_NAME, "Start the real-time control signal when the cofiguration updated");
+		LoggingService.logDebug(MODULE_NAME, "Start the real-time control signal when the configuration updated");
 		Map<String, String> oldConfigMap = new HashMap<>();
 		oldConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		updateContainerConfig();
@@ -118,6 +117,6 @@ public class LocalApi implements Runnable {
 		newConfigMap.putAll(ConfigurationMap.containerConfigMap);
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		handler.initiateControlSignal(oldConfigMap, newConfigMap);
-		LoggingService.logInfo(MODULE_NAME, "Finish the real-time control signal when the cofiguration updated");
+		LoggingService.logDebug(MODULE_NAME, "Finish the real-time control signal when the configuration updated");
 	}
 }

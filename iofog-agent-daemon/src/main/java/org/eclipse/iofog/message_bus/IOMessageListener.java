@@ -41,7 +41,7 @@ public class IOMessageListener implements MessageListener {
 	
 	@Override
 	public void onMessage(javax.jms.Message msg) {
-		LoggingService.logInfo(MODULE_NAME, "Start acknowledging message onMessage");
+		LoggingService.logDebug(MODULE_NAME, "Start acknowledging message onMessage");
 		try {
 			TextMessage textMessage = (TextMessage) msg;
 			textMessage.acknowledge();
@@ -56,6 +56,6 @@ public class IOMessageListener implements MessageListener {
 					new AgentSystemException("Error acknowledging message", exp));
 		}
 
-		LoggingService.logInfo(MODULE_NAME, "Finish acknowledging message onMessage");
+		LoggingService.logDebug(MODULE_NAME, "Finish acknowledging message onMessage");
 	}
 }

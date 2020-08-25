@@ -134,7 +134,7 @@ public class StraceDiagnosticManagerTest {
         Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getString("microserviceUuid");
         Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getBoolean("straceRun");
         PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
+        LoggingService.logDebug(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
     }
 
     /**
@@ -181,7 +181,7 @@ public class StraceDiagnosticManagerTest {
         Mockito.verify(jsonObject, Mockito.atLeastOnce()).getJsonArray("straceValues");
         Mockito.verify(iterator, Mockito.times(1)).hasNext();
         PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
 
     }
@@ -198,7 +198,7 @@ public class StraceDiagnosticManagerTest {
         Mockito.verify(microserviceObject, Mockito.atLeastOnce()).containsKey("microserviceUuid");
         Mockito.verify(iterator, Mockito.times(2)).hasNext();
         PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
     }
 
@@ -210,7 +210,7 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.updateMonitoringMicroservices(null);
         Mockito.verify(jsonObject, Mockito.never()).getJsonArray("straceValues");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
     }
 
@@ -225,7 +225,7 @@ public class StraceDiagnosticManagerTest {
         Mockito.verify(jsonObject, Mockito.times(1)).getJsonArray("straceValues");
         Mockito.verify(iterator, Mockito.never()).hasNext();
         PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
 
     }
@@ -305,7 +305,7 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(microserviceUuid);
         assertEquals(0, straceDiagnosticManager.getMonitoringMicroservices().size());
         PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
     }
 
@@ -319,7 +319,7 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(microserviceUuid);
         assertEquals(1, straceDiagnosticManager.getMonitoringMicroservices().size());
         PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
     }
 
@@ -330,7 +330,7 @@ public class StraceDiagnosticManagerTest {
     public void testDisableMicroserviceStraceDiagnosticsWhenMicroserviceUuidIsNull() {
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(null);
         PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,
+        LoggingService.logDebug(MODULE_NAME,
                 "Disabling microservice strace diagnostics for miroservice : null");
     }
 

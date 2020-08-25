@@ -37,7 +37,7 @@ public class ImageDownloadManager {
     private static final String MODULE_NAME = "Image Download Manager";
 
     public static void createImageSnapshot(Orchestrator orchestrator, String microserviceUuid) {
-    	LoggingService.logInfo(MODULE_NAME, String.format("\"Start Create image snapshot \"%s :" , microserviceUuid));
+    	LoggingService.logDebug(MODULE_NAME, String.format("\"Start Create image snapshot \"%s :" , microserviceUuid));
         Optional<Container> containerOptional = DockerUtil.getInstance().getContainer(microserviceUuid);
         String image;
         if (containerOptional != null && containerOptional.isPresent()) {
@@ -67,27 +67,25 @@ public class ImageDownloadManager {
                     logInfo(MODULE_NAME, "Image snapshot " + imageFile.getName() + " deleted");
                 } catch (Exception e) {
                     logError(MODULE_NAME, "Unable send image snapshot path",
-                            new AgentSystemException("Unable send image snapshot path", e));
+                            new AgentSystemException(e.getMessage(), e));
                 }
             }
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
+        LoggingService.logDebug(MODULE_NAME, "Finished Create image snapshot");
     }
 
     private static File getFileByImagePath(String path) {
-    	LoggingService.logInfo(MODULE_NAME, "Start get file by image path");
         URL url = null;
         try {
             url = new URL("file://" + path);
         } catch (MalformedURLException e) {
         	logError(MODULE_NAME, "Unable to load image",
-            		new AgentSystemException("Unable to load image", e));
+            		new AgentSystemException(e.getMessage(), e));
         }
         File file = null;
         if ((url != null ? url.getPath() : null) != null) {
             file = new File(url.getPath());
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished get file by image path");
         return file;
     }
 

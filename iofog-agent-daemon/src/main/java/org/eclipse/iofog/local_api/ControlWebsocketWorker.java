@@ -40,7 +40,7 @@ public class ControlWebsocketWorker  implements Runnable{
 	@Override
 	public void run() {
 		Thread.currentThread().setName(Constants.LOCAL_API_CONTROL_WEBSOCKET_WORKER);
-		LoggingService.logInfo(MODULE_NAME,"Initiating control signals for unacknowledged signals");
+		LoggingService.logDebug(MODULE_NAME,"Initiating control signals for unacknowledged signals");
 
 		for(Map.Entry<ChannelHandlerContext, ControlSignalSentInfo> contextEntry : WebSocketMap.unackControlSignalsMap.entrySet()){
 			ChannelHandlerContext ctx = contextEntry.getKey();
@@ -54,7 +54,7 @@ public class ControlWebsocketWorker  implements Runnable{
 				if (tryCount < 10) {
 					initiateControlSignal(ctx);
 				} else {
-					LoggingService.logInfo(MODULE_NAME, " Initiating control signal expires");
+					LoggingService.logDebug(MODULE_NAME, " Initiating control signal expires");
 					WebSocketMap.unackControlSignalsMap.remove(ctx);
 					WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.controlWebsocketMap);
 					StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
@@ -62,7 +62,7 @@ public class ControlWebsocketWorker  implements Runnable{
 				}
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME,"Finished Initiating control signals for unacknowledged signals");
+		LoggingService.logDebug(MODULE_NAME,"Finished Initiating control signals for unacknowledged signals");
 	}
 
 	/**
@@ -71,7 +71,6 @@ public class ControlWebsocketWorker  implements Runnable{
 	 * @return void
 	 */
 	private void initiateControlSignal(ChannelHandlerContext ctx) {
-		LoggingService.logInfo(MODULE_NAME, "Start Helper to initiate control sinals");
 		ControlSignalSentInfo controlSignalSentInfo = WebSocketMap.unackControlSignalsMap.get(ctx);
 		int tryCount = controlSignalSentInfo.getSendTryCount() + 1;
 		WebSocketMap.unackControlSignalsMap.put(ctx, new ControlSignalSentInfo(tryCount, System.currentTimeMillis()));
@@ -79,6 +78,5 @@ public class ControlWebsocketWorker  implements Runnable{
 		ByteBuf buffer1 = ctx.alloc().buffer();
 		buffer1.writeByte(OPCODE_CONTROL_SIGNAL);
 		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		LoggingService.logInfo(MODULE_NAME, "Finished Helper to initiate control sinals");
 	}
 }

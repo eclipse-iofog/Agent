@@ -42,7 +42,7 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start handling http call of log api");
+		LoggingService.logDebug(MODULE_NAME, "Start handling http call of log api");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
@@ -83,7 +83,7 @@ public class LogApiHandler implements Callable<FullHttpResponse> {
 
 		String sendMessageResult = builder.build().toString();
 
-		LoggingService.logInfo(MODULE_NAME, "Finished handling http call of log api");
+		LoggingService.logDebug(MODULE_NAME, "Finished handling http call of log api");
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 

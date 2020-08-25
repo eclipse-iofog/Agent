@@ -60,7 +60,7 @@ public class IOFogNetworkInterfaceManager {
     }
 
     public void updateIOFogNetworkInterface() throws SocketException {
-        LoggingService.logInfo(MODULE_NAME, "Updating IoFog NetworkInterface");
+        LoggingService.logDebug(MODULE_NAME, "Updating IoFog NetworkInterface");
         try {
             setCurrentIpAddress(IOFogNetworkInterface.getCurrentIpAddress());
             setNetworkInterface(IOFogNetworkInterface.getNetworkInterface());
@@ -72,7 +72,7 @@ public class IOFogNetworkInterfaceManager {
     }
 
     private final Runnable getIoFogNetworkInterface = () -> {
-        LoggingService.logInfo(MODULE_NAME, "Start getIoFogNetworkInterface");
+        LoggingService.logDebug(MODULE_NAME, "Start getIoFogNetworkInterface");
         try {
             updateIOFogNetworkInterface();
         } catch (Exception e) {
@@ -83,9 +83,10 @@ public class IOFogNetworkInterfaceManager {
             }
             start();
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished getIoFogNetworkInterface");
+        LoggingService.logDebug(MODULE_NAME, "Finished getIoFogNetworkInterface");
     };
     public void start() {
+        LoggingService.logInfo(MODULE_NAME, "Start IoFog NetworkInterface");
         try {
             updateIOFogNetworkInterface();
         } catch (Exception e) {
@@ -93,6 +94,7 @@ public class IOFogNetworkInterfaceManager {
             start();
         }
         futureTask = scheduler.scheduleAtFixedRate(getIoFogNetworkInterface, 0, 30, TimeUnit.MINUTES);
+        LoggingService.logInfo(MODULE_NAME, "Started IoFog NetworkInterface");
     }
 
 }

@@ -50,23 +50,22 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void addContainer(Microservice microservice) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start pull image from registry and creates a new container");
+		LoggingService.logDebug(MODULE_NAME, "Start add container");
 		Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 		if (!containerOptional.isPresent()) {
-			LoggingService.logInfo(MODULE_NAME, "creating \"" + microservice.getImageName() + "\"");
 			createContainer(microservice);
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished pull image from registry and creates a new container");
+		LoggingService.logDebug(MODULE_NAME, "Finished adding container");
 	}
 
 	private Registry getRegistry(Microservice microservice) throws AgentSystemException {
-		LoggingService.logInfo(MODULE_NAME, "Start get registry");
+		LoggingService.logDebug(MODULE_NAME, "Start get registry");
 		Registry registry;
 		registry = microserviceManager.getRegistry(microservice.getRegistryId());
 		if (registry == null) {
 			throw new AgentSystemException(String.format("registry is not valid \"%d\"", microservice.getRegistryId()), null);
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished get registry");
+		LoggingService.logDebug(MODULE_NAME, "Finished get registry");
 		return registry;
 	}
 
@@ -77,12 +76,12 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start update container");
+		LoggingService.logDebug(MODULE_NAME, "Start update container");
 		microservice.setUpdating(true);
 		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
 		createContainer(microservice);
 		microservice.setUpdating(false);
-		LoggingService.logInfo(MODULE_NAME, "Finished update container");
+		LoggingService.logDebug(MODULE_NAME, "Finished update container");
 	}
 
 	private void createContainer(Microservice microservice) throws Exception {
@@ -93,28 +92,26 @@ public class ContainerManager {
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.PULLING);
 		Registry registry = getRegistry(microservice);
 		if (!registry.getUrl().equals("from_cache") && pullImage){
-			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
 			try {
 				docker.pullImage(microservice.getImageName(), microservice.getMicroserviceUuid(), registry);
 			} catch (Exception e) {
 				LoggingService.logError(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache",
-						new AgentSystemException("unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache", e));
+						new AgentSystemException(e.getMessage(), e));
 				createContainer(microservice, false);
 				LoggingService.logInfo(MODULE_NAME, "created \"" + microservice.getImageName() + "\" from local cache");
 				return;
 			}
-			LoggingService.logInfo(MODULE_NAME, String.format("\"%s\" pulled", microservice.getImageName()));
 		}
 		if (!pullImage && !docker.findLocalImage(microservice.getImageName())) {
 			throw new NotFoundException("Image not found in local cache");
 		}
-		LoggingService.logInfo(MODULE_NAME, "creating container \"" + microservice.getImageName() + "\"");
+		LoggingService.logDebug(MODULE_NAME, "Creating container \"" + microservice.getImageName() + "\"");
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
 		String hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
-		LoggingService.logInfo(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
+		LoggingService.logDebug(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
 		startContainer(microservice);
 		microservice.setRebuild(false);
 		StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microservice.getMicroserviceUuid(), Constants.PERCENTAGE_COMPLETION);
@@ -125,7 +122,7 @@ public class ContainerManager {
 	 * starts a {@link Container} and sets appropriate status
 	 */
 	private void startContainer(Microservice microservice) {
-		LoggingService.logInfo(MODULE_NAME, String.format("trying to start container \"%s\"", microservice.getImageName()));
+		LoggingService.logDebug(MODULE_NAME, String.format("Starting container \"%s\"", microservice.getImageName()));
 		try {
 			if (!docker.isContainerRunning(microservice.getContainerId())) {
 				docker.startContainer(microservice);
@@ -137,9 +134,9 @@ public class ContainerManager {
 		} catch (Exception ex) {
 			LoggingService.logError(MODULE_NAME,
 					String.format("Container \"%s\" not found", microservice.getImageName()),
-					new AgentSystemException(String.format("Container \"%s\" not found", microservice.getImageName()), ex));
+					new AgentSystemException(ex.getMessage(), ex));
 		}
-		LoggingService.logInfo(MODULE_NAME, String.format("Finished trying to start container \"%s\"", microservice.getImageName()));
+		LoggingService.logDebug(MODULE_NAME, String.format("Container started \"%s\"", microservice.getImageName()));
 	}
 
 	/**
@@ -148,21 +145,20 @@ public class ContainerManager {
 	 * @param microserviceUuid id of the {@link Microservice}
 	 */
 	private void stopContainer(String microserviceUuid) {
-		LoggingService.logInfo(MODULE_NAME, "Stop container by microserviceuuid : " + microserviceUuid);
+		LoggingService.logInfo(MODULE_NAME, "Stop container with microserviceuuid : " + microserviceUuid);
 		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 		containerOptional.ifPresent(container -> {
 			setMicroserviceStatus(microserviceUuid, MicroserviceState.STOPPING);
 			LoggingService.logInfo(MODULE_NAME, String.format("Stopping container \"%s\"", container.getId()));
 			try {
 				docker.stopContainer(container.getId());
-				LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" stopped", container.getId()));
 			} catch (Exception e) {
 				LoggingService.logError(MODULE_NAME, String.format("Error stopping container \"%s\"", container.getId()),
-						new AgentSystemException(String.format("Error stopping container \"%s\"", container.getId()), e));
+						new AgentSystemException(e.getMessage(), e));
 			}
 		});
 		setMicroserviceStatus(microserviceUuid, MicroserviceState.STOPPED);
-		LoggingService.logInfo(MODULE_NAME, "Stopped container by microserviceuuid : " + microserviceUuid);
+		LoggingService.logInfo(MODULE_NAME, "Stopped container with microserviceuuid : " + microserviceUuid);
 
 	}
 
@@ -170,7 +166,7 @@ public class ContainerManager {
 	 * removes a {@link Container} by Microservice uuid
 	 */
 	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) throws AgentSystemException {
-		LoggingService.logInfo(MODULE_NAME, "Start remove container by microserviceuuid : " + microserviceUuid);
+		LoggingService.logInfo(MODULE_NAME, "Start remove container with microserviceuuid : " + microserviceUuid);
 		synchronized (deleteLock) {
 			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 			if (containerOptional.isPresent()) {
@@ -180,11 +176,11 @@ public class ContainerManager {
 				removeContainer(container.getId(), container.getImageId(), withCleanUp);
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished remove container by microserviceuuid : " + microserviceUuid);
+		LoggingService.logInfo(MODULE_NAME, "Finished remove container with microserviceuuid : " + microserviceUuid);
 	}
 
 	private void removeContainer(String containerId, String imageId, boolean withCleanUp) throws AgentSystemException{
-		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
+		LoggingService.logDebug(MODULE_NAME, String.format("Removing container \"%s\"", containerId));
 		try {
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
@@ -192,18 +188,18 @@ public class ContainerManager {
 					docker.removeImageById(imageId);
 				} catch (ConflictException ex) {
 					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId),
-							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", containerId), ex));
+							new AgentSystemException(ex.getMessage(), ex));
 				} catch (Exception ex) {
 					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId),
-							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", containerId), ex));
+							new AgentSystemException(ex.getMessage(), ex));
 				}
 			}
 
-			LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" removed", containerId));
+			LoggingService.logDebug(MODULE_NAME, String.format("Container \"%s\" removed", containerId));
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, String.format("Error removing container \"%s\"", containerId),
-					new AgentSystemException(String.format("Error removing container \"%s\"", containerId), e));
-			throw new AgentSystemException(String.format("Error removing container \"%s\"", containerId), e);
+					new AgentSystemException(e.getMessage(), e));
+			throw new AgentSystemException(e.getMessage(), e);
 		}
 	}
 
@@ -213,7 +209,7 @@ public class ContainerManager {
 	 * @param task - tasks to be executed
 	 */
 	public void execute(ContainerTask task) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start executes assigned task");
+		LoggingService.logDebug(MODULE_NAME, "Start executes assigned task");
 		docker = DockerUtil.getInstance();
 		if (task != null) {
 			Optional<Microservice> microserviceOptional = microserviceManager.findLatestMicroserviceByUuid(task.getMicroserviceUuid());
@@ -243,11 +239,10 @@ public class ContainerManager {
 			LoggingService.logError(MODULE_NAME, "Container Task cannot be null",
 					new AgentSystemException("Container Task container be null"));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished executes assigned task");
+		LoggingService.logDebug(MODULE_NAME, "Finished executes assigned task");
 	}
 
 	private void stopContainerByMicroserviceUuid(String microserviceUuid) {
-		LoggingService.logInfo(MODULE_NAME, String.format("stopping container with microserviceId \"%s\"", microserviceUuid));
 		stopContainer(microserviceUuid);
 	}
 

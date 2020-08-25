@@ -54,7 +54,7 @@ public class StraceDiagnosticManager {
 	}
 
 	public void updateMonitoringMicroservices(JsonObject diagnosticData) {
-		LoggingService.logInfo(MODULE_NAME, "Trying to update strace monitoring microservices");
+		LoggingService.logDebug(MODULE_NAME, "Trying to update strace monitoring microservices");
 
 		if (diagnosticData !=null && diagnosticData.containsKey("straceValues")) {
 			JsonArray straceMicroserviceChanges = diagnosticData.getJsonArray("straceValues");
@@ -69,21 +69,19 @@ public class StraceDiagnosticManager {
 				}
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished update strace monitoring microservices");
+		LoggingService.logDebug(MODULE_NAME, "Finished update strace monitoring microservices");
 	}
 
 	private void manageMicroservice(String microserviceUuid, boolean strace) {
-		LoggingService.logInfo(MODULE_NAME, "Start manage microservices");
         if (strace) {
             enableMicroserviceStraceDiagnostics(microserviceUuid);
         } else {
             disableMicroserviceStraceDiagnostics(microserviceUuid);
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished manage microservices");
 	}
 
 	private Optional<MicroserviceStraceData> getStraceDataByMicroserviceUuid(String microserviceUuid) {
-		LoggingService.logInfo(MODULE_NAME, "Start getting Strace Data By MicroserviceUuid : "+ microserviceUuid);
+		LoggingService.logDebug(MODULE_NAME, "Start getting Strace Data By MicroserviceUuid : "+ microserviceUuid);
 		return this.monitoringMicroservices.stream()
 				.filter(microservice -> microservice.getMicroserviceUuid().equals(microserviceUuid))
 				.findFirst();
@@ -107,7 +105,7 @@ public class StraceDiagnosticManager {
     }
 
 	public void disableMicroserviceStraceDiagnostics(String microserviceUuid) {
-		LoggingService.logInfo(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : " + microserviceUuid);
+		LoggingService.logDebug(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : " + microserviceUuid);
         getStraceDataByMicroserviceUuid(microserviceUuid).ifPresent(microserviceStraceData -> {
             microserviceStraceData.setStraceRun(false);
             this.monitoringMicroservices.remove(microserviceStraceData);
@@ -115,7 +113,7 @@ public class StraceDiagnosticManager {
     }
 
 	private int getPidByContainerName(String containerName) throws IllegalArgumentException {
-		LoggingService.logInfo(MODULE_NAME, "Start getting pid of microservice by container name : "+ containerName);
+		LoggingService.logDebug(MODULE_NAME, "Start getting pid of microservice by container name : "+ containerName);
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("docker top " + containerName);
 		if (resultSet.getValue() != null && resultSet.getValue().size() > 1 && resultSet.getValue().get(1) != null) {
 			String pid = resultSet.getValue().get(1).split("\\s+")[1];
@@ -127,7 +125,7 @@ public class StraceDiagnosticManager {
 	}
 
 	private void runStrace(MicroserviceStraceData microserviceStraceData) {
-		LoggingService.logInfo(MODULE_NAME, "Start running strace ");
+		LoggingService.logDebug(MODULE_NAME, "Start running strace ");
 		String straceCommand = "strace -p " + microserviceStraceData.getPid();
 		CommandShellResultSet<List<String>, List<String>> resultSet = new CommandShellResultSet<>(null, microserviceStraceData.getResultBuffer());
 		CommandShellExecutor.executeDynamicCommand(
@@ -136,11 +134,11 @@ public class StraceDiagnosticManager {
 			microserviceStraceData.getStraceRun(),
 			killOrphanedStraceProcessesRunnable()
 		);
-		LoggingService.logInfo(MODULE_NAME, "Finished running strace ");
+		LoggingService.logDebug(MODULE_NAME, "Finished running strace ");
 	}
 
 	private Runnable killOrphanedStraceProcessesRunnable() {
-		LoggingService.logInfo(MODULE_NAME, "killing orphaned strace processes.");
+		LoggingService.logDebug(MODULE_NAME, "killing orphaned strace processes.");
 		return () -> {
 			CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand("pgrep strace");
 			if (resultSet.getValue() != null) {

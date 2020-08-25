@@ -45,7 +45,7 @@ public class LocalApiServerPipelineFactory extends ChannelInitializer<SocketChan
 	 * @return void
 	 */
 	public void initChannel(SocketChannel ch) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start Initialize channel for communication and assign handler");
+		LoggingService.logDebug(MODULE_NAME, "Start Initialize channel for communication and assign handler");
 		ChannelPipeline pipeline = ch.pipeline();
 		if (sslCtx != null) {
 			pipeline.addLast(sslCtx.newHandler(ch.alloc()));
@@ -53,6 +53,6 @@ public class LocalApiServerPipelineFactory extends ChannelInitializer<SocketChan
 		pipeline.addLast(new HttpServerCodec());
 		pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
 		pipeline.addLast(new LocalApiServerHandler(executor));	
-		LoggingService.logInfo(MODULE_NAME, "Finished Initialize channel for communication and assign handler");
+		LoggingService.logDebug(MODULE_NAME, "Finished Initialize channel for communication and assign handler");
 	}
 }	
