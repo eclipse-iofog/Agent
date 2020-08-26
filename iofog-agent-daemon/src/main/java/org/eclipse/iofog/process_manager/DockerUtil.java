@@ -23,7 +23,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
-import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
@@ -38,6 +38,7 @@ import javax.json.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -520,8 +521,10 @@ public class DockerUtil {
      * @param registry  - {@link Registry} where image is placed
      */
     @SuppressWarnings("resource")
-	public void pullImage(String imageName, Registry registry) throws AgentSystemException {
-    	LoggingService.logInfo(MODULE_NAME , String.format("pull image \"%s\" ", imageName));
+    public void pullImage(String imageName, String microserviceUuid, Registry registry) throws AgentSystemException {
+        LoggingService.logInfo(MODULE_NAME, String.format("pull image name \"%s\" ", imageName));
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        Map<String, ItemStatus> statuses = new HashMap();
         String tag = null, image;
         String[] sp = imageName.split(":");
         image = sp[0];
@@ -544,20 +547,31 @@ public class DockerUtil {
                                             .withPassword(registry.getPassword())
                             );
             req.withTag(tag);
-            PullImageResultCallback res = new PullImageResultCallback();
-            res = req.exec(res);
-            res.awaitCompletion();
-		} catch (NotFoundException e) {
-			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException("Image not found", e);
-		} catch (NotModifiedException e) {
-			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException(e.getMessage(), e);
-		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException(e.getMessage(), e);
-		}
-        LoggingService.logInfo(MODULE_NAME ,String.format("Finished pull image \"%s\" ", imageName));
+            PullImageResultCallback resultCallback = new PullImageResultCallback() {
+                @Override
+                public void onNext(PullResponseItem item) {
+                    update(item, statuses);
+                    double average = calculatePullPercentage(statuses);
+                    StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microserviceUuid, decimalFormat.format(average));
+                    super.onNext(item);
+                }
+            };
+            resultCallback = req.exec(resultCallback);
+            resultCallback.awaitCompletion();
+
+        } catch (NotFoundException e) {
+            LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
+            throw new AgentSystemException("Image not found", e);
+        } catch (NotModifiedException e) {
+            LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
+            throw new AgentSystemException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            throw new AgentSystemException("Interrupted while pulling image", new AgentSystemException(e.getMessage(), e));
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
+            throw new AgentSystemException(e.getMessage(), e);
+        }
+        LoggingService.logInfo(MODULE_NAME, String.format("Finished pull image \"%s\" ", imageName));
     }
 
     /**
@@ -700,5 +714,111 @@ public class DockerUtil {
     public void dockerPrune() throws NotModifiedException {
         LoggingService.logInfo(MODULE_NAME , "docker image prune");
         dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
+    }
+    /**
+     * Updates the item status of docker pull Layer
+     *
+     * @param item
+     * @param statuses
+     */
+    public void update(PullResponseItem item, Map<String, ItemStatus> statuses) {
+        if (item != null && item.getId() != null) {
+            statuses.put(item.getId(), createStatusItem(item, statuses.get(item.getId())));
+        }
+    }
+
+    /**
+     * Creates the status of each docker pull layer
+     *
+     * @param item
+     * @param previousStatus
+     * @return
+     */
+    private ItemStatus createStatusItem(PullResponseItem item, ItemStatus previousStatus) {
+        ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
+        if (previousStatus != null) {
+            if (progressDetail != null && progressDetail.getTotal() != null && progressDetail.getTotal() > 0) {
+                int currentPct = computePercentage(previousStatus, progressDetail);
+                previousStatus.setPercentage(currentPct);
+                previousStatus.setPullStatus(statusNotNull(item.getStatus()) ? item.getStatus() : "");
+                return previousStatus;
+            }
+            previousStatus.setPullStatus(statusNotNull(item.getStatus()) ? item.getStatus() : "");
+            return previousStatus;
+        }
+        ItemStatus status = new ItemStatus();
+        status.setId(item.getId());
+        status.setPullStatus(statusNotNull(item.getStatus()) ? item.getStatus() : "");
+        return status;
+
+    }
+
+    /**
+     * Compute percentage at each layer of docker pull
+     *
+     * @param previousStatus
+     * @param progressDetail
+     * @return
+     */
+    private int computePercentage(ItemStatus previousStatus, ResponseItem.ProgressDetail progressDetail) {
+        int currentPct = (int) (
+              ((float) progressDetail.getCurrent()) /
+                    ((float) progressDetail.getTotal())
+                    * 100);
+        currentPct = (previousStatus != null && previousStatus.getPercentage() > currentPct) ?
+              previousStatus.getPercentage()
+              :
+              currentPct;
+        return currentPct;
+    }
+
+    private boolean statusNotNull(String status) {
+        return status != null && !status.trim().equals("null");
+    }
+
+    /**
+     * Calculate the average percentage pull completion
+     *
+     * @param statuses
+     * @return
+     */
+    private double calculatePullPercentage(Map<String, ItemStatus> statuses) {
+        List<ItemStatus> stateList = new ArrayList<ItemStatus>(statuses.values());
+        double total = 0;
+        for (ItemStatus status : stateList) {
+            total = total + status.getPercentage();
+        }
+        return (total / (stateList.size() > 1 ? (stateList.size() - 1) : stateList.size()));
+
+    }
+
+    class ItemStatus {
+        private String id;
+        private int percentage;
+        private String pullStatus;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public int getPercentage() {
+            return percentage;
+        }
+
+        public void setPercentage(int percentage) {
+            this.percentage = percentage;
+        }
+
+        public String getPullStatus() {
+            return pullStatus;
+        }
+
+        public void setPullStatus(String pullStatus) {
+            this.pullStatus = pullStatus;
+        }
     }
 }

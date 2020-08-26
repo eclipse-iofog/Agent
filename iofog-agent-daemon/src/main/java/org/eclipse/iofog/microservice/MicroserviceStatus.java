@@ -36,6 +36,7 @@ public class MicroserviceStatus {
 	private float cpuUsage;
 	private long memoryUsage;
 	private String containerId;
+	private String percentage;
 
 	public MicroserviceStatus() {
 		this.status = MicroserviceState.UNKNOWN;
@@ -90,6 +91,14 @@ public class MicroserviceStatus {
 
 	public void setContainerId(String containerId) {
 		this.containerId = containerId;
+	}
+
+	public String getPercentage() {
+		return percentage;
+	}
+
+	public void setPercentage(String percentage) {
+		this.percentage = percentage;
 	}
 
 	/**

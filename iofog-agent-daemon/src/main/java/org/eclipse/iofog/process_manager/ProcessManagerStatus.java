@@ -56,7 +56,8 @@ public class ProcessManagerStatus {
                 .add("id", key != null ? key : "UNKNOWN")
                 .add("status", status != null ?
                         (status.getStatus() != null ? status.getStatus().toString() : "UNKNOWN") :
-                        "UNKNOWN");
+                        "UNKNOWN")
+                .add("percentage", status != null ? (status.getPercentage() != null ? status.getPercentage() : "") : "");
             if (status != null && status.getContainerId() != null) {
                 objectBuilder
                         .add("containerId", status.getContainerId() != null ?
@@ -135,5 +136,14 @@ public class ProcessManagerStatus {
 
     public Map<Integer, LinkStatus> getRegistriesStatus() {
         return registriesStatus;
+    }
+
+    public ProcessManagerStatus setMicroservicesStatePercentage(String microserviceUuid, String percentage) {
+        synchronized (microservicesStatus) {
+            MicroserviceStatus status = microservicesStatus.getOrDefault(microserviceUuid, new MicroserviceStatus());
+            status.setPercentage(percentage);
+            this.microservicesStatus.put(microserviceUuid, status);
+        }
+        return this;
     }
 }

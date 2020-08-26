@@ -95,7 +95,7 @@ public class ContainerManager {
 		if (!registry.getUrl().equals("from_cache") && pullImage){
 			LoggingService.logInfo(MODULE_NAME, "pulling \"" + microservice.getImageName() + "\" from registry");
 			try {
-				docker.pullImage(microservice.getImageName(), registry);
+				docker.pullImage(microservice.getImageName(), microservice.getMicroserviceUuid(), registry);
 			} catch (Exception e) {
 				LoggingService.logError(MODULE_NAME, "unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache",
 						new AgentSystemException("unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache", e));
@@ -117,6 +117,7 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
 		startContainer(microservice);
 		microservice.setRebuild(false);
+		StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microservice.getMicroserviceUuid(), Constants.PERCENTAGE_COMPLETION);
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.RUNNING);
 	}
 
