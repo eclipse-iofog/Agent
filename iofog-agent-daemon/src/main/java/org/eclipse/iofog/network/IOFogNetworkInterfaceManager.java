@@ -1,10 +1,10 @@
 package org.eclipse.iofog.network;
 
 import org.eclipse.iofog.exception.AgentSystemException;
-import org.eclipse.iofog.utils.Constants;
-import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.functional.Pair;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -21,6 +21,8 @@ public class IOFogNetworkInterfaceManager {
     private static IOFogNetworkInterfaceManager instance;
     private String currentIpAddress;
     private Pair<NetworkInterface, InetAddress> networkInterface;
+    private String hostName;
+    private long pid;
 
     public String getCurrentIpAddress() {
         return currentIpAddress;
@@ -46,6 +48,22 @@ public class IOFogNetworkInterfaceManager {
         this.networkInterface = networkInterface;
     }
 
+    public String getHostName() {
+        return hostName;
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
+
+    public void setPid(long pid) {
+        this.pid = pid;
+    }
+
+    public long getPid() {
+        return pid;
+    }
+
     private InetAddress inetAddress;
     private IOFogNetworkInterfaceManager(){}
     public static IOFogNetworkInterfaceManager getInstance() {
@@ -65,6 +83,8 @@ public class IOFogNetworkInterfaceManager {
             setCurrentIpAddress(IOFogNetworkInterface.getCurrentIpAddress());
             setNetworkInterface(IOFogNetworkInterface.getNetworkInterface());
             setInetAddress(IOFogNetworkInterface.getInetAddress());
+            setHostName(IOFogNetworkInterface.getHostName());
+            setPid(getFogPid());
         } catch (SocketException exp) {
             LoggingService.logError(MODULE_NAME, "Unable to set IP address of the machine running ioFog", new AgentSystemException(exp.getMessage(), exp));
             throw exp;
@@ -95,6 +115,11 @@ public class IOFogNetworkInterfaceManager {
         }
         futureTask = scheduler.scheduleAtFixedRate(getIoFogNetworkInterface, 0, 30, TimeUnit.MINUTES);
         LoggingService.logInfo(MODULE_NAME, "Started IoFog NetworkInterface");
+    }
+
+    public long getFogPid(){
+        String processName = ManagementFactory.getRuntimeMXBean().getName();
+        return Long.parseLong(processName.split("@")[0]);
     }
 
 }

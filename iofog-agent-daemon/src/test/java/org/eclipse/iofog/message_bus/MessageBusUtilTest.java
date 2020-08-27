@@ -104,9 +104,9 @@ public class MessageBusUtilTest {
             Mockito.verify(messageBus).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).publish(any(Message.class));
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start publish message");
+            LoggingService.logDebug(MODULE_NAME, "Start publish message");
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finishing publish message");
+            LoggingService.logDebug(MODULE_NAME, "Finishing publish message");
         } catch (Exception e) {
             fail("This should not happen");
         }

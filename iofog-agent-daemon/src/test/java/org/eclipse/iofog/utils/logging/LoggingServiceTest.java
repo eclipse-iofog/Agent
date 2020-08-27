@@ -131,7 +131,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             LoggingService.logInfo(MODULE_NAME, message);
-            Mockito.verify(logger).log(Level.INFO, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, message));
+            Mockito.verify(logger).logp(Level.INFO, Thread.currentThread().getName(), MODULE_NAME, message);
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -145,7 +145,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             LoggingService.logWarning(MODULE_NAME, message);
-            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, message));
+            Mockito.verify(logger).logp(Level.WARNING, Thread.currentThread().getName(), MODULE_NAME, message);
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -159,7 +159,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             LoggingService.logDebug(MODULE_NAME, message);
-            Mockito.verify(logger).log(Level.FINE, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, message));
+            Mockito.verify(logger).logp(Level.FINE, Thread.currentThread().getName(), MODULE_NAME, message);
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -174,8 +174,7 @@ public class LoggingServiceTest {
             LoggingService.setupLogger();
             Exception e = new Exception("This is exception");
             LoggingService.logError(MODULE_NAME, message, e);
-            Mockito.verify(logger).log(Level.SEVERE, String.format("[%s] [%s] : %s - Exception: %s - Stack trace: %s",
-                    Thread.currentThread().getName(), MODULE_NAME, message, e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
+            Mockito.verify(logger).logp(Level.SEVERE, Thread.currentThread().getName(), MODULE_NAME, message, e);
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -225,7 +224,7 @@ public class LoggingServiceTest {
             assertFalse(LoggingService.microserviceLogInfo("uuid", message));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logWarning(MODULE_NAME, errorMsg);
-            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, errorMsg));
+            Mockito.verify(logger).logp(Level.WARNING, Thread.currentThread().getName(), MODULE_NAME, errorMsg);
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -253,7 +252,7 @@ public class LoggingServiceTest {
         try {
             LoggingService.setupLogger();
             assertFalse(LoggingService.microserviceLogWarning("uuid", message));
-            Mockito.verify(logger).log(Level.WARNING, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), MODULE_NAME, " Log message parsing error, Logger initialized null"));
+            Mockito.verify(logger).logp(Level.WARNING, Thread.currentThread().getName(), MODULE_NAME, " Log message parsing error, Logger initialized null");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -299,7 +298,6 @@ public class LoggingServiceTest {
         LoggingService.setupLogger();
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.logError(MODULE_NAME, e.getMessage(), e);
-        Mockito.verify(logger).log(Level.SEVERE, String.format("[%s] [%s] : %s - Exception: %s - Stack trace: %s",
-                Thread.currentThread().getName(), MODULE_NAME, e.getMessage(), e.getMessage(), ExceptionUtils.getFullStackTrace(e)));
+        Mockito.verify(logger).logp(Level.SEVERE, Thread.currentThread().getName(), MODULE_NAME, e.getMessage(), e);
     }
 }

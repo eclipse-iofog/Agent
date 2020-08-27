@@ -36,7 +36,7 @@ public class MessageBusUtil {
 	 * @return published {@link Message} containing the id and timestamp 
 	 */
 	public void publishMessage(Message message) {
-		LoggingService.logInfo(MODULE_NAME, "Start publish message");
+		LoggingService.logDebug(MODULE_NAME, "Start publish message");
 		long timestamp = System.currentTimeMillis();
 		StatusReporter.setMessageBusStatus().increasePublishedMessagesPerMicroservice(message.getPublisher());
 		message.setId(messageBus.getNextId());
@@ -51,7 +51,7 @@ public class MessageBusUtil {
 						new AgentSystemException(e.getMessage(), e));
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finishing publish message");
+		LoggingService.logDebug(MODULE_NAME, "Finishing publish message");
 	}
 	
 	/**

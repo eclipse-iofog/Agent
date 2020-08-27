@@ -172,4 +172,14 @@ public class IOFogNetworkInterface {
 
         return null;
     }
+    public static String getHostName() {
+        String hostname = "";
+        try {
+            InetAddress ip = InetAddress.getLocalHost();
+            hostname = ip.getHostName();
+        } catch (UnknownHostException e) {
+            LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " +  e.getMessage());
+        }
+        return hostname;
+    }
 }
