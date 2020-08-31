@@ -124,7 +124,7 @@ public class MessageArchive implements AutoCloseable{
 			dataFile.write(message, HEADER_SIZE, message.length - HEADER_SIZE);
 		} catch(Exception e) {
 			LoggingService.logError(MODULE_NAME, "Error saving archive",
-					new AgentSystemException("Error saving archive", e));
+					new AgentSystemException(e.getMessage(), e));
 		}
 	}
 	
@@ -197,7 +197,7 @@ public class MessageArchive implements AutoCloseable{
 	 * @return list of {@link Message}
 	 */
 	public List<Message> messageQuery(long from, long to) {
-		LoggingService.logInfo(MODULE_NAME, "Start message query");
+		LoggingService.logDebug(MODULE_NAME, "Start message query");
 		boolean outOfMemory = false;
 		List<Message> result = new ArrayList<>();
 		
@@ -256,7 +256,7 @@ public class MessageArchive implements AutoCloseable{
 				LoggingService.logError("Message Archive", e.getMessage(), e);
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finish message query");
+		LoggingService.logDebug(MODULE_NAME, "Finish message query");
 		return result;
 	}
 }

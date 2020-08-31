@@ -46,10 +46,10 @@ public class VersionApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Starting Version Api Handler call");
+    	LoggingService.logDebug(MODULE_NAME, "Handle Version Api Handler call");
         if (!ApiHandlerHelpers.validateMethod(this.req, GET)) {
             LoggingService.logError(MODULE_NAME, "Request method not allowed", 
-            		new AgentUserException("Request method not allowed", new Exception()));
+            		new AgentUserException("Request method not allowed"));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
@@ -57,7 +57,7 @@ public class VersionApiHandler implements Callable<FullHttpResponse> {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
             LoggingService.logError(MODULE_NAME, errorMsg, 
-            		new AgentUserException(errorMsg, new Exception()));
+            		new AgentUserException(errorMsg));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }
 
@@ -73,11 +73,11 @@ public class VersionApiHandler implements Callable<FullHttpResponse> {
             FullHttpResponse res;
             res = ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
             res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
-            LoggingService.logInfo("MODULE_NAME", "Finished Version Api Handler call");
+            LoggingService.logDebug(MODULE_NAME, "Finished Version Api Handler call");
             return res;
         } catch (Exception e) {
-            String errorMsg = "Log message parsing error, " + e.getMessage();
-            LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(errorMsg, e));
+            String errorMsg = "Log message parsing error ";
+            LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(e.getMessage(), e));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
         }
     }

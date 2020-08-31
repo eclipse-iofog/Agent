@@ -55,7 +55,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * @throws Exception
 	 */
 	synchronized List<Message> getMessages() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, String.format("Start getting message \"%s\"", name));
+		LoggingService.logDebug(MODULE_NAME, String.format("Start getting message \"%s\"", name));
 		List<Message> result = new ArrayList<>();
 		
 		if (consumer != null || listener == null) {
@@ -65,7 +65,7 @@ public class MessageReceiver implements AutoCloseable{
 				message = getMessage();
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, String.format("Finished getting message \"%s\"", name));
+		LoggingService.logDebug(MODULE_NAME, String.format("Finished getting message \"%s\"", name));
 		return result;
 	}
 
@@ -102,7 +102,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * 
 	 */
 	void enableRealTimeReceiving() {
-		LoggingService.logInfo(MODULE_NAME, "Start enable real time receiving");
+		LoggingService.logDebug(MODULE_NAME, "Start enable real time receiving");
 
 		listener = new IOMessageListener(new MessageCallback(name));
 		try {
@@ -110,9 +110,9 @@ public class MessageReceiver implements AutoCloseable{
 		} catch (Exception e) {
 			listener = null;
 			LoggingService.logError(MODULE_NAME, "Error in enabling real time listener",
-					new AgentSystemException("Error in enabling real time listener", e));
+					new AgentSystemException(e.getMessage(), e));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished enable real time receiving");
+		LoggingService.logDebug(MODULE_NAME, "Finished enable real time receiving");
 	}
 	
 	/**
@@ -120,7 +120,7 @@ public class MessageReceiver implements AutoCloseable{
 	 * 
 	 */
 	void disableRealTimeReceiving() {
-		LoggingService.logInfo(MODULE_NAME, "Start disable real time receiving");
+		LoggingService.logDebug(MODULE_NAME, "Start disable real time receiving");
 		try {
 			if (consumer == null || listener == null || consumer.getMessageListener() == null)
 				return;
@@ -128,13 +128,14 @@ public class MessageReceiver implements AutoCloseable{
 			consumer.setMessageListener(null);
 		} catch (Exception exp) {
 			logError(MODULE_NAME, "Error in disabling real time listener",
-					new AgentSystemException("Error in disabling real time listener", exp));
+					new AgentSystemException(exp.getMessage()
+							, exp));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished disable real time receiving");
+		LoggingService.logDebug(MODULE_NAME, "Finished disable real time receiving");
 	}
 	
 	public void close() {
-		LoggingService.logInfo(MODULE_NAME, "Start closing receiver");
+		LoggingService.logDebug(MODULE_NAME, "Start closing receiver");
 		if (consumer == null)
 			return;
 		disableRealTimeReceiving();
@@ -142,8 +143,8 @@ public class MessageReceiver implements AutoCloseable{
 			consumer.close();
 		} catch (Exception exp) {
 			logError(MODULE_NAME, "Error in closing receiver",
-					new AgentSystemException("Error in closing receiver", exp));
+					new AgentSystemException(exp.getMessage(), exp));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished closing receiver");
+		LoggingService.logDebug(MODULE_NAME, "Finished closing receiver");
 	}
 }

@@ -700,7 +700,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logWarning(MODULE_NAME,"controller verification failed: BROKEN_CERTIFICATE");
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get microservices"), any());
+            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get microservices due to broken certificate"), any());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
             LoggingService.logError(eq(MODULE_NAME), eq("Provisioning failed"), any());
         } catch (AgentSystemException e) {
@@ -913,7 +913,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "posting ioFog config");
+            LoggingService.logInfo(MODULE_NAME, "Finished Post ioFog config");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -934,7 +934,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "posting ioFog config");
+            LoggingService.logInfo(MODULE_NAME, "Finished Post ioFog config");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -956,7 +956,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config due to broken certificate "), any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished IOFog configuration update");
+            LoggingService.logDebug(MODULE_NAME, "Finished IOFog configuration update");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -978,7 +978,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished IOFog configuration update");
+            LoggingService.logDebug(MODULE_NAME, "Finished IOFog configuration update");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -998,9 +998,9 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             PowerMockito.verifyPrivate(fieldAgent, never()).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start the Field Agent");
+            LoggingService.logDebug(MODULE_NAME, "Start the Field Agent");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Field Agent started");
+            LoggingService.logDebug(MODULE_NAME, "Field Agent started");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -1028,13 +1028,13 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished Ping : " + false);
+            LoggingService.logDebug(MODULE_NAME, "Finished Ping : " + false);
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "Connection to controller has broken");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished handling Bad Controller Status");
+            LoggingService.logDebug(MODULE_NAME, "Finished handling Bad Controller Status");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME,"Started checking provisioned");
+            LoggingService.logDebug(MODULE_NAME,"Started checking provisioned");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -1063,7 +1063,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             LoggingService.logInfo(MODULE_NAME, "Started Ping");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished Ping : " + false);
+            LoggingService.logDebug(MODULE_NAME, "Finished Ping : " + false);
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: NOT_CONNECTED");
         } catch (Exception e) {
@@ -1092,11 +1092,11 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             LoggingService.logInfo(MODULE_NAME, "Finished Ping : " + true);
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "checked is Controller Connected : true ");
+            LoggingService.logDebug(MODULE_NAME, "checked is Controller Connected : true ");
             PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "Finished handling Bad Controller Status");
+            LoggingService.logDebug(MODULE_NAME, "Finished handling Bad Controller Status");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Field Agent started");
+            LoggingService.logDebug(MODULE_NAME, "Field Agent started");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -1133,11 +1133,11 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished Ping : " + true);
+            LoggingService.logDebug(MODULE_NAME, "Finished Ping : " + true);
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "checked is Controller Connected : true ");
+            LoggingService.logDebug(MODULE_NAME, "checked is Controller Connected : true ");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Field Agent started");
+            LoggingService.logDebug(MODULE_NAME, "Field Agent started");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -1156,7 +1156,7 @@ public class FieldAgentTest {
             assertTrue(output.getString("ipAddress").equals("ip"));
             PowerMockito.verifyPrivate(fieldAgent).invoke("getFogStatus");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "get Fog Status");
+            LoggingService.logDebug(MODULE_NAME, "get Fog Status");
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -1177,7 +1177,7 @@ public class FieldAgentTest {
             Mockito.verify(fieldAgent).deProvision(eq(false));
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "start deleting current fog node from controller and make it deprovision");
+            LoggingService.logDebug(MODULE_NAME, "start deleting current fog node from controller and make it deprovision");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished Deprovisioning : Failure - not provisioned");
         } catch (Exception e){
@@ -1203,7 +1203,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished Deprovisioning : Success - tokens, identifiers and keys removed");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finish deleting current fog node from controller and make it deprovision");
+            LoggingService.logDebug(MODULE_NAME, "Finish deleting current fog node from controller and make it deprovision");
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -1328,7 +1328,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(VersionHandler.class, atLeastOnce());
             VersionHandler.changeVersion(any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start change version operation, received from ioFog controller");
+            LoggingService.logInfo(MODULE_NAME, "Starting change version action");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished change version operation, received from ioFog controller");
         } catch (Exception e){
@@ -1355,7 +1355,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: BROKEN_CERTIFICATE");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get version command"), any());
+            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get version command due to broken certificate"), any());
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -1425,7 +1425,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: BROKEN_CERTIFICATE");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get diagnostics update"), any());
+            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get diagnostics update due to broken certificate"), any());
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -1522,9 +1522,9 @@ public class FieldAgentTest {
             /*PowerMockito.verifyStatic(StatusReporter.class, atLeastOnce());
             StatusReporter.setResourceManagerStatus();*/
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start send USB Info from hal To Controller");
+            LoggingService.logDebug(MODULE_NAME, "Start send USB Info from hal To Controller");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished send USB Info from hal To Controller");
+            LoggingService.logDebug(MODULE_NAME, "Finished send USB Info from hal To Controller");
         } catch (Exception e){
             fail("This should never happen");
         }

@@ -103,7 +103,7 @@ public class VersionHandler {
 	}
 
 	private static boolean isPackageRepositoryUpdated() {
-		LoggingService.logInfo(MODULE_NAME, "start package repository update");
+		LoggingService.logDebug(MODULE_NAME, "start package repository update");
 		boolean isPackageRepositoryUpdated;
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT);
 		//if lock file exists and not empty
@@ -116,7 +116,7 @@ public class VersionHandler {
 			CommandShellExecutor.executeCommand(UPDATE_PACKAGE_REPOSITORY);
 			isPackageRepositoryUpdated = true;
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished package repository update : " + isPackageRepositoryUpdated);
+		LoggingService.logDebug(MODULE_NAME, "Finished package repository update : " + isPackageRepositoryUpdated);
 		return isPackageRepositoryUpdated;
 	}
 
@@ -140,14 +140,13 @@ public class VersionHandler {
 			String provisionKey = actionData.getString("provisionKey");
 
 			if (isValidChangeVersionOperation(versionCommand)) {
-				LoggingService.logInfo(MODULE_NAME, "Performing change version operation");
 				executeChangeVersionScript(versionCommand, provisionKey);
 			}
 
 		} catch (UnknownVersionCommandException e) {
 			logError(MODULE_NAME, "Error performing change version operation : Invalid command", e);
 		} catch (Exception e){
-			logError(MODULE_NAME, "Error performing change version operation", new AgentSystemException("Error performing change version operation", e));
+			logError(MODULE_NAME, "Error performing change version operation", new AgentSystemException(e.getMessage(), e));
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 	}
@@ -159,19 +158,18 @@ public class VersionHandler {
 	 * @param provisionKey new provision key (used to restart iofog correctly)
 	 */
 	private static void executeChangeVersionScript(VersionCommand command, String provisionKey) {
-		LoggingService.logInfo(MODULE_NAME, "Start executeing sh script to change iofog version");
+		LoggingService.logInfo(MODULE_NAME, "Start executing sh script to change iofog version");
 		String shToExecute = command.getScript();
 
 		try {
 			Runtime.getRuntime().exec("java -jar /usr/bin/iofog-agentvc.jar " + shToExecute + " " + provisionKey + " " + MAX_RESTARTING_TIMEOUT);
 		} catch (IOException e) {
-			logError(MODULE_NAME, "Error executing sh script to change version", new AgentSystemException("Error executing sh script to change version", e));
+			logError(MODULE_NAME, "Error executing sh script to change version", new AgentSystemException(e.getMessage(), e));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished executeing sh script to change iofog version");
+		LoggingService.logInfo(MODULE_NAME, "Finished executing sh script to change iofog version");
 	}
 
 	private static boolean isValidChangeVersionOperation(VersionCommand command) {
-		LoggingService.logInfo(MODULE_NAME, "Checking is Valid Change Version Operation");
 		switch (command){
 			case UPGRADE:
 				return isReadyToUpgrade();
@@ -185,13 +183,13 @@ public class VersionHandler {
 	static boolean isReadyToUpgrade() {
 		boolean isReadyToUpgrade = false;
 		try{
-			LoggingService.logInfo(MODULE_NAME, "Checking is ready to upgrade");
+			LoggingService.logDebug(MODULE_NAME, "Checking is ready to upgrade");
 			isReadyToUpgrade = isNotWindows()
 					&& isPackageRepositoryUpdated()
 					&& areNotVersionsSame();
-			LoggingService.logInfo(MODULE_NAME, "Is ready to upgrade : " + isReadyToUpgrade);
+			LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : " + isReadyToUpgrade);
 		} catch (Exception e){
-			LoggingService.logError(MODULE_NAME, "Error getting is ready to upgrade", new AgentSystemException("Error getting is ready to upgrade", e));
+			LoggingService.logError(MODULE_NAME, "Error getting is ready to upgrade", new AgentSystemException(e.getMessage(), e));
 		}
 		return isReadyToUpgrade;
 	}
@@ -205,10 +203,10 @@ public class VersionHandler {
 	}
 
 	static boolean isReadyToRollback() {
-		LoggingService.logInfo(MODULE_NAME, "Checking is ready to rollback");
+		LoggingService.logDebug(MODULE_NAME, "Checking is ready to rollback");
 		String[] backupsFiles = new File(BACKUPS_DIR).list();
 		boolean isReadyToRollback = !(backupsFiles == null || backupsFiles.length == 0);
-		LoggingService.logInfo(MODULE_NAME, "Is ready to rollback : " + isReadyToRollback);
+		LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : " + isReadyToRollback);
 		return isReadyToRollback;
 	}
 }

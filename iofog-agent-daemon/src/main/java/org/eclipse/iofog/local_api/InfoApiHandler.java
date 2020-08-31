@@ -50,7 +50,7 @@ public class InfoApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start processing info request");
+    	LoggingService.logDebug(MODULE_NAME, "Processing info http request");
         if (!ApiHandlerHelpers.validateMethod(this.req, GET)) {
             LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
             return ApiHandlerHelpers.methodNotAllowedResponse();
@@ -83,11 +83,11 @@ public class InfoApiHandler implements Callable<FullHttpResponse> {
             FullHttpResponse res;
             res = ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
             res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
-            LoggingService.logInfo(MODULE_NAME, "Finished processing info request");
+            LoggingService.logDebug(MODULE_NAME, "Finished processing info http request");
             return res;
         } catch (Exception e) {
-            String errorMsg = "Log message parsing error, " + e.getMessage();
-            LoggingService.logError(MODULE_NAME, errorMsg, e);
+            String errorMsg = "Log message parsing error";
+            LoggingService.logError(MODULE_NAME, errorMsg, new AgentUserException(e.getMessage(), e));
             return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
         }
     }

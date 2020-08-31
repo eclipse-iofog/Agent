@@ -48,7 +48,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() {
-		LoggingService.logInfo(MODULE_NAME, "Start processing gps request");
+		LoggingService.logDebug(MODULE_NAME, "Processing gps http request");
 		final String contentTypeError = ApiHandlerHelpers.validateContentType(this.req, "application/json");
 		if (contentTypeError != null) {
 			LoggingService.logError(MODULE_NAME, contentTypeError, new Exception());
@@ -67,7 +67,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 	}
 
 	private FullHttpResponse setAgentGpsCoordinates() {
-		LoggingService.logInfo(MODULE_NAME, "Start post agent gps coordiates request");
+		LoggingService.logDebug(MODULE_NAME, "Post agent gps coordinates http request");
 		String msgString = new String(content, StandardCharsets.UTF_8);
 		JsonReader reader = Json.createReader(new StringReader(msgString));
 		JsonObject jsonObject = reader.readObject();
@@ -82,8 +82,8 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 			Configuration.writeGpsToConfigFile();
 			Configuration.saveConfigUpdates();
 		} catch (Exception e) {
-			String errorMsg = " Error with setting GPS, " + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(errorMsg, e));
+			String errorMsg = " Error with setting GPS";
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(e.getMessage(), e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -93,15 +93,14 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 
 		String sendMessageResult = builder.build().toString();
 
-		LoggingService.logInfo(MODULE_NAME, "finished post agent gps coordiates request");
-		LoggingService.logInfo(MODULE_NAME, "Finished processing gps request");
+		LoggingService.logDebug(MODULE_NAME, "Finished processing gps request");
 		
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 
 	private FullHttpResponse getAgentGpsCoordinates() {
 
-		LoggingService.logInfo(MODULE_NAME, "Start get agent gps coordiates request");
+		LoggingService.logDebug(MODULE_NAME, "Get agent gps coordinates");
 		
 		String gpsCoordinates = Configuration.getGpsCoordinates();
 		String[] latLon = gpsCoordinates.split(",");
@@ -117,10 +116,8 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		builder.add("lon", lon);
 
 		String sendMessageResult = builder.build().toString();
+		LoggingService.logDebug(MODULE_NAME, "Finished processing gps http request");
 
-		LoggingService.logInfo(MODULE_NAME, "Finished get agent gps coordiates request");
-		LoggingService.logInfo(MODULE_NAME, "Finished processing gps request");
-		
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 }

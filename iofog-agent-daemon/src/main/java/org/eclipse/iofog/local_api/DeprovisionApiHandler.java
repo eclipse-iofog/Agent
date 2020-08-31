@@ -53,7 +53,7 @@ public class DeprovisionApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Starting deprovison Api Handler call");
+    	LoggingService.logDebug(MODULE_NAME, "Start deprovison Api Handler http request");
         if (!ApiHandlerHelpers.validateMethod(this.req, DELETE)) {
             LoggingService.logError(MODULE_NAME, "Request method not allowed", 
             		new AgentUserException("Request method not allowed"));
@@ -84,7 +84,7 @@ public class DeprovisionApiHandler implements Callable<FullHttpResponse> {
                 res = ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
             }
             res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
-            LoggingService.logInfo(MODULE_NAME, "Finshing status Api Handler call");
+            LoggingService.logDebug(MODULE_NAME, "Finished status Api Handler http request");
             return res;
         } catch (Exception e) {
             String errorMsg = "Log message parsing error, " + e.getMessage();

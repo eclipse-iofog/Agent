@@ -43,23 +43,23 @@ public class ResourceManager implements IOFogModule {
 
     public void start() {
         new Thread(getUsageData, Constants.RESOURCE_MANAGER_GET_USAGE_DATA).start();
+        LoggingService.logDebug("ResourceManager", "started");
 
-        LoggingService.logInfo(MODULE_NAME, "started");
     }
 
     private Runnable getUsageData = () -> {
 
         while (true) {
-        	LoggingService.logInfo(MODULE_NAME, "Start getting usage data");
+        	LoggingService.logDebug(MODULE_NAME, "Start getting usage data");
             FieldAgent.getInstance().sendUSBInfoFromHalToController();
             FieldAgent.getInstance().sendHWInfoFromHalToController();
             try {
                 Thread.sleep(Configuration.getDeviceScanFrequency() * 1000);
             } catch (InterruptedException e) {
-                LoggingService.logError(MODULE_NAME, "", 
-                		new AgentSystemException("Error getting usage data", e));
+                LoggingService.logError(MODULE_NAME, "Error getting usage data",
+                		new AgentSystemException(e.getMessage(), e));
             }
-            LoggingService.logInfo(MODULE_NAME, "Finished getting usage data");
+            LoggingService.logDebug(MODULE_NAME, "Finished getting usage data");
         }
     };
 

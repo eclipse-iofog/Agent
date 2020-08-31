@@ -66,10 +66,10 @@ public class MessageBusServer {
      * @throws Exception
      */
     void startServer(String routerHost, int routerPort) throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "starting server");
+        LoggingService.logDebug(MODULE_NAME, "Starting server");
         JmsConnectionFactory connectionFactory = new JmsConnectionFactory(String.format("amqp://%s:%d", routerHost, routerPort));
         connection = connectionFactory.createConnection();
-        LoggingService.logInfo(MODULE_NAME, "Finished starting server");
+        LoggingService.logDebug(MODULE_NAME, "Finished starting server");
     }
 
     /**
@@ -79,12 +79,12 @@ public class MessageBusServer {
      * @throws Exception
      */
     void initialize() throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "starting initialization");
+        LoggingService.logDebug(MODULE_NAME, "Starting initialization");
         synchronized (messageBusSessionLock) {
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
             connection.start();
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished initialization");
+        LoggingService.logDebug(MODULE_NAME, "Finished initialization");
     }
 
     /**
@@ -94,7 +94,7 @@ public class MessageBusServer {
      * @throws Exception
      */
     void createConsumer(String name) throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "Starting create consumer");
+        LoggingService.logDebug(MODULE_NAME, "Starting create consumer");
 
         synchronized (consumerLock) {
             Destination messageQueue = session.createQueue(name);
@@ -102,7 +102,7 @@ public class MessageBusServer {
             consumers.put(name, consumer);
         }
 
-        LoggingService.logInfo(MODULE_NAME, "Finished create consumer");
+        LoggingService.logDebug(MODULE_NAME, "Finished create consumer");
     }
 
     /**
@@ -112,7 +112,7 @@ public class MessageBusServer {
      * @return {@link MessageConsumer}
      */
     MessageConsumer getConsumer(String receiver) throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "Start get consumer");
+        LoggingService.logDebug(MODULE_NAME, "Start get consumer");
         if (consumers == null || !consumers.containsKey(receiver))
             try {
                 createConsumer(receiver);
@@ -121,7 +121,7 @@ public class MessageBusServer {
                 throw e;
             }
 
-        LoggingService.logInfo(MODULE_NAME, "Finished get consumer");
+        LoggingService.logDebug(MODULE_NAME, "Finished get consumer");
         return consumers.get(receiver);
     }
 
@@ -131,7 +131,7 @@ public class MessageBusServer {
      * @param name - ID of {@link Microservice}
      */
     void removeConsumer(String name) throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "Start remove consumer");
+        LoggingService.logDebug(MODULE_NAME, "Start remove consumer");
 
         synchronized (consumerLock) {
             if (consumers != null && consumers.containsKey(name)) {
@@ -140,7 +140,7 @@ public class MessageBusServer {
             }
         }
 
-        LoggingService.logInfo(MODULE_NAME, "Finished remove consumer");
+        LoggingService.logDebug(MODULE_NAME, "Finished remove consumer");
     }
 
     /**
@@ -150,7 +150,7 @@ public class MessageBusServer {
      * @throws Exception
      */
     void createProducer(String name, List<String> receivers) throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "Start create Producer");
+        LoggingService.logDebug(MODULE_NAME, "Start create Producer");
 
         synchronized (producerLock) {
             if (receivers != null && receivers.size() > 0) {
@@ -164,7 +164,7 @@ public class MessageBusServer {
             }
         }
 
-        LoggingService.logInfo(MODULE_NAME, "Finish create Producer");
+        LoggingService.logDebug(MODULE_NAME, "Finish create Producer");
     }
 
     /**
@@ -174,7 +174,7 @@ public class MessageBusServer {
      * @return {@link MessageProducer}
      */
     List<MessageProducer> getProducer(String publisher, List<String> receivers) throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "Start get Producer");
+        LoggingService.logDebug(MODULE_NAME, "Start get Producer");
 
         if (!producers.containsKey(publisher)) {
             try {
@@ -185,7 +185,7 @@ public class MessageBusServer {
             }
         }
 
-        LoggingService.logInfo(MODULE_NAME, "Finish get Producer");
+        LoggingService.logDebug(MODULE_NAME, "Finish get Producer");
         return producers.get(publisher);
     }
 
@@ -195,7 +195,7 @@ public class MessageBusServer {
      * @param name - ID of {@link Microservice}
      */
     void removeProducer(String name) {
-        LoggingService.logInfo(MODULE_NAME, "Start remove Producer");
+        LoggingService.logDebug(MODULE_NAME, "Start remove Producer");
 
 		synchronized (producerLock) {
 			if (producers != null && producers.containsKey(name)) {
@@ -210,7 +210,7 @@ public class MessageBusServer {
 			}
 		}
 
-        LoggingService.logInfo(MODULE_NAME, "Finish remove Producer");
+        LoggingService.logDebug(MODULE_NAME, "Finish remove Producer");
     }
 
     /**
@@ -226,7 +226,7 @@ public class MessageBusServer {
                     value.close();
                 } catch (Exception e) {
                     LoggingService.logError(MODULE_NAME, "Error closing consumer",
-                            new AgentSystemException("Error closing consumer", e));
+                            new AgentSystemException(e.getMessage(), e));
                 }
             });
             consumers.clear();
@@ -238,7 +238,7 @@ public class MessageBusServer {
                         producer.close();
                     } catch (Exception e) {
                         LoggingService.logError(MODULE_NAME, "Error closing producer",
-                                new AgentSystemException("Error closing producer", e));
+                                new AgentSystemException(e.getMessage(), e));
                     }
                 });
             });

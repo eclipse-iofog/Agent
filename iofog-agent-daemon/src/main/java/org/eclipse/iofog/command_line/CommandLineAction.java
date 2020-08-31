@@ -132,7 +132,7 @@ public enum CommandLineAction {
 				status = FieldAgent.getInstance().deProvision(false);
 			} catch (Exception e) {
 				status = "Error";
-				LoggingService.logError(MODULE_NAME, "error de-provisioning", new AgentUserException("error de-provisioning"));
+				LoggingService.logError(MODULE_NAME, "error de-provisioning", new AgentUserException(e.getMessage(), e));
 				throw new AgentUserException(format(getDeprovisionMessage(), status));
 			}
 			Tracker.getInstance().handleEvent(TrackingEventType.DEPROVISION, status);
@@ -299,7 +299,7 @@ public enum CommandLineAction {
 
 		@Override
 		public String perform(String[] args) {
-			return FieldAgent.getInstance().getcheckUpgradeReadyReport();
+			return FieldAgent.getInstance().getCheckUpgradeReadyReport();
 		}
 	};
 

@@ -34,15 +34,14 @@ public class WebsocketUtil {
 	 * @return void
 	 */
 	public static synchronized void removeWebsocketContextFromMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
-		LoggingService.logInfo(MODULE_NAME, "Start Removing real-time websocket context for the id ");
+		LoggingService.logDebug(MODULE_NAME, "Removing real-time websocket context for the id ");
 		for (Iterator<Map.Entry<String,ChannelHandlerContext>> it = socketMap.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<String,ChannelHandlerContext> e = it.next();
 			if (ctx.equals(e.getValue())) {
-				LoggingService.logInfo(MODULE_NAME, "Removing real-time websocket context for the id: " + e.getKey());
 				it.remove();
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished Removing real-time websocket context for the id ");
+		LoggingService.logDebug(MODULE_NAME, "Finished Removing real-time websocket context for the id ");
 	}
 	
 	/**
@@ -52,13 +51,12 @@ public class WebsocketUtil {
 	 * @return boolean
 	 */
 	public static boolean hasContextInMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap) {
-		LoggingService.logInfo(MODULE_NAME,"Start Check if the container has open real-time websocket ");
-		for (ChannelHandlerContext context: socketMap.values()) 
+		for (ChannelHandlerContext context: socketMap.values())
 			if (context.equals(ctx)) {
-				LoggingService.logInfo(MODULE_NAME, "Finished Check if the container has open real-time websocket : " + true);
+				LoggingService.logInfo(MODULE_NAME, "Container has open real-time websocket : " + true);
 				return true;
 			}
-		LoggingService.logInfo(MODULE_NAME, "Finished Check if the container has open real-time websocket : " + false);
+		LoggingService.logInfo(MODULE_NAME, "Container has open real-time websocket : " + false);
 		return false;
 	}
 	
@@ -69,15 +67,13 @@ public class WebsocketUtil {
 	 * @return String
 	 */
 	public static String getIdForWebsocket(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap){
-		LoggingService.logInfo(MODULE_NAME, "Start Get id for the real-time socket channel");
+		LoggingService.logDebug(MODULE_NAME, "Get id for the real-time socket channel");
 		String id = "";
 		for (Map.Entry<String, ChannelHandlerContext> e : socketMap.entrySet()) {
 			if (ctx.equals(e.getValue())) {
-				LoggingService.logInfo(MODULE_NAME, "Finished : Context found as real-time websocket");
 				return e.getKey();
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished : Context not found as real-time websocket");
 		return id;
 	}
 }

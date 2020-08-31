@@ -101,7 +101,7 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-		LoggingService.logInfo(MODULE_NAME, "Start Handler for the real-time message receive and sending real time-time messages");
+		LoggingService.logDebug(MODULE_NAME, "Handle the real-time message receive and sending real time-time messages");
 		if (frame instanceof PingWebSocketFrame) {
 			ByteBuf buffer = frame.content();
 			if (buffer.readableBytes() == 1) {
@@ -114,7 +114,7 @@ public class MessageWebsocketHandler {
 					}
 				}
 			} else {
-				LoggingService.logInfo(MODULE_NAME, "Handler for the real-time message, Ping opcode not found");
+				LoggingService.logDebug(MODULE_NAME, "Real-time message, Ping opcode not found");
 			}
 
 			return;
@@ -185,7 +185,7 @@ public class MessageWebsocketHandler {
 			WebsocketUtil.removeWebsocketContextFromMap(ctx, WebSocketMap.messageWebsocketMap);
 			StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.messageWebsocketMap.size());
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished Handler for the real-time message receive and sending real time-time messages");
+		LoggingService.logDebug(MODULE_NAME, "Finished real-time message receive and sending real time-time messages");
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class MessageWebsocketHandler {
 	 * @return void
 	 */
 	public void sendRealTimeMessage(String receiverId, Message message) {
-		LoggingService.logInfo(MODULE_NAME, "Start Helper to send real-time messages");
+		LoggingService.logDebug(MODULE_NAME, "Send real-time messages");
 		ChannelHandlerContext ctx;
 		Map<String, ChannelHandlerContext> messageSocketMap = WebSocketMap.messageWebsocketMap;
 
@@ -220,8 +220,6 @@ public class MessageWebsocketHandler {
 			LoggingService.logError(MODULE_NAME, "No active real-time websocket found for " + receiverId, 
 					new AgentSystemException("No active real-time websocket found for " + receiverId, null));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished Helper to send real-time messages");
-
 	}
 
 	/**

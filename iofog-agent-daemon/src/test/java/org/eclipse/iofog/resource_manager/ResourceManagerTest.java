@@ -75,7 +75,7 @@ public class ResourceManagerTest {
         assertEquals(Constants.RESOURCE_MANAGER, resourceManager.getModuleIndex());
         assertEquals("ResourceManager", resourceManager.getModuleName());
         PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-        LoggingService.logInfo("ResourceManager", "started");
+        LoggingService.logDebug("ResourceManager", "started");
     }
 
 }

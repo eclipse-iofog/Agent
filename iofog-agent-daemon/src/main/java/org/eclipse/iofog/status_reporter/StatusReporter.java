@@ -56,14 +56,14 @@ public final class StatusReporter {
 	 * sets system time property
 	 */
 	private static final Runnable setStatusReporterSystemTime = () -> {
-		LoggingService.logInfo(MODULE_NAME, "Inside setStatusReporterSystemTime");
+		LoggingService.logDebug(MODULE_NAME, "Inside setStatusReporterSystemTime");
 		try {
 			Thread.currentThread().setName(Constants.STATUS_REPORTER_SET_STATUS_REPORTER_SYSTEM_TIME);
 			setStatusReporterStatus().setSystemTime(System.currentTimeMillis());
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, e.getMessage(), new AgentSystemException(e.getMessage(), e));
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished setStatusReporterSystemTime");
+		LoggingService.logDebug(MODULE_NAME, "Finished setStatusReporterSystemTime");
 	};
 
 	private StatusReporter() {
@@ -126,49 +126,49 @@ public final class StatusReporter {
 	}
 
 	public static SupervisorStatus setSupervisorStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Supervisor Status");
+		LoggingService.logDebug(MODULE_NAME, "set Supervisor Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return supervisorStatus;
 	}
 
 	public static ResourceConsumptionManagerStatus setResourceConsumptionManagerStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set ResourceConsumption Manager Status");
+		LoggingService.logDebug(MODULE_NAME, "set ResourceConsumption Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return resourceConsumptionManagerStatus;
 	}
 
 	public static ResourceManagerStatus setResourceManagerStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Resource Manager Status");
+		LoggingService.logDebug(MODULE_NAME, "set Resource Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return resourceManagerStatus;
 	}
 
 	public static MessageBusStatus setMessageBusStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Message Bus Status");
+		LoggingService.logDebug(MODULE_NAME, "set Message Bus Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return messageBusStatus;
 	}
 
 	public static FieldAgentStatus setFieldAgentStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Field Agent Status");
+		LoggingService.logDebug(MODULE_NAME, "set Field Agent Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return fieldAgentStatus;
 	}
 
 	public static StatusReporterStatus setStatusReporterStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Status Reporter Status");
+		LoggingService.logDebug(MODULE_NAME, "set Status Reporter Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return statusReporterStatus;
 	}
 
 	public static ProcessManagerStatus setProcessManagerStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Process Manager Status");
+		LoggingService.logDebug(MODULE_NAME, "set Process Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return processManagerStatus;
 	}
 
 	public static SshProxyManagerStatus setSshProxyManagerStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set SshProxy Manager Status");
+		LoggingService.logDebug(MODULE_NAME, "set SshProxy Manager Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return sshManagerStatus;
 	}
@@ -178,7 +178,7 @@ public final class StatusReporter {
 	}
 
 	public static LocalApiStatus setLocalApiStatus() {
-		LoggingService.logInfo(MODULE_NAME, "set Local Api Status");
+		LoggingService.logDebug(MODULE_NAME, "set Local Api Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
 		return localApiStatus;
 	}

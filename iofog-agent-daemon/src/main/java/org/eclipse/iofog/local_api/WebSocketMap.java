@@ -39,7 +39,7 @@ public final class WebSocketMap {
 	}
 	
 	public static void addWebsocket(char ws, String id, ChannelHandlerContext ctx) {
-		LoggingService.logInfo("WebSocketMap", "Adding web socket");
+		LoggingService.logDebug("WebSocketMap", "Adding web socket");
 		synchronized (WebSocketMap.class) {
 			switch (ws) {
 				case 'C':
@@ -49,7 +49,6 @@ public final class WebSocketMap {
 					messageWebsocketMap.put(id, ctx);
 			}
 		}
-		LoggingService.logInfo("WebSocketMap", "Finished adding web socket");
 	}
 
 	public static Map<String, ChannelHandlerContext> getMessageWebsocketMap() {

@@ -86,7 +86,7 @@ public class MessageReceiverTest {
             PowerMockito.verifyPrivate(messageReceiver, times(1))
                     .invoke("getMessage");
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, String.format("Finished getting message \"%s\"", name));
+            LoggingService.logDebug(MODULE_NAME, String.format("Finished getting message \"%s\"", name));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -144,7 +144,7 @@ public class MessageReceiverTest {
             messageReceiver.enableRealTimeReceiving();
             Mockito.verify(messageConsumer, Mockito.never()).setMessageListener(any(IOMessageListener.class));
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start enable real time receiving");
+            LoggingService.logDebug(MODULE_NAME, "Start enable real time receiving");
             verifyStatic(LoggingService.class);
             LoggingService.logError(anyString(), anyString(), any());
         } catch (Exception e) {
@@ -209,9 +209,9 @@ public class MessageReceiverTest {
             messageReceiver.disableRealTimeReceiving();
             Mockito.verify(messageConsumer, Mockito.never()).setMessageListener(any(IOMessageListener.class));
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start disable real time receiving");
+            LoggingService.logDebug(MODULE_NAME, "Start disable real time receiving");
             verifyStatic(LoggingService.class, Mockito.never());
-            LoggingService.logInfo(MODULE_NAME, "Finished disable real time receiving");
+            LoggingService.logDebug(MODULE_NAME, "Finished disable real time receiving");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -242,9 +242,9 @@ public class MessageReceiverTest {
             Mockito.verify(messageReceiver).disableRealTimeReceiving();
             Mockito.verify(messageConsumer).close();
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start closing receiver");
+            LoggingService.logDebug(MODULE_NAME, "Start closing receiver");
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finished closing receiver");
+            LoggingService.logDebug(MODULE_NAME, "Finished closing receiver");
         } catch (Exception e) {
             fail("This should not happen");
         }

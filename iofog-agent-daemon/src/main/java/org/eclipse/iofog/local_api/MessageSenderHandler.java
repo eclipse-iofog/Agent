@@ -54,7 +54,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleMessageSenderRequest() {
-		LoggingService.logInfo(MODULE_NAME, "Start Handler method to publish the messages from the container to message bus");
+		LoggingService.logDebug(MODULE_NAME, "Publish the messages from the container to message bus");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
@@ -96,7 +96,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 		builder.add("id", message.getId());
 
 		String sendMessageResult = builder.build().toString();
-		LoggingService.logInfo(MODULE_NAME, "Finished Handler method to publish the messages from the container to message bus");
+		LoggingService.logDebug(MODULE_NAME, "Finished publish the messages from the container to message bus");
 		return ApiHandlerHelpers.successResponse(outputBuffer, sendMessageResult);
 	}
 
@@ -107,7 +107,7 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 	 */
 	private void validateMessage(JsonObject message) throws Exception {
 		
-		LoggingService.logInfo(MODULE_NAME, "Start Handler method to validate the request and the message to publish");
+		LoggingService.logDebug(MODULE_NAME, "Validate the request and the message to publish");
 		if (!message.containsKey("publisher"))
 			throw new AgentUserException("Error: Missing input field publisher ");
 		if (!message.containsKey("version"))
@@ -165,7 +165,6 @@ public class MessageSenderHandler implements Callable<FullHttpResponse> {
 				throw new AgentUserException("Error: Invalid  value for field difficulty target ");
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished Handler method to validate the request and the message to publish");
 	}
 
 	/**

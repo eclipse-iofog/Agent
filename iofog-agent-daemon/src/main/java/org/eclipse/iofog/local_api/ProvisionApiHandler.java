@@ -54,10 +54,10 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start processing request in Provision Api Handler");
+    	LoggingService.logDebug(MODULE_NAME, "Processing request in Provision Api Handler");
         if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
             LoggingService.logError(MODULE_NAME, "Request method not allowed", 
-            		new AgentUserException("Request method not allowed", new Exception()));
+            		new AgentUserException("Request method not allowed"));
             return ApiHandlerHelpers.methodNotAllowedResponse();
         }
 
@@ -72,7 +72,7 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
             String errorMsg = "Incorrect access token";
             outputBuffer.writeBytes(errorMsg.getBytes(UTF_8));
             LoggingService.logError(MODULE_NAME, contentTypeError, 
-            		new AgentUserException("Incorrect access token", new Exception()));
+            		new AgentUserException(errorMsg));
             return ApiHandlerHelpers.unauthorizedResponse(outputBuffer, errorMsg);
         }
 
@@ -101,7 +101,7 @@ public class ProvisionApiHandler implements Callable<FullHttpResponse> {
                 res = ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
             }
             res.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
-            LoggingService.logInfo(MODULE_NAME, "Finished processing request in Provision Api Handler");
+            LoggingService.logDebug(MODULE_NAME, "Finished processing request in Provision Api Handler");
             return res;
         } catch (Exception e) {
             String errorMsg = "Log message parsing error, " + e.getMessage();

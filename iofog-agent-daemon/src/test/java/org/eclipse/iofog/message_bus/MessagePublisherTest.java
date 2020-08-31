@@ -106,9 +106,9 @@ public class MessagePublisherTest {
             messagePublisher.publish(message);
             Mockito.verify(messageArchive, atLeastOnce()).save(any(byte[].class), anyLong());
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start publish message :name");
+            LoggingService.logDebug(MODULE_NAME, "Start publish message :name");
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finished publish message : name");
+            LoggingService.logDebug(MODULE_NAME, "Finished publish message : name");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -139,7 +139,7 @@ public class MessagePublisherTest {
         try {
             messagePublisher.updateRoute(route, messageProducers);
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Updating route");
+            LoggingService.logDebug(MODULE_NAME, "Updating route");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -154,9 +154,9 @@ public class MessagePublisherTest {
             messagePublisher.close();
             Mockito.verify(messageArchive, atLeastOnce()).close();
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Start closing publish");
+            LoggingService.logDebug(MODULE_NAME, "Start closing publish");
             verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finished closing publish");
+            LoggingService.logDebug(MODULE_NAME, "Finished closing publish");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -186,8 +186,6 @@ public class MessagePublisherTest {
         try {
             assertEquals(messageList, messagePublisher.messageQuery(System.currentTimeMillis()-1, System.currentTimeMillis()));
             Mockito.verify(messageArchive, atLeastOnce()).messageQuery(anyLong(), anyLong());
-            verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Getting messages by query");
         } catch (Exception e) {
             fail("This should not happen");
         }

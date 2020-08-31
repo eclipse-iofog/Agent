@@ -45,7 +45,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
 
     @Override
     public FullHttpResponse call() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start processing commandline api request");
+    	LoggingService.logDebug(MODULE_NAME, "Handle Bluetooth api http request");
     	
         String host = "localhost";
         int port = 10500;
@@ -105,7 +105,7 @@ public class BluetoothApiHandler implements Callable<FullHttpResponse> {
             LoggingService.logInfo(MODULE_NAME, "error unable to reach RESTblue container!");
         }
         
-        LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+        LoggingService.logDebug(MODULE_NAME, "Finished processing commandline api request");
         return response;
     }
 

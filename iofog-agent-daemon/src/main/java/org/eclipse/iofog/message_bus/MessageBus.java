@@ -97,12 +97,12 @@ public class MessageBus implements IOFogModule {
 	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void enableRealTimeReceiving(String receiver) {
-		logInfo("Starting enable real time receiving");
+		logDebug("Starting enable real time receiving");
 		MessageReceiver rec = receiver != null ? receivers.get(receiver) : null;
 		if (rec == null)
 			return;
 		rec.enableRealTimeReceiving();
-		logInfo("Finishing enable real time receiving");
+		logDebug("Finishing enable real time receiving");
 	}
 
 	/**
@@ -111,12 +111,12 @@ public class MessageBus implements IOFogModule {
 	 * @param receiver - ID of {@link Microservice}
 	 */
 	public synchronized void disableRealTimeReceiving(String receiver) {
-		logInfo("Starting disable real time receiving");
+		logDebug("Starting disable real time receiving");
 		MessageReceiver rec = receiver != null ? receivers.get(receiver) : null;
 		if (rec == null)
 			return;
 		rec.disableRealTimeReceiving();
-		logInfo("Finishing disable real time receiving");
+		logDebug("Finishing disable real time receiving");
 	}
 
 	/**
@@ -142,10 +142,9 @@ public class MessageBus implements IOFogModule {
 	private final Runnable calculateSpeed = () -> {
 		while (true) {
 			try {
-				logInfo("calculating message processing speed");
 				Thread.sleep(Configuration.getSpeedCalculationFreqMinutes() * 60 * 1000);
 
-				logInfo("Start calculating message processing speed");
+				logDebug("Start calculating message processing speed");
 
 				long now = System.currentTimeMillis();
 				long msgs = StatusReporter.getMessageBusStatus().getProcessedMessages();
@@ -158,7 +157,7 @@ public class MessageBus implements IOFogModule {
 				logError(MODULE_NAME,
 						new AgentSystemException("unable to calculate message processing speed", exp));
 			}
-			logInfo("Finished calculating message processing speed");
+			logDebug("Finished calculating message processing speed");
 		}
 	};
 
@@ -259,7 +258,7 @@ public class MessageBus implements IOFogModule {
 	 * 
 	 */
 	public void update() throws Exception {
-		logInfo("Start update routes, list of publishers and receivers");
+		logDebug("Start update routes, list of publishers and receivers");
 		synchronized (updateLock) {
 			if (!messageBusServer.isConnected()) {
 				messageBusServer.setConnected(false);
@@ -284,7 +283,7 @@ public class MessageBus implements IOFogModule {
 
 			updatePublishersAndReceivers();
 		}
-		logInfo("Finished update routes, list of publishers and receivers");
+		logDebug("Finished update routes, list of publishers and receivers");
 	}
 	
 	/**
@@ -372,7 +371,7 @@ public class MessageBus implements IOFogModule {
 				try {
 					receiver.close();
 				} catch (Exception e) {
-					logError("Error closing receiver " + receiver.getName(), new AgentSystemException("Error closing receiver " + receiver.getName(), e));
+					logError("Error closing receiver " + receiver.getName(), new AgentSystemException(e.getMessage(), e));
 				}
 			}
 			receivers.clear();
@@ -383,7 +382,7 @@ public class MessageBus implements IOFogModule {
 				try {
 					publisher.close();
 				} catch (Exception e) {
-					logError("Error closing publisher " + publisher.getName(), new AgentSystemException("Error closing publisher " + publisher.getName(), e));
+					logError("Error closing publisher " + publisher.getName(), new AgentSystemException(e.getMessage(), e));
 				}
 			}
 			publishers.clear();
@@ -392,7 +391,7 @@ public class MessageBus implements IOFogModule {
 		try {
 			messageBusServer.stopServer();
 		} catch (Exception exp) {
-			logError("Error closing receivers and publishers and stops ActiveMQ server", new AgentSystemException("Error closing receivers and publishers and stops ActiveMQ server", exp));
+			logError("Error closing receivers and publishers and stops ActiveMQ server", new AgentSystemException(exp.getMessage(), exp));
 		}
 		logInfo("Finished closing receivers and publishers and stops ActiveMQ server");
 	}

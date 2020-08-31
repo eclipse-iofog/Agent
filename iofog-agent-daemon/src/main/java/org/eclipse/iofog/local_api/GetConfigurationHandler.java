@@ -54,7 +54,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleGetConfigurationRequest() {
-		LoggingService.logInfo(MODULE_NAME, "Start processing config request");
+		LoggingService.logDebug(MODULE_NAME, "Processing config http request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
@@ -73,12 +73,12 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 		try {
 			validateRequest(jsonObject);
 		} catch (AgentUserException e) {
-			String errorMsg = "Incorrect content/data, " + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, e);
+			String errorMsg = "Incorrect content/data";
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(e.getMessage(), e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		} catch (Exception e) {
-			String errorMsg = "Incorrect content/data, " + e.getMessage();
-			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(errorMsg, e));
+			String errorMsg = "Incorrect content/data ";
+			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(e.getMessage(), e));
 			return ApiHandlerHelpers.badRequestResponse(outputBuffer, errorMsg);
 		}
 
@@ -92,7 +92,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 			builder.add("config", containerConfig);
 			String result = builder.build().toString();
 
-			LoggingService.logInfo(MODULE_NAME, "Finished processing config request");
+			LoggingService.logDebug(MODULE_NAME, "Finished processing config request");
 			return ApiHandlerHelpers.successResponse(outputBuffer, result);
 		} else {
 			String errorMsg = "No configuration found for the id " + receiverId;
@@ -108,7 +108,7 @@ public class GetConfigurationHandler implements Callable<FullHttpResponse> {
 	 * @return String
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Validate config request");
+		LoggingService.logDebug(MODULE_NAME, "Validate config request");
 		if (!jsonObject.containsKey("id") ||
 				jsonObject.isNull("id") ||
 				jsonObject.getString("id").trim().equals(""))

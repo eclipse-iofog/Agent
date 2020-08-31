@@ -174,7 +174,7 @@ public class ImageDownloadManagerTest {
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
         verify(orchestrator, never()).sendFileToController(any(), any());
         PowerMockito.verifyStatic(LoggingService.class, VerificationModeFactory.times(1));
-        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
+        LoggingService.logDebug(MODULE_NAME, "Finished Create image snapshot");
     }
 
     /**
@@ -193,7 +193,7 @@ public class ImageDownloadManagerTest {
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
         verify(orchestrator, atLeastOnce()).sendFileToController(any(), any());
         PowerMockito.verifyStatic(LoggingService.class, VerificationModeFactory.times(1));
-        LoggingService.logInfo(MODULE_NAME, "Finished Create image snapshot");
+        LoggingService.logDebug(MODULE_NAME, "Finished Create image snapshot");
     }
 
     /**

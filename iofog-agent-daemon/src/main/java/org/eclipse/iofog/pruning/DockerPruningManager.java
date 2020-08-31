@@ -64,7 +64,7 @@ public class DockerPruningManager {
         try {
             docker.dockerPrune();
         } catch (Exception e){
-            LoggingService.logError(MODULE_NAME,"Error in Docker Pruning scheduler", new AgentSystemException("Error in docker Pruning", e));
+            LoggingService.logError(MODULE_NAME,"Error in Docker Pruning scheduler", new AgentSystemException(e.getMessage(), e));
         }
     };
 
@@ -109,7 +109,7 @@ public class DockerPruningManager {
             docker.dockerPrune();
             return "\nSuccess - pruned dangling docker images.";
         } catch (Exception e){
-            LoggingService.logError(MODULE_NAME,"Error in docker Pruning", new AgentSystemException("Error in docker Pruning", e));
+            LoggingService.logError(MODULE_NAME,"Error in docker Pruning", new AgentSystemException(e.getMessage(), e));
             return "\nFailure - not pruned.";
         }
     }

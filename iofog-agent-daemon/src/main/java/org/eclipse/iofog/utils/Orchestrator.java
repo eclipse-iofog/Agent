@@ -29,7 +29,6 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.field_agent.enums.RequestType;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -57,9 +56,7 @@ import java.security.cert.CertificateFactory;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.eclipse.iofog.utils.logging.LoggingService.logError;
-import static org.eclipse.iofog.utils.logging.LoggingService.logWarning;
-import static org.eclipse.iofog.utils.logging.LoggingService.logInfo;
+import static org.eclipse.iofog.utils.logging.LoggingService.*;
 
 /**
  * provides methods for IOFog controller
@@ -87,10 +84,10 @@ public class Orchestrator {
      * @throws Exception
      */
     public boolean ping() throws Exception {
-    	logInfo(MODULE_NAME, "Inside ping");
+    	logDebug(MODULE_NAME, "Inside ping");
         try {
             JsonObject result = getJSON(controllerUrl + "status");
-            logInfo(MODULE_NAME, "Finished pinging");
+            logDebug(MODULE_NAME, "Finished pinging");
             return !result.isNull("status");
         } catch (Exception exp) {
             logError(MODULE_NAME, "Error pinging", new AgentSystemException(exp.getMessage(), exp));
@@ -106,7 +103,7 @@ public class Orchestrator {
      * @throws AgentSystemException
      */
     public JsonObject provision(String key) throws AgentSystemException {
-    	logInfo(MODULE_NAME, "Inside provision");
+    	logDebug(MODULE_NAME, "Inside provision");
         try {
 			JsonObject result;
 			JsonObject json = Json.createObjectBuilder()
@@ -115,7 +112,7 @@ public class Orchestrator {
 			        .build();
 
 			result = request("provision", RequestType.POST, null, json);
-			logInfo(MODULE_NAME, "Finished provision");
+			logDebug(MODULE_NAME, "Finished provision");
 			return result;
 		} catch (Exception e) {
 			logError(MODULE_NAME, "Error while provision", new AgentSystemException(e.getMessage(), e));
@@ -124,7 +121,7 @@ public class Orchestrator {
     }
 
     private RequestConfig getRequestConfig() throws Exception {
-    	logInfo(MODULE_NAME, "get request config");
+    	logDebug(MODULE_NAME, "get request config");
         return RequestConfig.copy(RequestConfig.DEFAULT)
                 .setLocalAddress(IOFogNetworkInterfaceManager.getInstance().getInetAddress())
                 .setConnectTimeout(CONNECTION_TIMEOUT)
@@ -137,7 +134,7 @@ public class Orchestrator {
      * @throws Exception
      */
     private void initialize(boolean secure) throws AgentSystemException {
-    	logInfo(MODULE_NAME, "Start initialize TrustManager");
+    	logDebug(MODULE_NAME, "Start initialize TrustManager");
         if (secure) {
             TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
             SSLContext sslContext;
@@ -155,7 +152,7 @@ public class Orchestrator {
         } else {
             client = HttpClients.createDefault();
         }
-        logInfo(MODULE_NAME, "Finished initialize TrustManager");
+        logDebug(MODULE_NAME, "Finished initialize TrustManager");
     }
 
     /**
@@ -165,16 +162,16 @@ public class Orchestrator {
      * @return {@link Certificate}
      */
     private Certificate getCert(InputStream is) {
-    	logInfo(MODULE_NAME, "Start get Certificate");
+    	logDebug(MODULE_NAME, "Start get Certificate");
         Certificate result = null;
         try {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             result = certificateFactory.generateCertificate(is);
         } catch (CertificateException exp) {
             logError(MODULE_NAME, "unable to get certificate",
-        			new AgentUserException("unable to get certificate", exp));
+        			new AgentUserException(exp.getMessage(), exp));
         }
-        logInfo(MODULE_NAME, "Finished get Certificate");
+        logDebug(MODULE_NAME, "Finished get Certificate");
         return result;
     }
 
@@ -186,7 +183,7 @@ public class Orchestrator {
      * @throws AgentSystemException 
      */
     private JsonObject getJSON(String surl) throws AgentUserException  {
-    	logInfo(MODULE_NAME, "Start getJSON for result of a IOFog Controller endpoint");
+    	logDebug(MODULE_NAME, "Start getJSON for result of a IOFog Controller endpoint");
         // disable certificates for dev mode
         boolean secure = true;
         if (!surl.toLowerCase().startsWith("https")) {
@@ -227,18 +224,18 @@ public class Orchestrator {
 
         } catch (UnsupportedEncodingException e) {
         	logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
-        			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
-        	throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
+        			new AgentUserException(e.getMessage(), e));
+        	throw new AgentUserException(e.getMessage(), e );
 
     	} catch (UnsupportedOperationException e) {
     		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
-        			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
-    		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
+        			new AgentUserException(e.getMessage(), e));
+    		throw new AgentUserException(e.getMessage(), e );
 
     	} catch (ClientProtocolException e) {
     		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
-        			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
-    		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
+        			new AgentUserException(e.getMessage(), e));
+    		throw new AgentUserException(e.getMessage(), e );
     		
     	} catch (IOException e) {
             try {
@@ -247,29 +244,26 @@ public class Orchestrator {
                 LoggingService.logWarning(MODULE_NAME, "Unable to update network interface : " + ex.getMessage());
             }
             logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
-        			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
-    		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
+        			new AgentUserException(e.getMessage(), e));
+    		throw new AgentUserException(e.getMessage(), e );
     		
     	}catch (Exception e) {
     		logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",
-        			new AgentUserException("unable to connect to IOFog Controller endpoint", e));
-    		throw new AgentUserException("unable to connect to IOFog Controller endpoint", e );
+        			new AgentUserException(e.getMessage(), e));
+    		throw new AgentUserException(e.getMessage(), e );
     	}
         logInfo(MODULE_NAME, "Finished getJSON for result of a IOFog Controller endpoint");
         return result;
     }
 
     public JsonObject request(String command, RequestType requestType, Map<String, Object> queryParams, JsonObject json) throws Exception {
-    	logInfo(MODULE_NAME, "get request JsonObject");
     	if (json == null) {
             json = Json.createObjectBuilder().build();
         }
-    	logInfo(MODULE_NAME, "finished request JsonObject");
         return getJsonObject(queryParams, requestType, new StringEntity(json.toString(), ContentType.APPLICATION_JSON), createUri(command));
     }
 
     private StringBuilder createUri(String command) {
-    	logInfo(MODULE_NAME, "Create Uri");
         StringBuilder uri = new StringBuilder(controllerUrl);
         uri.append("agent/")
                 .append(command);
@@ -279,7 +273,7 @@ public class Orchestrator {
 
     private JsonObject getJsonObject(Map<String, Object> queryParams, RequestType requestType, HttpEntity httpEntity, StringBuilder uri) throws Exception {
         // disable certificates for dev mode
-    	logInfo(MODULE_NAME, "Start get JsonObject");
+    	logDebug(MODULE_NAME, "Start get JsonObject");
         boolean secure = true;
         if (!controllerUrl.toLowerCase().startsWith("https")) {
             if (!Configuration.isDeveloperMode())
@@ -332,7 +326,7 @@ public class Orchestrator {
 
         UUID requestId = UUID.randomUUID();
         req.addHeader("Request-Id", requestId.toString());
-        logInfo("Orchestrator", String.format("(%s) %s %s", requestId, requestType.name(), uri.toString()));
+        logDebug("Orchestrator", String.format("(%s) %s %s", requestId, requestType.name(), uri.toString()));
 
         try (CloseableHttpResponse response = client.execute(req)) {
             String errorMessage = "";
@@ -366,7 +360,7 @@ public class Orchestrator {
             logError(MODULE_NAME, "Error while executing the request", new AgentUserException(exp.getMessage(), exp));
             throw new AgentUserException(exp.getMessage(), exp);
         }
-        logInfo(MODULE_NAME, "Finish get JsonObject");
+        logDebug(MODULE_NAME, "Finish get JsonObject");
         return result;
     }
 
@@ -379,7 +373,7 @@ public class Orchestrator {
      * @throws Exception
      */
     public void sendFileToController(String command, File file) throws Exception {
-    	logInfo(MODULE_NAME, "Start send file to Controller");
+    	logDebug(MODULE_NAME, "Start send file to Controller");
         InputStream inputStream = new FileInputStream(file);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
@@ -388,14 +382,14 @@ public class Orchestrator {
         HttpEntity entity = builder.build();
 
         getJsonObject(null, RequestType.PUT, entity, createUri(command));
-        logInfo(MODULE_NAME, "Finished send file to Controller");
+        logDebug(MODULE_NAME, "Finished send file to Controller");
     }
 
     /**
      * updates local variables when changes applied
      */
     public void update() {
-    	logInfo(MODULE_NAME, "Start updates local variables when changes applied");
+    	logDebug(MODULE_NAME, "Start updates local variables when changes applied");
         iofogUuid = Configuration.getIofogUuid();
         iofogAccessToken = Configuration.getAccessToken();
         controllerUrl = Configuration.getControllerUrl();
@@ -415,11 +409,11 @@ public class Orchestrator {
             initialize(secure);
         } catch (AgentSystemException exp) {
         	logError(MODULE_NAME,"Error while updating local variables when changes applied", 
-            		new AgentUserException("Error while updating local variables when changes applied", exp));
+            		new AgentUserException(exp.getMessage(), exp));
         } catch (Exception exp) {
             logError(MODULE_NAME,"Error while updating local variables when changes applied", 
-            		new AgentUserException("Error while updating local variables when changes applied", exp));
+            		new AgentUserException(exp.getMessage(), exp));
         }
-        logInfo(MODULE_NAME, "Finished updates local variables when changes applied");
+        logDebug(MODULE_NAME, "Finished updates local variables when changes applied");
     }
 }

@@ -44,11 +44,10 @@ public class MessageWebsocketWorker implements Runnable{
 	@Override
 	public void run() {
 		Thread.currentThread().setName(Constants.LOCAL_API_MESSAGE_WEBSOCKET_WORKER);
-		LoggingService.logInfo(MODULE_NAME,"Initiating message sending for the unacknowledged messages");
+		LoggingService.logDebug(MODULE_NAME,"Initiating message sending for the unacknowledged messages");
 
 		for(Map.Entry<ChannelHandlerContext, MessageSentInfo> contextEntry : WebSocketMap.unackMessageSendingMap.entrySet()){
 
-			LoggingService.logInfo(MODULE_NAME,"Sending messages - unacknowledged messages");
 			ChannelHandlerContext ctx = contextEntry.getKey();
 			int tryCount = WebSocketMap.unackMessageSendingMap.get(ctx).getSendTryCount();
 			long lastSendTime = WebSocketMap.unackMessageSendingMap.get(ctx).getTimeMillis();
@@ -66,7 +65,7 @@ public class MessageWebsocketWorker implements Runnable{
 				}
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME,"Finished Initiating message sending for the unacknowledged messages");
+		LoggingService.logDebug(MODULE_NAME,"Finished message sending for the unacknowledged messages");
 	}
 	
 	/**
@@ -74,7 +73,7 @@ public class MessageWebsocketWorker implements Runnable{
 	 * @return void
 	 */
 	private void sendRealTimeMessage(ChannelHandlerContext ctx){
-		LoggingService.logInfo(MODULE_NAME, "Start sending real-time messages");
+		LoggingService.logDebug(MODULE_NAME, "Sending real-time messages");
 //		count++;
 		MessageSentInfo messageContextAndCount = WebSocketMap.unackMessageSendingMap.get(ctx);
 		int tryCount = messageContextAndCount.getSendTryCount();
@@ -93,6 +92,5 @@ public class MessageWebsocketWorker implements Runnable{
 		//Message
 		buffer1.writeBytes(bytesMsg);
 		ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
-		LoggingService.logInfo(MODULE_NAME, "Finished sending real-time messages");
 	}
 }

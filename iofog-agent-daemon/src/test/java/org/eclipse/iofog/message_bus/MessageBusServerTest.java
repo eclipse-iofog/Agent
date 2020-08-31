@@ -101,9 +101,9 @@ public class MessageBusServerTest {
             messageBusServer.startServer("localhost", 5672);
             Mockito.verify(connectionFactory, Mockito.atLeastOnce()).createConnection();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "starting server");
+            LoggingService.logDebug(MODULE_NAME, "Starting server");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished starting server");
+            LoggingService.logDebug(MODULE_NAME, "Finished starting server");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -120,9 +120,9 @@ public class MessageBusServerTest {
             Mockito.verify(connection, Mockito.atLeastOnce()).createSession(false, Session.CLIENT_ACKNOWLEDGE);
             Mockito.verify(connection, Mockito.atLeastOnce()).start();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "starting initialization");
+            LoggingService.logDebug(MODULE_NAME, "Starting initialization");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Finished initialization");
+            LoggingService.logDebug(MODULE_NAME, "Finished initialization");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -207,9 +207,9 @@ public class MessageBusServerTest {
             messageBusServer.createConsumer("consumer");
             assertEquals(messageConsumer, messageBusServer.getConsumer("consumer"));
             PowerMockito.verifyStatic(LoggingService.class, times(1));
-            LoggingService.logInfo(MODULE_NAME, "Starting create consumer");
+            LoggingService.logDebug(MODULE_NAME, "Starting create consumer");
             PowerMockito.verifyStatic(LoggingService.class, times(1));
-            LoggingService.logInfo(MODULE_NAME, "Finished create consumer");
+            LoggingService.logDebug(MODULE_NAME, "Finished create consumer");
         } catch (Exception e) {
             fail("This should never happen");
         }

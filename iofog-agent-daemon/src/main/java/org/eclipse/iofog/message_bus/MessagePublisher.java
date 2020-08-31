@@ -53,14 +53,14 @@ public class MessagePublisher implements AutoCloseable{
 	 * @throws Exception
 	 */
 	synchronized void publish(Message message) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start publish message :" + this.name );
+		LoggingService.logDebug(MODULE_NAME, "Start publish message :" + this.name );
 		byte[] bytes = message.getBytes();
 
 		try {
 			archive.save(bytes, message.getTimestamp());
 		} catch (Exception e) {
 			logError(MODULE_NAME, "Message Publisher (" + this.name + ")unable to archive message",
-					new AgentSystemException("Message Publisher (" + this.name + ")unable to archive message", e));
+					new AgentSystemException(e.getMessage(), e));
 		}
 
 		for (MessageProducer producer: producers) {
@@ -69,24 +69,24 @@ public class MessagePublisher implements AutoCloseable{
 				producer.send(msg, DeliveryMode.NON_PERSISTENT, javax.jms.Message.DEFAULT_PRIORITY, javax.jms.Message.DEFAULT_TIME_TO_LIVE);
 			} catch (Exception e) {
 				logError(MODULE_NAME, "Message Publisher (" + this.name + ") unable to send message",
-						new AgentSystemException("Message Publisher (" + this.name + ") unable to send message", e));
+						new AgentSystemException(e.getMessage(), e));
 			}
 		}
-		LoggingService.logInfo(MODULE_NAME, "Finished publish message : " + this.name);
+		LoggingService.logDebug(MODULE_NAME, "Finished publish message : " + this.name);
 	}
 
 	synchronized void updateRoute(Route route, List<MessageProducer> producers) {
-		LoggingService.logInfo(MODULE_NAME, "Updating route");
+		LoggingService.logDebug(MODULE_NAME, "Updating route");
 		this.route = route;
 		this.producers = producers;
 	}
 
 	public synchronized void close() {
-		LoggingService.logInfo(MODULE_NAME, "Start closing publish");
+		LoggingService.logDebug(MODULE_NAME, "Start closing publish");
 		try {
 			archive.close();
 		} catch (Exception exp) {
-			logError(MODULE_NAME, "Error closing message archive", new AgentSystemException("Error closing message archive", exp));
+			logError(MODULE_NAME, "Error closing message archive", new AgentSystemException(exp.getMessage(), exp));
 		}
 
 		if (producers != null && producers.size() > 0) {
@@ -94,13 +94,13 @@ public class MessagePublisher implements AutoCloseable{
 				try {
 					producer.close();
 				} catch (Exception exp) {
-					logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException("Error closing message publisher", exp));
+					logError(MODULE_NAME, "Error closing message publisher", new AgentSystemException(exp.getMessage(), exp));
 				}
 			}
 			producers.clear();
 		}
 
-		LoggingService.logInfo(MODULE_NAME, "Finished closing publish");
+		LoggingService.logDebug(MODULE_NAME, "Finished closing publish");
 	}
 
 	/**
@@ -112,7 +112,6 @@ public class MessagePublisher implements AutoCloseable{
 	 * @return list of {@link Message}
 	 */
 	public synchronized List<Message> messageQuery(long from, long to) {
-		LoggingService.logInfo(MODULE_NAME, "Getting messages by query");
 		return archive.messageQuery(from, to);
 	}
 

@@ -186,9 +186,9 @@ public class MessageBusTest {
         messageBus.enableRealTimeReceiving(null);
         Mockito.verify(messageReceiver, never()).enableRealTimeReceiving();
         PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Starting enable real time receiving");
+        LoggingService.logDebug(MODULE_NAME,"Starting enable real time receiving");
         PowerMockito.verifyStatic(LoggingService.class, never());
-        LoggingService.logInfo(MODULE_NAME,"Finishing enable real time receiving");
+        LoggingService.logDebug(MODULE_NAME,"Finishing enable real time receiving");
     }
 
     /**

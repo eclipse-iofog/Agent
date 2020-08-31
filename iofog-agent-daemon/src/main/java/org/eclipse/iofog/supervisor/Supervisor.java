@@ -83,7 +83,7 @@ public class Supervisor implements IOFogModule {
 	 */
 	public void start() throws Exception {
         Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook, Constants.SHUTDOWN_HOOK));
-        logInfo("Starting Supervisor");
+        logDebug("Starting Supervisor");
         StatusReporter.start();
         StatusReporter.setSupervisorStatus().setModuleStatus(STATUS_REPORTER, RUNNING);
 
@@ -106,7 +106,7 @@ public class Supervisor implements IOFogModule {
         scheduler.scheduleAtFixedRate(checkLocalApiStatus, 0, 10, SECONDS);
 
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
-		logInfo("Started Supervisor");
+		logDebug("Started Supervisor");
         Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
 		DockerPruningManager.getInstance().start();
         operationDuration();
@@ -121,7 +121,7 @@ public class Supervisor implements IOFogModule {
     }
 
     private void operationDuration(){
-    	logInfo(" Start checking operation duration ");
+    	logDebug(" Start checking operation duration ");
         while (true) {
 			StatusReporter.setSupervisorStatus()
 				.setOperationDuration(currentTimeMillis());
@@ -131,7 +131,7 @@ public class Supervisor implements IOFogModule {
                 logError("Error checking operation duration", new AgentSystemException("Error checking operation duration", e));
                 System.exit(1);
             }
-            logInfo(" Finished checking operation duration ");
+            logDebug(" Finished checking operation duration ");
         }
     }
 
@@ -148,7 +148,7 @@ public class Supervisor implements IOFogModule {
 				messageBus.stop();
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, "Error in shutdown hook to stop message bus and local api",
-					new AgentSystemException("Error in shutdown hook to stop message bus and local api", e));
+					new AgentSystemException(e.getMessage(), e));
 		}
 	};
 

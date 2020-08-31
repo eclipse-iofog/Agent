@@ -57,7 +57,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return Object
 	 */
 	private FullHttpResponse handleMessageRecievedRequest() {
-		LoggingService.logInfo(MODULE_NAME, "Start Handler method to deliver the messages to the receiver. Get the messages");
+		LoggingService.logDebug(MODULE_NAME, "Start Handler method to deliver the messages to the receiver.");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
@@ -99,7 +99,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 		builder.add("messages", messagesArray);
 
 		String result = builder.build().toString();
-		LoggingService.logInfo(MODULE_NAME, "Finished Handler method to deliver the messages to the receiver. Get the messages");
+		LoggingService.logDebug(MODULE_NAME, "Finished Handler method to deliver the messages to the receiver.");
 		return ApiHandlerHelpers.successResponse(outputBuffer, result);
 	}
 
@@ -110,7 +110,7 @@ public class MessageReceiverHandler implements Callable<FullHttpResponse> {
 	 * @return String
 	 */
 	private void validateRequest(JsonObject jsonObject) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start Handler method to validate the request");
+		LoggingService.logDebug(MODULE_NAME, "validate the request");
 		if (!jsonObject.containsKey("id") ||
 				jsonObject.isNull("id") ||
 				jsonObject.getString("id").trim().equals(""))

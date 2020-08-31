@@ -53,7 +53,7 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 
 	@Override
 	public FullHttpResponse call() throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start processing commandline api request");
+		LoggingService.logDebug(MODULE_NAME, "Handle commandline api http request");
 		if (!ApiHandlerHelpers.validateMethod(this.req, POST)) {
 			LoggingService.logError(MODULE_NAME, "Request method not allowed", new AgentUserException("Request method not allowed"));
 			return ApiHandlerHelpers.methodNotAllowedResponse();
@@ -84,14 +84,14 @@ public class CommandLineApiHandler implements Callable<FullHttpResponse> {
 				result = CommandLineParser.parse(command);
 				resultMap.put("response", result);
 				String jsonResult = objectMapper.writeValueAsString(resultMap);
-				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+				LoggingService.logDebug(MODULE_NAME, "Finished processing commandline api request");
 				return ApiHandlerHelpers.successResponse(outputBuffer, jsonResult);
 			} catch (AgentUserException e) {
 				result = e.getMessage();
 				resultMap.put("response", result);
 				resultMap.put("error", "Internal server error");
 				String jsonResult = objectMapper.writeValueAsString(resultMap);
-				LoggingService.logInfo(MODULE_NAME, "Finished processing commandline api request");
+				LoggingService.logError(MODULE_NAME, "Error in handling command line http request", e);
 				return ApiHandlerHelpers.internalServerErrorResponse(outputBuffer, jsonResult);
 			}		
 
