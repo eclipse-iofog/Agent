@@ -38,7 +38,6 @@ import javax.json.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -517,7 +516,6 @@ public class DockerUtil {
     @SuppressWarnings("resource")
     public void pullImage(String imageName, String microserviceUuid, Registry registry) throws AgentSystemException {
         LoggingService.logInfo(MODULE_NAME, String.format("pull image name \"%s\" ", imageName));
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
         Map<String, ItemStatus> statuses = new HashMap();
         String tag = null, image;
         String[] sp = imageName.split(":");
@@ -546,7 +544,7 @@ public class DockerUtil {
                 public void onNext(PullResponseItem item) {
                     update(item, statuses);
                     double average = calculatePullPercentage(statuses);
-                    StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microserviceUuid, decimalFormat.format(average));
+                    StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microserviceUuid, (float)average);
                     super.onNext(item);
                 }
             };

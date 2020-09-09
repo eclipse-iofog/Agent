@@ -20,7 +20,6 @@ import com.github.dockerjava.api.model.Statistics;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -36,7 +35,7 @@ public class MicroserviceStatus {
 	private float cpuUsage;
 	private long memoryUsage;
 	private String containerId;
-	private String percentage;
+	private float percentage;
 
 	public MicroserviceStatus() {
 		this.status = MicroserviceState.UNKNOWN;
@@ -93,11 +92,11 @@ public class MicroserviceStatus {
 		this.containerId = containerId;
 	}
 
-	public String getPercentage() {
+	public float getPercentage() {
 		return percentage;
 	}
 
-	public void setPercentage(String percentage) {
+	public void setPercentage(float percentage) {
 		this.percentage = percentage;
 	}
 
