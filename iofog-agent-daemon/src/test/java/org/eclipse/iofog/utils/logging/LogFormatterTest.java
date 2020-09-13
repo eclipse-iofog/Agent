@@ -12,6 +12,8 @@
  */
 package org.eclipse.iofog.utils.logging;
 
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
+import org.eclipse.iofog.utils.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +22,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
@@ -30,16 +33,29 @@ import static org.mockito.Mockito.mock;
  * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({LogFormatter.class, LogRecord.class})
+@PrepareForTest({LogFormatter.class, LogRecord.class, Configuration.class, IOFogNetworkInterfaceManager.class})
 public class LogFormatterTest {
     private LogRecord logRecord;
     private LogFormatter logFormatter;
+    private IOFogNetworkInterfaceManager fogNetworkInterfaceManager;
 
     @Before
     public void setUp() throws Exception {
+        fogNetworkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
+        PowerMockito.mockStatic(IOFogNetworkInterfaceManager.class);
+        PowerMockito.mockStatic(Configuration.class);
+        PowerMockito.when(Configuration.getIofogUuid()).thenReturn("uuid");
+        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(fogNetworkInterfaceManager);
+        PowerMockito.when(fogNetworkInterfaceManager.getPid()).thenReturn((long) 12324);
+        PowerMockito.when(fogNetworkInterfaceManager.getHostName()).thenReturn("hostname");
+
         logRecord = mock(LogRecord.class);
         logFormatter = PowerMockito.spy(new LogFormatter());
+        PowerMockito.when(logRecord.getMessage()).thenReturn("log");
         PowerMockito.when(logRecord.getLevel()).thenReturn(Level.SEVERE);
+        PowerMockito.when(logRecord.getSourceClassName()).thenReturn("Thread");
+        PowerMockito.when(logRecord.getSourceMethodName()).thenReturn("module");
+        PowerMockito.when(logRecord.getThrown()).thenReturn(new Exception("I'm a mock exception"));
     }
 
     @After
@@ -51,6 +67,6 @@ public class LogFormatterTest {
      */
     @Test
     public void testFormat() {
-        assertTrue(logFormatter.format(logRecord).contains("[SEVERE]"));
+        assertTrue(logFormatter.format(logRecord).contains("SEVERE"));
     }
 }

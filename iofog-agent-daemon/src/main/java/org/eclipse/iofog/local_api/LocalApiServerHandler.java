@@ -68,7 +68,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      */
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-    	LoggingService.logInfo(MODULE_NAME, "Start channel initializing");
+    	LoggingService.logDebug(MODULE_NAME, "Start channel initializing");
         try {
             if (msg instanceof FullHttpRequest) {
                 // full request
@@ -136,7 +136,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
         } catch (Exception e) {
             LoggingService.logError(MODULE_NAME, "Failed to initialize channel for the request", e);
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished channel initializing");
+        LoggingService.logDebug(MODULE_NAME, "Finished channel initializing");
     }
 
     /**
@@ -286,19 +286,18 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private String findContextMapName(ChannelHandlerContext ctx) {
-    	LoggingService.logInfo(MODULE_NAME, "Start find context map name");
-    	
+
         if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap)) {
-        	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : control");
+        	LoggingService.logDebug(MODULE_NAME, "Context map name : control");
         	return "control";
         }          
         else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap)) {
-        	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : message");
+        	LoggingService.logDebug(MODULE_NAME, "Context map name : message");
         	return "message";
         }
             
         else {
-        	LoggingService.logInfo(MODULE_NAME, "Finished finding context map name : null");
+        	LoggingService.logDebug(MODULE_NAME, "Context map name : null");
         	return null;
         }
             
@@ -341,7 +340,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      * @param res
      */
     private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) {
-    	LoggingService.logInfo(MODULE_NAME, "Start providing response as per the request");
+    	LoggingService.logDebug(MODULE_NAME, "Start providing response as per the request");
         if (res.status().code() != 200) {
             ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
             res.content().writeBytes(buf);
@@ -353,7 +352,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
         if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
             f.addListener(ChannelFutureListener.CLOSE);
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished providing response as per the request");
+        LoggingService.logDebug(MODULE_NAME, "Response sent");
     }
 
     @Override
@@ -365,7 +364,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void release(Object obj) {
-    	LoggingService.logInfo(MODULE_NAME, "Releasing object lock");
+    	LoggingService.logDebug(MODULE_NAME, "Releasing object lock");
         if ((obj instanceof ReferenceCounted) && ((ReferenceCounted) obj).refCnt() > 0) {
             ReferenceCountUtil.release(obj);
         }

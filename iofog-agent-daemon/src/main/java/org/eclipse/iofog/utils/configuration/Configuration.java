@@ -22,7 +22,6 @@ import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
@@ -334,19 +333,19 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     private static void setNode(CommandLineConfigParam param, String content, Document document, Element node) throws ConfigurationItemException {
-    	LoggingService.logInfo(MODULE_NAME, "Start Setting node : " + param.getCommandName());
+    	LoggingService.logDebug(MODULE_NAME, "Start Setting node : " + param.getCommandName());
     	createNodeIfNotExists(param.getXmlTag(), document, node);
         getFirstNodeByTagName(param.getXmlTag(), document).setTextContent(content);
-        LoggingService.logInfo(MODULE_NAME, "Finished Setting node : " + param.getCommandName());
+        LoggingService.logDebug(MODULE_NAME, "Finished Setting node : " + param.getCommandName());
     }
 
     private static void createNodeIfNotExists(String name, Document document, Element node) {
-    	LoggingService.logInfo(MODULE_NAME, "Start create Node IfNotExists : " + name);
+    	LoggingService.logDebug(MODULE_NAME, "Start create Node IfNotExists : " + name);
         NodeList nodes = node.getElementsByTagName(name);
         if (nodes.getLength() == 0) {
             node.appendChild(document.createElement(name));
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished create Node IfNotExists : " + name);
+        LoggingService.logDebug(MODULE_NAME, "Finished create Node IfNotExists : " + name);
     }
 
     /**
@@ -357,19 +356,19 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     private static Node getFirstNodeByTagName(String name, Document document) throws ConfigurationItemException {
-    	LoggingService.logInfo(MODULE_NAME, "Start get First Node By TagName : " + name);
+    	LoggingService.logDebug(MODULE_NAME, "Start get First Node By TagName : " + name);
         NodeList nodes = document.getElementsByTagName(name);
 
         if (nodes.getLength() != 1) {
             throw new ConfigurationItemException("<" + name + "> item not found or defined more than once");
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished get First Node By TagName : " + name);
+        LoggingService.logDebug(MODULE_NAME, "Finished get First Node By TagName : " + name);
         return nodes.item(0);
     }
 
     public static HashMap<String, String> getOldNodeValuesForParameters(Set<String> parameters, Document document) throws ConfigurationItemException {
 
-    	LoggingService.logInfo(MODULE_NAME, "Start get Old Node Values For Parameters : ");
+    	LoggingService.logDebug(MODULE_NAME, "Start get Old Node Values For Parameters : ");
     	
         HashMap<String, String> result = new HashMap<>();
 
@@ -379,7 +378,7 @@ public final class Configuration {
             result.put(cmdOption.getCommandName(), getNode(cmdOption, document));
         }
 
-        LoggingService.logInfo(MODULE_NAME, "Finished get Old Node Values For Parameters : ");
+        LoggingService.logDebug(MODULE_NAME, "Finished get Old Node Values For Parameters : ");
         
         return result;
     }
@@ -425,7 +424,7 @@ public final class Configuration {
      * @throws Exception
      */
     public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Starting setting configuration base on commandline parameters");
+    	LoggingService.logInfo(MODULE_NAME, "Start setting configuration base on commandline parameters");
     	
         HashMap<String, String> messageMap = new HashMap<>();
         if (commandLineMap != null) {
@@ -788,7 +787,7 @@ public final class Configuration {
      * @throws ConfigurationItemException
      */
     private static void configureGps(String gpsModeCommand, String gpsCoordinatesCommand) throws ConfigurationItemException {
-    	LoggingService.logInfo(MODULE_NAME, "Start Configures GPS coordinates and mode in config file ");
+    	LoggingService.logDebug(MODULE_NAME, "Start configures GPS coordinates and mode in config file ");
     	String gpsCoordinates;
         GpsMode currentMode;
 
@@ -811,11 +810,11 @@ public final class Configuration {
         }
 
         setGpsDataIfValid(currentMode, gpsCoordinates);
-        LoggingService.logInfo(MODULE_NAME, "Finished Configures GPS coordinates and mode in config file ");
+        LoggingService.logDebug(MODULE_NAME, "Finished configures GPS coordinates and mode in config file ");
     }
 
     public static void setGpsDataIfValid(GpsMode mode, String gpsCoordinates) throws ConfigurationItemException {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Gps Data If Valid ");
+    	LoggingService.logDebug(MODULE_NAME, "Start set Gps Data If Valid ");
         if (!isValidCoordinates(gpsCoordinates)) {
             throw new ConfigurationItemException("Incorrect GPS coordinates value: " + gpsCoordinates + "\n"
                     + "Correct format is <DDD.DDDDD(lat),DDD.DDDDD(lon)> (GPS DD format)");
@@ -824,7 +823,7 @@ public final class Configuration {
         if (gpsCoordinates != null && !StringUtils.isBlank(gpsCoordinates) && !gpsCoordinates.isEmpty()) {
             setGpsCoordinates(gpsCoordinates.trim());
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished set Gps Data If Valid ");
+        LoggingService.logDebug(MODULE_NAME, "Finished set Gps Data If Valid ");
     }
 
     /**
@@ -834,12 +833,12 @@ public final class Configuration {
      */
     public static void writeGpsToConfigFile() throws ConfigurationItemException {
     	
-    	LoggingService.logInfo(MODULE_NAME, "Start Writes GPS coordinates and GPS mode to config file ");
+    	LoggingService.logDebug(MODULE_NAME, "Start writing GPS coordinates and GPS mode to config file");
     	
         setNode(GPS_MODE, gpsMode.name().toLowerCase(), configFile, configElement);
         setNode(GPS_COORDINATES, gpsCoordinates, configFile, configElement);
         
-        LoggingService.logInfo(MODULE_NAME, "Finished Writes GPS coordinates and GPS mode to config file ");
+        LoggingService.logDebug(MODULE_NAME, "Finished writing GPS coordinates and GPS mode to config file");
     }
 
     /**
@@ -850,7 +849,7 @@ public final class Configuration {
      */
     private static boolean isValidCoordinates(String gpsCoordinates) {
     	
-    	LoggingService.logInfo(MODULE_NAME, "Start is Valid Coordinates ");
+    	LoggingService.logDebug(MODULE_NAME, "Start is Valid Coordinates ");
 
         boolean isValid = true;
 
@@ -870,7 +869,7 @@ public final class Configuration {
             isValid = gpsCoordinates.isEmpty();
         }
         
-        LoggingService.logInfo(MODULE_NAME, "Start is Valid Coordinates : " + isValid);
+        LoggingService.logDebug(MODULE_NAME, "Start is Valid Coordinates : " + isValid);
 
         return isValid;
     }
@@ -882,7 +881,7 @@ public final class Configuration {
      * @return
      */
     private static boolean isValidNetworkInterface(String eth) {
-    	LoggingService.logInfo(MODULE_NAME, "Start is Valid network interface ");
+    	LoggingService.logDebug(MODULE_NAME, "Start is Valid network interface ");
     	
         if (SystemUtils.IS_OS_WINDOWS) { // any name could be used for network interface on Win
             return true;
@@ -890,19 +889,19 @@ public final class Configuration {
 
         try {
             if (CommandLineConfigParam.NETWORK_INTERFACE.getDefaultValue().equals(eth)) {
-            	LoggingService.logInfo(MODULE_NAME, "Finished is Valid network interface : true");
+            	LoggingService.logDebug(MODULE_NAME, "Finished is Valid network interface : true");
                 return true;
             }
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             for (NetworkInterface networkInterface : list(networkInterfaces)) {
                 if (networkInterface.getName().equalsIgnoreCase(eth))
-                	LoggingService.logInfo(MODULE_NAME, "Finished is Valid network interface : true");
+                	LoggingService.logDebug(MODULE_NAME, "Finished is Valid network interface : true");
                     return true;
             }
         } catch (Exception e) {
-            logError(MODULE_NAME, "Error validating network interface", new AgentUserException("Error validating network interface", e));
+            logError(MODULE_NAME, "Error validating network interface", new AgentUserException(e.getMessage(), e));
         }
-        LoggingService.logInfo(MODULE_NAME, "Finished is Valid network interface : false");
+        LoggingService.logDebug(MODULE_NAME, "Finished is Valid network interface : false");
         return false;
     }
 
@@ -933,18 +932,18 @@ public final class Configuration {
         try {
 			builder = factory.newDocumentBuilder();
 		} catch (ParserConfigurationException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
-			throw new ConfigurationItemException("Error while parsing config xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException(e.getMessage(), e));
+			throw new ConfigurationItemException(e.getMessage(), e);
 		}
 
         try {
         	configFile = builder.parse(getCurrentConfigPath());
 		} catch (SAXException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException(e.getMessage(), e));
 			throw new ConfigurationItemException("Error while parsing config xml");
 		} catch (IOException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
-			throw new ConfigurationItemException("Error while parsing config xml", e);
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException(e.getMessage(), e));
+			throw new ConfigurationItemException(e.getMessage(), e);
 		}
         
         configFile.getDocumentElement().normalize();
@@ -998,31 +997,31 @@ public final class Configuration {
 			builder = factory.newDocumentBuilder();
 		} catch (ParserConfigurationException e) {
 			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", e);
-			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
+			throw new ConfigurationItemException(e.getMessage(), e);
 		}
 
         try {
 			configSwitcherFile = builder.parse(CONFIG_SWITCHER_PATH);
 		} catch (SAXException e) {
 			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", 
-					new ConfigurationItemException("Error while parsing config switcher xml", e));
-			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
+					new ConfigurationItemException(e.getMessage(), e));
+			throw new ConfigurationItemException(e.getMessage(), e);
 		} catch (IOException e) {
 			LoggingService.logError(MODULE_NAME, "Error while parsing config switcher xml", 
-					new ConfigurationItemException("Error while parsing config switcher xml", e));
-			throw new ConfigurationItemException("Error while parsing config switcher xml", e);
+					new ConfigurationItemException(e.getMessage(), e));
+			throw new ConfigurationItemException(e.getMessage(), e);
 		}
         configSwitcherFile.getDocumentElement().normalize();
 
         configSwitcherElement = (Element) getFirstNodeByTagName(SWITCHER_ELEMENT, configSwitcherFile);
 
         verifySwitcherNode(SWITCHER_NODE, ConfigSwitcherState.DEFAULT.fullValue());
-        LoggingService.logInfo(MODULE_NAME, "Finished loads configuration about current config from config-switcher.xml");
+        LoggingService.logInfo(MODULE_NAME, "Finished loading configuration about current config from config-switcher.xml");
     }
 
     // this code will be triggered in case of iofog updated (not newly installed) and add new option for config
     private static void createConfigProperty(CommandLineConfigParam cmdParam) throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start create config property");
+    	LoggingService.logDebug(MODULE_NAME, "Start create config property");
         // TODO: add appropriate handling of case when 0 nodes found or multiple before adding new property to file
         Element el = configFile.createElement(cmdParam.getXmlTag());
         el.appendChild(configFile.createTextNode(cmdParam.getDefaultValue()));
@@ -1033,7 +1032,7 @@ public final class Configuration {
         Transformer transformer = transformerFactory.newTransformer();
         StreamResult result = new StreamResult(getCurrentConfigPath());
         transformer.transform(source, result);
-        LoggingService.logInfo(MODULE_NAME, "Finished create config property");
+        LoggingService.logDebug(MODULE_NAME, "Finished create config property");
     }
 
     public static String getAccessToken() {
@@ -1089,27 +1088,27 @@ public final class Configuration {
     }
 
     public static void setLogDiskDirectory(String logDiskDirectory) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Log Disk Directory");
+    	LoggingService.logDebug(MODULE_NAME, "Start set Log Disk Directory");
         if (logDiskDirectory.charAt(0) != separatorChar)
             logDiskDirectory = separatorChar + logDiskDirectory;
         if (logDiskDirectory.charAt(logDiskDirectory.length() - 1) != separatorChar)
             logDiskDirectory += separatorChar;
         Configuration.logDiskDirectory = SNAP_COMMON + logDiskDirectory;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Log Disk Directory");
+        LoggingService.logDebug(MODULE_NAME, "Finished set Log Disk Directory");
     }
 
     public static void setAccessToken(String accessToken) throws ConfigurationItemException {
-    	LoggingService.logInfo(MODULE_NAME, "Start set access token");
+    	LoggingService.logDebug(MODULE_NAME, "Start set access token");
         setNode(ACCESS_TOKEN, accessToken, configFile, configElement);
         Configuration.accessToken = accessToken;
-        LoggingService.logInfo(MODULE_NAME, "Finished set access token");
+        LoggingService.logDebug(MODULE_NAME, "Finished set access token");
     }
 
     public static void setIofogUuid(String iofogUuid) throws ConfigurationItemException {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Iofog uuid");
+    	LoggingService.logDebug(MODULE_NAME, "Start set Iofog uuid");
         setNode(IOFOG_UUID, iofogUuid, configFile, configElement);
         Configuration.iofogUuid = iofogUuid;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Iofog uuid");
+        LoggingService.logDebug(MODULE_NAME, "Finished set Iofog uuid");
     }
 
     private static void verifySwitcherNode(String switcher, String defaultValue) throws ConfigurationItemException {
@@ -1128,77 +1127,58 @@ public final class Configuration {
                 currentSwitcherState = ConfigSwitcherState.DEFAULT;
                 System.out.println("Error while reading current switcher state, using default config");
                 LoggingService.logError(MODULE_NAME, "Error while reading current switcher state, using default config", 
-                		new ConfigurationItemException("Error while reading current switcher state, using default config", e));
-                throw new ConfigurationItemException("Error while reading current switcher state, using default config", e);
+                		new ConfigurationItemException(e.getMessage(), e));
+                throw new ConfigurationItemException(e.getMessage(), e);
             }
         }
         LoggingService.logInfo(MODULE_NAME, "Finished verify Switcher Node");
     }
 
     private static void setControllerUrl(String controllerUrl) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set ControllerUrl");
+    	LoggingService.logDebug(MODULE_NAME, "Set ControllerUrl");
         if (controllerUrl != null && controllerUrl.length() > 0 && controllerUrl.charAt(controllerUrl.length() - 1) != '/')
             controllerUrl += '/';
         Configuration.controllerUrl = controllerUrl;
-        LoggingService.logInfo(MODULE_NAME, "Finished set ControllerUrl");
     }
 
     private static void setControllerCert(String controllerCert) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Controller Cert");
         Configuration.controllerCert = SNAP_COMMON + controllerCert;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Controller Cert");
     }
 
     private static void setNetworkInterface(String networkInterface) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Network Interface");
         Configuration.networkInterface = networkInterface;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Network Interface");
     }
 
     private static void setDockerUrl(String dockerUrl) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Docker url");
         Configuration.dockerUrl = dockerUrl;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Docker url");
     }
 
     private static void setDiskLimit(float diskLimit) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Disk limit");
         Configuration.diskLimit = diskLimit;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Disk limit");
     }
 
     private static void setMemoryLimit(float memoryLimit) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set memory limit");
         Configuration.memoryLimit = memoryLimit;
-        LoggingService.logInfo(MODULE_NAME, "Finished set memory limit");
     }
 
     private static void setDiskDirectory(String diskDirectory) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Disk Directory");
         if (diskDirectory.charAt(0) != separatorChar)
             diskDirectory = separatorChar + diskDirectory;
         if (diskDirectory.charAt(diskDirectory.length() - 1) != separatorChar)
             diskDirectory += separatorChar;
         Configuration.diskDirectory = SNAP_COMMON + diskDirectory;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Disk Directory");
     }
 
     private static void setCpuLimit(float cpuLimit) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set cpu limit");
         Configuration.cpuLimit = cpuLimit;
-        LoggingService.logInfo(MODULE_NAME, "Finished set cpu limit");
     }
 
     private static void setLogDiskLimit(float logDiskLimit) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set log disk limit");
         Configuration.logDiskLimit = logDiskLimit;
-        LoggingService.logInfo(MODULE_NAME, "Finished set log disk limit");
     }
 
     private static void setLogFileCount(int logFileCount) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set log file count");
         Configuration.logFileCount = logFileCount;
-        LoggingService.logInfo(MODULE_NAME, "Finished set log file count");
     }
 
     /**
@@ -1207,7 +1187,7 @@ public final class Configuration {
      * @return info report
      */
     public static String getConfigReport() {
-    	LoggingService.logInfo(MODULE_NAME, "Start get Config Report");
+    	LoggingService.logDebug(MODULE_NAME, "Start get Config Report");
         String ipAddress = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
         String networkInterface = getNetworkInterfaceInfo();
         ipAddress = "".equals(ipAddress) ? "unable to retrieve ip address" : ipAddress;
@@ -1266,18 +1246,17 @@ public final class Configuration {
         // is ready to upgrade scan frequency
         result.append(buildReportLine(getConfigParamMessage(READY_TO_UPGRADE_SCAN_FREQUENCY), format("%d", readyToUpgradeScanFrequency)));
 
-        LoggingService.logInfo(MODULE_NAME, "Finished get Config Report");
+        LoggingService.logDebug(MODULE_NAME, "Finished get Config Report");
         
         return result.toString();
     }
 
     private static String buildReportLine(String messageDescription, String value) {
-    	LoggingService.logInfo(MODULE_NAME, "build Report Line");
         return rightPad(messageDescription, 40, ' ') + " : " + value + "\\n";
     }
 
     public static String getNetworkInterfaceInfo() {
-    	LoggingService.logInfo(MODULE_NAME, "get Network Interface Info");
+    	LoggingService.logDebug(MODULE_NAME, "get Network Interface Info");
         if (!NETWORK_INTERFACE.getDefaultValue().equals(networkInterface)) {
             return networkInterface;
         }
@@ -1399,9 +1378,7 @@ public final class Configuration {
     }
 
     public static void setIpAddressExternal(String ipAddressExternal) {
-    	LoggingService.logInfo(MODULE_NAME, "Start set Ip Address External");
         Configuration.ipAddressExternal = ipAddressExternal;
-        LoggingService.logInfo(MODULE_NAME, "Finished set Ip Address External");
     }
 
 	public static String getLogLevel() {
@@ -1409,9 +1386,7 @@ public final class Configuration {
 	}
 
 	public static void setLogLevel(String logLevel) {
-		LoggingService.logInfo(MODULE_NAME, "Start set log level");
 		Configuration.logLevel = logLevel;
-		LoggingService.logInfo(MODULE_NAME, "Finished set log level");
 	}
 
     public static long getDockerPruningFrequency() {

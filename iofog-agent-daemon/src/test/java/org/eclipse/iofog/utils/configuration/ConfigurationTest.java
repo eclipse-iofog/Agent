@@ -326,7 +326,7 @@ public class ConfigurationTest {
             initializeConfiguration();
             Configuration.writeGpsToConfigFile();
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-            LoggingService.logInfo("Configuration", "Finished Writes GPS coordinates and GPS mode to config file ");
+            LoggingService.logDebug("Configuration", "Finished writing GPS coordinates and GPS mode to config file");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -359,7 +359,7 @@ public class ConfigurationTest {
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logInfo(MODULE_NAME, "Start loads configuration about current config from config-switcher.xml");
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo(MODULE_NAME, "Finished loads configuration about current config from config-switcher.xml");
+            LoggingService.logInfo(MODULE_NAME, "Finished loading configuration about current config from config-switcher.xml");
             PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("getFirstNodeByTagName",
                     Mockito.eq(SWITCHER_ELEMENT), Mockito.any(Document.class));
             PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("verifySwitcherNode",

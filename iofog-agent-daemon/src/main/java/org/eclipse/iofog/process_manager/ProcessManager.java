@@ -162,7 +162,7 @@ public class ProcessManager implements IOFogModule {
 	}
 
 	private void handleLatestMicroservices() {
-		logInfo("Start handle latest microservices");
+		logDebug("Start handle latest microservices");
 		microserviceManager.getLatestMicroservices().stream()
 			.filter(microservice -> !microservice.isUpdating())
 			.forEach(microservice -> {
@@ -181,11 +181,11 @@ public class ProcessManager implements IOFogModule {
 					updateMicroservice(containerOptional.get(), microservice);
 				}
 			});
-		logInfo("Finished handle latest microservices");
+		logDebug("Finished handle latest microservices");
 	}
 
 	public void deleteRemainingMicroservices() {
-		LoggingService.logInfo(MODULE_NAME ,"Start delete Remaining Microservices");
+		LoggingService.logDebug(MODULE_NAME ,"Start delete Remaining Microservices");
 		Set<String> latestMicroserviceUuids = microserviceManager.getLatestMicroservices().stream()
 			.map(Microservice::getMicroserviceUuid)
 			.collect(Collectors.toSet());
@@ -235,7 +235,7 @@ public class ProcessManager implements IOFogModule {
 
 		deleteOldAgentContainers(oldAgentMicroserviceUuids);
 		deleteUnknownContainers(unknownMicroserviceUuids);
-		LoggingService.logInfo(MODULE_NAME ,"Finished delete Remaining Microservices");
+		LoggingService.logDebug(MODULE_NAME ,"Finished delete Remaining Microservices");
 	}
 
 	/**
@@ -290,7 +290,7 @@ public class ProcessManager implements IOFogModule {
 			});
 			stopRunningAgentContainers(runningMicroserviceUuids);
 		}
-		LoggingService.logInfo(MODULE_NAME ,"Finished stop running Microservices");
+		LoggingService.logInfo(MODULE_NAME ,"Stopped running Microservices");
 	}
 
 	/**

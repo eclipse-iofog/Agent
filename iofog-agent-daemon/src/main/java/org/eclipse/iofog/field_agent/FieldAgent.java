@@ -194,7 +194,6 @@ public class FieldAgent implements IOFogModule {
     private void postStatusHelper() {
         logDebug("posting ioFog status");
         try {
-            logInfo("Start posting ioFog status");
             JsonObject status = getFogStatus();
             if (Configuration.debugging) {
                 logInfo(status.toString());
@@ -485,7 +484,7 @@ public class FieldAgent implements IOFogModule {
                 }
 
                 if (lastUpdated != null && resetChanges) {
-                    logInfo("Resetting config changes flags");
+                    logDebug("Resetting config changes flags");
                     try {
                         JsonObject req = Json.createObjectBuilder()
                                 .add("lastUpdated", lastUpdated)

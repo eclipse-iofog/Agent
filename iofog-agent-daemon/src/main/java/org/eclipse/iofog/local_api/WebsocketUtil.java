@@ -53,10 +53,10 @@ public class WebsocketUtil {
 	public static boolean hasContextInMap(ChannelHandlerContext ctx, Map<String, ChannelHandlerContext> socketMap) {
 		for (ChannelHandlerContext context: socketMap.values())
 			if (context.equals(ctx)) {
-				LoggingService.logInfo(MODULE_NAME, "Container has open real-time websocket : " + true);
+				LoggingService.logDebug(MODULE_NAME, "Container has open real-time websocket : " + true);
 				return true;
 			}
-		LoggingService.logInfo(MODULE_NAME, "Container has open real-time websocket : " + false);
+		LoggingService.logDebug(MODULE_NAME, "Container has open real-time websocket : " + false);
 		return false;
 	}
 	
