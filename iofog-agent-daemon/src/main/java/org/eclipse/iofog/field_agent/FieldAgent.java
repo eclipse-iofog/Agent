@@ -1061,13 +1061,13 @@ public class FieldAgent implements IOFogModule {
                         !Configuration.getNetworkInterface().equals(networkInterface))
                     instanceConfig.put(NETWORK_INTERFACE.getCommandName(), networkInterface);
 
-                if (!Configuration.getDockerUrl().equals(dockerUrl))
+                if (Configuration.getDockerUrl() != null && !Configuration.getDockerUrl().equals(dockerUrl))
                     instanceConfig.put(DOCKER_URL.getCommandName(), dockerUrl);
 
                 if (Configuration.getDiskLimit() != diskLimit)
                     instanceConfig.put(DISK_CONSUMPTION_LIMIT.getCommandName(), diskLimit);
 
-                if (!Configuration.getDiskDirectory().equals(diskDirectory))
+                if (Configuration.getDiskDirectory() != null && !Configuration.getDiskDirectory().equals(diskDirectory))
                     instanceConfig.put(DISK_DIRECTORY.getCommandName(), diskDirectory);
 
                 if (Configuration.getMemoryLimit() != memoryLimit)
@@ -1079,7 +1079,7 @@ public class FieldAgent implements IOFogModule {
                 if (Configuration.getLogDiskLimit() != logLimit)
                     instanceConfig.put(LOG_DISK_CONSUMPTION_LIMIT.getCommandName(), logLimit);
 
-                if (!Configuration.getLogDiskDirectory().equals(logDirectory))
+                if (Configuration.getLogDiskDirectory() != null && !Configuration.getLogDiskDirectory().equals(logDirectory))
                     instanceConfig.put(LOG_DISK_DIRECTORY.getCommandName(), logDirectory);
 
                 if (Configuration.getLogFileCount() != logFileCount)
@@ -1097,17 +1097,21 @@ public class FieldAgent implements IOFogModule {
                 if (Configuration.isWatchdogEnabled() != watchdogEnabled)
                     instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled ? "on" : "off");
 
-                if (!Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
-                    instanceConfig.put(GPS_MODE.getCommandName(), gpsCoordinates);
+                if (Configuration.getGpsCoordinates() != null && !Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
+                    instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
                 }
 
-                if (!Configuration.getLogLevel().equals(logLevel))
+                if (Configuration.getGpsCoordinates() == null && !gpsCoordinates.equals("0.0,0.0")) {
+                    instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
+                }
+
+                if (Configuration.getLogLevel() != null && !Configuration.getLogLevel().equals(logLevel))
                     instanceConfig.put(LOG_LEVEL.getCommandName(), logLevel);
 
                 if ((Configuration.getDockerPruningFrequency() != dockerPruningFrequency) && (dockerPruningFrequency >= 1))
                     instanceConfig.put(DOCKER_PRUNING_FREQUENCY.getCommandName(), dockerPruningFrequency);
 
-                if (Configuration.getAvailableDiskThreshold() != availableDiskThreshold) {
+                if ((Configuration.getAvailableDiskThreshold() != availableDiskThreshold) && (availableDiskThreshold >= 1)) {
                     instanceConfig.put(AVAILABLE_DISK_THRESHOLD.getCommandName(), availableDiskThreshold);
                 }
                 if ((Configuration.getReadyToUpgradeScanFrequency() != readyToUpgradeScanFreq) && (readyToUpgradeScanFreq >= 1))

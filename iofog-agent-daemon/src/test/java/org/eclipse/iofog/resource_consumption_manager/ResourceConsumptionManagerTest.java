@@ -163,7 +163,7 @@ public class ResourceConsumptionManagerTest {
     /**
      * Test start method
      */
-    @Test
+    @Test (timeout = 1000L)
     public void testStartThread() {
         resourceConsumptionManager.start();
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
