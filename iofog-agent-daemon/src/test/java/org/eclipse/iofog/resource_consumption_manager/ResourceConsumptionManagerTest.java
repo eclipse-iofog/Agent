@@ -36,6 +36,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 /**
  * Agent Exception
@@ -44,7 +45,7 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ResourceConsumptionManager.class, LoggingService.class,
-        Configuration.class, CommandShellExecutor.class, StatusReporter.class})
+        Configuration.class, CommandShellExecutor.class, StatusReporter.class, Thread.class})
 public class ResourceConsumptionManagerTest {
     private ResourceConsumptionManager resourceConsumptionManager;
     private static final String MODULE_NAME = "Resource Consumption Manager";
@@ -54,6 +55,7 @@ public class ResourceConsumptionManagerTest {
     private List<String> error;
     private List<String> value;
     private Method method = null;
+    private Thread thread;
 
     @Before
     public void setUp() throws Exception {
@@ -68,6 +70,10 @@ public class ResourceConsumptionManagerTest {
         PowerMockito.when(Configuration.getCpuLimit()).thenReturn(1.0f);
         PowerMockito.when(Configuration.getDiskLimit()).thenReturn(1.0f);
         PowerMockito.when(Configuration.getDiskDirectory()).thenReturn("");
+        thread = PowerMockito.mock(Thread.class);
+        whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
+                Mockito.anyString()).thenReturn(thread);
+        PowerMockito.doNothing().when(thread).start();
     }
     /**
      * Set a mock to the {@link ResourceConsumptionManager} instance

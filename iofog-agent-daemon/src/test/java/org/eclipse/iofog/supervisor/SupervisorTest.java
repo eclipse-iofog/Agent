@@ -8,7 +8,9 @@ import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.local_api.LocalApiStatus;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
+import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.process_manager.ProcessManager;
+import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
@@ -41,12 +43,16 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Supervisor.class, StatusReporter.class, ResourceConsumptionManager.class,
         FieldAgent.class, ProcessManager.class, Tracker.class, SecurityManager.class,
-        MessageBus.class, LocalApi.class, LoggingService.class, Configuration.class, IOFogNetworkInterfaceManager.class})
+        MessageBus.class, LocalApi.class, LoggingService.class, Configuration.class, IOFogNetworkInterfaceManager.class, DockerPruningManager.class,
+        DockerUtil.class, SupervisorStatus.class})
 public class SupervisorTest {
     private Supervisor supervisor;
     private Method method = null;
     private ResourceManager resourceManager;
     private IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager;
+    private DockerPruningManager dockerPruningManager;
+    private DockerUtil dockerUtil;
+    private SupervisorStatus supervisorStatus;
 
     @Before
     public void initialization() {
@@ -62,17 +68,29 @@ public class SupervisorTest {
             mockStatic(LocalApi.class);
             mockStatic(LoggingService.class);
             mockStatic(IOFogNetworkInterfaceManager.class);
+            mockStatic(DockerUtil.class);
+            mockStatic(DockerPruningManager.class);
+            dockerUtil = PowerMockito.mock(DockerUtil.class);
+            supervisorStatus = PowerMockito.mock(SupervisorStatus.class);
             ioFogNetworkInterfaceManager = PowerMockito.mock(IOFogNetworkInterfaceManager.class);
+            dockerPruningManager = PowerMockito.mock(DockerPruningManager.class);
 
-            PowerMockito.when(StatusReporter.setSupervisorStatus()).thenReturn(new SupervisorStatus());
-            PowerMockito.when(StatusReporter.setLocalApiStatus()).thenReturn(new LocalApiStatus());
+            PowerMockito.when(StatusReporter.setSupervisorStatus()).thenReturn(supervisorStatus);
+            PowerMockito.when(supervisorStatus.setDaemonStatus(any())).thenReturn(supervisorStatus);
+            PowerMockito.when(supervisorStatus.setDaemonLastStart(anyLong())).thenReturn(supervisorStatus);
+            PowerMockito.when(supervisorStatus.setOperationDuration(anyLong())).thenReturn(supervisorStatus);
+            PowerMockito.when(StatusReporter.setLocalApiStatus()).thenReturn(mock(LocalApiStatus.class));
             PowerMockito.when(ResourceConsumptionManager.getInstance()).thenReturn(null);
             PowerMockito.when(FieldAgent.getInstance()).thenReturn(null);
             PowerMockito.when(ProcessManager.getInstance()).thenReturn(null);
-            PowerMockito.when(Tracker.getInstance()).thenReturn(new Tracker());
+            PowerMockito.when(Tracker.getInstance()).thenReturn(mock(Tracker.class));
             PowerMockito.when(MessageBus.getInstance()).thenReturn(null);
             PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);
             PowerMockito.doNothing().when(ioFogNetworkInterfaceManager).start();
+            PowerMockito.when(DockerUtil.getInstance()).thenReturn(dockerUtil);
+            PowerMockito.when(DockerPruningManager.getInstance()).thenReturn(dockerPruningManager);
+            PowerMockito.doNothing().when(dockerPruningManager).start();
+            PowerMockito.doNothing().when(StatusReporter.class, "start");
             // PowerMockito.when(LocalApi.getInstance()).thenReturn(null);
 
         } catch (Exception e) {
@@ -90,8 +108,8 @@ public class SupervisorTest {
             verify(supervisor, Mockito.atLeastOnce()).start();
             verify(supervisor, Mockito.never()).getModuleIndex();
             verify(supervisor, Mockito.atLeastOnce()).getModuleName();
-            verify(supervisor, Mockito.atLeastOnce()).logInfo("Starting Supervisor");
-            verify(supervisor, Mockito.atLeastOnce()).logInfo("Started Supervisor");
+            verify(supervisor, Mockito.atLeastOnce()).logDebug("Starting Supervisor");
+            verify(supervisor, Mockito.atLeastOnce()).logDebug("Started Supervisor");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -114,13 +132,7 @@ public class SupervisorTest {
         PowerMockito.when(StatusReporter.setSupervisorStatus().setModuleStatus(6, RUNNING)).thenReturn(null);
         method = Supervisor.class.getDeclaredMethod("startModule", IOFogModule.class);
         method.setAccessible(true);
-
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).when(resourceManager).start();
+        PowerMockito.doNothing().when(resourceManager).start();
         method.invoke(supervisor, resourceManager);
         verify(supervisor, Mockito.atLeastOnce()).logInfo(" Starting ResourceManager");
         verify(supervisor, Mockito.atLeastOnce()).logInfo(" Started ResourceManager");
