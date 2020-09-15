@@ -20,28 +20,40 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.mockito.Mockito.*;
+
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * @author nehanaithani
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StatusReporter.class, Configuration.class, LoggingService.class})
+@PrepareForTest({StatusReporter.class, Configuration.class, LoggingService.class, ScheduledExecutorService.class, Executors.class, ScheduledFuture.class})
 public class StatusReporterTest {
 	private StatusReporter statusReporter;
+	private ScheduledExecutorService scheduledExecutorService;
+	private ScheduledFuture future;
 
 	@Before
 	public void setUp() throws Exception {
 		statusReporter = mock(StatusReporter.class);
 		mockStatic(Configuration.class);
+		scheduledExecutorService = mock(ScheduledExecutorService.class);
+		future = mock(ScheduledFuture.class);
 
 		mockStatic(LoggingService.class);
+		mockStatic(Executors.class);
 		when(Configuration.getSetSystemTimeFreqSeconds()).thenReturn(1);
+		when(Executors.newScheduledThreadPool(anyInt())).thenReturn(scheduledExecutorService);
+		PowerMockito.when(scheduledExecutorService.scheduleAtFixedRate(any(Runnable.class), anyInt(), anyInt(), any())).thenReturn(future);
 	}
 
 	@After
