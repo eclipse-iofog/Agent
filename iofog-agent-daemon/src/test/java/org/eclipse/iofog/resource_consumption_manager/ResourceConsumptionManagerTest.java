@@ -71,7 +71,8 @@ public class ResourceConsumptionManagerTest {
         PowerMockito.when(Configuration.getDiskLimit()).thenReturn(1.0f);
         PowerMockito.when(Configuration.getDiskDirectory()).thenReturn("");
         thread = PowerMockito.mock(Thread.class);
-        whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class), Mockito.anyString()).thenReturn(thread);
+        whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
+                Mockito.anyString()).thenReturn(thread);
         PowerMockito.doNothing().when(thread).start();
     }
     /**

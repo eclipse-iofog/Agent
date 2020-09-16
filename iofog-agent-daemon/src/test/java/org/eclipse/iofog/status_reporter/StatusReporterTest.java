@@ -27,6 +27,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -36,21 +37,23 @@ import java.util.concurrent.ScheduledFuture;
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StatusReporter.class, Configuration.class, LoggingService.class, ScheduledExecutorService.class, Executors.class, ScheduledFuture.class})
+@PrepareForTest({StatusReporter.class, Configuration.class, LoggingService.class, ScheduledExecutorService.class, Executors.class,
+		ScheduledFuture.class})
 public class StatusReporterTest {
 	private StatusReporter statusReporter;
+	private Executors executors;
 	private ScheduledExecutorService scheduledExecutorService;
 	private ScheduledFuture future;
 
 	@Before
 	public void setUp() throws Exception {
 		statusReporter = mock(StatusReporter.class);
-		mockStatic(Configuration.class);
 		scheduledExecutorService = mock(ScheduledExecutorService.class);
 		future = mock(ScheduledFuture.class);
+		mockStatic(Configuration.class);
+		mockStatic(Executors.class);
 
 		mockStatic(LoggingService.class);
-		mockStatic(Executors.class);
 		when(Configuration.getSetSystemTimeFreqSeconds()).thenReturn(1);
 		when(Executors.newScheduledThreadPool(anyInt())).thenReturn(scheduledExecutorService);
 		PowerMockito.when(scheduledExecutorService.scheduleAtFixedRate(any(Runnable.class), anyInt(), anyInt(), any())).thenReturn(future);
