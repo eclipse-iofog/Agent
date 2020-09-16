@@ -4,7 +4,7 @@ provisionkey=$1
 timeout=${2:-60}
 
 iofogpackage=$(apt-cache policy iofog-agent iofog-agent-dev | grep -A1 ^iofog | awk '$2 ~ /^[0-9]/ {print a}{a=$0}' | sed -e 's/iofog-agent\(.*\):/\1/')
-iofogversion=$(apt-cache policy iofog-agent$iofogpackage | grep Installed | awk --posix '{ if ($2 ~ /^[0-9]/) print $2}')
+iofogversion=$(apt-cache policy iofog-agent$iofogpackage | grep Installed | awk '{ if ($2 ~ /^[0-9]/) print $2}')
 
 cd /var/backups/iofog-agent
 tar -cvzf config_backup$iofogpackage.tar.gz -P /etc/iofog-agent
