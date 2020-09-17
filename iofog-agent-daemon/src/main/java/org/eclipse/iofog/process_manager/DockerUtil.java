@@ -702,9 +702,9 @@ public class DockerUtil {
     /**
      * docker prune a {@link Image}
      */
-    public void dockerPrune() throws NotModifiedException {
+    public PruneResponse dockerPrune() throws NotModifiedException {
         LoggingService.logInfo(MODULE_NAME , "docker image prune");
-        dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
+        return dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
     }
     /**
      * Updates the item status of docker pull Layer

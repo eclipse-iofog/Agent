@@ -12,6 +12,7 @@
  */
 package org.eclipse.iofog.pruning;
 
+import com.github.dockerjava.api.model.PruneResponse;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.status_reporter.StatusReporter;
@@ -44,17 +45,18 @@ public class DockerPruningManager {
         return instance;
     }
     private DockerPruningManager() {}
+    private boolean isPruning;
     /**
      * Start docker pruning manager
      */
     public void start() throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "Start Create and start local api server");
+        LoggingService.logInfo(MODULE_NAME, "Start docker pruning manager");
         scheduler = Executors.newScheduledThreadPool(1);
         // one hour
         scheduler.scheduleAtFixedRate(pruneAgent, 60, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
-        scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
+        scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, 1, TimeUnit.MINUTES);
 
-        LoggingService.logInfo(MODULE_NAME, "Finished Create and start local api server");
+        LoggingService.logInfo(MODULE_NAME, "Docker pruning manager started");
     }
 
     /**
@@ -72,12 +74,19 @@ public class DockerPruningManager {
      * Trigger prune on available disk is equal to or less than threshold
      */
     private final Runnable triggerPruneOnThresholdBreach = () -> {
-        while (true){
+        if (!isPruning) {
             long availableDiskPercentage = StatusReporter.getResourceConsumptionManagerStatus().getAvailableDisk() * 100 /
                     StatusReporter.getResourceConsumptionManagerStatus().getTotalDiskSpace();
-            if (Configuration.getAvailableDiskThreshold() >= availableDiskPercentage){
-                LoggingService.logDebug(MODULE_NAME, "Docker Prune when available disk is equal to or less than threshold");
-                docker.dockerPrune();
+            if (availableDiskPercentage < Configuration.getAvailableDiskThreshold()) {
+                try {
+                    LoggingService.logDebug(MODULE_NAME, "Docker Prune when available disk is less than threshold");
+                    isPruning = true;
+                    docker.dockerPrune();
+                } catch (Exception e){
+                    LoggingService.logError(MODULE_NAME,"Error in docker Pruning when available threshold breach", new AgentSystemException(e.getMessage(), e));
+                } finally {
+                    isPruning = false;
+                }
             }
         }
     };
@@ -87,13 +96,13 @@ public class DockerPruningManager {
      */
     public void refreshSchedule(){
         LoggingService.logInfo(MODULE_NAME, "Starting refresh scheduler of Docker pruning.");
-        if(scheduler!=null){
-            scheduler.shutdown();
+        if (scheduler!=null){
             try {
+                scheduler.shutdown();
                 start();
             } catch (Exception e) {
                 LoggingService.logError(MODULE_NAME,"Error starting docker pruning manager after refresh",
-                        new AgentSystemException("Error starting docker pruning manager after refresh", e));
+                        new AgentSystemException(e.getMessage(), e));
             }
         }
         LoggingService.logInfo(MODULE_NAME, "Finished updating scheduler frequency of Docker pruning.");
@@ -106,8 +115,8 @@ public class DockerPruningManager {
     public String pruneAgent(){
         LoggingService.logInfo(MODULE_NAME, "Initiate prune agent on demand.");
         try {
-            docker.dockerPrune();
-            return "\nSuccess - pruned dangling docker images.";
+            PruneResponse response = docker.dockerPrune();
+            return "\nSuccess - pruned dangling docker images, total reclaimed space: " + response.getSpaceReclaimed();
         } catch (Exception e){
             LoggingService.logError(MODULE_NAME,"Error in docker Pruning", new AgentSystemException(e.getMessage(), e));
             return "\nFailure - not pruned.";
