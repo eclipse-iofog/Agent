@@ -146,7 +146,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
      * @param ctx ChannelHandlerContext
      */
     private void handleHttpRequest(ChannelHandlerContext ctx) {
-    	LoggingService.logInfo(MODULE_NAME, "Start passig request to the relevant handler");
+    	LoggingService.logDebug(MODULE_NAME, "Start passig request to the relevant handler");
     	
         if (request.uri().equals("/v2/config/get")) {
         	LoggingService.logInfo(MODULE_NAME, "Start Processing config/get request");
@@ -281,7 +281,7 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
         String errorMsg = " Request not found ";
         errorMsgBytes.writeBytes(errorMsg.getBytes(UTF_8));
         sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, errorMsgBytes));
-        LoggingService.logInfo(MODULE_NAME, "Finished passig request to the relevant handler");
+        LoggingService.logDebug(MODULE_NAME, "Finished passig request to the relevant handler");
 
     }
 

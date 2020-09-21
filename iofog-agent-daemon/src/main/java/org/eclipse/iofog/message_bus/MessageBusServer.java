@@ -219,7 +219,7 @@ public class MessageBusServer {
      * @throws Exception
      */
     void stopServer() throws Exception {
-        LoggingService.logInfo(MODULE_NAME, "stopping server started");
+        LoggingService.logDebug(MODULE_NAME, "stopping server started");
         if (consumers != null) {
             consumers.forEach((key, value) -> {
                 try {
@@ -253,7 +253,7 @@ public class MessageBusServer {
             connection.close();
         }
 
-        LoggingService.logInfo(MODULE_NAME, "stopped server");
+        LoggingService.logDebug(MODULE_NAME, "stopped server");
     }
 
     public boolean isConnected() {

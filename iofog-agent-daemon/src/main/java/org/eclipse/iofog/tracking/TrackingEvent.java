@@ -68,7 +68,6 @@ public class TrackingEvent {
     }
 
     public JsonObject toJsonObject() {
-        LoggingService.logInfo(MODULE_NAME, "Getting JsonObject of TrackingEvent");
         return Json.createObjectBuilder()
                 .add("uuid", uuid)
                 .add("timestamp", timestamp)

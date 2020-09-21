@@ -39,7 +39,7 @@ import javax.json.JsonObjectBuilder;
 public class LogFormatter extends Formatter {
 	public String format(LogRecord record) {
 		IOFogNetworkInterfaceManager fogNetworkInterfaceManager = IOFogNetworkInterfaceManager.getInstance();
-		final DateFormat df = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss.SSS");
+		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		JsonBuilderFactory factory = Json.createBuilderFactory(null);
 		JsonObjectBuilder jsonObjectBuilder = factory.createObjectBuilder();
 		jsonObjectBuilder.add("timestamp", df.format(System.currentTimeMillis()));

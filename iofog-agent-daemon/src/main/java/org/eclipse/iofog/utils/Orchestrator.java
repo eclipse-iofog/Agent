@@ -252,7 +252,7 @@ public class Orchestrator {
         			new AgentUserException(e.getMessage(), e));
     		throw new AgentUserException(e.getMessage(), e );
     	}
-        logInfo(MODULE_NAME, "Finished getJSON for result of a IOFog Controller endpoint");
+        logDebug(MODULE_NAME, "Finished getJSON for result of a IOFog Controller endpoint");
         return result;
     }
 

@@ -142,9 +142,9 @@ public class MessageBusServerTest {
             Mockito.verify(session, Mockito.atLeastOnce()).close();
             Mockito.verify(connection, Mockito.atLeastOnce()).close();
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "stopping server started");
+            LoggingService.logDebug(MODULE_NAME, "stopping server started");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "stopped server");
+            LoggingService.logDebug(MODULE_NAME, "stopped server");
         } catch (Exception e) {
             fail("This should not happen");
         }
