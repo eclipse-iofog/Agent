@@ -60,7 +60,7 @@ public class Supervisor implements IOFogModule {
 	 */
 	private Runnable checkLocalApiStatus = () -> {
 		Thread.currentThread().setName(Constants.SUPERVISOR_CHECK_LOCAL_API_STATUS);
-		logInfo("Check local API status");
+		logDebug("Check local API status");
 		try {
 			if (localApiThread != null && localApiThread.getState() == TERMINATED) {
 				localApiThread = new Thread(localApi, Constants.LOCAL_API_EVENT);
@@ -71,7 +71,7 @@ public class Supervisor implements IOFogModule {
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, "", new AgentSystemException(e.getMessage(), e));
 		}
-		logInfo("Finished Checking local API status");
+		logDebug("Finished Checking local API status");
 	};
 
 	public Supervisor() {}
