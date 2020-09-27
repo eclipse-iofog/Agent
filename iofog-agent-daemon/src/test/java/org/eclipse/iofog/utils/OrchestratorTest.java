@@ -28,7 +28,6 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.field_agent.enums.RequestType;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
@@ -163,7 +162,7 @@ public class OrchestratorTest {
         PowerMockito.when(Configuration.getFogType()).thenReturn(ArchitectureType.ARM);
         PowerMockito.when(Configuration.getAccessToken()).thenReturn("access-token");
         PowerMockito.when(Configuration.getControllerUrl()).thenReturn("http://controller/");
-        PowerMockito.when(Configuration.isDeveloperMode()).thenReturn(true);
+        PowerMockito.when(Configuration.isSecureMode()).thenReturn(true);
         PowerMockito.when(Configuration.getControllerCert()).thenReturn("controllerCert");
         PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(iOFogNetworkInterfaceManager);
         PowerMockito.when(iOFogNetworkInterfaceManager.getInetAddress()).thenReturn(inetAddress);
@@ -264,7 +263,7 @@ public class OrchestratorTest {
     @Test (expected = AgentUserException.class)
     public void testPingWhenControllerUrlIsHttpsAndNotDevMode() throws Exception{
         PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
-        PowerMockito.when(Configuration.isDeveloperMode()).thenReturn(false);
+        PowerMockito.when(Configuration.isSecureMode()).thenReturn(false);
         assertFalse(orchestrator.ping());
     }
 
@@ -358,7 +357,7 @@ public class OrchestratorTest {
             jsonResponse = orchestrator.request("", RequestType.PATCH, null, jsonObject);
             assertEquals(jsonObject, jsonResponse);
             PowerMockito.verifyStatic(Configuration.class);
-            Configuration.isDeveloperMode();
+            Configuration.isSecureMode();
             PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
                     Mockito.eq(RequestType.PATCH), Mockito.eq(stringEntity),  Mockito.any());
         } catch (Exception e) {
@@ -371,7 +370,7 @@ public class OrchestratorTest {
      */
     @Test (expected = AgentUserException.class)
     public void throwsAgentUserExceptionWhenDevModeIsFalse() throws Exception {
-        PowerMockito.when(Configuration.isDeveloperMode()).thenReturn(false);
+        PowerMockito.when(Configuration.isSecureMode()).thenReturn(false);
         JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
         assertEquals(jsonObject, jsonResponse);
         PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq("delete"),
@@ -502,7 +501,7 @@ public class OrchestratorTest {
             PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(queryParams),
                     Mockito.eq(RequestType.PUT), Mockito.eq(stringEntity),  Mockito.any());
             PowerMockito.verifyStatic(Configuration.class);
-            Configuration.isDeveloperMode();
+            Configuration.isSecureMode();
         } catch (Exception e) {
             fail("This should not happen");
         }

@@ -184,10 +184,10 @@ public class Orchestrator {
      */
     private JsonObject getJSON(String surl) throws AgentUserException  {
     	logDebug(MODULE_NAME, "Start getJSON for result of a IOFog Controller endpoint");
-        // disable certificates for dev mode
+        // disable certificates for secure mode
         boolean secure = true;
         if (!surl.toLowerCase().startsWith("https")) {
-            if (!Configuration.isDeveloperMode()) {
+            if (!Configuration.isSecureMode()) {
             	logError(MODULE_NAME, "unable to connect over non-secure connection",
             			new AgentUserException("unable to connect over non-secure connection", null));
                 throw new AgentUserException("unable to connect over non-secure connection", null );
@@ -272,11 +272,11 @@ public class Orchestrator {
 
 
     private JsonObject getJsonObject(Map<String, Object> queryParams, RequestType requestType, HttpEntity httpEntity, StringBuilder uri) throws Exception {
-        // disable certificates for dev mode
+        // disable certificates for secure mode
     	logDebug(MODULE_NAME, "Start get JsonObject");
         boolean secure = true;
         if (!controllerUrl.toLowerCase().startsWith("https")) {
-            if (!Configuration.isDeveloperMode())
+            if (!Configuration.isSecureMode())
                 throw new AgentUserException("unable to connect over non-secure connection", null);
             else
                 secure = false;
@@ -393,7 +393,7 @@ public class Orchestrator {
         iofogUuid = Configuration.getIofogUuid();
         iofogAccessToken = Configuration.getAccessToken();
         controllerUrl = Configuration.getControllerUrl();
-        // disable certificates for dev mode
+        // disable certificates for secure mode
         boolean secure = true;
         if (controllerUrl.toLowerCase().startsWith("https")) {
             try (FileInputStream fileInputStream = new FileInputStream(Configuration.getControllerCert())) {

@@ -395,8 +395,9 @@ public enum CommandLineAction {
 			"                 -ft <auto               Set fog type.\\n" +
 			"                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
 			"                                         use arm or intel_amd to set it manually\\n" +
-			"                 -dev <on/off>           Set the developer's mode without using ssl \\n" +
+			"                 -sec <on/off>           Set the secure mode without using ssl \\n" +
 			"                                         certificates. \\n" +
+			"                 -dev <on/off>           Set the developer's mode\\n" +
 			"\\n" +
 			"\\n" +
 			"Report bugs to: edgemaster@iofog.org\\n" +

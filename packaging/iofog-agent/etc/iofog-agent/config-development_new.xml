@@ -20,7 +20,7 @@
 	<controller_url>http://localhost:51121/api/v3/</controller_url>
 	
 	<iofog_uuid/>
-
+	<secure_mode>on</secure_mode>
 	<dev_mode>on</dev_mode>
 	
 	<controller_cert>/etc/iofog-agent/cert.crt</controller_cert>

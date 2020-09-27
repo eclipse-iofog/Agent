@@ -103,6 +103,7 @@ public class ConfigurationTest {
         setFinalStatic(Constants.class.getField("CONFIG_SWITCHER_PATH"), MOCK_CONFIG_SWITCHER_PATH);
         setFinalStatic(Constants.class.getField("DEFAULT_CONFIG_PATH"), MOCK_DEFAULT_CONFIG_PATH);
         PowerMockito.when(GpsWebHandler.getGpsCoordinatesByExternalIp()).thenReturn("32.00,-121.31");
+        PowerMockito.when(GpsWebHandler.getExternalIp()).thenReturn("0.0.0.0");
         PowerMockito.suppress(method(Configuration.class, "updateConfigFile"));
     }
 
@@ -200,10 +201,10 @@ public class ConfigurationTest {
             assertEquals("Default value", ArchitectureType.INTEL_AMD, Configuration.getFogType());
             Configuration.setFogType(ArchitectureType.ARM);
             assertEquals("New Value",ArchitectureType.ARM, Configuration.getFogType());
-            assertEquals("Default value", true, Configuration.isDeveloperMode());
-            Configuration.setDeveloperMode(false);
-            assertEquals("New Value", false, Configuration.isDeveloperMode());
-            assertNull("Default value", Configuration.getIpAddressExternal());
+            assertEquals("Default value", true, Configuration.isSecureMode());
+            Configuration.setSecureMode(false);
+            assertEquals("New Value", false, Configuration.isSecureMode());
+            assertNotNull("Default value", Configuration.getIpAddressExternal());
             Configuration.setIpAddressExternal("ipExternal");
             assertEquals("New Value", "ipExternal", Configuration.getIpAddressExternal());
             assertEquals("Default value", "INFO", Configuration.getLogLevel());
@@ -218,6 +219,9 @@ public class ConfigurationTest {
             assertEquals("Default value", "", Configuration.getAccessToken());
             Configuration.setAccessToken("token");
             assertEquals("New Value", "token", Configuration.getAccessToken());
+            assertEquals("Default value", false, Configuration.isDevMode());
+            Configuration.setDevMode(true);
+            assertEquals("New Value", true, Configuration.isDevMode());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -267,7 +271,6 @@ public class ConfigurationTest {
     @Test
     public void testResetToDefault() {
         try {
-            suppress(method(Configuration.class, "updateConfigFile"));
             initializeConfiguration();
             Configuration.setWatchdogEnabled(true);
             assertTrue("New Value", Configuration.isWatchdogEnabled());
@@ -286,12 +289,14 @@ public class ConfigurationTest {
             assertEquals("New Value",60, Configuration.getPostDiagnosticsFreq());
             Configuration.setFogType(ArchitectureType.ARM);
             assertEquals("New Value",ArchitectureType.ARM, Configuration.getFogType());
-            Configuration.setDeveloperMode(false);
-            assertEquals("New Value", false, Configuration.isDeveloperMode());
+            Configuration.setSecureMode(false);
+            assertEquals("New Value", false, Configuration.isSecureMode());
             Configuration.setIpAddressExternal("ipExternal");
             assertEquals("New Value", "ipExternal", Configuration.getIpAddressExternal());
             Configuration.setLogLevel("SEVERE");
             assertEquals("New Value", "SEVERE", Configuration.getLogLevel());
+            Configuration.setDevMode(true);
+            assertEquals("New Value", true, Configuration.isDevMode());
             Configuration.resetToDefault();
             assertFalse("Default Value", Configuration.isWatchdogEnabled());
             assertEquals("Default Value", 10, Configuration.getStatusFrequency());
@@ -299,7 +304,8 @@ public class ConfigurationTest {
             assertEquals("Default Value", 60, Configuration.getDeviceScanFrequency());
             assertEquals("Default value", GpsMode.AUTO, Configuration.getGpsMode());
             assertEquals("Default value", 10, Configuration.getPostDiagnosticsFreq());
-            assertEquals("Default value", true, Configuration.isDeveloperMode());
+            assertEquals("Default value", true, Configuration.isSecureMode());
+            assertEquals("Default value", false, Configuration.isDevMode());
             assertNotNull("Default value", Configuration.getIpAddressExternal());
             assertEquals("Default value", "INFO", Configuration.getLogLevel());
         } catch(Exception e) {
@@ -1405,15 +1411,63 @@ public class ConfigurationTest {
     public void testSetConfigForGPSModeWithValidValue() {
         try {
             String value = "off";
-            initializeConfiguration();
             suppress(method(Configuration.class, "saveConfigUpdates"));
+            initializeConfiguration();
             Map<String, Object> config = new HashMap<>();
-            config.put("gps", value);
+            config.put(GPS_MODE.getCommandName(), value);
             HashMap messageMap = Configuration.setConfig(config, false);
             assertEquals(GpsMode.OFF, Configuration.getGpsMode());
             assertEquals(0, messageMap.size());
             PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
-            PowerMockito.verifyPrivate(Configuration.class).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
+
+    /**
+     * Test setConfig when GPS_Coordinate is set with valid coordinates and gps_mode is switched to manual
+     */
+    @Test
+    public void testSetConfigForGPSModeWithValidCoordinates() {
+        try {
+            String value = "0,0";
+            suppress(method(Configuration.class, "saveConfigUpdates"));
+            initializeConfiguration();
+            Map<String, Object> config = new HashMap<>();
+            config.put(GPS_MODE.getCommandName(), value);
+            HashMap messageMap = Configuration.setConfig(config, false);
+            assertEquals(GpsMode.MANUAL, Configuration.getGpsMode());
+            assertEquals(value, Configuration.getGpsCoordinates());
+            assertEquals(0, messageMap.size());
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("isValidCoordinates", Mockito.eq("0,0"));
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
+
+    /**
+     * Test setConfig when GPS_Coordinate is set with invalid coordinates and gps_mode is switched to manual
+     */
+    @Test
+    public void testSetConfigForGPSModeWithInValidCoordinates() {
+        try {
+            String value = "I am invalid coordinates";
+            suppress(method(Configuration.class, "saveConfigUpdates"));
+            initializeConfiguration();
+            Map<String, Object> config = new HashMap<>();
+            config.put(GPS_MODE.getCommandName(), value);
+            HashMap messageMap = Configuration.setConfig(config, false);
+            assertEquals(1, messageMap.size());
+            messageMap.forEach((k, v) -> {
+                assertEquals("gps", k);
+                assertEquals("Option -gps has invalid value: I am invalid coordinates", v);
+            });
+            assertNotEquals(value, Configuration.getGpsCoordinates());
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -1466,6 +1520,47 @@ public class ConfigurationTest {
      * Test setConfig when DEV_MODE with invalid value
      */
     @Test
+    public void testSetConfigForSecureModeWithInValidValue() {
+        try {
+            String value = "1020";
+            initializeConfiguration();
+            suppress(method(Configuration.class, "saveConfigUpdates"));
+            Map<String, Object> config = new HashMap<>();
+            config.put("sec", value);
+            HashMap messageMap = Configuration.setConfig(config, false);
+            assertEquals(0, messageMap.size());
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(SECURE_MODE), Mockito.eq(value),
+                    Mockito.any(Document.class), Mockito.any(Element.class));
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setSecureMode", Mockito.eq(!value.equals("off")));
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
+
+    /**
+     * Test setConfig when DEV_MODE with valid value
+     */
+    @Test
+    public void testSetConfigForSecureModeWithValidValue() {
+        try {
+            String value = "off";
+            initializeConfiguration();
+            suppress(method(Configuration.class, "saveConfigUpdates"));
+            Map<String, Object> config = new HashMap<>();
+            config.put("sec", value);
+            HashMap messageMap = Configuration.setConfig(config, false);
+            assertEquals(0, messageMap.size());
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(SECURE_MODE), Mockito.eq(value),
+                    Mockito.any(Document.class), Mockito.any(Element.class));
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setSecureMode", Mockito.eq(!value.equals("off")));
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
+    /**
+     * Test setConfig when DEV_MODE with invalid value
+     */
+    @Test
     public void testSetConfigForDevModeWithInValidValue() {
         try {
             String value = "1020";
@@ -1477,7 +1572,7 @@ public class ConfigurationTest {
             assertEquals(0, messageMap.size());
             PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(DEV_MODE), Mockito.eq(value),
                     Mockito.any(Document.class), Mockito.any(Element.class));
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDeveloperMode", Mockito.eq(!value.equals("off")));
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDevMode", Mockito.eq(!value.equals("off")));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -1498,7 +1593,7 @@ public class ConfigurationTest {
             assertEquals(0, messageMap.size());
             PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(DEV_MODE), Mockito.eq(value),
                     Mockito.any(Document.class), Mockito.any(Element.class));
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDeveloperMode", Mockito.eq(!value.equals("off")));
+            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDevMode", Mockito.eq(!value.equals("off")));
         } catch (Exception e) {
             fail("This should not happen");
         }

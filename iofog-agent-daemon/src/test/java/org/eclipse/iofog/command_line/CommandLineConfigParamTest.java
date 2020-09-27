@@ -157,9 +157,10 @@ public class CommandLineConfigParamTest {
         assertEquals("", commandLineConfigParam.GPS_COORDINATES.getDefaultValue());
         assertEquals("10", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getDefaultValue());
         assertEquals("auto", commandLineConfigParam.FOG_TYPE.getDefaultValue());
-        assertEquals("on", commandLineConfigParam.DEV_MODE.getDefaultValue());
+        assertEquals("on", commandLineConfigParam.SECURE_MODE.getDefaultValue());
         assertEquals("1", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getDefaultValue());
         assertEquals("20", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getDefaultValue());
+        assertEquals("off", commandLineConfigParam.DEV_MODE.getDefaultValue());
     }
 
     @SuppressWarnings("static-access")
@@ -190,6 +191,7 @@ public class CommandLineConfigParamTest {
         assertEquals("-dev", commandLineConfigParam.DEV_MODE.getCmdText());
         assertEquals("-pf", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getCmdText());
         assertEquals("-dt", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getCmdText());
+        assertEquals("-sec", commandLineConfigParam.SECURE_MODE.getCmdText());
     }
 
     @Test

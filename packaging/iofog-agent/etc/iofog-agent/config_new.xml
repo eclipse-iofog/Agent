@@ -21,7 +21,8 @@
 	
 	<iofog_uuid/>
 
-	<dev_mode>on</dev_mode>
+	<secure_mode>on</secure_mode>
+	<dev_mode>off</dev_mode>
 	
 	<controller_cert>/etc/iofog-agent/cert.crt</controller_cert>
 

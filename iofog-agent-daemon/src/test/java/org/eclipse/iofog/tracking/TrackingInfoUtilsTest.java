@@ -30,7 +30,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.json.Json;
 import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,7 +56,7 @@ public class TrackingInfoUtilsTest {
         fieldAgentStatus = mock(FieldAgentStatus.class);
         when(Configuration.getGpsCoordinates()).thenReturn("coordinates");
         when(Configuration.getGpsMode()).thenReturn(GpsMode.AUTO);
-        when(Configuration.isDeveloperMode()).thenReturn(true);
+        when(Configuration.isSecureMode()).thenReturn(true);
         when(Configuration.getNetworkInterfaceInfo()).thenReturn("interfaceInfo");
         when(CmdProperties.getVersion()).thenReturn("version");
         when(StatusReporter.getFieldAgentStatus()).thenReturn(fieldAgentStatus);
@@ -77,7 +76,7 @@ public class TrackingInfoUtilsTest {
     public void testGetStartTrackingInfo() {
         assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("gpsCoordinates"));
         assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("gpsMode"));
-        assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("developerMode"));
+        assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("secureMode"));
         assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("networkInterface"));
         assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("version"));
         assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("agentStatus"));
@@ -96,7 +95,7 @@ public class TrackingInfoUtilsTest {
         assertTrue(TrackingInfoUtils.getStartTrackingInfo().containsKey("error"));
         assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("gpsCoordinates"));
         assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("gpsMode"));
-        assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("developerMode"));
+        assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("secureMode"));
         assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("networkInterface"));
         assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("version"));
         assertFalse(TrackingInfoUtils.getStartTrackingInfo().containsKey("agentStatus"));

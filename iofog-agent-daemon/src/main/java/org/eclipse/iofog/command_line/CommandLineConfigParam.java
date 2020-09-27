@@ -52,12 +52,13 @@ public enum CommandLineConfigParam {
     GPS_COORDINATES ("", "", "gps_coordinates", "gpscoordinates"),
     POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
     FOG_TYPE ("auto", "ft", "fog_type", ""),
-    DEV_MODE ("on", "dev", "dev_mode", ""),
+    SECURE_MODE ("on", "sec", "secure_mode", ""),
     ROUTER_HOST ("", "", "router_host", "routerHost"),
     ROUTER_PORT ("0", "", "router_port", "routerPort"),
     DOCKER_PRUNING_FREQUENCY ("1", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
     AVAILABLE_DISK_THRESHOLD ("20", "dt", "available_disk_threshold", "availableDiskThreshold"),
-    READY_TO_UPGRADE_SCAN_FREQUENCY ("24", "uf", "upgrade_scan_frequency", "readyToUpgradeScanFrequency");
+    READY_TO_UPGRADE_SCAN_FREQUENCY ("24", "uf", "upgrade_scan_frequency", "readyToUpgradeScanFrequency"),
+    DEV_MODE ("off", "dev", "dev_mode", "");
 
     private final String commandName;
     private final String xmlTag;

@@ -110,7 +110,7 @@ public final class LoggingService {
      * @param e          - exception
      */
     public static void logError(String moduleName, String msg, Throwable e) {
-        if (newSentryException(e)) {
+        if (newSentryException(e) && !Configuration.isDevMode()) {
             Sentry.getContext().addExtra("version", getVersion());
             Sentry.getStoredClient().getContext().setUser(new User(System.getProperty("user.name"), System.getProperty("user.name"), "", ""));
             Sentry.capture(e);
