@@ -15,6 +15,7 @@ package org.eclipse.iofog.utils.configuration;
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
+import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
@@ -58,7 +59,7 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Configuration.class, LoggingService.class, FieldAgent.class, ProcessManager.class, ResourceConsumptionManager.class,
-        MessageBus.class, Transformer.class, TransformerFactory.class, StreamResult.class, DOMSource.class, Supervisor.class})
+        MessageBus.class, Transformer.class, TransformerFactory.class, StreamResult.class, DOMSource.class, Supervisor.class, GpsWebHandler.class})
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.*", "com.sun.org.apache.xalan.*"})
 public class ConfigurationTest {
     private MessageBus messageBus;
@@ -80,6 +81,7 @@ public class ConfigurationTest {
         ORIGINAL_DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_PATH;
         ORIGINAL_CONFIG_SWITCHER_PATH = CONFIG_SWITCHER_PATH;
         mockStatic(Configuration.class, Mockito.CALLS_REAL_METHODS);
+        mockStatic(GpsWebHandler.class);
         messageBus = mock(MessageBus.class);
         fieldAgent = mock(FieldAgent.class);
         processManager =mock(ProcessManager.class);
@@ -100,6 +102,8 @@ public class ConfigurationTest {
         PowerMockito.doNothing().when(supervisor).start();
         setFinalStatic(Constants.class.getField("CONFIG_SWITCHER_PATH"), MOCK_CONFIG_SWITCHER_PATH);
         setFinalStatic(Constants.class.getField("DEFAULT_CONFIG_PATH"), MOCK_DEFAULT_CONFIG_PATH);
+        PowerMockito.when(GpsWebHandler.getGpsCoordinatesByExternalIp()).thenReturn("32.00,-121.31");
+        PowerMockito.suppress(method(Configuration.class, "updateConfigFile"));
     }
 
     @After
@@ -156,6 +160,7 @@ public class ConfigurationTest {
             assertEquals(4096, Configuration.getMemoryLimit(), 0);
             assertEquals(80.0, Configuration.getCpuLimit(), 0);
             assertEquals(10.0, Configuration.getLogFileCount(), 0);
+            assertEquals(20.0, Configuration.getAvailableDiskThreshold(), 0);
             assertEquals("Default value", "dynamic", Configuration.getNetworkInterface());
             assertEquals("Default value", "not found(dynamic)", Configuration.getNetworkInterfaceInfo());
             assertEquals("Default value", 10.0, Configuration.getLogDiskLimit(), 0);
@@ -198,7 +203,7 @@ public class ConfigurationTest {
             assertEquals("Default value", true, Configuration.isDeveloperMode());
             Configuration.setDeveloperMode(false);
             assertEquals("New Value", false, Configuration.isDeveloperMode());
-            assertNotNull("Default value", Configuration.getIpAddressExternal());
+            assertNull("Default value", Configuration.getIpAddressExternal());
             Configuration.setIpAddressExternal("ipExternal");
             assertEquals("New Value", "ipExternal", Configuration.getIpAddressExternal());
             assertEquals("Default value", "INFO", Configuration.getLogLevel());
@@ -243,13 +248,12 @@ public class ConfigurationTest {
     public void testSaveConfigUpdates() {
         try {
             initializeConfiguration();
-            suppress(method(Configuration.class, "updateConfigFile"));
             Configuration.saveConfigUpdates();
-            Mockito.verify(processManager).instanceConfigUpdated();
-            Mockito.verify(fieldAgent).instanceConfigUpdated();
-            Mockito.verify(messageBus).instanceConfigUpdated();
-            Mockito.verify(processManager).instanceConfigUpdated();
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(processManager, Mockito.atLeastOnce()).instanceConfigUpdated();
+            Mockito.verify(fieldAgent, Mockito.atLeastOnce()).instanceConfigUpdated();
+            Mockito.verify(messageBus, Mockito.atLeastOnce()).instanceConfigUpdated();
+            Mockito.verify(processManager, Mockito.atLeastOnce()).instanceConfigUpdated();
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");

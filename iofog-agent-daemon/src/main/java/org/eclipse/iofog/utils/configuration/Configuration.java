@@ -65,6 +65,7 @@ import static org.apache.commons.lang.StringUtils.*;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.*;
+import static org.eclipse.iofog.utils.logging.LoggingService.logDebug;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
@@ -250,14 +251,14 @@ public final class Configuration {
     }
 
     public static void setGpsCoordinates(String gpsCoordinates) {
-        if (Configuration.gpsCoordinates == null || StringUtils.isEmpty(Configuration.gpsCoordinates)) {
+        Configuration.gpsCoordinates = gpsCoordinates;
+//        if (Configuration.gpsCoordinates == null || StringUtils.isEmpty(Configuration.gpsCoordinates)) {
             try {
                 Configuration.writeGpsToConfigFile();
             } catch (Exception e) {
                 LoggingService.logError("Configuration", "Error saving GPS coordinates", e);
             }
-        }
-        Configuration.gpsCoordinates = gpsCoordinates;
+//        }
     }
 
     public static GpsMode getGpsMode() {
@@ -979,7 +980,11 @@ public final class Configuration {
         setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
         setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
-
+        try {
+            saveConfigUpdates();
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Error saving config", e);
+        }
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
 

@@ -1102,11 +1102,11 @@ public class FieldAgent implements IOFogModule {
                     instanceConfig.put(WATCHDOG_ENABLED.getCommandName(), watchdogEnabled ? "on" : "off");
 
                 if (Configuration.getGpsCoordinates() != null && !Configuration.getGpsCoordinates().equals(gpsCoordinates)) {
-                    instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
+                    instanceConfig.put(GPS_MODE.getCommandName(), gpsCoordinates);
                 }
 
                 if (Configuration.getGpsCoordinates() == null && !gpsCoordinates.equals("0.0,0.0")) {
-                    instanceConfig.put(GPS_COORDINATES.getCommandName(), gpsCoordinates);
+                    instanceConfig.put(GPS_MODE.getCommandName(), gpsCoordinates);
                 }
 
                 if (Configuration.getLogLevel() != null && !Configuration.getLogLevel().equals(logLevel))
@@ -1174,6 +1174,10 @@ public class FieldAgent implements IOFogModule {
                 .add(GPS_MODE.getJsonProperty(), Configuration.getGpsMode() == null ? "UNKNOWN" : Configuration.getGpsMode().name().toLowerCase())
                 .add("latitude", latitude)
                 .add("longitude", longitude)
+                .add(LOG_LEVEL.getJsonProperty(), Configuration.getLogLevel().toUpperCase())
+                .add(AVAILABLE_DISK_THRESHOLD.getJsonProperty(), Configuration.getAvailableDiskThreshold())
+                .add(DOCKER_PRUNING_FREQUENCY.getJsonProperty(), Configuration.getDockerPruningFrequency())
+                .add(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty(), Configuration.getReadyToUpgradeScanFrequency())
                 .build();
 
         try {
