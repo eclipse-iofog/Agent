@@ -65,7 +65,6 @@ import static org.apache.commons.lang.StringUtils.*;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
 import static org.eclipse.iofog.utils.Constants.*;
-import static org.eclipse.iofog.utils.logging.LoggingService.logDebug;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 /**
@@ -252,13 +251,11 @@ public final class Configuration {
 
     public static void setGpsCoordinates(String gpsCoordinates) {
         Configuration.gpsCoordinates = gpsCoordinates;
-//        if (Configuration.gpsCoordinates == null || StringUtils.isEmpty(Configuration.gpsCoordinates)) {
-            try {
-                Configuration.writeGpsToConfigFile();
-            } catch (Exception e) {
-                LoggingService.logError("Configuration", "Error saving GPS coordinates", e);
-            }
-//        }
+        try {
+            Configuration.writeGpsToConfigFile();
+        } catch (Exception e) {
+            LoggingService.logError("Configuration", "Error saving GPS coordinates", e);
+        }
     }
 
     public static GpsMode getGpsMode() {
