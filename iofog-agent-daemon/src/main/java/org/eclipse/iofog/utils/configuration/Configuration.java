@@ -250,14 +250,12 @@ public final class Configuration {
     }
 
     public static void setGpsCoordinates(String gpsCoordinates) {
-        if (Configuration.gpsCoordinates == null || StringUtils.isEmpty(Configuration.gpsCoordinates)) {
-            try {
-                Configuration.writeGpsToConfigFile();
-            } catch (Exception e) {
-                LoggingService.logError("Configuration", "Error saving GPS coordinates", e);
-            }
-        }
         Configuration.gpsCoordinates = gpsCoordinates;
+        try {
+            Configuration.writeGpsToConfigFile();
+        } catch (Exception e) {
+            LoggingService.logError("Configuration", "Error saving GPS coordinates", e);
+        }
     }
 
     public static GpsMode getGpsMode() {
@@ -979,7 +977,11 @@ public final class Configuration {
         setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
         setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
-
+        try {
+            saveConfigUpdates();
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Error saving config", e);
+        }
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
 
