@@ -92,12 +92,36 @@ task doJacocoOfflineInstrumentation(dependsOn: [ classes, project.configurations
                 sourceSets.test.runtimeClasspath += files(instrumentedClassedDir)
                 instrumented = true
             }
+
         }
         if (instrumented) {
             test.jvmArgs += '-noverify'
         }
     }
 }
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            compileClasspath += sourceSets.main.output + configurations.testCompile
+            runtimeClasspath += sourceSets.main.output + compileClasspath + configurations.testRuntime
+            srcDir file('src/integrationTest/java')
+        }
+    }
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+    mustRunAfter test
+}
+
 
 test.dependsOn(doJacocoOfflineInstrumentation)
 test.finalizedBy jacocoTestReport
+check.dependsOn integrationTest
+integrationTest.mustRunAfter test
