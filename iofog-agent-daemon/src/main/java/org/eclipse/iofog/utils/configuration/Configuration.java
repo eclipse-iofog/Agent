@@ -105,7 +105,7 @@ public final class Configuration {
     private static GpsMode gpsMode;
     private static ArchitectureType fogType;
     private static final Map<String, Object> defaultConfig;
-    private static boolean developerMode;
+    private static boolean secureMode;
     private static String ipAddressExternal;
     private static long dockerPruningFrequency;
     private static long availableDiskThreshold;
@@ -126,6 +126,15 @@ public final class Configuration {
     private static int monitorSshTunnelStatusFreqSeconds;
     private static String routerHost;
     private static int routerPort;
+    private static boolean devMode;
+
+    public static boolean isDevMode() {
+        return devMode;
+    }
+
+    public static void setDevMode(boolean devMode) {
+        Configuration.devMode = devMode;
+    }
 
     public static String getRouterHost() {
         return routerHost;
@@ -286,12 +295,12 @@ public final class Configuration {
         Configuration.fogType = fogType;
     }
 
-    public static boolean isDeveloperMode() {
-        return developerMode;
+    public static boolean isSecureMode() {
+        return secureMode;
     }
 
-    public static void setDeveloperMode(boolean developerMode) {
-        Configuration.developerMode = developerMode;
+    public static void setSecureMode(boolean secureMode) {
+        Configuration.secureMode = secureMode;
     }
 
     /**
@@ -663,10 +672,10 @@ public final class Configuration {
                             break;
                         }
                         break;
-                    case DEV_MODE:
-                        LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
-                        setNode(DEV_MODE, value, configFile, configElement);
-                        setDeveloperMode(!value.equals("off"));
+                    case SECURE_MODE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting secure mode");
+                        setNode(SECURE_MODE, value, configFile, configElement);
+                        setSecureMode(!value.equals("off"));
                         break;
                     case ROUTER_HOST:
                         LoggingService.logInfo(MODULE_NAME, "Setting router host");
@@ -723,6 +732,11 @@ public final class Configuration {
                         setNode(READY_TO_UPGRADE_SCAN_FREQUENCY, value, configFile, configElement);
                         setReadyToUpgradeScanFrequency(Integer.parseInt(value));
                         FieldAgent.getInstance().changeReadInterval();
+                        break;
+                    case DEV_MODE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting dev mode");
+                        setNode(DEV_MODE, value, configFile, configElement);
+                        setDevMode(!value.equals("off"));
                         break;
                     default:
                         throw new ConfigurationItemException("Invalid parameter -" + option);
@@ -969,7 +983,7 @@ public final class Configuration {
         setPostDiagnosticsFreq(Integer.parseInt(getNode(POST_DIAGNOSTICS_FREQ, configFile)));
         setWatchdogEnabled(!getNode(WATCHDOG_ENABLED, configFile).equals("off"));
         configureFogType(getNode(FOG_TYPE, configFile));
-        setDeveloperMode(!getNode(DEV_MODE, configFile).equals("off"));
+        setSecureMode(!getNode(SECURE_MODE, configFile).equals("off"));
         setIpAddressExternal(GpsWebHandler.getExternalIp());
         setRouterHost(getNode(ROUTER_HOST, configFile));
         setRouterPort(!getNode(ROUTER_PORT, configFile).equals("") ? Integer.parseInt(getNode(ROUTER_PORT, configFile)) : 0);
@@ -977,6 +991,8 @@ public final class Configuration {
         setDockerPruningFrequency(Long.parseLong(getNode(DOCKER_PRUNING_FREQUENCY, configFile)));
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
         setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
+        setDevMode(!getNode(DEV_MODE, configFile).equals("off"));
+
         try {
             saveConfigUpdates();
         } catch (Exception e) {
@@ -1201,8 +1217,8 @@ public final class Configuration {
         result.append(buildReportLine(getIpAddressMessage(), ipAddress));
         // network interface
         result.append(buildReportLine(getConfigParamMessage(NETWORK_INTERFACE), networkInterface));
-        // developer mode
-        result.append(buildReportLine(getConfigParamMessage(DEV_MODE), (developerMode ? "on" : "off")));
+        // secure mode
+        result.append(buildReportLine(getConfigParamMessage(SECURE_MODE), (secureMode ? "on" : "off")));
         // controller url
         result.append(buildReportLine(getConfigParamMessage(CONTROLLER_URL), controllerUrl));
         // controller cert dir
@@ -1247,7 +1263,8 @@ public final class Configuration {
         result.append(buildReportLine(getConfigParamMessage(AVAILABLE_DISK_THRESHOLD), format("%d", availableDiskThreshold)));
         // is ready to upgrade scan frequency
         result.append(buildReportLine(getConfigParamMessage(READY_TO_UPGRADE_SCAN_FREQUENCY), format("%d", readyToUpgradeScanFrequency)));
-
+        // dev mode
+        result.append(buildReportLine(getConfigParamMessage(DEV_MODE), (devMode ? "on" : "off")));
         LoggingService.logDebug(MODULE_NAME, "Finished get Config Report");
         
         return result.toString();

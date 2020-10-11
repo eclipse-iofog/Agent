@@ -18,7 +18,7 @@ public class TrackingInfoUtils {
         try {
             String gpsCoordinates = Configuration.getGpsCoordinates();
             String gpsMode = Configuration.getGpsMode().name();
-            boolean developerMode = Configuration.isDeveloperMode();
+            boolean secureMode = Configuration.isSecureMode();
             String networkInterface = Configuration.getNetworkInterfaceInfo();
             String version = CmdProperties.getVersion();
             String agentStatus = StatusReporter.getFieldAgentStatus().getControllerStatus().name().toLowerCase();
@@ -26,7 +26,7 @@ public class TrackingInfoUtils {
             startInfo = Json.createObjectBuilder()
                     .add("gpsCoordinates", gpsCoordinates)
                     .add("gpsMode", gpsMode)
-                    .add("developerMode", developerMode)
+                    .add("secureMode", secureMode)
                     .add("networkInterface", networkInterface)
                     .add("version", version)
                     .add("agentStatus", agentStatus)

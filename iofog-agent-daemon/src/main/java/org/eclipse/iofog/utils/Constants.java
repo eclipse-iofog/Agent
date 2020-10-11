@@ -138,4 +138,5 @@ public class Constants {
 
     public static final float MAX_DISK_CONSUMPTION_LIMIT = 100;
     public static final float PERCENTAGE_COMPLETION = 100;
+
 }
