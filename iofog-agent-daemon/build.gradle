@@ -123,5 +123,5 @@ task integrationTest(type: Test) {
 
 test.dependsOn(doJacocoOfflineInstrumentation)
 test.finalizedBy jacocoTestReport
-check.dependsOn integrationTest
-integrationTest.mustRunAfter test
+//check.dependsOn integrationTest
+//integrationTest.mustRunAfter test

@@ -1,0 +1,13 @@
+apiVersion: iofog.org/v2
+kind: LocalControlPlane
+metadata:
+  name: ecn
+spec:
+  iofogUser:
+    name: integration
+    surname: test
+    email: user@domain.com
+    password: q1u45ic9kst563art
+  controller:
+    container:
+      image: iofog/controller:2.0.0
