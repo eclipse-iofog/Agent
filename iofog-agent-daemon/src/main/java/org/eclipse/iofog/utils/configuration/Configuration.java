@@ -994,7 +994,7 @@ public final class Configuration {
         setDevMode(!getNode(DEV_MODE, configFile).equals("off"));
 
         try {
-            saveConfigUpdates();
+            updateConfigFile(getCurrentConfigPath(), configFile);
         } catch (Exception e) {
             LoggingService.logError(MODULE_NAME, "Error saving config", e);
         }
