@@ -981,7 +981,7 @@ public final class Configuration {
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
         setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
         try {
-            saveConfigUpdates();
+            updateConfigFile(getCurrentConfigPath(), configFile);
         } catch (Exception e) {
             LoggingService.logError(MODULE_NAME, "Error saving config", e);
         }
