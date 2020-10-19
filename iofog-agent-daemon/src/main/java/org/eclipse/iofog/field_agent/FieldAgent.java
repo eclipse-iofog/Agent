@@ -231,6 +231,7 @@ public class FieldAgent implements IOFogModule {
                     Thread.sleep(Configuration.getStatusFrequency() * 1000);
                 } else {
                     Thread.sleep(1 * 1000);
+                    ProcessManager.getInstance().updateMicroserviceStatus();
                 }
                 postStatusHelper();
             } catch (Exception e) {

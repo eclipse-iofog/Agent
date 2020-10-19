@@ -478,7 +478,7 @@ public class DockerUtilTest {
     @Test
     public void testGetMicroserviceStatusWhenExecReturnsNull() {
         PowerMockito.when(inspectContainerResponse.getState()).thenReturn(null);
-        assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+        assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
         Mockito.verify(microserviceStatus, Mockito.never()).getContainerId();
         Mockito.verify(microserviceStatus, Mockito.never()).getContainerId();
     }
@@ -491,7 +491,7 @@ public class DockerUtilTest {
     @Test
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsUnknown() {
         try {
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
             Mockito.verify(microserviceStatus).setStatus(any());
             Mockito.verify(microserviceStatus).setUsage(any());
@@ -510,7 +510,7 @@ public class DockerUtilTest {
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsRunning() {
         try {
             PowerMockito.when(containerState.getStatus()).thenReturn("RUNNING");
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
             Mockito.verify(microserviceStatus).setStatus(any());
             Mockito.verify(microserviceStatus).setUsage(any());
@@ -530,7 +530,7 @@ public class DockerUtilTest {
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsStart() {
         try {
             PowerMockito.when(containerState.getStatus()).thenReturn("START");
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
             Mockito.verify(microserviceStatus).setStatus(any());
             Mockito.verify(microserviceStatus).setUsage(any());
@@ -550,7 +550,7 @@ public class DockerUtilTest {
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsStop() {
         try {
             PowerMockito.when(containerState.getStatus()).thenReturn("STOP");
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
             Mockito.verify(microserviceStatus).setStatus(any());
             Mockito.verify(microserviceStatus).setUsage(any());
@@ -570,7 +570,7 @@ public class DockerUtilTest {
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsDestroy() {
         try {
             PowerMockito.when(containerState.getStatus()).thenReturn("DESTROY");
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
             Mockito.verify(microserviceStatus).setStatus(any());
             Mockito.verify(microserviceStatus).setUsage(any());
@@ -590,11 +590,11 @@ public class DockerUtilTest {
     @Test
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsRestart() {
         try {
-            PowerMockito.when(containerState.getStatus()).thenReturn("RESTART");
+            PowerMockito.when(containerState.getStatus()).thenReturn("EXITED");
             PowerMockito.when(RestartStuckChecker.isStuck(any())).thenReturn(false);
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
-            Mockito.verify(microserviceStatus).setStatus(eq(MicroserviceState.RESTARTING));
+            Mockito.verify(microserviceStatus).setStatus(eq(MicroserviceState.EXITING));
             Mockito.verify(microserviceStatus).setUsage(any());
             Mockito.verify(microserviceStatus, Mockito.never()).setStartTime(anyLong());
             PowerMockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
@@ -614,9 +614,9 @@ public class DockerUtilTest {
     @Test
     public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsRestartIsStuck() {
         try {
-            PowerMockito.when(containerState.getStatus()).thenReturn("RESTART");
+            PowerMockito.when(containerState.getStatus()).thenReturn("EXITED");
             PowerMockito.when(RestartStuckChecker.isStuck(any())).thenReturn(true);
-            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID));
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
             Mockito.verify(microserviceStatus).setContainerId(any());
             Mockito.verify(microserviceStatus).setStatus(eq(MicroserviceState.STUCK_IN_RESTART));
             Mockito.verify(microserviceStatus).setUsage(any());

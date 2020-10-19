@@ -309,7 +309,7 @@ public class DockerUtil {
      * @param containerId - id of {@link Container}
      * @return {@link MicroserviceStatus}
      */
-    public MicroserviceStatus getMicroserviceStatus(String containerId) {
+    public MicroserviceStatus getMicroserviceStatus(String containerId, String microServiceUuid) {
     	LoggingService.logDebug(MODULE_NAME , "get microservice status");
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
         ContainerState containerState = inspectInfo.getState();
@@ -320,7 +320,7 @@ public class DockerUtil {
             }
 
             MicroserviceState microserviceState = containerToMicroserviceState(containerState);
-             result.setStatus(MicroserviceState.RESTARTING.equals(microserviceState) && RestartStuckChecker.isStuck(containerId)
+             result.setStatus(MicroserviceState.EXITING.equals(microserviceState) && RestartStuckChecker.isStuck(microServiceUuid)
                 ? MicroserviceState.STUCK_IN_RESTART
                 : microserviceState);
 
@@ -351,6 +351,8 @@ public class DockerUtil {
                 return MicroserviceState.STOPPING;
             case "destroy":
                 return MicroserviceState.DELETING;
+            case "exited":
+                return MicroserviceState.EXITING;
         }
 
         return MicroserviceState.UNKNOWN;
