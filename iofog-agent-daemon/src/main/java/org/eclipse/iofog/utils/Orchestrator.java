@@ -45,6 +45,7 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
@@ -240,7 +241,7 @@ public class Orchestrator {
     	} catch (IOException e) {
             try {
                 IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
-            } catch (SocketException ex) {
+            } catch (SocketException | MalformedURLException ex) {
                 LoggingService.logWarning(MODULE_NAME, "Unable to update network interface : " + ex.getMessage());
             }
             logError(MODULE_NAME, "unable to connect to IOFog Controller endpoint",

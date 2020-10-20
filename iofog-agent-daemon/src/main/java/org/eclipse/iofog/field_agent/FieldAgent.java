@@ -215,7 +215,7 @@ public class FieldAgent implements IOFogModule {
         }catch (SocketTimeoutException e) {
             try {
                 IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
-            } catch (SocketException ex) {
+            } catch (SocketException | MalformedURLException ex) {
                 logError("Unable to update Network interface", new AgentSystemException(ex.getMessage(), ex));
             }
         } catch (Exception e) {

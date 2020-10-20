@@ -50,8 +50,10 @@ public class IOFogNetworkInterface {
         Optional<InetAddress> inetAddress = Optional.empty();
         try {
             inetAddress = Optional.of(getInetAddress());
-        } catch (SocketException exp) {
-            LoggingService.logError(MODULE_NAME, "Unable to find the IP address of the machine running ioFog", new AgentSystemException(exp.getMessage(), exp));
+        } catch (SocketException | MalformedURLException exp) {
+            LoggingService.logError(MODULE_NAME, "Unable to find the local IP address", new AgentSystemException(exp.getMessage(), exp));
+        } catch (Exception e){
+            LoggingService.logError(MODULE_NAME, "Unable to find the IP address of the machine running ioFog exception occurred", new AgentSystemException(e.getMessage(), e));
         }
         return inetAddress;
     }
@@ -62,16 +64,21 @@ public class IOFogNetworkInterface {
      * @return {@link Inet4Address}
      * @throws Exception
      */
-    public static InetAddress getInetAddress() throws SocketException {
-        final Pair<NetworkInterface, InetAddress> connectedAddress = getNetworkInterface();
-        if (connectedAddress != null) {
-           return connectedAddress._2();
+    public static InetAddress getInetAddress() throws SocketException, MalformedURLException {
+        try {
+            final Pair<NetworkInterface, InetAddress> connectedAddress = getNetworkInterface();
+            if (connectedAddress != null) {
+                return connectedAddress._2();
+            }
+        } catch (SocketException | MalformedURLException e){
+            throw e;
+        } catch (Exception e){
+            throw e;
         }
-
-        throw new ConnectException(UNABLE_TO_GET_IP_ADDRESS);
+        return null;
     }
 
-    public static Pair<NetworkInterface, InetAddress> getNetworkInterface() {
+    public static Pair<NetworkInterface, InetAddress> getNetworkInterface() throws MalformedURLException, SocketException {
         final String configNetworkInterface = Configuration.getNetworkInterface();
         if (NETWORK_INTERFACE.getDefaultValue().equals(configNetworkInterface)) {
             return getOSNetworkInterface();
@@ -82,8 +89,8 @@ public class IOFogNetworkInterface {
             NetworkInterface networkInterface = NetworkInterface.getByName(configNetworkInterface);
             return getConnectedAddress(controllerUrl, networkInterface);
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to get Network Interface : " + e.getMessage());
-            return null;
+            LoggingService.logWarning(MODULE_NAME, "Unable to get Network Interface : " + e.getStackTrace().toString());
+            throw e;
         }
     }
 
@@ -101,7 +108,7 @@ public class IOFogNetworkInterface {
         try {
             future.get(1, TimeUnit.SECONDS);
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name");
+            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name : " + e.getStackTrace().toString());
             dockerBridgeInterfaceName = null;
         }
     }
@@ -136,7 +143,7 @@ public class IOFogNetworkInterface {
 
             return null;
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + e.getMessage());
+            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + e.getStackTrace().toString());
             return null;
         }
     }
@@ -148,9 +155,9 @@ public class IOFogNetworkInterface {
     private static Pair<NetworkInterface, InetAddress> getConnectedAddress(URL controllerUrl, NetworkInterface networkInterface, boolean checkConnection) {
         int controllerPort = controllerUrl.getPort();
         String controllerHost = controllerUrl.getHost();
-
         Enumeration<InetAddress> nifAddresses = networkInterface.getInetAddresses();
         for (InetAddress nifAddress: Collections.list(nifAddresses)) {
+            LoggingService.logDebug(MODULE_NAME, "Detected network interface: " + networkInterface + " And network address: " + nifAddresses);
             if (!(nifAddress instanceof Inet4Address)) {
                 continue;
             }
@@ -166,7 +173,7 @@ public class IOFogNetworkInterface {
                 soc.close();
                 return Pair.of(networkInterface, nifAddress);
             } catch (Exception e) {
-                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " +  e.getMessage());
+                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " +  e.getStackTrace().toString());
             }
         }
 
@@ -178,7 +185,7 @@ public class IOFogNetworkInterface {
             InetAddress ip = InetAddress.getLocalHost();
             hostname = ip.getHostName();
         } catch (UnknownHostException e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " +  e.getMessage());
+            LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " +  e.getStackTrace().toString());
         }
         return hostname;
     }

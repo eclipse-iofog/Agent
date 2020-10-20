@@ -6,6 +6,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.concurrent.Executors;
@@ -77,7 +78,7 @@ public class IOFogNetworkInterfaceManager {
         return instance;
     }
 
-    public void updateIOFogNetworkInterface() throws SocketException {
+    public void updateIOFogNetworkInterface() throws SocketException, MalformedURLException {
         LoggingService.logDebug(MODULE_NAME, "Updating IoFog NetworkInterface");
         try {
             setCurrentIpAddress(IOFogNetworkInterface.getCurrentIpAddress());
@@ -85,7 +86,7 @@ public class IOFogNetworkInterfaceManager {
             setInetAddress(IOFogNetworkInterface.getInetAddress());
             setHostName(IOFogNetworkInterface.getHostName());
             setPid(getFogPid());
-        } catch (SocketException exp) {
+        } catch (SocketException | MalformedURLException exp) {
             LoggingService.logError(MODULE_NAME, "Unable to set IP address of the machine running ioFog", new AgentSystemException(exp.getMessage(), exp));
             throw exp;
         }
