@@ -87,11 +87,23 @@ jobs:
         displayName: 'Save Docker image name and tag to GCR_DOCKER_IMAGE into artifacts'
 
       - task: Docker@2
-        displayName: 'build and push docker image'
+        displayName: 'build docker image'
         inputs:
           containerRegistry: 'Edgeworx GCP'
           repository: $(repository)
-          command: 'buildAndPush'
+          command: 'build'
+          Dockerfile: 'Dockerfile'
+          tags: |
+            $(imageTag)
+            $(branchTag)
+            latest
+
+      - task: Docker@2
+        displayName: 'push docker image'
+        inputs:
+          containerRegistry: 'Edgeworx GCP'
+          repository: $(repository)
+          command: 'push'
           Dockerfile: 'Dockerfile'
           tags: |
             $(imageTag)
@@ -138,6 +150,34 @@ jobs:
           echo $(ls | grep *.deb)
           echo "##vso[task.setvariable variable=pkg_version]$pkg_version"
         displayName: 'create deb package'
+
+      - script: |
+          sudo apt-get install jq
+        displayName: 'install jq'
+
+      - script: |
+          curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
+          sudo apt-get install iofogctl=$(iofogctl.version)
+        displayName: 'install iofogctl'
+
+      - script: |
+          sudo apt-get update -y
+          sudo apt-get install -y bats
+        displayName: 'install bats'
+
+      - script: |
+          sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"$(controller.image)\"|g" test/resources/env.sh
+          sudo bash test/deploy_ecn.bash deployControlPlane
+        displayName: 'deploy local ecn'
+
+      - script: |
+          sudo bash test/run.bash
+        displayName: 'integration test'
+
+      - script: |
+          sudo bash test/deploy_ecn.bash deleteECN
+        displayName: 'delete ecn'
+        condition: always()
 
       - script: |
           cd packaging/iofog-agent

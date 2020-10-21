@@ -1378,7 +1378,7 @@ public class FieldAgent implements IOFogModule {
         } catch (Exception e) {
             logError("Error posting updated for config ", e);
         }
-        orchestrator.update();
+            orchestrator.update();
         logDebug("Finished IOFog configuration update");
     }
 

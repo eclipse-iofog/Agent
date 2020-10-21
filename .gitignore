@@ -12,3 +12,4 @@ iofog-agent-daemon/bin
 iofog-agent-client/bin
 iofog-version-controller/bin
 .vscode
+bats-core
