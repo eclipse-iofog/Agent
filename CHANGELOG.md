@@ -4,6 +4,9 @@
 
 ## [v2.0.2] - 2020-10-23
 
+### Features
+* Added dir /var/log/iofog-microservices on install for microservice logs
+
 ### Bugs
 * Fixed docker pruning dead loop
 * Fixed Gps mode null pointer
