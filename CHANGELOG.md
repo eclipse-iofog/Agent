@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [v2.0.2]
+
+### Bugs
+* Fixed docker pruning dead loop
+* Fixed Gps mode null pointer
+* Fixed rollback version issue
+
 ### Features
 
 * Volume mapping types

@@ -14,14 +14,18 @@ package org.eclipse.iofog.command_line;
 
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
+import org.eclipse.iofog.tracking.Tracker;
+import org.eclipse.iofog.tracking.TrackingEventType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.json.JsonObject;
 import java.lang.reflect.Constructor;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,22 +37,27 @@ import static org.powermock.api.mockito.PowerMockito.*;
  * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({CommandLineParser.class, CommandLineAction.class, FieldAgent.class})
+@PrepareForTest({CommandLineParser.class, CommandLineAction.class, FieldAgent.class, Tracker.class})
 public class CommandLineParserTest {
     private CommandLineParser commandLineParser;
     private String[] mockArguments = {"help", "-h", "--help"};
     private FieldAgent fieldAgent;
+    private Tracker tracker;
 
     @Before
     public void setUp() throws Exception {
         commandLineParser = mock(CommandLineParser.class);
         mockStatic(CommandLineAction.class);
         mockStatic(FieldAgent.class);
+        mockStatic(Tracker.class);
         fieldAgent = mock(FieldAgent.class);
+        tracker = mock(Tracker.class);
         when(FieldAgent.getInstance()).thenReturn(fieldAgent);
+        when(Tracker.getInstance()).thenReturn(tracker);
         when(fieldAgent.provision(anyString())).thenReturn(null);
         when(CommandLineAction.getActionByKey(anyString())).thenReturn(CommandLineAction.HELP_ACTION);
         when(CommandLineAction.getActionByKey(anyString()).perform(mockArguments)).thenReturn("Test perform");
+        doNothing().when(tracker).handleEvent(Mockito.eq(TrackingEventType.PROVISION), anyString());
     }
 
     @After
@@ -63,6 +72,7 @@ public class CommandLineParserTest {
     @Test(expected = AgentUserException.class)
     public void throwsAgentUserExceptionWhenParse() throws AgentUserException {
         when(CommandLineAction.getActionByKey(anyString())).thenReturn(CommandLineAction.PROVISION_ACTION);
+        when(fieldAgent.provision(anyString())).thenReturn(mock(JsonObject.class));
         when(CommandLineAction.getActionByKey(anyString()).perform(mockArguments)).thenThrow(mock(AgentUserException.class));
         commandLineParser.parse("provision key");
         PowerMockito.verifyStatic(CommandLineAction.class);

@@ -12,7 +12,11 @@
  *******************************************************************************/
 package org.eclipse.iofog.utils.logging;
 
+import io.sentry.Sentry;
+import io.sentry.SentryClient;
+import io.sentry.context.Context;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 /**
@@ -43,7 +48,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LoggingService.class, Configuration.class, Logger.class, File.class, FileHandler.class, FileSystems.class, FileSystem.class,
-        UserPrincipalLookupService.class, Files.class, PosixFileAttributeView.class, Handler.class})
+        UserPrincipalLookupService.class, Files.class, PosixFileAttributeView.class, Handler.class, CmdProperties.class, Sentry.class, Context.class,
+        SentryClient.class})
 public class LoggingServiceTest {
     private String MODULE_NAME;
     private String message;
@@ -57,6 +63,8 @@ public class LoggingServiceTest {
     private Files files;
     private PosixFileAttributeView posixFileAttributeView;
     private Handler handler;
+    private Context context;
+    private SentryClient sentryClient;
 
     @Before
     public void setUp() throws Exception {
@@ -65,11 +73,15 @@ public class LoggingServiceTest {
         PowerMockito.mockStatic(FileSystems.class);
         PowerMockito.mockStatic(Files.class);
         mockStatic(Logger.class);
+        mockStatic(Sentry.class);
+        mockStatic(CmdProperties.class);
         file = Mockito.mock(File.class);
         logger = Mockito.mock(Logger.class);
         fileHandler = Mockito.mock(FileHandler.class);
         fileSystem = Mockito.mock(FileSystem.class);
         handler = Mockito.mock(Handler.class);
+        sentryClient = Mockito.mock(SentryClient.class);
+        context = Mockito.mock(Context.class);
         posixFileAttributeView = Mockito.mock(PosixFileAttributeView.class);
         userPrincipalLookupService = Mockito.mock(UserPrincipalLookupService.class);
         MODULE_NAME = "LoggingService";
@@ -83,17 +95,23 @@ public class LoggingServiceTest {
         PowerMockito.when(Configuration.getLogFileCount()).thenReturn(10);
         PowerMockito.when(Configuration.getLogLevel()).thenReturn("info");
         PowerMockito.when(Configuration.getLogDiskDirectory()).thenReturn("/log/");
-        PowerMockito.whenNew(File.class).withParameterTypes(String.class).withArguments(Mockito.any()).thenReturn(file);
+        PowerMockito.whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
         PowerMockito.whenNew(FileHandler.class)
-                .withArguments(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt()).thenReturn(fileHandler);
+                .withArguments(anyString(), Mockito.anyInt(), Mockito.anyInt()).thenReturn(fileHandler);
         PowerMockito.when(file.getPath()).thenReturn("/log/");
-        PowerMockito.when(Logger.getLogger(Mockito.anyString())).thenReturn(logger);
-        PowerMockito.doNothing().when(logger).addHandler(Mockito.any());
+        PowerMockito.when(Logger.getLogger(anyString())).thenReturn(logger);
+        PowerMockito.doNothing().when(logger).addHandler(any());
         PowerMockito.when(logger.getHandlers()).thenReturn(handlers);
         PowerMockito.doNothing().when(handler).close();
         PowerMockito.when(FileSystems.getDefault()).thenReturn(fileSystem);
         PowerMockito.when(fileSystem.getUserPrincipalLookupService()).thenReturn(userPrincipalLookupService);
-        PowerMockito.when(Files.getFileAttributeView(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(posixFileAttributeView);
+        PowerMockito.when(Files.getFileAttributeView(any(), any(), any())).thenReturn(posixFileAttributeView);
+        PowerMockito.when(CmdProperties.getVersion()).thenReturn("version");
+        PowerMockito.when(Sentry.getContext()).thenReturn(context);
+        PowerMockito.when(Sentry.getStoredClient()).thenReturn(sentryClient);
+        PowerMockito.when(sentryClient.getContext()).thenReturn(context);
+        PowerMockito.doNothing().when(context).addExtra(eq("version"), anyString());
+        PowerMockito.doNothing().when(context).setUser(any());
     }
 
     @After
@@ -169,8 +187,8 @@ public class LoggingServiceTest {
     public void testSetupLogger() {
         try {
             LoggingService.setupLogger();
-            PowerMockito.verifyNew(File.class, Mockito.atLeastOnce()).withArguments(Mockito.eq(Configuration.getLogDiskDirectory()));
-            PowerMockito.verifyNew(FileHandler.class).withArguments(Mockito.eq(file.getPath()+"/iofog-agent.%g.log"), Mockito.anyInt(), Mockito.anyInt());
+            PowerMockito.verifyNew(File.class, Mockito.atLeastOnce()).withArguments(eq(Configuration.getLogDiskDirectory()));
+            PowerMockito.verifyNew(FileHandler.class).withArguments(eq(file.getPath()+"/iofog-agent.%g.log"), Mockito.anyInt(), Mockito.anyInt());
             Mockito.verify(logger).addHandler(fileHandler);
             Mockito.verify(logger).setLevel(Level.INFO);
         } catch (Exception e) {
@@ -189,7 +207,7 @@ public class LoggingServiceTest {
             PowerMockito.verifyStatic(Logger.class);
             Logger.getLogger(microUuid);
             Mockito.verify(logger).addHandler(fileHandler);
-            Mockito.verify(logger).setUseParentHandlers(Mockito.eq(false));
+            Mockito.verify(logger).setUseParentHandlers(eq(false));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -274,7 +292,7 @@ public class LoggingServiceTest {
     @Test
     public void TestInstanceConfigUpdated() throws IOException {
         Exception e = new SecurityException("This is exception");
-        PowerMockito.doThrow(e).when(logger).setLevel(Mockito.any());
+        PowerMockito.doThrow(e).when(logger).setLevel(any());
         LoggingService.instanceConfigUpdated();
         PowerMockito.verifyStatic(LoggingService.class);
         LoggingService.setupLogger();

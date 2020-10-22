@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2019 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- * Neha Naithani
- *******************************************************************************/
+ */
 package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
@@ -31,7 +31,6 @@ import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager
 import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.status_reporter.StatusReporterStatus;
-import org.eclipse.iofog.supervisor.Supervisor;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
@@ -69,12 +68,14 @@ import java.util.concurrent.TimeUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.resource_manager.ResourceManager.COMMAND_USB_INFO;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-import static org.powermock.api.support.membermodification.MemberMatcher.method;
-import static org.powermock.api.support.membermodification.MemberModifier.suppress;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.powermock.api.mockito.PowerMockito.*;
 
 /**
  * @author nehanaithani
@@ -83,7 +84,7 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
 @PrepareForTest({FieldAgent.class, LoggingService.class, FieldAgentStatus.class, MicroserviceManager.class,
         Orchestrator.class, URL.class, HttpURLConnection.class, Configuration.class, StatusReporter.class,
         SshProxyManager.class, ProcessManager.class, MessageBus.class, LocalApi.class, Thread.class, BufferedReader.class,
-        InputStreamReader.class, ResourceManagerStatus.class, IOFogNetworkInterface.class, VersionHandler.class, CommandShellExecutor.class})
+        InputStreamReader.class, ResourceManagerStatus.class, VersionHandler.class, CommandShellExecutor.class, IOFogNetworkInterface.class})
 public class FieldAgentTest {
     private FieldAgent fieldAgent;
     private String MODULE_NAME;
@@ -114,48 +115,54 @@ public class FieldAgentTest {
         mockStatic(Orchestrator.class);
         mockStatic(MessageBus.class);
         mockStatic(LocalApi.class);
-        mockStatic(IOFogNetworkInterface.class);
         mockStatic(VersionHandler.class);
         mockStatic(CommandShellExecutor.class);
-        orchestrator = mock(Orchestrator.class);
-        sshProxyManager = mock(SshProxyManager.class);
-        processManager = mock(ProcessManager.class);
-        messageBus = mock(MessageBus.class);
-        localApi = mock(LocalApi.class);
-        resourceManagerStatus = mock(ResourceManagerStatus.class);
+        mockStatic(BufferedReader.class);
+        mockStatic(InputStreamReader.class);
+        mockStatic(IOFogNetworkInterface.class);
+
+        orchestrator = PowerMockito.mock(Orchestrator.class);
+        sshProxyManager = PowerMockito.mock(SshProxyManager.class);
+        processManager = PowerMockito.mock(ProcessManager.class);
+        messageBus = PowerMockito.mock(MessageBus.class);
+        localApi = PowerMockito.mock(LocalApi.class);
+        resourceManagerStatus = PowerMockito.mock(ResourceManagerStatus.class);
         mockConfiguration();
         mockOthers();
         fieldAgent = PowerMockito.spy(FieldAgent.getInstance());
-        fieldAgentStatus = mock(FieldAgentStatus.class);
+        fieldAgentStatus = PowerMockito.mock(FieldAgentStatus.class);
         setMock(fieldAgent);
         MODULE_NAME = "Field Agent";
         when(StatusReporter.getFieldAgentStatus()).thenReturn(fieldAgentStatus);
         when(StatusReporter.setFieldAgentStatus()).thenReturn(fieldAgentStatus);
         when(StatusReporter.setResourceManagerStatus()).thenReturn(resourceManagerStatus);
         when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.NOT_PROVISIONED);
-        microserviceManager = mock(MicroserviceManager.class);
-        mockStatic(MicroserviceManager.class);
-        whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
-        whenNew(SshProxyManager.class).withArguments(any(SshConnection.class)).thenReturn(sshProxyManager);
-        PowerMockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
-        PowerMockito.when(ProcessManager.getInstance()).thenReturn(processManager);
-        PowerMockito.when(MessageBus.getInstance()).thenReturn(messageBus);
-        PowerMockito.when(LocalApi.getInstance()).thenReturn(localApi);
+        microserviceManager = PowerMockito.mock(MicroserviceManager.class);
+        PowerMockito.mockStatic(MicroserviceManager.class);
+        PowerMockito.whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
+        PowerMockito.whenNew(SshProxyManager.class).withArguments(Mockito.any(SshConnection.class)).thenReturn(sshProxyManager);
+        when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
+        when(ProcessManager.getInstance()).thenReturn(processManager);
+        when(MessageBus.getInstance()).thenReturn(messageBus);
+        when(LocalApi.getInstance()).thenReturn(localApi);
         PowerMockito.doNothing().when(processManager).deleteRemainingMicroservices();
-        PowerMockito.when(orchestrator.request(any(), any(), any(), any())).thenReturn(mock(JsonObject.class));
+        when(orchestrator.request(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(PowerMockito.mock(JsonObject.class));
         url = PowerMockito.mock(URL.class);
-        httpURLConnection = mock(HttpURLConnection.class);
-        whenNew(URL.class).withArguments(any()).thenReturn(url);
-        PowerMockito.when(url.openConnection()).thenReturn(httpURLConnection );
-        PowerMockito.when(httpURLConnection.getResponseCode()).thenReturn(200);
-        bufferedReader = mock(BufferedReader.class);
-        inputStreamReader = mock(InputStreamReader.class);
+        httpURLConnection = PowerMockito.mock(HttpURLConnection.class);
+        whenNew(URL.class).withArguments(Mockito.any()).thenReturn(url);
+        when(url.openConnection()).thenReturn(httpURLConnection );
+        when(httpURLConnection.getResponseCode()).thenReturn(200);
+        PowerMockito.doNothing().when(httpURLConnection).disconnect();
+        bufferedReader = PowerMockito.mock(BufferedReader.class);
+        inputStreamReader = PowerMockito.mock(InputStreamReader.class);
         PowerMockito.whenNew(InputStreamReader.class).withParameterTypes(InputStream.class, Charset.class).
-                withArguments(any(), eq(UTF_8)).thenReturn(inputStreamReader);
+                withArguments(Mockito.any(String.class), Mockito.eq(UTF_8)).thenReturn(inputStreamReader);
+        PowerMockito.whenNew(InputStreamReader.class).withParameterTypes(InputStream.class, Charset.class).
+                withArguments(Mockito.eq(null), Mockito.eq(UTF_8)).thenReturn(inputStreamReader);
         PowerMockito.whenNew(BufferedReader.class).withArguments(inputStreamReader).thenReturn(bufferedReader);
-        PowerMockito.when(bufferedReader.readLine()).thenReturn("Response from HAL").thenReturn(null);
-        PowerMockito.when(VersionHandler.isReadyToUpgrade()).thenReturn(false);
-        PowerMockito.when(VersionHandler.isReadyToRollback()).thenReturn(false);
+        when(bufferedReader.readLine()).thenReturn("Response from HAL").thenReturn(null);
+        when(VersionHandler.isReadyToUpgrade()).thenReturn(false);
+        when(VersionHandler.isReadyToRollback()).thenReturn(false);
         jsonObjectBuilder = Json.createObjectBuilder();
         jsonObject = jsonObjectBuilder
                 .add("uuid", "uuid")
@@ -165,6 +172,7 @@ public class FieldAgentTest {
                 .add("uuid", "uuid")
                 .add("token", "token")
                 .add("message", "success").build();
+        PowerMockito.when(IOFogNetworkInterface.getCurrentIpAddress()).thenReturn("ip");
 
     }
 
@@ -175,7 +183,7 @@ public class FieldAgentTest {
         instance.set(null, null);
         MODULE_NAME = null;
         fieldAgent = null;
-        Mockito.reset(fieldAgentStatus, orchestrator);
+        Mockito.reset(fieldAgentStatus, orchestrator, bufferedReader, inputStreamReader);
         if (method != null)
             method.setAccessible(false);
     }
@@ -195,10 +203,10 @@ public class FieldAgentTest {
     }
 
     public void initiateMockStart() {
-        thread = mock(Thread.class);
+        thread = PowerMockito.mock(Thread.class);
         try {
-            whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(any(Runnable.class),
-                    anyString()).thenReturn(thread);
+            whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
+                    Mockito.anyString()).thenReturn(thread);
             PowerMockito.doNothing().when(thread).start();
             fieldAgent.start();
         } catch (Exception e) {
@@ -253,7 +261,7 @@ public class FieldAgentTest {
     public void postTrackingLogsErrorWhenRequestFails() {
         try {
             initiateMockStart();
-            PowerMockito.when(orchestrator.request(any(), any(), any(), any())).thenThrow(mock(Exception.class));
+            when(orchestrator.request(any(), any(), any(), any())).thenThrow(PowerMockito.mock(Exception.class));
             fieldAgent.postTracking(null);
             Mockito.verify(orchestrator).request(eq("tracking"), eq(RequestType.POST), eq(null), eq(null));
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
@@ -270,7 +278,7 @@ public class FieldAgentTest {
     public void testProvisionWhenControllerStatusIsNotProvisioned() {
         try {
             initiateMockStart();
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -298,7 +306,7 @@ public class FieldAgentTest {
             when(Configuration.getGpsCoordinates()).thenReturn(null);
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -310,13 +318,11 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-            PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
         } catch (Exception e) {
             fail("this should never happen");
         }
@@ -331,7 +337,7 @@ public class FieldAgentTest {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             when(Configuration.getGpsCoordinates()).thenReturn("");
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -343,13 +349,11 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-            PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
         } catch (Exception e) {
             fail("this should never happen");
         }
@@ -364,10 +368,10 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("config"), any(), any(), any())).
+            when(orchestrator.request(eq("config"), any(), any(), any())).
                     thenThrow(new CertificateException("Invalid certificate"));
             when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -384,8 +388,6 @@ public class FieldAgentTest {
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to post ioFog config due to broken certificate "), any());
         } catch (AgentSystemException e) {
@@ -404,7 +406,7 @@ public class FieldAgentTest {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -416,13 +418,11 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processRoutes", any());
-            PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
         } catch (Exception e) {
             fail("this should never happen");
         }
@@ -450,8 +450,8 @@ public class FieldAgentTest {
                     .add("registries", jsonArray)
                     .add("uuid", "uuid")
                     .add("token", "token").build();
-            PowerMockito.when(orchestrator.request(eq("registries"), any(), any(), any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.request(eq("registries"), any(), any(), any())).thenReturn(jsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -463,19 +463,17 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-            PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
         } catch (Exception e) {
             fail("This should not happen");
         }
     }
 
-   /**
+    /**
      * Test provision when controller status is provisioned & Gps coordinates not null &
      * IoFogController returns Invalid registries
      * And has no microservices
@@ -494,8 +492,8 @@ public class FieldAgentTest {
                     .add("registries", jsonArray)
                     .add("uuid", "uuid")
                     .add("token", "token").build();
-            PowerMockito.when(orchestrator.request(eq("registries"), any(), any(), any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.request(eq("registries"), any(), any(), any())).thenReturn(jsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -512,8 +510,6 @@ public class FieldAgentTest {
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get registries"), any());
         } catch (AgentSystemException e) {
@@ -547,8 +543,8 @@ public class FieldAgentTest {
                     .add("microservices", jsonMicorserviceArray)
                     .add("uuid", "uuid")
                     .add("token", "token").build();
-            PowerMockito.when(orchestrator.request(any(), any(), any(), any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.request(any(), any(), any(), any())).thenReturn(jsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
@@ -565,8 +561,6 @@ public class FieldAgentTest {
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to parse microservices"),any());
         } catch (AgentSystemException e) {
@@ -634,8 +628,8 @@ public class FieldAgentTest {
                     .add("microservices", jsonMicorserviceArray)
                     .add("uuid", "uuid")
                     .add("token", "token").build();
-            PowerMockito.when(orchestrator.request(any(), any(), any(), any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
+            when(orchestrator.request(any(), any(), any(), any())).thenReturn(jsonObject);
+            when(orchestrator.provision(anyString())).thenReturn(provisionJsonObject);
             JsonObject response = fieldAgent.provision("provisonKey");
             assertTrue(response.containsKey("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
@@ -648,8 +642,6 @@ public class FieldAgentTest {
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
             Configuration.getGpsCoordinates();
-            PowerMockito.verifyStatic(IOFogNetworkInterface.class, Mockito.atLeastOnce());
-            IOFogNetworkInterface.getNetworkInterface();
         } catch (AgentSystemException e) {
             fail("This should not happen");
         } catch (Exception e) {
@@ -666,7 +658,7 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
-            PowerMockito.when(orchestrator.provision(any())).thenThrow(new AgentSystemException("IofogController provisioning failed"));
+            when(orchestrator.provision(any())).thenThrow(new AgentSystemException("IofogController provisioning failed"));
             JsonObject provisioningResult = fieldAgent.provision("provisonKey");
             assertTrue(provisioningResult.containsKey("status"));
             assertTrue(provisioningResult.containsKey("errorMessage"));
@@ -694,20 +686,18 @@ public class FieldAgentTest {
             initiateMockStart();
             when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.provision(any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.request(eq("microservices"), any(), any(), any())).thenThrow(new CertificateException("Certificate Error"));
+            when(orchestrator.provision(any())).thenReturn(jsonObject);
+            when(orchestrator.request(eq("microservices"), any(), any(), any())).thenThrow(new CertificateException("Certificate Error"));
             fieldAgent.provision("provisonKey");
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
             PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-            PowerMockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logWarning(MODULE_NAME,"controller verification failed: BROKEN_CERTIFICATE");
-            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get microservices"), any());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
             LoggingService.logError(eq(MODULE_NAME), eq("Provisioning failed"), any());
         } catch (AgentSystemException e) {
@@ -729,8 +719,8 @@ public class FieldAgentTest {
             when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
             when(StatusReporter.getFieldAgentStatus()).thenReturn(fieldAgentStatus);
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.provision(any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.request(eq("registries"), any(), any(), any())).thenThrow(new AgentUserException("Agent user error"));
+            when(orchestrator.provision(any())).thenReturn(jsonObject);
+            when(orchestrator.request(eq("registries"), any(), any(), any())).thenThrow(new AgentUserException("Agent user error"));
             fieldAgent.provision("provisonKey");
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
@@ -748,7 +738,7 @@ public class FieldAgentTest {
         }
     }
 
-   /**
+    /**
      * Test provision when controller status is provisioned & Gps coordinates not null &
      * Orchestrator.provision returns success response &
      * sendHWInfoFromHalToController method throws exception
@@ -760,8 +750,8 @@ public class FieldAgentTest {
             when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
             when(StatusReporter.getFieldAgentStatus()).thenReturn(fieldAgentStatus);
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.provision(any())).thenReturn(jsonObject);
-            PowerMockito.when(orchestrator.request(any(), any(), any(), any())).thenReturn(mock(JsonObject.class));
+            when(orchestrator.provision(any())).thenReturn(jsonObject);
+            when(orchestrator.request(any(), any(), any(), any())).thenReturn(mock(JsonObject.class));
             PowerMockito.whenNew(BufferedReader.class).withArguments(inputStreamReader).thenThrow(new Exception("invalid operation"));
             JsonObject provisioningResult = fieldAgent.provision("provisonKey");
             assertTrue(provisioningResult.containsKey("status"));
@@ -829,7 +819,7 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenReturn(mock(JsonObject.class));
+            when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
@@ -850,7 +840,7 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenThrow(new Exception("Error while deProvsioning"));
+            when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenThrow(new Exception("Error while deProvsioning"));
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
@@ -871,7 +861,7 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
+            when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
@@ -892,7 +882,7 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenReturn(mock(JsonObject.class));
+            when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             PowerMockito.doThrow(new Exception("Error Updating config")).when(Configuration.class);
             Configuration.saveConfigUpdates();
             String response = fieldAgent.deProvision(false);
@@ -913,14 +903,14 @@ public class FieldAgentTest {
     public void testInstanceConfigUpdatedWhenControllerStatusIsNotProvisioned() {
         try {
             initiateMockStart();
-            PowerMockito.when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
+            when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             PowerMockito.verifyStatic(LoggingService.class, never());
-            LoggingService.logInfo(MODULE_NAME, "posting ioFog config");
+            LoggingService.logInfo(MODULE_NAME, "Finished Post ioFog config");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -934,14 +924,14 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
+            when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
             PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "posting ioFog config");
+            LoggingService.logInfo(MODULE_NAME, "Finished Post ioFog config");
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -956,10 +946,10 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
+            when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config due to broken certificate "), any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
@@ -978,7 +968,7 @@ public class FieldAgentTest {
         try {
             initiateMockStart();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new Exception("Invalid operation"));
+            when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new Exception("Invalid operation"));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
             PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
@@ -1128,7 +1118,7 @@ public class FieldAgentTest {
                     .add("dockerUrl", "http://url")
                     .add("diskLimit", 40)
                     .build();
-            PowerMockito.when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(configObject);
+            when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(configObject);
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             when(orchestrator.ping()).thenReturn(true);
             initiateMockStart();
@@ -1156,7 +1146,6 @@ public class FieldAgentTest {
     @Test
     public void testGetFogStatus() {
         try {
-            mockOthers();
             method = FieldAgent.class.getDeclaredMethod("getFogStatus");
             method.setAccessible(true);
             JsonObject output = (JsonObject) method.invoke(fieldAgent);
@@ -1226,7 +1215,7 @@ public class FieldAgentTest {
     public void throwsExceptionWhenDeleteNode() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("delete-node"), any(), any(), any())).thenThrow(mock(Exception.class));
+            when(orchestrator.request(eq("delete-node"), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("deleteNode");
             method.setAccessible(true);
@@ -1336,7 +1325,7 @@ public class FieldAgentTest {
             PowerMockito.verifyStatic(VersionHandler.class, atLeastOnce());
             VersionHandler.changeVersion(any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logInfo(MODULE_NAME, "Start change version operation, received from ioFog controller");
+            LoggingService.logInfo(MODULE_NAME, "Get change version action");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished change version operation, received from ioFog controller");
         } catch (Exception e){
@@ -1352,7 +1341,7 @@ public class FieldAgentTest {
     public void throwsCertificateExceptionWhenCalledForChangeVersion() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("version"), any(), any(), any())).thenThrow(mock(CertificateException.class));
+            when(orchestrator.request(eq("version"), any(), any(), any())).thenThrow(mock(CertificateException.class));
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("changeVersion");
             method.setAccessible(true);
@@ -1362,8 +1351,6 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("verificationFailed", any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: BROKEN_CERTIFICATE");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get version command"), any());
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -1377,7 +1364,7 @@ public class FieldAgentTest {
     public void throwsExceptionWhenCalledForChangeVersion() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("version"), any(), any(), any())).thenThrow(mock(Exception.class));
+            when(orchestrator.request(eq("version"), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("changeVersion");
             method.setAccessible(true);
@@ -1403,7 +1390,7 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("updateDiagnostics");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-            PowerMockito.verifyPrivate(fieldAgent).invoke("updateDiagnostics");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("updateDiagnostics");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("strace"), eq(RequestType.GET), eq(null), eq(null));
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start update diagnostics");
@@ -1422,7 +1409,7 @@ public class FieldAgentTest {
     public void throwsCertificateExceptionWhenUpdateDiagnostics() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("strace"), any(), any(), any())).thenThrow(mock(CertificateException.class));
+            when(orchestrator.request(eq("strace"), any(), any(), any())).thenThrow(mock(CertificateException.class));
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("updateDiagnostics");
             method.setAccessible(true);
@@ -1432,8 +1419,6 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("verificationFailed", any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: BROKEN_CERTIFICATE");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
-            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get diagnostics update"), any());
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -1447,7 +1432,7 @@ public class FieldAgentTest {
     public void throwsExceptionWhenUpdateDiagnostics() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("strace"), any(), any(), any())).thenThrow(mock(Exception.class));
+            when(orchestrator.request(eq("strace"), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("updateDiagnostics");
             method.setAccessible(true);
@@ -1470,12 +1455,12 @@ public class FieldAgentTest {
     public void throwsExceptionWhenGetProxyConfigIsCalled() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("tunnel"), any(), any(), any())).thenThrow(mock(Exception.class));
+            when(orchestrator.request(eq("tunnel"), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("getProxyConfig");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-            PowerMockito.verifyPrivate(fieldAgent).invoke("getProxyConfig");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("getProxyConfig");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("tunnel"), eq(RequestType.GET), eq(null), eq(null));
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get proxy config "), any());
@@ -1498,14 +1483,14 @@ public class FieldAgentTest {
                     .add("proxy", dummyObject)
                     .build();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq("tunnel"), any(), any(), any())).thenReturn(proxyObject);
+            when(orchestrator.request(eq("tunnel"), any(), any(), any())).thenReturn(proxyObject);
             initiateMockStart();
             method = FieldAgent.class.getDeclaredMethod("getProxyConfig");
             method.setAccessible(true);
             JsonObject response = (JsonObject) method.invoke(fieldAgent);
             assertTrue(response.containsKey("uuid"));
             assertEquals("response proxy", response.getString("uuid"));
-            PowerMockito.verifyPrivate(fieldAgent).invoke("getProxyConfig");
+            PowerMockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("getProxyConfig");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("tunnel"), eq(RequestType.GET), eq(null), eq(null));
             PowerMockito.verifyStatic(LoggingService.class, never());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get proxy config "), any());
@@ -1522,10 +1507,10 @@ public class FieldAgentTest {
     public void testSendUSBInfoFromHalToController() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenReturn(jsonObject);
+            when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenReturn(jsonObject);
             initiateMockStart();
             fieldAgent.sendUSBInfoFromHalToController();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("getResponse", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("getResponse", any());
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("config"), eq(RequestType.PATCH), eq(null), any());
             /*PowerMockito.verifyStatic(StatusReporter.class, atLeastOnce());
             StatusReporter.setResourceManagerStatus();*/
@@ -1546,7 +1531,7 @@ public class FieldAgentTest {
     public void throwsExceptionWhenSendUSBInfoFromHalToController() {
         try {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
-            PowerMockito.when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenThrow(mock(Exception.class));
+            when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             fieldAgent.sendUSBInfoFromHalToController();
             PowerMockito.verifyPrivate(fieldAgent).invoke("getResponse", any());
@@ -1583,7 +1568,7 @@ public class FieldAgentTest {
         when(Configuration.isWatchdogEnabled()).thenReturn(false);
         when(Configuration.getReadyToUpgradeScanFrequency()).thenReturn(24);
         when(Configuration.getGpsCoordinates()).thenReturn("4000.0, 2000.3");
-        PowerMockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
+        when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
     }
 
     /**
@@ -1603,11 +1588,10 @@ public class FieldAgentTest {
         when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
         when(StatusReporter.getSshManagerStatus()).thenReturn(sshProxyManagerStatus);
         when(StatusReporter.getResourceConsumptionManagerStatus()).thenReturn(resourceConsumptionManagerStatus);
-        when(IOFogNetworkInterface.getCurrentIpAddress()).thenReturn("ip");
         when(supervisorStatus.getDaemonStatus()).thenReturn(Constants.ModulesStatus.RUNNING);
         ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
         ScheduledFuture future = mock(ScheduledFuture.class);
-        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), anyLong(), anyLong(), any(TimeUnit.class));
+        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), any(TimeUnit.class));
         mock(Runnable.class);
 
     }

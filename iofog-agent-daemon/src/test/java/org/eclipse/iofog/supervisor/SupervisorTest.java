@@ -101,8 +101,8 @@ public class SupervisorTest {
             verify(supervisor, Mockito.atLeastOnce()).start();
             verify(supervisor, Mockito.never()).getModuleIndex();
             verify(supervisor, Mockito.atLeastOnce()).getModuleName();
-            verify(supervisor, Mockito.atLeastOnce()).logDebug("Starting Supervisor");
-            verify(supervisor, Mockito.atLeastOnce()).logDebug("Started Supervisor");
+            verify(supervisor, Mockito.atLeastOnce()).logInfo("Starting Supervisor");
+            verify(supervisor, Mockito.atLeastOnce()).logInfo("Started Supervisor");
         } catch (Exception e) {
             e.printStackTrace();
         }
