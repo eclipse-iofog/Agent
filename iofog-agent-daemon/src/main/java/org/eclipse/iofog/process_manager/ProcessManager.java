@@ -120,6 +120,19 @@ public class ProcessManager implements IOFogModule {
 		}
 	};
 
+	public void updateMicroserviceStatus() {
+		microserviceManager.getCurrentMicroservices().stream()
+				.forEach(microservice -> {
+					Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
+					String containerId = containerOptional.get().getId();
+					MicroserviceStatus status = docker.getMicroserviceStatus(containerId, microservice.getMicroserviceUuid());
+					if (!status.getStatus().equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
+						StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
+						logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
+					}
+				});
+	}
+
 	private void addMicroservice(Microservice microservice) {
 		StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
 		addTask(new ContainerTask(ADD, microservice.getMicroserviceUuid()));
@@ -154,7 +167,7 @@ public class ProcessManager implements IOFogModule {
 			logError("Can't get IP address for microservice with i=" + microservice.getMicroserviceUuid() + " " + e.getMessage(),
 					new AgentSystemException(e.getMessage(), e));
 		}
-		if (shouldContainerBeUpdated(microservice, container, docker.getMicroserviceStatus(container.getId()))) {
+		if (shouldContainerBeUpdated(microservice, container, docker.getMicroserviceStatus(container.getId(), microservice.getMicroserviceUuid()))) {
 			StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.UPDATING);
 			addTask(new ContainerTask(UPDATE, microservice.getMicroserviceUuid()));
 		}
@@ -176,7 +189,7 @@ public class ProcessManager implements IOFogModule {
 					deleteMicroservice(microservice);
 				} else if (containerOptional.isPresent() && !microservice.isDelete()) {
 					String containerId = containerOptional.get().getId();
-					MicroserviceStatus status = docker.getMicroserviceStatus(containerId);
+					MicroserviceStatus status = docker.getMicroserviceStatus(containerId, microservice.getMicroserviceUuid());
 					StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
 					updateMicroservice(containerOptional.get(), microservice);
 				}

@@ -40,11 +40,11 @@ public class RestartStuckCheckerTest {
     }
 
     /**
-     * Test isStuck is true when called sixth time for the same containerID
+     * Test isStuck is true when called 11th time for the same containerID
      */
     @Test
     public void testIsStuckSixthTime() {
-        for (int i =1 ; i<=5 ; i++){
+        for (int i =1 ; i<=10 ; i++){
             RestartStuckChecker.isStuck("uuid");
         }
        assertTrue(RestartStuckChecker.isStuck("uuid"));

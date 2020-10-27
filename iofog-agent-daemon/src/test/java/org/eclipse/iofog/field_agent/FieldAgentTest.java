@@ -174,6 +174,7 @@ public class FieldAgentTest {
                 .add("uuid", "uuid")
                 .add("token", "token")
                 .add("message", "success").build();
+        PowerMockito.doNothing().when(processManager).updateMicroserviceStatus();
 
     }
 

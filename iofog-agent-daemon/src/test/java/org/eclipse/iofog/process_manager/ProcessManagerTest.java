@@ -315,7 +315,7 @@ public class ProcessManagerTest {
             PowerMockito.when(container.getId()).thenReturn("containerId");
             PowerMockito.when(microserviceManager.getLatestMicroservices()).thenReturn(microservicesList);
             PowerMockito.when(dockerUtil.getContainer(Mockito.any())).thenReturn(Optional.of(container));
-            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any())).thenReturn(microserviceStatus);
+            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any(), Mockito.any())).thenReturn(microserviceStatus);
             PowerMockito.when(dockerUtil.getContainerIpAddress(Mockito.any())).thenReturn("containerIpAddress");
             PowerMockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             PowerMockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
@@ -352,7 +352,7 @@ public class ProcessManagerTest {
             PowerMockito.when(container.getId()).thenReturn("containerId");
             PowerMockito.when(microserviceManager.getLatestMicroservices()).thenReturn(microservicesList);
             PowerMockito.when(dockerUtil.getContainer(Mockito.any())).thenReturn(Optional.of(container));
-            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any())).thenReturn(microserviceStatus);
+            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any(), Mockito.any())).thenReturn(microserviceStatus);
             PowerMockito.when(dockerUtil.getContainerIpAddress(Mockito.any())).thenReturn("containerIpAddress");
             PowerMockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             PowerMockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
@@ -390,7 +390,7 @@ public class ProcessManagerTest {
             PowerMockito.when(container.getId()).thenReturn("containerId");
             PowerMockito.when(microserviceManager.getLatestMicroservices()).thenReturn(microservicesList);
             PowerMockito.when(dockerUtil.getContainer(Mockito.any())).thenReturn(Optional.of(container));
-            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any())).thenReturn(microserviceStatus);
+            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any(), Mockito.any())).thenReturn(microserviceStatus);
             PowerMockito.when(dockerUtil.getContainerIpAddress(Mockito.any())).thenReturn("containerIpAddress");
             PowerMockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             PowerMockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
@@ -430,7 +430,7 @@ public class ProcessManagerTest {
             PowerMockito.when(container.getId()).thenReturn("containerId");
             PowerMockito.when(microserviceManager.getLatestMicroservices()).thenReturn(microservicesList);
             PowerMockito.when(dockerUtil.getContainer(Mockito.any())).thenReturn(Optional.of(container));
-            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any())).thenReturn(microserviceStatus);
+            PowerMockito.when(dockerUtil.getMicroserviceStatus(Mockito.any(), Mockito.any())).thenReturn(microserviceStatus);
             PowerMockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).getContainerIpAddress(Mockito.any());
             PowerMockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             PowerMockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
