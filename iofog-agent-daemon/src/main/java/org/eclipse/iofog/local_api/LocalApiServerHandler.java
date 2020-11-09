@@ -276,6 +276,14 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
+        if (request.uri().startsWith("/v2/edgeResources")) {
+        	LoggingService.logInfo(MODULE_NAME, "Start Processing version request");
+            Callable<FullHttpResponse> callable = new EdgeResourceHandler(request, ctx.alloc().buffer(), content);
+            runTask(callable, ctx, request);
+            LoggingService.logInfo(MODULE_NAME, "Finished Processing version request");
+            return;
+        }
+
         LoggingService.logError(MODULE_NAME, "Error: Request not found", new AgentSystemException("Error: Request not found"));
         ByteBuf errorMsgBytes = ctx.alloc().buffer();
         String errorMsg = " Request not found ";

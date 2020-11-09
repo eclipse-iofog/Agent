@@ -74,7 +74,6 @@ public class LocalApi implements Runnable {
 
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
 		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(WebSocketMap.messageWebsocketMap.size());
-
 		retrieveContainerConfig();
 
 		server = new LocalApiServer();
@@ -106,7 +105,7 @@ public class LocalApi implements Runnable {
 
 	/**
 	 * Initiate the real-time control signal when the cofiguration changes.
-	 * Called by field-agtent.
+	 * Called by field-agent.
 	 */
 	public void update(){
 		LoggingService.logDebug(MODULE_NAME, "Start the real-time control signal when the configuration updated");
@@ -118,5 +117,12 @@ public class LocalApi implements Runnable {
 		ControlWebsocketHandler handler = new ControlWebsocketHandler();
 		handler.initiateControlSignal(oldConfigMap, newConfigMap);
 		LoggingService.logDebug(MODULE_NAME, "Finish the real-time control signal when the configuration updated");
+	}
+
+	public void updateEdgeResource() {
+		LoggingService.logDebug(MODULE_NAME, "Start the real-time control signal when the edge resources are updated");
+		ControlWebsocketHandler handler = new ControlWebsocketHandler();
+		handler.initiateResourceSignal();
+		LoggingService.logDebug(MODULE_NAME, "Finished the real-time control signal when the edge resources are updated");
 	}
 }
