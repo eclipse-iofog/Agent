@@ -1,20 +1,5 @@
 #!/bin/bash
 
-provisionkey=$1
-timeout=${2:-60}
-
-iofogpackage=$(apt-cache policy iofog-agent iofog-agent-dev | grep -A1 ^iofog | awk '$2 ~ /^[0-9]/ {print a}{a=$0}' | sed -e 's/iofog-agent\(.*\):/\1/')
-iofogversion=$(apt-cache policy iofog-agent$iofogpackage | grep Installed | awk '{ if ($2 ~ /^[0-9]/) print $2}')
-
-cd /var/backups/iofog-agent
-tar -cvzf config_backup$iofogpackage.tar.gz -P /etc/iofog-agent
-
-printf 'ver: %s %s' $iofogversion $iofogpackage > prev_version_data
-
-iofog-agent deprovision
-service iofog-agent stop
-
-
 get_distribution() {
 	lsb_dist=""
 	# Every system that we officially support has /etc/os-release
@@ -26,34 +11,58 @@ get_distribution() {
 	echo "$lsb_dist"
 }
 
-lsb_dist=$( get_distribution )
-lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
+{
+	timeout=${2:-60}
 
-case "$lsb_dist" in
+	# Find current version
+	iofogpackage=$(apt-cache policy iofog-agent iofog-agent-dev | grep -A1 ^iofog | awk '$2 ~ /^[0-9]/ {print a}{a=$0}' | sed -e 's/iofog-agent\(.*\):/\1/')
+	iofogversion=$(apt-cache policy iofog-agent$iofogpackage | grep Installed | awk '{ if ($2 ~ /^[0-9]/) print $2}')
 
-    ubuntu|debian|raspbian)
-        apt-get update
-        apt-get install --only-upgrade iofog-agent$iofogpackage -y
-    ;;
+	# Copy config
+	ORIGINAL="/etc/iofog-agent/config.xml"
+	BACKUP="/var/backups/iofog-agent/config.xml"
+	cp "$ORIGINAL" "$BACKUP"
 
-    centos|rhel|ol|sles)
-        yum check-update
-        yum update iofog-agent$iofogpackage -y
-    ;;
+	# Create backup for rollback
+	cd /var/backups/iofog-agent
+	tar -cvzf config_backup$iofogpackage.tar.gz -P /etc/iofog-agent
+	printf 'ver: %s %s' $iofogversion $iofogpackage > prev_version_data
 
-esac
+	# Stop agent
+	service iofog-agent stop
+	rm /etc/iofog-agent/*
 
-starttimestamp=$(date +%s)
-service iofog-agent start
-sleep 1
+	# Perform upgrade
+	lsb_dist=$( get_distribution )
+	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
+	case "$lsb_dist" in
 
-while [ "$(iofog-agent status | grep ioFog | awk '{printf $4 }')" != "RUNNING" ]; do
+	    ubuntu|debian|raspbian)
+	        apt-get update
+	        apt-get install --only-upgrade iofog-agent$iofogpackage -y
+	    ;;
+
+	    centos|rhel|ol|sles)
+	        yum check-update
+	        yum update iofog-agent$iofogpackage -y
+	    ;;
+
+	esac
+
+	# Restore config and start agent
+	cp "$BACKUP" "$ORIGINAL"
+	starttimestamp=$(date +%s)
+	service iofog-agent start
 	sleep 1
-	currenttimestamp=$(date +%s)
-	currentdeltatime=$(( $currenttimestamp - $starttimestamp ))
-	if [ $currentdeltatime -gt $timeout ]; then
-		break
-	fi
-done
 
-iofog-agent provision $provisionkey
+	# Wait for agent
+	while [ "$(iofog-agent status | grep ioFog | awk '{printf $4 }')" != "RUNNING" ]; do
+		sleep 1
+		currenttimestamp=$(date +%s)
+		currentdeltatime=$(( $currenttimestamp - $starttimestamp ))
+		if [ $currentdeltatime -gt $timeout ]; then
+			break
+		fi
+	done
+
+} > /var/log/iofog-agent/agent-upgrade.log 2>&1
