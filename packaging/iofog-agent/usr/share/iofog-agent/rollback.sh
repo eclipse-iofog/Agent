@@ -38,6 +38,8 @@ get_distribution() {
 
 	esac
 
+	# Save logs
+	tar -cvzf log_backup_rollback$iofogversion.tar.gz -P /var/log/iofog-agent
 	# Overwrite config based on previous data
 	rm -rf /etc/iofog-agent/
 	tar -xvzf config_backup$iofogpackage.tar.gz -P -C /
@@ -59,4 +61,4 @@ get_distribution() {
 		fi
 	done
 
-} > /var/log/iofog-agent/agent-rollback.log 2>&1	
+} > /var/log/iofog-agent-rollback.log 2>&1
