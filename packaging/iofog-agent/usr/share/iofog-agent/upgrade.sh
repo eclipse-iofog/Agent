@@ -26,6 +26,7 @@ get_distribution() {
 	# Create backup for rollback
 	cd /var/backups/iofog-agent
 	tar -cvzf config_backup$iofogpackage.tar.gz -P /etc/iofog-agent
+	tar -cvzf log_backup_upgrade$iofogversion.tar.gz -P /var/log/iofog-agent
 	printf 'ver: %s %s' $iofogversion $iofogpackage > prev_version_data
 
 	# Stop agent
@@ -65,4 +66,4 @@ get_distribution() {
 		fi
 	done
 
-} > /var/log/iofog-agent/agent-upgrade.log 2>&1
+} > /var/log/iofog-agent-upgrade.log 2>&1
