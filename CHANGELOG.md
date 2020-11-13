@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v2.0.23] - 2020-11-16
+
+### Bugs
+* Fix bug of pruning live images on agent reboot
+
 ## [v2.0.2] - 2020-10-23
 
 ### Features
