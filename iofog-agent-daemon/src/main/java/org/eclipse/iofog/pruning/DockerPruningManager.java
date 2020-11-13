@@ -12,17 +12,22 @@
  *******************************************************************************/
 package org.eclipse.iofog.pruning;
 
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PruneResponse;
 import org.eclipse.iofog.exception.AgentSystemException;
+import org.eclipse.iofog.microservice.Microservice;
+import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import java.io.File;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author nehanaithani
@@ -46,6 +51,7 @@ public class DockerPruningManager {
     }
     private DockerPruningManager() {}
     private boolean isPruning;
+    private MicroserviceManager microserviceManager = MicroserviceManager.getInstance();;
     /**
      * Start docker pruning manager
      */
@@ -79,9 +85,11 @@ public class DockerPruningManager {
                     StatusReporter.getResourceConsumptionManagerStatus().getTotalDiskSpace();
             if (availableDiskPercentage < Configuration.getAvailableDiskThreshold()) {
                 try {
-                    LoggingService.logDebug(MODULE_NAME, "Docker Prune when available disk is less than threshold");
+                    LoggingService.logDebug(MODULE_NAME, "Pruning of unwanted images as current system available disk percentage : " + availableDiskPercentage +
+                            " which is less than disk threshold for pruning : " + Configuration.getAvailableDiskThreshold());
                     isPruning = true;
-                    docker.dockerPrune();
+                    Set<String> unwantedImages = getUnwantedImagesList();
+                    removeImagesById(unwantedImages);
                 } catch (Exception e){
                     LoggingService.logError(MODULE_NAME,"Error in docker Pruning when available threshold breach", new AgentSystemException(e.getMessage(), e));
                 } finally {
@@ -90,6 +98,53 @@ public class DockerPruningManager {
             }
         }
     };
+
+    /**
+     * Gets list of unwanted docker images to be removed
+     * @return list
+     */
+    public Set<String> getUnwantedImagesList() {
+        List<Image> images = docker.getImages();
+        LoggingService.logDebug(MODULE_NAME, "Total number of images already downloaded in the machine : " + images.size());
+        List<Container> nonIoFogContainers = docker.getRunningNonIofogContainers();
+        LoggingService.logDebug(MODULE_NAME, "Total number of running non iofog containers : " + nonIoFogContainers.size());
+
+        // Removes the non-ioFog running container from the images to be prune list
+        List<Image> ioFogImages = images.stream().filter(im -> nonIoFogContainers.stream()
+                .noneMatch(c -> c.getImageId().equals(im.getId())))
+                .collect(Collectors.toList());
+
+        LoggingService.logDebug(MODULE_NAME, "Total number of ioFog images  : " + ioFogImages.size());
+        List<Microservice> microservices = microserviceManager.getLatestMicroservices();
+        LoggingService.logDebug(MODULE_NAME, "Total number of running microservices : " + microservices.size());
+
+        // Removes the ioFog running containers from the images to be prune list
+        Set<String> imageIDsToBePruned = ioFogImages.stream().filter(im -> microservices.stream()
+                .noneMatch(ms -> ms.getImageName().equals(im.getRepoTags()[0])))
+                .map(Image::getId)
+                .collect(Collectors.toSet());
+        LoggingService.logDebug(MODULE_NAME, "Total number of unwanted images to be pruned : " + imageIDsToBePruned.size());
+        return imageIDsToBePruned;
+    }
+
+    /**
+     * Remove unwanted docker image
+     * @param imageIDsToBePruned
+     */
+    private void removeImagesById(Set<String> imageIDsToBePruned){
+        LoggingService.logDebug(MODULE_NAME, "Start removing image by ID");
+        for (String id: imageIDsToBePruned) {
+            LoggingService.logInfo(MODULE_NAME, "Removing unwanted image id : " + id);
+            try {
+                docker.removeImageById(id);
+            } catch (Exception e) {
+                LoggingService.logError(MODULE_NAME,"Error removing unwanted docker image by id",
+                        new AgentSystemException(e.getMessage(), e));
+            }
+        }
+        LoggingService.logDebug(MODULE_NAME, "Finished removing image by ID");
+
+    }
 
     /**
      * Refresh schedule with different time

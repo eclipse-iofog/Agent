@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2018 Edgeworx, Inc.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
  *
- * Contributors:
- * Saeid Baghbidi
- * Kilton Hopkins
- *  Ashita Nagar
- *******************************************************************************/
+ */
 package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.DockerClient;
@@ -89,7 +89,7 @@ public class DockerUtil {
             DockerClientConfig config = configBuilder.build();
             dockerClient = DockerClientBuilder.getInstance(config).build();
         } catch (Exception e) {
-            logError(MODULE_NAME,"Docker client initialization failed", new AgentUserException("Docker client initialization failed", e));
+            logError(MODULE_NAME,"Docker client initialization failed", new AgentUserException(e.getMessage(), e));
             throw e;
         }
         addDockerEventHandler();
@@ -106,7 +106,7 @@ public class DockerUtil {
                 dockerClient.close();
             }
         } catch (IOException e) {
-            logError(MODULE_NAME, "Docker client closing failed", new AgentSystemException("Docker client closing failed", e));
+            logError(MODULE_NAME, "Docker client closing failed", new AgentSystemException(e.getMessage(), e));
         }
         initDockerClient();
         LoggingService.logInfo(MODULE_NAME , "Finished Docker Client re-initialization");
@@ -118,7 +118,7 @@ public class DockerUtil {
      * starts docker events handler
      */
     private void addDockerEventHandler() {
-    	LoggingService.logInfo(MODULE_NAME , "Starting docker events handler");
+    	LoggingService.logDebug(MODULE_NAME , "Starting docker events handler");
         dockerClient.eventsCmd().exec(new EventsResultCallback() {
             @Override
             public void onNext(Event item) {
@@ -130,7 +130,7 @@ public class DockerUtil {
                 }
             }
         });
-        LoggingService.logInfo(MODULE_NAME, "docker events handler is started");
+        LoggingService.logDebug(MODULE_NAME, "docker events handler is started");
     }
 
     /**
@@ -169,7 +169,7 @@ public class DockerUtil {
         if (dockerBridge == null) {
             return null;
         }
-        LoggingService.logInfo(MODULE_NAME , "Finished get docker bridge name");
+        LoggingService.logDebug(MODULE_NAME , "Finished get docker bridge name");
         return dockerBridge.getOptions().get("com.docker.network.bridge.name");
     }
 
@@ -185,7 +185,7 @@ public class DockerUtil {
 //
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
-    	LoggingService.logInfo(MODULE_NAME , "start Container");
+    	LoggingService.logDebug(MODULE_NAME , "start Container");
         dockerClient.startContainerCmd(microservice.getContainerId()).exec();
     }
 
@@ -195,7 +195,7 @@ public class DockerUtil {
      * @param id - id of {@link Container}
      */
     public void stopContainer(String id) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME , "stop Container");
+    	LoggingService.logDebug(MODULE_NAME , "stop Container");
         if (isContainerRunning(id)) {
             dockerClient.stopContainerCmd(id).exec();
         }
@@ -208,7 +208,7 @@ public class DockerUtil {
      * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
      */
     public void removeContainer(String id, Boolean withRemoveVolumes) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME , "remove Container");
+    	LoggingService.logDebug(MODULE_NAME , "remove Container");
     	dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
     }
 
@@ -220,23 +220,23 @@ public class DockerUtil {
      */
     @SuppressWarnings("deprecation")
 	public String getContainerIpAddress(String id) throws  AgentSystemException {
-    	LoggingService.logInfo(MODULE_NAME , "get Container IpAddress");
+    	LoggingService.logDebug(MODULE_NAME , "get Container IpAddress");
         try {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(id).exec();
-            LoggingService.logInfo(MODULE_NAME , "Finished get Container IpAddress");
+            LoggingService.logDebug(MODULE_NAME , "Finished get Container IpAddress");
             return inspect.getNetworkSettings().getIpAddress();
         } catch (NotModifiedException exp) {
             logError(MODULE_NAME, "Error getting container ipAddress", 
-            		new AgentSystemException("Error getting container ipAddress", exp));
-            throw new AgentSystemException("Error getting container ipAddress", exp);
+            		new AgentSystemException(exp.getMessage(), exp));
+            throw new AgentSystemException(exp.getMessage(), exp);
         }catch (NotFoundException exp) {
             logError(MODULE_NAME, "Error getting container ipAddress", 
-            		new AgentSystemException("Error getting container ipAddress", exp));
-            throw new AgentSystemException("Error getting container ipAddress", exp);
+            		new AgentSystemException(exp.getMessage(), exp));
+            throw new AgentSystemException(exp.getMessage(), exp);
         }catch (Exception exp) {
             logError(MODULE_NAME, "Error getting container ipAddress", 
-            		new AgentSystemException("Error getting container ipAddress", exp));
-            throw new AgentSystemException("Error getting container ipAddress", exp);
+            		new AgentSystemException(exp.getMessage(), exp));
+            throw new AgentSystemException(exp.getMessage(), exp);
         }
     }
 
@@ -264,7 +264,6 @@ public class DockerUtil {
      * @return container name
      */
     public static String getIoFogContainerName(String microserviceUuid) {
-    	LoggingService.logInfo(MODULE_NAME , "get ioFog Container name");
         return Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX + microserviceUuid;
     }
 
@@ -275,7 +274,6 @@ public class DockerUtil {
      * @return Optional<Container>
      */
     public Optional<Container> getContainer(String microserviceUuid) {
-    	LoggingService.logInfo(MODULE_NAME , "get container");
         List<Container> containers = getContainers();
         return containers.stream()
             .filter(c -> getContainerMicroserviceUuid(c).equals(microserviceUuid))
@@ -289,18 +287,18 @@ public class DockerUtil {
      * @return started time in milliseconds
      */
     private long getStartedTime(String startedTime) {
-    	LoggingService.logInfo(MODULE_NAME , "get started time of container");
+    	LoggingService.logDebug(MODULE_NAME , "get started time of container");
         int milli = startedTime.length() > 22 ? Integer.parseInt(startedTime.substring(20, 23)) : 0;
         startedTime = startedTime.substring(0, 10) + " " + startedTime.substring(11, 19);
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         try {
             Date local = dateFormat.parse(dateFormat.format(dateFormat.parse(startedTime)));
-            LoggingService.logInfo(MODULE_NAME , "Finished get started time of container");
+            LoggingService.logDebug(MODULE_NAME , "Finished get started time of container");
             return local.getTime() + milli;
         } catch (Exception e) {
         	logError(MODULE_NAME, "Error getting started time of container", 
-            		new AgentSystemException("Error getting started time of container", e));
+            		new AgentSystemException(e.getMessage(), e));
             return 0;
         }
     }
@@ -359,7 +357,7 @@ public class DockerUtil {
     }
 
     public List<Container> getRunningContainers() {
-    	LoggingService.logInfo(MODULE_NAME ,"get Running list of Containers");
+    	LoggingService.logDebug(MODULE_NAME ,"get Running list of Containers");
         return getContainers().stream()
             .filter(container -> {
                 InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(container.getId()).exec();
@@ -370,15 +368,14 @@ public class DockerUtil {
     }
 
     public List<Container> getRunningIofogContainers() {
-    	LoggingService.logInfo(MODULE_NAME ,"get Running list of ioFog Containers");
+    	LoggingService.logDebug(MODULE_NAME ,"get Running list of ioFog Containers");
         return getRunningContainers().stream()
             .filter(container -> getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
             .collect(Collectors.toList());
     }
 
     public Optional<Statistics> getContainerStats(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME ,"get Container Stats");
-    	LoggingService.logInfo(MODULE_NAME ,"Start get Container Stats");
+    	LoggingService.logDebug(MODULE_NAME ,"Start get Container Stats");
         StatsCmd statsCmd = dockerClient.statsCmd(containerId);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         StatsCallback stats = new StatsCallback(countDownLatch);
@@ -387,7 +384,7 @@ public class DockerUtil {
         } catch (InterruptedException | IOException e) {
             LoggingService.logError(MODULE_NAME, "Error while getting Container Stats", new AgentUserException(e.getMessage(), e));
         }
-        LoggingService.logInfo(MODULE_NAME ,"Finished get Container Stats");
+        LoggingService.logDebug(MODULE_NAME ,"Finished get Container Stats");
         return Optional.ofNullable(stats.getStats());
     }
 
@@ -398,10 +395,10 @@ public class DockerUtil {
      * @return long epoch time
      */
     public long getContainerStartedAt(String id) {
-    	LoggingService.logInfo(MODULE_NAME ,"get Container Started At");
+    	LoggingService.logDebug(MODULE_NAME ,"Get Container Started At");
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(id).exec();
         String startedAt = inspectInfo.getState().getStartedAt();
-        LoggingService.logInfo(MODULE_NAME ,"Finished get Container Started At");
+        LoggingService.logDebug(MODULE_NAME ,"Finished get Container Started At");
         return startedAt != null ? DateTimeFormatter.ISO_INSTANT.parse(startedAt, Instant::from).toEpochMilli() : Instant.now().toEpochMilli();
     }
 
@@ -413,7 +410,7 @@ public class DockerUtil {
      * @return boolean
      */
     public boolean areMicroserviceAndContainerEqual(String containerId, Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"are Microservice And Container Equal");
+    	LoggingService.logDebug(MODULE_NAME ,"Are Microservice And Container Equal");
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
         return isPortMappingEqual(inspectInfo, microservice) && isNetworkModeEqual(inspectInfo, microservice);
     }
@@ -427,7 +424,7 @@ public class DockerUtil {
      * @return boolean
      */
     private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"is NetworkMode Equal");
+    	LoggingService.logDebug(MODULE_NAME ,"is NetworkMode Equal");
         boolean isRootHostAccess = microservice.isRootHostAccess();
         HostConfig hostConfig = inspectInfo.getHostConfig();
         return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
@@ -442,8 +439,6 @@ public class DockerUtil {
      * @return boolean true if port mappings are the same
      */
     private boolean isPortMappingEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"is PortMapping Equal");
-
         List<PortMapping> microservicePorts = getMicroservicePorts(microservice);
         Collections.sort(microservicePorts);
 
@@ -451,18 +446,18 @@ public class DockerUtil {
         Collections.sort(containerPorts);
 
         boolean areEqual = microservicePorts.equals(containerPorts);
-        LoggingService.logInfo(MODULE_NAME ,"is PortMapping Equal: " + areEqual);
+        LoggingService.logDebug(MODULE_NAME ,"is PortMapping Equal: " + areEqual);
 
         return areEqual;
     }
 
     private List<PortMapping> getMicroservicePorts(Microservice microservice) {
-    	LoggingService.logInfo(MODULE_NAME ,"get list of Microservice Ports");
+    	LoggingService.logDebug(MODULE_NAME ,"get list of Microservice Ports");
         return microservice.getPortMappings() != null ? microservice.getPortMappings() : new ArrayList<>();
     }
 
     private List<PortMapping> getContainerPorts(InspectContainerResponse inspectInfo) {
-    	LoggingService.logInfo(MODULE_NAME ,"get list of Container Ports");
+    	LoggingService.logDebug(MODULE_NAME ,"Get list of Container Ports");
         HostConfig hostConfig = inspectInfo.getHostConfig();
         Ports ports = hostConfig != null ? hostConfig.getPortBindings() : null;
         return ports != null ? ports.getBindings().entrySet().stream()
@@ -477,22 +472,21 @@ public class DockerUtil {
     }
 
     public Optional<String> getContainerStatus(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME ,"get Container status");
         Optional<String> result = Optional.empty();
         try {
-        	LoggingService.logInfo(MODULE_NAME ,"Started get Container status");
+        	LoggingService.logDebug(MODULE_NAME ,"Start get Container status");
             InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
             ContainerState status = inspectInfo.getState();
             result = Optional.ofNullable(status.getStatus());
         } catch (Exception exp) {
-            logError(MODULE_NAME, "Error getting container status", new AgentSystemException("Error getting container status", exp));
+            logError(MODULE_NAME, "Error getting container status", new AgentSystemException(exp.getMessage(), exp));
         }
-        LoggingService.logInfo(MODULE_NAME ,"Finished get Container status");
+        LoggingService.logDebug(MODULE_NAME ,"Finished get Container status");
         return result;
     }
 
     public boolean isContainerRunning(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME ,"is Container Running");
+    	LoggingService.logDebug(MODULE_NAME ,"is Container Running");
         Optional<String> status = getContainerStatus(containerId);
         return status.isPresent() && status.get().equalsIgnoreCase(MicroserviceState.RUNNING.toString());
     }
@@ -503,14 +497,14 @@ public class DockerUtil {
      * @return list of {@link Container}
      */
     public List<Container> getContainers() {
-    	LoggingService.logInfo(MODULE_NAME ,"get list of container running");
+    	LoggingService.logDebug(MODULE_NAME ,"get list of container running");
         return dockerClient.listContainersCmd().withShowAll(true).exec();
     }
 
     public void removeImageById(String imageId) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME ,"removing image by id");
+    	LoggingService.logDebug(MODULE_NAME ,"removing image by id");
         dockerClient.removeImageCmd(imageId).withForce(true).exec();
-        LoggingService.logInfo(MODULE_NAME, String.format("image \"%s\" removed", imageId));
+        LoggingService.logDebug(MODULE_NAME, String.format("image \"%s\" removed", imageId));
     }
 
     /**
@@ -583,8 +577,7 @@ public class DockerUtil {
      * @return id of created {@link Container}
      */
     public String createContainer(Microservice microservice, String host) throws NotFoundException, NotModifiedException {
-    	LoggingService.logInfo(MODULE_NAME ,"create container");
-    	LoggingService.logInfo(MODULE_NAME ,"start create container");
+    	LoggingService.logInfo(MODULE_NAME ,String.format("Creating container \"%s\" ", microservice.getImageName()));
     	RestartPolicy restartPolicy = RestartPolicy.noRestart();
 
         Ports portBindings = new Ports();
@@ -690,7 +683,7 @@ public class DockerUtil {
         }
         cmd = cmd.withHostConfig(hostConfig);
         CreateContainerResponse resp = cmd.exec();
-        LoggingService.logInfo(MODULE_NAME , "Finished create container");
+        LoggingService.logInfo(MODULE_NAME ,String.format("Container created \"%s\" ", microservice.getImageName()));
         return resp.getId();
     }
 
@@ -700,5 +693,22 @@ public class DockerUtil {
     public PruneResponse dockerPrune() throws NotModifiedException {
         LoggingService.logInfo(MODULE_NAME , "docker image prune");
         return dockerClient.pruneCmd(PruneType.IMAGES).withDangling(false).exec();
+    }
+
+    /**
+     * returns list of {@link Image} installed on Docker daemon
+     *
+     * @return list of {@link Image}
+     */
+    public List<Image> getImages() {
+        LoggingService.logDebug(MODULE_NAME ,"get list of images already pulled");
+        return dockerClient.listImagesCmd().withShowAll(true).exec();
+    }
+
+    public List<Container> getRunningNonIofogContainers() {
+        LoggingService.logDebug(MODULE_NAME ,"get Running list of non ioFog Containers");
+        return getRunningContainers().stream()
+                .filter(container -> !getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
+                .collect(Collectors.toList());
     }
 }
