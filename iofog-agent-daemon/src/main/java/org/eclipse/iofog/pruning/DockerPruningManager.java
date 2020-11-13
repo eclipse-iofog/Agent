@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author nehanaithani
@@ -103,45 +104,25 @@ public class DockerPruningManager {
      * @return list
      */
     public Set<String> getUnwantedImagesList() {
-        Set<String> imageIDsToBePruned = new HashSet<>();
         List<Image> images = docker.getImages();
         LoggingService.logDebug(MODULE_NAME, "Total number of images already downloaded in the machine : " + images.size());
         List<Container> nonIoFogContainers = docker.getRunningNonIofogContainers();
         LoggingService.logDebug(MODULE_NAME, "Total number of running non iofog containers : " + nonIoFogContainers.size());
 
         // Removes the non-ioFog running container from the images to be prune list
-        for (Container container : nonIoFogContainers) {
-            for (Image image: images) {
-                if (container.getImageId().equals(image.getId())) {
-                    LoggingService.logDebug(MODULE_NAME, "Non ioFog image not to be pruned : " + container.getImage());
-                    images.remove(image);
-                    break;
-                }
+        List<Image> ioFogImages = images.stream().filter(im -> nonIoFogContainers.stream()
+                .noneMatch(c -> c.getImageId().equals(im.getId())))
+                .collect(Collectors.toList());
 
-            }
-        }
-        LoggingService.logDebug(MODULE_NAME, "Total number of ioFog images  : " + images.size());
+        LoggingService.logDebug(MODULE_NAME, "Total number of ioFog images  : " + ioFogImages.size());
         List<Microservice> microservices = microserviceManager.getLatestMicroservices();
         LoggingService.logDebug(MODULE_NAME, "Total number of running microservices : " + microservices.size());
 
         // Removes the ioFog running containers from the images to be prune list
-        for (Image image: images){
-            for (Microservice microservice: microservices){
-                if (image.getRepoTags()[0] != null) {
-                    if(microservice.getImageName().equals(image.getRepoTags()[0])){
-                        if(imageIDsToBePruned.contains(image.getId())) {
-                            imageIDsToBePruned.remove(image.getId());
-                        }
-                        break;
-                    } else {
-                        imageIDsToBePruned.add(image.getId());
-                    }
-                } else {
-                    imageIDsToBePruned.add(image.getId());
-                    break;
-                }
-            }
-        }
+        Set<String> imageIDsToBePruned = ioFogImages.stream().filter(im -> microservices.stream()
+                .noneMatch(ms -> ms.getImageName().equals(im.getRepoTags()[0])))
+                .map(Image::getId)
+                .collect(Collectors.toSet());
         LoggingService.logDebug(MODULE_NAME, "Total number of unwanted images to be pruned : " + imageIDsToBePruned.size());
         return imageIDsToBePruned;
     }
@@ -152,14 +133,14 @@ public class DockerPruningManager {
      */
     private void removeImagesById(Set<String> imageIDsToBePruned){
         LoggingService.logDebug(MODULE_NAME, "Start removing image by ID");
-        try {
-            for (String id: imageIDsToBePruned) {
-                LoggingService.logInfo(MODULE_NAME, "Removing unwanted image id : " + id);
+        for (String id: imageIDsToBePruned) {
+            LoggingService.logInfo(MODULE_NAME, "Removing unwanted image id : " + id);
+            try {
                 docker.removeImageById(id);
+            } catch (Exception e) {
+                LoggingService.logError(MODULE_NAME,"Error removing unwanted docker image by id",
+                        new AgentSystemException(e.getMessage(), e));
             }
-        } catch (Exception e){
-            LoggingService.logError(MODULE_NAME,"Error removing unwanted docker image by id",
-                    new AgentSystemException(e.getMessage(), e));
         }
         LoggingService.logDebug(MODULE_NAME, "Finished removing image by ID");
 
