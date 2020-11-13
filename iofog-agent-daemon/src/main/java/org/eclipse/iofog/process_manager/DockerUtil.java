@@ -785,6 +785,23 @@ public class DockerUtil {
 
     }
 
+    /**
+     * returns list of {@link Image} installed on Docker daemon
+     *
+     * @return list of {@link Image}
+     */
+    public List<Image> getImages() {
+        LoggingService.logDebug(MODULE_NAME ,"get list of images already pulled");
+        return dockerClient.listImagesCmd().withShowAll(true).exec();
+    }
+
+    public List<Container> getRunningNonIofogContainers() {
+        LoggingService.logDebug(MODULE_NAME ,"get Running list of non ioFog Containers");
+        return getRunningContainers().stream()
+                .filter(container -> !getContainerName(container).startsWith(Constants.IOFOG_DOCKER_CONTAINER_NAME_PREFIX))
+                .collect(Collectors.toList());
+    }
+
     class ItemStatus {
         private String id;
         private int percentage;
