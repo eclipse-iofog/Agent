@@ -17,6 +17,7 @@ import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
 import org.eclipse.iofog.message_bus.MessageBus;
+import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.supervisor.Supervisor;
@@ -50,6 +51,8 @@ import java.util.Set;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.powermock.api.mockito.PowerMockito.*;
 import static org.powermock.api.support.membermodification.MemberMatcher.method;
 import static org.powermock.api.support.membermodification.MemberModifier.suppress;
@@ -59,7 +62,7 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Configuration.class, LoggingService.class, FieldAgent.class, ProcessManager.class, ResourceConsumptionManager.class,
-        MessageBus.class, Transformer.class, TransformerFactory.class, StreamResult.class, DOMSource.class, Supervisor.class, GpsWebHandler.class})
+        MessageBus.class, Transformer.class, TransformerFactory.class, StreamResult.class, DOMSource.class, Supervisor.class, GpsWebHandler.class, IOFogNetworkInterfaceManager.class})
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.*", "com.sun.org.apache.xalan.*"})
 public class ConfigurationTest {
     private MessageBus messageBus;
@@ -72,6 +75,7 @@ public class ConfigurationTest {
     private String MOCK_DEFAULT_CONFIG_PATH;
     private String ORIGINAL_DEFAULT_CONFIG_PATH;
     private String ORIGINAL_CONFIG_SWITCHER_PATH;
+    private IOFogNetworkInterfaceManager networkInterfaceManager;
 
     @Before
     public void setUp() throws Exception {
@@ -82,6 +86,8 @@ public class ConfigurationTest {
         ORIGINAL_CONFIG_SWITCHER_PATH = CONFIG_SWITCHER_PATH;
         mockStatic(Configuration.class, Mockito.CALLS_REAL_METHODS);
         mockStatic(GpsWebHandler.class);
+        mockStatic(IOFogNetworkInterfaceManager.class);
+        networkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
         messageBus = mock(MessageBus.class);
         fieldAgent = mock(FieldAgent.class);
         processManager =mock(ProcessManager.class);
@@ -105,6 +111,8 @@ public class ConfigurationTest {
         PowerMockito.when(GpsWebHandler.getGpsCoordinatesByExternalIp()).thenReturn("32.00,-121.31");
         PowerMockito.when(GpsWebHandler.getExternalIp()).thenReturn("0.0.0.0");
         PowerMockito.suppress(method(Configuration.class, "updateConfigFile"));
+        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(networkInterfaceManager);
+        PowerMockito.doNothing().when(networkInterfaceManager).updateIOFogNetworkInterface();
     }
 
     @After
@@ -257,8 +265,6 @@ public class ConfigurationTest {
             Mockito.verify(fieldAgent, Mockito.atLeastOnce()).instanceConfigUpdated();
             Mockito.verify(messageBus, Mockito.atLeastOnce()).instanceConfigUpdated();
             Mockito.verify(processManager, Mockito.atLeastOnce()).instanceConfigUpdated();
-            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-            LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -495,6 +501,8 @@ public class ConfigurationTest {
                 assertEquals("Parameter error", k);
                 assertEquals("Command or value is invalid", v);
             });
+            PowerMockito.verifyStatic(LoggingService.class, never());
+            LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -513,9 +521,9 @@ public class ConfigurationTest {
                 assertEquals("invalid", k);
                 assertEquals("Option and value are null", v);
             });
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.never()).invoke("setNode", Mockito.any(CommandLineConfigParam.class), Mockito.anyString(),
+            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.any(CommandLineConfigParam.class), Mockito.anyString(),
                     Mockito.any(Document.class), Mockito.any(Element.class));
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.never()).invoke("setLogLevel", Mockito.anyString());
+            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setLogLevel", Mockito.anyString());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -557,6 +565,8 @@ public class ConfigurationTest {
                 assertEquals("d", k);
                 assertEquals("Disk limit range must be 1 to 1048576 GB", v);
             });
+            PowerMockito.verifyStatic(LoggingService.class, never());
+            LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -603,6 +613,8 @@ public class ConfigurationTest {
             PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DISK_DIRECTORY), Mockito.eq("dir/"),
                     Mockito.any(Document.class), Mockito.any(Element.class));
             PowerMockito.verifyPrivate(Configuration.class).invoke("setDiskDirectory", Mockito.eq("dir/"));
+            PowerMockito.verifyStatic(LoggingService.class, never());
+            LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -647,8 +659,8 @@ public class ConfigurationTest {
                 assertEquals("m", k);
                 assertEquals("Memory limit range must be 128 to 1048576 MB", v);
             });
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.never()).invoke("setMemoryLimit", Mockito.eq(Float.parseFloat(value)));
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.never()).invoke("setNode", Mockito.eq(MEMORY_CONSUMPTION_LIMIT), Mockito.eq(value),
+            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setMemoryLimit", Mockito.eq(Float.parseFloat(value)));
+            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.eq(MEMORY_CONSUMPTION_LIMIT), Mockito.eq(value),
                     Mockito.any(Document.class), Mockito.any(Element.class));
         } catch (Exception e) {
             fail("This should not happen");
@@ -1020,9 +1032,11 @@ public class ConfigurationTest {
                 assertEquals("ll", k);
                 assertEquals("Option -ll has invalid value: terrific", v);
             });
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.never()).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value),
+            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value),
                     Mockito.any(Document.class), Mockito.any(Element.class));
-            PowerMockito.verifyPrivate(Configuration.class, Mockito.never()).invoke("setLogLevel", Mockito.eq(value));
+            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setLogLevel", Mockito.eq(value));
+            PowerMockito.verifyStatic(LoggingService.class, never());
+            LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -1045,6 +1059,8 @@ public class ConfigurationTest {
             PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value.toUpperCase()),
                     Mockito.any(Document.class), Mockito.any(Element.class));
             PowerMockito.verifyPrivate(Configuration.class).invoke("setLogLevel", Mockito.eq(value.toUpperCase()));
+            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            LoggingService.instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
         }
