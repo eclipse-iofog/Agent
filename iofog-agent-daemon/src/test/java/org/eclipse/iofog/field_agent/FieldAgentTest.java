@@ -931,7 +931,7 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
@@ -953,7 +953,7 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config due to broken certificate "), any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
@@ -1542,7 +1542,7 @@ public class FieldAgentTest {
             when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             fieldAgent.sendUSBInfoFromHalToController();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("getResponse", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("getResponse", any());
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("config"), eq(RequestType.PATCH), eq(null), any());
             PowerMockito.verifyStatic(StatusReporter.class, atLeastOnce());
             StatusReporter.setResourceManagerStatus();

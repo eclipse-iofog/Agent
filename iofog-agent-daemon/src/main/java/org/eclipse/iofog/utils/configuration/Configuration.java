@@ -402,7 +402,6 @@ public final class Configuration {
         FieldAgent.getInstance().instanceConfigUpdated();
         ProcessManager.getInstance().instanceConfigUpdated();
         ResourceConsumptionManager.getInstance().instanceConfigUpdated();
-        LoggingService.instanceConfigUpdated();
         MessageBus.getInstance().instanceConfigUpdated();
 
         updateConfigFile(getCurrentConfigPath(), configFile);
@@ -432,7 +431,7 @@ public final class Configuration {
      */
     public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
     	LoggingService.logInfo(MODULE_NAME, "Start setting configuration base on commandline parameters");
-    	
+    	boolean isLogUpdated = false;
         HashMap<String, String> messageMap = new HashMap<>();
         if (commandLineMap != null) {
             for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
@@ -531,6 +530,7 @@ public final class Configuration {
                         if (defaults || isValidNetworkInterface(value.trim())) {
                             setNode(NETWORK_INTERFACE, value, configFile, configElement);
                             setNetworkInterface(value);
+                            IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
                         } else {
                             messageMap.put(option, "Invalid network interface");
                             break;
@@ -548,12 +548,14 @@ public final class Configuration {
                             messageMap.put(option, "Log disk limit range must be 0.5 to 100 GB");
                             break;
                         }
+                        isLogUpdated = true;
                         setNode(LOG_DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
                         setLogDiskLimit(Float.parseFloat(value));
                         break;
                     case LOG_DISK_DIRECTORY:
                         LoggingService.logInfo(MODULE_NAME, "Setting log disk directory");
                         value = addSeparator(value);
+                        isLogUpdated = true;
                         setNode(LOG_DISK_DIRECTORY, value, configFile, configElement);
                         setLogDiskDirectory(value);
                         break;
@@ -569,6 +571,7 @@ public final class Configuration {
                             messageMap.put(option, "Log file count range must be 1 to 100");
                             break;
                         }
+                        isLogUpdated = true;
                         setNode(LOG_FILE_COUNT, value, configFile, configElement);
                         setLogFileCount(Integer.parseInt(value));
                         break;
@@ -580,6 +583,7 @@ public final class Configuration {
                             messageMap.put(option, "Option -" + option + " has invalid value: " + value);
                             break;
                         }
+                        isLogUpdated = true;
                         setNode(LOG_LEVEL, value.toUpperCase(), configFile, configElement);
                         setLogLevel(value.toUpperCase());
                         break;
@@ -750,6 +754,9 @@ public final class Configuration {
                         TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
             }
             saveConfigUpdates();
+            if (isLogUpdated) {
+                LoggingService.instanceConfigUpdated();
+            }
         } else {
             messageMap.put("invalid", "Option and value are null");
         }
