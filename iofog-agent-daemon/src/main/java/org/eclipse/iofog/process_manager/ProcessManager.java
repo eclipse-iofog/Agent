@@ -124,11 +124,13 @@ public class ProcessManager implements IOFogModule {
 		microserviceManager.getCurrentMicroservices().stream()
 				.forEach(microservice -> {
 					Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
-					String containerId = containerOptional.get().getId();
-					MicroserviceStatus status = docker.getMicroserviceStatus(containerId, microservice.getMicroserviceUuid());
-					if (!status.getStatus().equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
-						StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
-						logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
+					if (containerOptional.isPresent()) {
+						String containerId = containerOptional.get().getId();
+						MicroserviceStatus status = docker.getMicroserviceStatus(containerId, microservice.getMicroserviceUuid());
+						if (!status.getStatus().equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
+							StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
+							logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
+						}
 					}
 				});
 	}
