@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2020 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,6 +13,7 @@
 
 package org.eclipse.iofog.network;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -101,7 +102,7 @@ public class IOFogNetworkInterface {
         try {
             future.get(1, TimeUnit.SECONDS);
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name");
+            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name : " + ExceptionUtils.getFullStackTrace(e));
             dockerBridgeInterfaceName = null;
         }
     }
@@ -136,7 +137,7 @@ public class IOFogNetworkInterface {
 
             return null;
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + e.getMessage());
+            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + ExceptionUtils.getFullStackTrace(e));
             return null;
         }
     }
@@ -148,9 +149,9 @@ public class IOFogNetworkInterface {
     private static Pair<NetworkInterface, InetAddress> getConnectedAddress(URL controllerUrl, NetworkInterface networkInterface, boolean checkConnection) {
         int controllerPort = controllerUrl.getPort();
         String controllerHost = controllerUrl.getHost();
-
         Enumeration<InetAddress> nifAddresses = networkInterface.getInetAddresses();
         for (InetAddress nifAddress: Collections.list(nifAddresses)) {
+            LoggingService.logInfo(MODULE_NAME, "Detected network interface: " + networkInterface.toString() + " And network address - hostAddress : "+ nifAddress.getHostAddress()  + " type of : " + nifAddress.getClass().getName());
             if (!(nifAddress instanceof Inet4Address)) {
                 continue;
             }
@@ -166,7 +167,7 @@ public class IOFogNetworkInterface {
                 soc.close();
                 return Pair.of(networkInterface, nifAddress);
             } catch (Exception e) {
-                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " +  e.getMessage());
+                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " + ExceptionUtils.getFullStackTrace(e));
             }
         }
 
