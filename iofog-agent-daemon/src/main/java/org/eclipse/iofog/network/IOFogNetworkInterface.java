@@ -158,7 +158,7 @@ public class IOFogNetworkInterface {
         String controllerHost = controllerUrl.getHost();
         Enumeration<InetAddress> nifAddresses = networkInterface.getInetAddresses();
         for (InetAddress nifAddress: Collections.list(nifAddresses)) {
-            LoggingService.logInfo(MODULE_NAME, "Detected network interface: " + networkInterface.toString() + " And network address - hostAddress : "+ nifAddress.getHostAddress() + "  hostname :" + nifAddress.getHostName() + " type of : " + nifAddress.getClass().getName());
+            LoggingService.logInfo(MODULE_NAME, "Detected network interface: " + networkInterface.toString() + " And network address - hostAddress : "+ nifAddress.getHostAddress()  + " type of : " + nifAddress.getClass().getName());
             if (!(nifAddress instanceof Inet4Address)) {
                 continue;
             }
