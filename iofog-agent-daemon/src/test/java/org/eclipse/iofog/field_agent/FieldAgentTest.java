@@ -14,6 +14,7 @@ package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.edge_resources.EdgeResourceManager;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.enums.RequestType;
@@ -84,7 +85,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
 @PrepareForTest({FieldAgent.class, LoggingService.class, FieldAgentStatus.class, MicroserviceManager.class,
         Orchestrator.class, URL.class, HttpURLConnection.class, Configuration.class, StatusReporter.class,
         SshProxyManager.class, ProcessManager.class, MessageBus.class, LocalApi.class, Thread.class, BufferedReader.class,
-        InputStreamReader.class, ResourceManagerStatus.class, IOFogNetworkInterfaceManager.class, VersionHandler.class, CommandShellExecutor.class})
+        InputStreamReader.class, ResourceManagerStatus.class, IOFogNetworkInterfaceManager.class, VersionHandler.class, CommandShellExecutor.class, EdgeResourceManager.class})
 public class FieldAgentTest {
     private FieldAgent fieldAgent;
     private String MODULE_NAME;
@@ -106,6 +107,7 @@ public class FieldAgentTest {
     private ResourceManagerStatus resourceManagerStatus;
     private Method method = null;
     private IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager;
+    private EdgeResourceManager edgeResourceManager;
 
     @Before
     public void setUp() throws Exception {
@@ -121,6 +123,7 @@ public class FieldAgentTest {
         mockStatic(IOFogNetworkInterfaceManager.class);
         mockStatic(BufferedReader.class);
         mockStatic(InputStreamReader.class);
+        mockStatic(EdgeResourceManager.class);
 
         orchestrator = PowerMockito.mock(Orchestrator.class);
         sshProxyManager = PowerMockito.mock(SshProxyManager.class);
@@ -128,6 +131,7 @@ public class FieldAgentTest {
         messageBus = PowerMockito.mock(MessageBus.class);
         localApi = PowerMockito.mock(LocalApi.class);
         resourceManagerStatus = PowerMockito.mock(ResourceManagerStatus.class);
+        edgeResourceManager = PowerMockito.mock(EdgeResourceManager.class);
         mockConfiguration();
         mockOthers();
         fieldAgent = PowerMockito.spy(FieldAgent.getInstance());
@@ -144,6 +148,7 @@ public class FieldAgentTest {
         PowerMockito.whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
         PowerMockito.whenNew(SshProxyManager.class).withArguments(Mockito.any(SshConnection.class)).thenReturn(sshProxyManager);
         when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
+        when(EdgeResourceManager.getInstance()).thenReturn(edgeResourceManager);
         when(ProcessManager.getInstance()).thenReturn(processManager);
         when(MessageBus.getInstance()).thenReturn(messageBus);
         when(LocalApi.getInstance()).thenReturn(localApi);

@@ -19,13 +19,13 @@ import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.diagnostics.ImageDownloadManager;
 import org.eclipse.iofog.diagnostics.strace.MicroserviceStraceData;
 import org.eclipse.iofog.diagnostics.strace.StraceDiagnosticManager;
+import org.eclipse.iofog.edge_resources.*;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.microservice.*;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.proxy.SshConnection;
@@ -64,12 +64,10 @@ import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.apache.commons.lang.StringUtils.rightPad;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;
-import static org.eclipse.iofog.utils.CmdProperties.getConfigParamMessage;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ControllerStatus.*;
 
@@ -93,6 +91,7 @@ public class FieldAgent implements IOFogModule {
     private ReentrantLock provisioningLock = new ReentrantLock();
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
     private ScheduledFuture<?> futureTask;
+    private EdgeResourceManager edgeResourceManager;
 
     private FieldAgent() {
         lastGetChangesList = 0;
@@ -433,9 +432,155 @@ public class FieldAgent implements IOFogModule {
                         resetChanges = false;
                     }
                 }
+                if (changes.getBoolean("linkedEdgeResources",false) && !initialization) {
+                    boolean linkedEdgeResources = changes.getBoolean("linkedEdgeResources");
+                    try {
+                        if (linkedEdgeResources) {
+                            loadEdgeResources(false);
+                            LocalApi.getInstance().updateEdgeResource();
+                            Tracker.getInstance().handleEvent(TrackingEventType.EDGE_RESOURCE,
+                                    TrackingInfoUtils.getEdgeResourcesInfo(loadEdgeResourcesJsonFile()));
+                        }
+                    } catch (Exception e) {
+                        logError("Unable to update linked edge resources", e);
+                        resetChanges = false;
+                    }
+                }
             }
             return resetChanges;
         });
+    }
+
+    /**
+     * Loads edge resources from json file
+     * @return
+     */
+    private JsonArray loadEdgeResourcesJsonFile() {
+        String filename = EDGE_RESOURCE_FILE;
+        JsonArray edgeResourcesJson = readFile(filesPath + filename);
+        return  edgeResourcesJson;
+    }
+
+    /**
+     * Loads edge resources from file or get from Controller
+     * @param fromFile
+     * @return
+     */
+    private List<EdgeResource> loadEdgeResources(boolean fromFile) {
+        {
+            logDebug("Start Loading edge resources...");
+            List<EdgeResource> edgeResourcesList = new ArrayList<>();
+            if (notProvisioned() || !isControllerConnected(fromFile)) {
+                return edgeResourcesList;
+            }
+
+            String filename = EDGE_RESOURCE_FILE;
+            JsonArray edgeResourcesJson = null;
+            try {
+                if (fromFile) {
+                    edgeResourcesJson = readFile(filesPath + filename);
+                    if (edgeResourcesJson == null) {
+                        return loadEdgeResources(false);
+                    }
+                } else {
+                    JsonObject result = orchestrator.request("edgeResources", RequestType.GET, null, null);
+                    if(result.containsKey("edgeResources")) {
+                        edgeResourcesJson = result.getJsonArray("edgeResources");
+                        saveFile(edgeResourcesJson, filesPath + filename);
+                    } else {
+                        logError("Error loading microservices from IOFog controller",
+                                new AgentUserException("Error loading microservices from IOFog controller"));
+                    }
+                }
+                try {
+                    if (edgeResourcesJson != null){
+                        List<EdgeResource> edgeResources = IntStream.range(0, edgeResourcesJson.size())
+                                .boxed()
+                                .map(edgeResourcesJson::getJsonObject)
+                                .map(containerJsonObjectToEdgeResourcesFunction())
+                                .collect(toList());
+                        edgeResourceManager.setLatestEdgeResources(edgeResources);
+                        edgeResourcesList.addAll(edgeResources);
+                    }
+                } catch (Exception e) {
+                    logError("Unable to parse microservices", new AgentSystemException(e.getMessage(), e));
+                }
+            } catch (CertificateException | SSLHandshakeException e) {
+                verificationFailed(e);
+                logError("Unable to get microservices due to broken certificate",
+                        new AgentSystemException(e.getMessage(), e));
+            } catch (Exception e) {
+                logError("Unable to get microservices", new AgentSystemException(e.getMessage(), e));
+            }
+            logDebug("Finished Loading microservices...");
+            return edgeResourcesList;
+        }
+    }
+
+    /**
+     * maps json object to EdgeResources
+     * @return
+     */
+    private Function<JsonObject, EdgeResource> containerJsonObjectToEdgeResourcesFunction() {
+        return jsonObj -> {
+            EdgeResource edgeResource = new EdgeResource(jsonObj.getInt("id"), jsonObj.getString("name"), jsonObj.getString("version"));
+            Display display = new Display();
+            EdgeInterface edgeInterface = new EdgeInterface();
+            edgeResource.setDescription(jsonObj.getString("description", null));
+            edgeResource.setInterfaceProtocol(jsonObj.getString("interfaceProtocol", null));
+            JsonArray tags = jsonObj.getJsonArray("orchestrationTags");
+            String[] orchestrationTags = null;
+            if (tags != null && tags.getValueType().equals(JsonValue.ValueType.NULL)) {
+                List<String> result = tags.size() > 0
+                        ? IntStream.range(0, tags.size())
+                        .boxed()
+                        .map(tags::getString)
+                        .collect(Collectors.toList())
+                        : null;
+                orchestrationTags = result.toArray(new String[result.size()]);
+            }
+
+            edgeResource.setOrchestrationTags(orchestrationTags);
+            JsonObject displayValue = jsonObj.getJsonObject("display");
+            if (displayValue != null && !displayValue.getValueType().equals(JsonValue.ValueType.NULL)) {
+                display.setName(displayValue.getString("name", null));
+                display.setIcon(displayValue.getString("icon", null));
+                display.setColor(displayValue.getString("color", null));
+            }
+
+            edgeResource.setDisplay(display);
+            JsonObject interfaceObj = jsonObj.getJsonObject("interface");
+            if (interfaceObj != null && !interfaceObj.getValueType().equals(JsonValue.ValueType.NULL)) {
+                edgeInterface.setEdgeResourceId(interfaceObj.getInt("edgeResourceId"));
+                edgeInterface.setId(interfaceObj.getInt("id"));
+                JsonArray endpointsArray = interfaceObj.getJsonArray("endpoints");
+                if (endpointsArray != null && !endpointsArray.getValueType().equals(JsonValue.ValueType.NULL)) {
+                    List<EdgeEndpoints> edgeEndpoints = endpointsArray.size() > 0
+                            ? IntStream.range(0, endpointsArray.size())
+                            .boxed()
+                            .map(endpointsArray::getJsonObject)
+                            .map(endpoint -> {
+                                EdgeEndpoints edgeEndPoint = new EdgeEndpoints();
+                                edgeEndPoint.setDescription(endpoint.getString("description", null));
+                                edgeEndPoint.setId(endpoint.getInt("id"));
+                                edgeEndPoint.setInterfaceId(endpoint.getInt("interfaceId"));
+                                edgeEndPoint.setMethod(endpoint.getString("method", null));
+                                edgeEndPoint.setName(endpoint.getString("name", null));
+                                edgeEndPoint.setRequestPayloadExample(endpoint.getString("requestPayloadExample", null));
+                                edgeEndPoint.setRequestType(endpoint.getString("requestType", null));
+                                edgeEndPoint.setResponseType(endpoint.getString("responseType", null));
+                                edgeEndPoint.setResponsePayloadExample(endpoint.getString("responsePayloadExample", null));
+                                edgeEndPoint.setUrl(endpoint.getString("url", null));
+                                return edgeEndPoint;
+                            })
+                            .collect(toList())
+                            : null;
+                    edgeInterface.setEndpoints(edgeEndpoints);
+                }
+            }
+            edgeResource.setEdgeInterface(edgeInterface);
+            return edgeResource;
+        };
     }
 
     /**
@@ -961,7 +1106,7 @@ public class FieldAgent implements IOFogModule {
      * @param filename - file name
      */
     private void saveFile(JsonArray data, String filename) {
-    	logDebug("Start save file");
+    	logDebug("Start save file name : " + filename);
         String checksum = checksum(data.toString());
         JsonObject object = Json.createObjectBuilder()
                 .add("checksum", checksum)
@@ -1249,6 +1394,7 @@ public class FieldAgent implements IOFogModule {
             processMicroserviceConfig(microservices);
             processRoutes(microservices);
             notifyModules();
+            loadEdgeResources(false);
 
             sendHWInfoFromHalToController();
 
@@ -1394,6 +1540,7 @@ public class FieldAgent implements IOFogModule {
         microserviceManager = MicroserviceManager.getInstance();
         orchestrator = new Orchestrator();
         sshProxyManager = new SshProxyManager(new SshConnection());
+        edgeResourceManager = EdgeResourceManager.getInstance();
 
         boolean isConnected = ping();
         getFogConfig();
@@ -1402,6 +1549,7 @@ public class FieldAgent implements IOFogModule {
             List<Microservice> microservices = loadMicroservices(!isConnected);
             processMicroserviceConfig(microservices);
             processRoutes(microservices);
+            loadEdgeResources(!isConnected);
         }
 
         new Thread(pingController, Constants.FIELD_AGENT_PING_CONTROLLER).start();

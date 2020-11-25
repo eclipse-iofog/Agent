@@ -130,7 +130,7 @@ public class TrackingInfoUtilsTest {
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logInfo(MODULE_NAME, "Start getting config update information");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logError(eq(MODULE_NAME), eq("can't update config info : option or value must not be null"), any());
+        LoggingService.logWarning(eq(MODULE_NAME), eq("can't update config info : option or value must not be null"));
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logInfo(MODULE_NAME, "Finished getting config update information");
     }
@@ -175,7 +175,7 @@ public class TrackingInfoUtilsTest {
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logInfo(MODULE_NAME, "Start getting microservice information");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logError(eq(MODULE_NAME), eq("can't get microservices info : option or value must not be null"), any());
+        LoggingService.logWarning(eq(MODULE_NAME), eq("can't get microservices info"));
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logInfo(MODULE_NAME, "Finished getting microservice information");
     }

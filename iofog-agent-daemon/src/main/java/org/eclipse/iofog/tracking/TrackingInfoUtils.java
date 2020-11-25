@@ -51,8 +51,7 @@ public class TrackingInfoUtils {
                     .add(option, newValue)
                     .build();
         } else {
-            LoggingService.logError(MODULE_NAME, "can't update config info : option or value must not be null",
-                    new AgentSystemException("can't update config info : option or value must not be null"));
+            LoggingService.logWarning(MODULE_NAME, "can't update config info : option or value must not be null");
             info = Json.createObjectBuilder()
                     .add("error", "can't update config info : option or value must not be null")
                     .build();
@@ -70,13 +69,29 @@ public class TrackingInfoUtils {
                     .add("microservicesCount", microservices.size())
                     .build();
         } else {
-            LoggingService.logError(MODULE_NAME, "can't get microservices info : option or value must not be null",
-                    new AgentSystemException("can't get microservices info : option or value must not be null"));
+            LoggingService.logWarning(MODULE_NAME, "can't get microservices info");
             info = Json.createObjectBuilder()
                     .add("error", "can't get microservices info : microservices must not be null")
                     .build();
         }
         LoggingService.logInfo(MODULE_NAME, "Finished getting microservice information");
+        return info;
+    }
+    public static JsonObject getEdgeResourcesInfo(JsonArray edgeResources) {
+        LoggingService.logInfo(MODULE_NAME, "Start getting edgeResources information size");
+        JsonObject info;
+        if(edgeResources != null){
+            info = Json.createObjectBuilder()
+                    .add("edgeResources", edgeResources)
+                    .add("edgeResourcesCount", edgeResources.size())
+                    .build();
+        } else {
+            LoggingService.logWarning(MODULE_NAME, "can't get edgeResources info : option or value must not be null");
+            info = Json.createObjectBuilder()
+                    .add("error", "can't get edgeResources info")
+                    .build();
+        }
+        LoggingService.logInfo(MODULE_NAME, "Finished getting edgeResources information");
         return info;
     }
 }

@@ -40,6 +40,7 @@ public class ControlWebsocketHandler {
 	private static final Byte OPCODE_PONG = 0xA;
 	private static final Byte OPCODE_ACK = 0xB;
 	private static final Byte OPCODE_CONTROL_SIGNAL = 0xC;
+	private static final Byte OPCODE_RESOURCE_SIGNAL = 0xF;
 
 	private static final String WEBSOCKET_PATH = "/v2/control/socket";
 
@@ -186,5 +187,18 @@ public class ControlWebsocketHandler {
 		} else {
 			return "ws://" + location;
 		}
+	}
+
+	public void initiateResourceSignal() {
+		Map<String, ChannelHandlerContext> controlMap = WebSocketMap.controlWebsocketMap;
+		for (Map.Entry<String, ChannelHandlerContext> newEntry : controlMap.entrySet()) {
+			ChannelHandlerContext ctx = newEntry.getValue();
+			WebSocketMap.unackControlSignalsMap.put(ctx, new ControlSignalSentInfo(1, System.currentTimeMillis()));
+
+			ByteBuf buffer1 = ctx.alloc().buffer();
+			buffer1.writeByte(OPCODE_RESOURCE_SIGNAL);
+			ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buffer1));
+		}
+
 	}
 }

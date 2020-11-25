@@ -7,6 +7,7 @@ public enum TrackingEventType {
     CONFIG("config updated"),
     TIME("running time"),
     MICROSERVICE("microservices were updated"),
+    EDGE_RESOURCE("edgeResources were updated"),
     ERROR("error");
 
     private String name;
