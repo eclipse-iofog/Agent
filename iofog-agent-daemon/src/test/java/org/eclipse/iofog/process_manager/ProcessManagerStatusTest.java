@@ -153,7 +153,7 @@ public class ProcessManagerStatusTest {
     public void testRemoveNotRunningMicroserviceStatus() {
         processManagerStatus.setMicroservicesStatus(microserviceUuid, microserviceStatus);
         processManagerStatus.removeNotRunningMicroserviceStatus();
-        verify(microserviceStatus, times(2)).getStatus();
+        verify(microserviceStatus, times(3)).getStatus();
     }
 
     /**

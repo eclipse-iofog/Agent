@@ -36,6 +36,19 @@ public class MicroserviceStatus {
 	private long memoryUsage;
 	private String containerId;
 	private float percentage;
+	private String containerError;
+
+	public String getContainerError() {
+		return containerError;
+	}
+
+	public void setContainerError(String containerError) {
+		this.containerError = containerError;
+	}
+
+	public static String getModuleName() {
+		return MODULE_NAME;
+	}
 
 	public MicroserviceStatus() {
 		this.status = MicroserviceState.UNKNOWN;
