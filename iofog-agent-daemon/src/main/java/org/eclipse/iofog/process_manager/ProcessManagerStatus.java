@@ -68,6 +68,9 @@ public class ProcessManagerStatus {
                         .add("cpuUsage", nf.format(status.getCpuUsage()))
                         .add("memoryUsage", String.format("%d", status.getMemoryUsage()));
             }
+            if (status != null && status.getContainerError() != null) {
+                objectBuilder.add("containerError", status.getContainerError());
+            }
             arrayBuilder.add(objectBuilder);
         });
         return arrayBuilder.build().toString();
@@ -126,7 +129,8 @@ public class ProcessManagerStatus {
     public void removeNotRunningMicroserviceStatus() {
         synchronized (microservicesStatus) {
             microservicesStatus.entrySet().removeIf(entry -> entry.getValue().getStatus() == MicroserviceState.UNKNOWN ||
-                    entry.getValue().getStatus() == MicroserviceState.DELETING || entry.getValue().getStatus() == MicroserviceState.DELETED);
+                    entry.getValue().getStatus() == MicroserviceState.DELETING ||
+                    entry.getValue().getStatus() == MicroserviceState.DELETED);
         }
     }
 
@@ -142,6 +146,15 @@ public class ProcessManagerStatus {
         synchronized (microservicesStatus) {
             MicroserviceStatus status = microservicesStatus.getOrDefault(microserviceUuid, new MicroserviceStatus());
             status.setPercentage(percentage);
+            this.microservicesStatus.put(microserviceUuid, status);
+        }
+        return this;
+    }
+
+    public ProcessManagerStatus setMicroservicesStateContainerError(String microserviceUuid, String message) {
+        synchronized (microservicesStatus) {
+            MicroserviceStatus status = microservicesStatus.getOrDefault(microserviceUuid, new MicroserviceStatus());
+            status.setContainerError(message);
             this.microservicesStatus.put(microserviceUuid, status);
         }
         return this;

@@ -109,6 +109,7 @@ public class ProcessManager implements IOFogModule {
 			logDebug("Start Monitoring containers");
 
 			try {
+
 				handleLatestMicroservices();
 				deleteRemainingMicroservices();
 				updateRunningMicroservicesCount();
@@ -128,7 +129,7 @@ public class ProcessManager implements IOFogModule {
 						String containerId = containerOptional.get().getId();
 						MicroserviceStatus status = docker.getMicroserviceStatus(containerId, microservice.getMicroserviceUuid());
 						if (!status.getStatus().equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
-							StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
+							StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), status.getStatus());
 							logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
 						}
 					}
@@ -184,8 +185,11 @@ public class ProcessManager implements IOFogModule {
 				Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 
 				if (!containerOptional.isPresent() && !microservice.isDelete()) {
-					StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
-					addMicroservice(microservice);
+					if (StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()) != null
+							&& MicroserviceState.UNKNOWN.equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
+						StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
+						addMicroservice(microservice);
+					}
 				} else if (containerOptional.isPresent() && microservice.isDelete()) {
 					StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.MARKED_FOR_DELETION);
 					deleteMicroservice(microservice);
@@ -370,7 +374,8 @@ public class ProcessManager implements IOFogModule {
 		boolean isNotRunning = !MicroserviceState.RUNNING.equals(status.getStatus());
 		boolean areNotEqual = !docker.areMicroserviceAndContainerEqual(container.getId(), microservice);
 		boolean isRebuild = microservice.isRebuild();
-		boolean isUpdated = isNotRunning || areNotEqual || isRebuild;
+		boolean isNotStuckInRestart = !MicroserviceState.STUCK_IN_RESTART.equals(status.getStatus());
+		boolean isUpdated = (isNotRunning || areNotEqual || isRebuild ) && isNotStuckInRestart;
 		logDebug("Finished should Container Be Updated : " + isUpdated);
 		return isUpdated;
 	}
