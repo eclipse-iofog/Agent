@@ -126,7 +126,7 @@ public class ProcessManagerStatus {
     public void removeNotRunningMicroserviceStatus() {
         synchronized (microservicesStatus) {
             microservicesStatus.entrySet().removeIf(entry -> entry.getValue().getStatus() == MicroserviceState.UNKNOWN ||
-                    entry.getValue().getStatus() == MicroserviceState.DELETING);
+                    entry.getValue().getStatus() == MicroserviceState.DELETING || entry.getValue().getStatus() == MicroserviceState.DELETED);
         }
     }
 
