@@ -171,7 +171,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(false));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq(null), eq(null), eq(false));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(3)).invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(4)).invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -200,7 +200,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(false));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq("containerID"), eq(null), eq(false));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(4))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Error stopping container \"containerID\""), any());
@@ -245,7 +245,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(true));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq(null), eq(null), eq(true));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(4))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
         } catch (Exception e) {
             fail("This should not happen");
@@ -275,7 +275,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(true));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq("containerID"), eq(null), eq(true));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(4))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Image for container \"containerID\" cannot be removed"), any());
@@ -307,7 +307,7 @@ public class ContainerManagerTest {
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainerByMicroserviceUuid", eq("uuid"), eq(true));
             PowerMockito.verifyPrivate(containerManager).invoke("stopContainer",  eq("uuid"));
             PowerMockito.verifyPrivate(containerManager).invoke("removeContainer", eq("containerID"), eq(null), eq(true));
-            PowerMockito.verifyPrivate(containerManager, Mockito.times(3))
+            PowerMockito.verifyPrivate(containerManager, Mockito.times(4))
                     .invoke("setMicroserviceStatus", any(), any(MicroserviceState.class));
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Image for container \"containerID\" cannot be removed"), any());

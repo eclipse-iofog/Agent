@@ -174,6 +174,7 @@ public class ContainerManager {
 				Container container = containerOptional.get();
 				setMicroserviceStatus(microserviceUuid, MicroserviceState.DELETING);
 				removeContainer(container.getId(), container.getImageId(), withCleanUp);
+				setMicroserviceStatus(microserviceUuid, MicroserviceState.DELETED);
 			}
 		}
 		LoggingService.logInfo(MODULE_NAME, "Finished remove container with microserviceuuid : " + microserviceUuid);
