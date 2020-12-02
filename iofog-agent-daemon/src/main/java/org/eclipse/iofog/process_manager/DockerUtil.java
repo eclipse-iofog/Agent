@@ -340,8 +340,6 @@ public class DockerUtil {
                 MicroserviceState microserviceState = containerToMicroserviceState(containerState);
                 result.setStatus(MicroserviceState.EXITING.equals(microserviceState) && RestartStuckChecker.isStuck(microServiceUuid)
                         ? MicroserviceState.STUCK_IN_RESTART
-                        : MicroserviceState.CREATING.equals(microserviceState) && RestartStuckChecker.isStuck(microServiceUuid)
-                        ? MicroserviceState.STUCK_IN_RESTART
                         : microserviceState);
 
                 result.setContainerId(containerId);
@@ -365,6 +363,7 @@ public class DockerUtil {
             case "running":
                 return MicroserviceState.RUNNING;
             case "create":
+                return MicroserviceState.CREATING;
             case "attach":
             case "start":
                 return MicroserviceState.STARTING;
@@ -379,7 +378,7 @@ public class DockerUtil {
             case "exited":
                 return MicroserviceState.EXITING;
             case "created":
-                return MicroserviceState.CREATING;
+                return MicroserviceState.CREATED;
         }
 
         return MicroserviceState.UNKNOWN;

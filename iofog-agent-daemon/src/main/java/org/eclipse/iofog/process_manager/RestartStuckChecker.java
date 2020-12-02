@@ -26,7 +26,7 @@ public class RestartStuckChecker {
 
 	private static final Map<String, List<LocalDateTime>> restarts = new HashMap<>();
 	private static final long INTERVAL_IN_MINUTES = 5;
-	private static final int ABNORMAL_NUMBER_OF_RESTARTS = 10;
+	private static final int ABNORMAL_NUMBER_OF_RESTARTS = 5;
 
 	public static boolean isStuck(String containerId) {
 		List<LocalDateTime> datesOfRestart = restarts.computeIfAbsent(containerId, k -> new ArrayList<>());
