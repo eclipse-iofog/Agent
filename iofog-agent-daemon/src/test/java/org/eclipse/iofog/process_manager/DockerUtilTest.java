@@ -628,6 +628,29 @@ public class DockerUtilTest {
             fail("This should not happen");
         }
     }
+    /**
+     * Test getMicroserviceStatus
+     * When containerState is restart
+     * containerState.getStartedAt() is null
+     * RestartStuckChecker.isStuck() returns false
+     */
+    @Test
+    public void testGetMicroserviceStatusWhenExecReturnsContainerStateIsCreating() {
+        try {
+            PowerMockito.when(containerState.getStatus()).thenReturn("CREATED");
+            PowerMockito.when(RestartStuckChecker.isStuckInContainerCreation(any())).thenReturn(false);
+            assertEquals(microserviceStatus, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid));
+            Mockito.verify(microserviceStatus).setContainerId(any());
+            Mockito.verify(microserviceStatus).setStatus(eq(MicroserviceState.CREATED));
+            Mockito.verify(microserviceStatus).setUsage(any());
+            Mockito.verify(microserviceStatus, Mockito.never()).setStartTime(anyLong());
+            PowerMockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
+            PowerMockito.verifyStatic(RestartStuckChecker.class);
+            RestartStuckChecker.isStuckInContainerCreation(any());
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
 
     /**
      * Test getRunningContainers when none of the container is not RUNNING

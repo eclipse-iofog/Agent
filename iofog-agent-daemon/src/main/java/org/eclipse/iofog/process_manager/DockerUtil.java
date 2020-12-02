@@ -190,17 +190,10 @@ public class DockerUtil {
         try {
             LoggingService.logDebug(MODULE_NAME , "start Container");
             dockerClient.startContainerCmd(microservice.getContainerId()).exec();
-        } catch (NotFoundException e) {
-            LoggingService.logError(MODULE_NAME, String.format("Error starting container\"%s\" ", microservice.getImageName()), e);
-            StatusReporter.setProcessManagerStatus().setMicroservicesStateContainerError(microservice.getMicroserviceUuid(), e.getMessage());
-            throw e;
-        } catch (NotModifiedException e) {
-            LoggingService.logError(MODULE_NAME, String.format("Error starting container\"%s\" ", microservice.getImageName()), e);
-            StatusReporter.setProcessManagerStatus().setMicroservicesStateContainerError(microservice.getMicroserviceUuid(), e.getMessage());
-            throw e;
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, String.format("Error starting container\"%s\" ", microservice.getImageName()), e);
-            StatusReporter.setProcessManagerStatus().setMicroservicesStateContainerError(microservice.getMicroserviceUuid(), e.getMessage());
+            LoggingService.logError(MODULE_NAME, String.format("Exception occurred while starting container\"%s\" ", microservice.getImageName()),
+                    new AgentSystemException(e.getMessage(), e));
+            StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microservice.getMicroserviceUuid(), e.getMessage());
             throw e;
         }
     }
@@ -325,7 +318,7 @@ public class DockerUtil {
      * @param containerId - id of {@link Container}
      * @return {@link MicroserviceStatus}
      */
-    public MicroserviceStatus getMicroserviceStatus(String containerId, String microServiceUuid) {
+    public MicroserviceStatus getMicroserviceStatus(String containerId, String microserviceUuid) {
     	LoggingService.logDebug(MODULE_NAME , "get microservice status");
         InspectContainerResponse inspectInfo;
         MicroserviceStatus result = new MicroserviceStatus();
@@ -338,20 +331,30 @@ public class DockerUtil {
                 }
 
                 MicroserviceState microserviceState = containerToMicroserviceState(containerState);
-                result.setStatus(MicroserviceState.EXITING.equals(microserviceState) && RestartStuckChecker.isStuck(microServiceUuid)
+                result.setStatus(isMicroserviceStuckInExitOrCreation(microserviceState, microserviceUuid)
                         ? MicroserviceState.STUCK_IN_RESTART
                         : microserviceState);
-
                 result.setContainerId(containerId);
                 result.setUsage(containerId);
+                MicroserviceStatus existingStatus = StatusReporter.setProcessManagerStatus().getMicroserviceStatus(microserviceUuid);
+                result.setPercentage(existingStatus.getPercentage());
+                result.setErrorMessage(existingStatus.getErrorMessage());
             }
-        } catch (NotFoundException e) {
-            LoggingService.logWarning(MODULE_NAME, "Error getting microservice uuid" + microServiceUuid +  "container status : " + ExceptionUtils.getFullStackTrace(e));
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Error getting microservice uuid" + microServiceUuid +  "container status : " + ExceptionUtils.getFullStackTrace(e));
+            LoggingService.logWarning(MODULE_NAME, "Error occurred while getting container status of microservice uuid" + microserviceUuid +
+                    " error : " + ExceptionUtils.getFullStackTrace(e));
         }
         LoggingService.logDebug(MODULE_NAME , "Finished get microservice status");
         return result;
+    }
+
+    private boolean isMicroserviceStuckInExitOrCreation(MicroserviceState microserviceState, String microServiceUuid){
+        if (MicroserviceState.EXITING.equals(microserviceState)){
+            return RestartStuckChecker.isStuck(microServiceUuid);
+        } else if (MicroserviceState.CREATED.equals(microserviceState)){
+            return RestartStuckChecker.isStuckInContainerCreation(microServiceUuid);
+        }
+        return false;
     }
 
     private MicroserviceState containerToMicroserviceState(ContainerState containerState) {
@@ -726,17 +729,10 @@ public class DockerUtil {
         try {
             resp = cmd.exec();
             LoggingService.logInfo(MODULE_NAME ,String.format("Container created \"%s\" ", microservice.getImageName()));
-        } catch (NotFoundException e) {
-            LoggingService.logError(MODULE_NAME, String.format("Error creating container\"%s\" ", microservice.getImageName()), e);
-            StatusReporter.setProcessManagerStatus().setMicroservicesStateContainerError(microservice.getMicroserviceUuid(), e.getMessage());
-            throw e;
-        } catch (ConflictException e) {
-            LoggingService.logError(MODULE_NAME, String.format("Error creating container\"%s\" ", microservice.getImageName()), e);
-            StatusReporter.setProcessManagerStatus().setMicroservicesStateContainerError(microservice.getMicroserviceUuid(), e.getMessage());
-            throw e;
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, String.format("Error creating container\"%s\" ", microservice.getImageName()), e);
-            StatusReporter.setProcessManagerStatus().setMicroservicesStateContainerError(microservice.getMicroserviceUuid(), e.getMessage());
+            LoggingService.logError(MODULE_NAME, String.format("Exception occurred while creating container\"%s\" ",
+                    microservice.getImageName()), new AgentSystemException(e.getMessage(), e));
+            StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microservice.getMicroserviceUuid(), e.getMessage());
             throw e;
         }
         return resp.getId();

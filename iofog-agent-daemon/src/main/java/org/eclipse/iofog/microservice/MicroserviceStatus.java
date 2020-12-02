@@ -36,14 +36,14 @@ public class MicroserviceStatus {
 	private long memoryUsage;
 	private String containerId;
 	private float percentage;
-	private String containerError;
+	private String errorMessage;
 
-	public String getContainerError() {
-		return containerError;
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 
-	public void setContainerError(String containerError) {
-		this.containerError = containerError;
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
 	}
 
 	public static String getModuleName() {

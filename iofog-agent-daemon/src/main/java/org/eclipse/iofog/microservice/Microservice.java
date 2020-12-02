@@ -42,6 +42,7 @@ public class Microservice {
 
     private boolean delete;
     private boolean deleteWithCleanup;
+    private boolean isStuckInRestart;
 
     public Microservice(String microserviceUuid, String imageName) {
         this.microserviceUuid = microserviceUuid;
@@ -196,5 +197,13 @@ public class Microservice {
 
     public void setExtraHosts(List<String> extraHosts) {
         this.extraHosts = extraHosts;
+    }
+
+    public boolean isStuckInRestart() {
+        return isStuckInRestart;
+    }
+
+    public void setStuckInRestart(boolean stuckInRestart) {
+        isStuckInRestart = stuckInRestart;
     }
 }

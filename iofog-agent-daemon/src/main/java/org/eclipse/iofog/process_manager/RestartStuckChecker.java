@@ -25,16 +25,27 @@ import java.util.Map;
 public class RestartStuckChecker {
 
 	private static final Map<String, List<LocalDateTime>> restarts = new HashMap<>();
-	private static final long INTERVAL_IN_MINUTES = 5;
-	private static final int ABNORMAL_NUMBER_OF_RESTARTS = 5;
+	private static final Map<String, List<LocalDateTime>> containerCreation = new HashMap<>();
+	private static final long INTERVAL_IN_MINUTES = 10;
+	private static final int ABNORMAL_NUMBER_OF_RESTARTS = 10;
 
-	public static boolean isStuck(String containerId) {
-		List<LocalDateTime> datesOfRestart = restarts.computeIfAbsent(containerId, k -> new ArrayList<>());
+	public static boolean isStuck(String microserviceUuid) {
+		List<LocalDateTime> datesOfRestart = restarts.computeIfAbsent(microserviceUuid, k -> new ArrayList<>());
 		LocalDateTime now = LocalDateTime.now();
 
 		datesOfRestart.removeIf(dateOfRestart -> dateOfRestart.isBefore(now.minusMinutes(INTERVAL_IN_MINUTES)));
 		datesOfRestart.add(now);
 
 		return datesOfRestart.size() >= ABNORMAL_NUMBER_OF_RESTARTS;
+	}
+
+	public static boolean isStuckInContainerCreation(String microserviceUuid) {
+		List<LocalDateTime> datesOfCreation = containerCreation.computeIfAbsent(microserviceUuid, k -> new ArrayList<>());
+		LocalDateTime now = LocalDateTime.now();
+
+		datesOfCreation.removeIf(dateOfRestart -> dateOfRestart.isBefore(now.minusMinutes(INTERVAL_IN_MINUTES)));
+		datesOfCreation.add(now);
+
+		return datesOfCreation.size() >= ABNORMAL_NUMBER_OF_RESTARTS;
 	}
 }

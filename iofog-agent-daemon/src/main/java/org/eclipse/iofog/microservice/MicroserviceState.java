@@ -18,8 +18,12 @@ package org.eclipse.iofog.microservice;
  */
 public enum MicroserviceState {
 
-    QUEUED, PULLING, STARTING, RUNNING, STOPPING, DELETING, MARKED_FOR_DELETION, UPDATING, RESTARTING, STUCK_IN_RESTART, UNKNOWN, FAILED, STOPPED, EXITING, DELETED, CREATING, CREATED;
-
+    QUEUED, PULLING, CREATING, CREATED,
+    STARTING, RUNNING, UPDATING,
+    RESTARTING, EXITING, STUCK_IN_RESTART, FAILED,
+    MARKED_FOR_DELETION, DELETING, DELETED,
+    STOPPING, STOPPED,
+    UNKNOWN;
 
     public static MicroserviceState fromText(String value){
         return valueOf(value.toUpperCase());
