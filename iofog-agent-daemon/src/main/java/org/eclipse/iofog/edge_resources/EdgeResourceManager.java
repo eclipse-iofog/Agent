@@ -13,6 +13,7 @@
 package org.eclipse.iofog.edge_resources;
 
 
+import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.util.ArrayList;
@@ -23,17 +24,20 @@ public class EdgeResourceManager {
     private List<EdgeResource> latestEdgeResources = new ArrayList<>();
     private List<EdgeResource> currentEdgeResources = new ArrayList<>();
     private static final String MODULE_NAME = "EdgeResource Manager";
+    private static EdgeResourceManager instance;
 
     private EdgeResourceManager() {
     }
-    public static class SingletonHolder {
-        public static final EdgeResourceManager em = new EdgeResourceManager();
-    }
 
     public static EdgeResourceManager getInstance() {
-        return EdgeResourceManager.SingletonHolder.em;
+        if (instance == null) {
+            synchronized (EdgeResourceManager.class) {
+                if (instance == null)
+                    instance = new EdgeResourceManager();
+            }
+        }
+        return instance;
     }
-
     public List<EdgeResource> getLatestEdgeResources() {
         synchronized (EdgeResource.class) {
             return Collections.unmodifiableList(latestEdgeResources);

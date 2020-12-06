@@ -488,7 +488,7 @@ public class FieldAgent implements IOFogModule {
                         edgeResourcesJson = result.getJsonArray("edgeResources");
                         saveFile(edgeResourcesJson, filesPath + filename);
                     } else {
-                        logError("Error loading microservices from IOFog controller",
+                        logError("Error loading edgeResources from IOFog controller",
                                 new AgentUserException("Error loading microservices from IOFog controller"));
                     }
                 }
@@ -501,18 +501,19 @@ public class FieldAgent implements IOFogModule {
                                 .collect(toList());
                         edgeResourceManager.setLatestEdgeResources(edgeResources);
                         edgeResourcesList.addAll(edgeResources);
+                        logDebug("Edge resource list size : " + edgeResourcesList.size());
                     }
                 } catch (Exception e) {
-                    logError("Unable to parse microservices", new AgentSystemException(e.getMessage(), e));
+                    logError("Unable to parse edgeResources", new AgentSystemException(e.getMessage(), e));
                 }
             } catch (CertificateException | SSLHandshakeException e) {
                 verificationFailed(e);
-                logError("Unable to get microservices due to broken certificate",
+                logError("Unable to get edgeResources due to broken certificate",
                         new AgentSystemException(e.getMessage(), e));
             } catch (Exception e) {
-                logError("Unable to get microservices", new AgentSystemException(e.getMessage(), e));
+                logError("Unable to get edgeResources", new AgentSystemException(e.getMessage(), e));
             }
-            logDebug("Finished Loading microservices...");
+            logDebug("Finished loading edge resources...");
             return edgeResourcesList;
         }
     }
