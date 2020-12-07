@@ -109,6 +109,7 @@ public class ProcessManager implements IOFogModule {
 			logDebug("Start Monitoring containers");
 
 			try {
+
 				handleLatestMicroservices();
 				deleteRemainingMicroservices();
 				updateRunningMicroservicesCount();
@@ -122,13 +123,17 @@ public class ProcessManager implements IOFogModule {
 
 	public void updateMicroserviceStatus() {
 		microserviceManager.getCurrentMicroservices().stream()
+				.filter(microservice -> !microservice.isStuckInRestart())
 				.forEach(microservice -> {
 					Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 					if (containerOptional.isPresent()) {
 						String containerId = containerOptional.get().getId();
 						MicroserviceStatus status = docker.getMicroserviceStatus(containerId, microservice.getMicroserviceUuid());
 						if (!status.getStatus().equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
-							StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
+							StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), status.getStatus());
+							if (status.getStatus().equals(MicroserviceState.STUCK_IN_RESTART)) {
+								microservice.setStuckInRestart(true);
+							}
 							logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
 						}
 					}
@@ -179,13 +184,16 @@ public class ProcessManager implements IOFogModule {
 	private void handleLatestMicroservices() {
 		logDebug("Start handle latest microservices");
 		microserviceManager.getLatestMicroservices().stream()
-			.filter(microservice -> !microservice.isUpdating())
+			.filter(microservice -> !microservice.isUpdating() && !microservice.isStuckInRestart())
 			.forEach(microservice -> {
 				Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 
 				if (!containerOptional.isPresent() && !microservice.isDelete()) {
-					StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
-					addMicroservice(microservice);
+					MicroserviceStatus status = StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid());
+					if (status != null && MicroserviceState.UNKNOWN.equals(status.getStatus())) {
+						StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.QUEUED);
+						addMicroservice(microservice);
+					}
 				} else if (containerOptional.isPresent() && microservice.isDelete()) {
 					StatusReporter.setProcessManagerStatus().setMicroservicesState(microservice.getMicroserviceUuid(), MicroserviceState.MARKED_FOR_DELETION);
 					deleteMicroservice(microservice);

@@ -22,7 +22,6 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * represents Process Manager status
@@ -67,6 +66,9 @@ public class ProcessManagerStatus {
                         .add("operatingDuration", status.getOperatingDuration())
                         .add("cpuUsage", nf.format(status.getCpuUsage()))
                         .add("memoryUsage", String.format("%d", status.getMemoryUsage()));
+            }
+            if (status != null && status.getErrorMessage() != null) {
+                objectBuilder.add("containerError", status.getErrorMessage());
             }
             arrayBuilder.add(objectBuilder);
         });
@@ -126,7 +128,7 @@ public class ProcessManagerStatus {
     public void removeNotRunningMicroserviceStatus() {
         synchronized (microservicesStatus) {
             microservicesStatus.entrySet().removeIf(entry -> entry.getValue().getStatus() == MicroserviceState.UNKNOWN ||
-                    entry.getValue().getStatus() == MicroserviceState.DELETING || entry.getValue().getStatus() == MicroserviceState.DELETED);
+                    entry.getValue().getStatus() == MicroserviceState.DELETED);
         }
     }
 
@@ -142,6 +144,15 @@ public class ProcessManagerStatus {
         synchronized (microservicesStatus) {
             MicroserviceStatus status = microservicesStatus.getOrDefault(microserviceUuid, new MicroserviceStatus());
             status.setPercentage(percentage);
+            this.microservicesStatus.put(microserviceUuid, status);
+        }
+        return this;
+    }
+
+    public ProcessManagerStatus setMicroservicesStatusErrorMessage(String microserviceUuid, String message) {
+        synchronized (microservicesStatus) {
+            MicroserviceStatus status = microservicesStatus.getOrDefault(microserviceUuid, new MicroserviceStatus());
+            status.setErrorMessage(message);
             this.microservicesStatus.put(microserviceUuid, status);
         }
         return this;

@@ -293,7 +293,7 @@ public class ProcessManagerTest {
             Mockito.verify(dockerUtil).getContainer(any());
             Mockito.verify(microservice).isDelete();
             Mockito.verify(microservice).isUpdating();
-            PowerMockito.verifyPrivate(processManager).invoke("addMicroservice", Mockito.any());
+            PowerMockito.verifyPrivate(processManager, never()).invoke("addMicroservice", Mockito.any());
         } catch (Exception e) {
             fail("This should not happen");
         }

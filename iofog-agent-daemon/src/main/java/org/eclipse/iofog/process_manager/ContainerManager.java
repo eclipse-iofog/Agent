@@ -112,9 +112,10 @@ public class ContainerManager {
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
 		LoggingService.logDebug(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
+		StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microservice.getMicroserviceUuid(),
+				Constants.PERCENTAGE_COMPLETION);
 		startContainer(microservice);
 		microservice.setRebuild(false);
-		StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microservice.getMicroserviceUuid(), Constants.PERCENTAGE_COMPLETION);
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.RUNNING);
 	}
 
