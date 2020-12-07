@@ -155,6 +155,9 @@ public class IOFogNetworkInterface {
             if (!(nifAddress instanceof Inet4Address)) {
                 continue;
             }
+            if (!(nifAddress.isSiteLocalAddress())) {
+                continue;
+            }
 
             if (!checkConnection) {
                 return Pair.of(networkInterface, nifAddress);
