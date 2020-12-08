@@ -68,7 +68,7 @@ public class ProcessManagerStatus {
                         .add("memoryUsage", String.format("%d", status.getMemoryUsage()));
             }
             if (status != null && status.getErrorMessage() != null) {
-                objectBuilder.add("containerError", status.getErrorMessage());
+                objectBuilder.add("errorMessage", status.getErrorMessage());
             }
             arrayBuilder.add(objectBuilder);
         });
