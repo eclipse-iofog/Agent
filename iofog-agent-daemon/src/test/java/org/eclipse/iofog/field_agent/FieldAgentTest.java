@@ -14,6 +14,7 @@ package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
+import org.eclipse.iofog.edge_resources.EdgeResource;
 import org.eclipse.iofog.edge_resources.EdgeResourceManager;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
@@ -191,8 +192,10 @@ public class FieldAgentTest {
         MODULE_NAME = null;
         fieldAgent = null;
         Mockito.reset(fieldAgentStatus, orchestrator, bufferedReader, inputStreamReader);
-        if (method != null)
+        if (method != null) {
             method.setAccessible(false);
+        }
+        jsonObject = null;
     }
     /**
      * Set a mock to the {@link FieldAgent} instance
@@ -297,6 +300,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("notifyModules");
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
         } catch (Exception e) {
@@ -325,6 +329,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -356,6 +361,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -388,6 +394,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
             PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
@@ -425,6 +432,8 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
+
             PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -470,6 +479,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -512,6 +522,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -563,6 +574,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
             PowerMockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
@@ -645,6 +657,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyStatic(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
@@ -736,6 +749,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get registries"), any());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
@@ -772,6 +786,7 @@ public class FieldAgentTest {
             PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
             PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Provisioning failed"), any());
         } catch (AgentSystemException e) {
@@ -915,7 +930,7 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             PowerMockito.verifyStatic(LoggingService.class, never());
@@ -980,7 +995,7 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new Exception("Invalid operation"));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
             PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
@@ -1610,6 +1625,82 @@ public class FieldAgentTest {
         PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), any(TimeUnit.class));
         mock(Runnable.class);
 
+    }
+
+    /**
+     * Test provision when controller status is provisioned & Gps coordinates not null &
+     * Orchestrator.provision returns success response &
+     * loadEdgeResources : Orchestrator.request with command microservice throws CertificateException
+     */
+    @Test
+    public void throwsExceptionWhenOrchestratorEdgeRequestIsCalled() {
+        try {
+            initiateMockStart();
+            when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
+            when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
+            when(orchestrator.provision(any())).thenReturn(jsonObject);
+            when(orchestrator.request(eq("edgeResources"), any(), any(), any())).thenThrow(new CertificateException("Certificate Error"));
+            fieldAgent.provision("provisonKey");
+            Mockito.verify(orchestrator).provision(eq("provisonKey"));
+            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
+            LoggingService.logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
+            PowerMockito.verifyStatic(LoggingService.class);
+            LoggingService.logWarning(MODULE_NAME,"controller verification failed: BROKEN_CERTIFICATE");
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+            LoggingService.logError(eq(MODULE_NAME), eq("Unable to get edgeResources due to broken certificate"), any());
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
+            LoggingService.logError(eq(MODULE_NAME), eq("Provisioning failed"), any());
+        } catch (AgentSystemException e) {
+            fail("This should not happen");
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
+    }
+    /**
+     * Test provision when controller status is provisioned & Gps coordinates not null &
+     * Orchestrator.provision returns success response &
+     * loadEdgeResources : returns list of edgeResources
+     */
+    @Test
+    public void testProvisionWhenLoadEdgeResourcesReturnList() {
+        try {
+            initiateMockStart();
+            JsonObject edgeObject = jsonObjectBuilder
+                    .add("id", 1)
+                    .add("name", "com.orange.smart-door")
+                    .add("description", "Orange Smart Door")
+                    .add("version", "0.0.1")
+                    .add("interfaceProtocol", "https")
+                    .add("orchestrationTags", "")
+                    .add("interface", "")
+                    .build();
+            JsonArray jsonArray = Json.createArrayBuilder().add(edgeObject).build();
+            JsonObject edgeResources = jsonObjectBuilder
+                    .add("edgeResources", jsonArray).build();
+            when(Configuration.getGpsCoordinates()).thenReturn("40.9006, 174.8860");
+            when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
+            when(orchestrator.provision(any())).thenReturn(jsonObject);
+            when(orchestrator.request(eq("edgeResources"), any(), any(), any())).thenReturn(edgeResources);
+            fieldAgent.provision("provisonKey");
+            Mockito.verify(orchestrator).provision(eq("provisonKey"));
+            PowerMockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
+            PowerMockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
+            PowerMockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
+            PowerMockito.verifyPrivate(fieldAgent).invoke("saveFile", any(), eq("/etc/iofog-agent/edge_resources.json"));
+            Mockito.verify(orchestrator).request(eq("edgeResources"), eq(RequestType.GET), eq(null), eq(null));
+            PowerMockito.verifyStatic(LoggingService.class);
+            LoggingService.logDebug(eq(MODULE_NAME), eq("Finished loading edge resources..."));
+        } catch (AgentSystemException e) {
+            fail("This should not happen");
+        } catch (Exception e) {
+            fail("This should not happen");
+        }
     }
 
 }
