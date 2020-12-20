@@ -49,23 +49,12 @@ There should be an ioFog code base for every processing platform that becomes pa
 
 See the docs folder in this repository for architecture, project microculture, engineering philosophy, functional specifications, and more.
 
-**IOFog Agent Setup**
+**ioFog Agent Setup**
 
-1.&ensp;In order to install IOFog Agent, you need to have Java and Docker installed on your machine.
+The entire ioFog platform is best deployed through the unified CLI: `iofogctl`.
 
-     sudo add-apt-repository ppa:webupd8team/java
-     sudo apt-get update
-     sudo apt-get install oracle-java8-installer
-     curl -fsSL https://get.docker.com/ | sh
+Go to [iofog.org](https://iofog.org/docs/) to learn how to deploy the ioFog Control Plane and Agents.
 
-2.&ensp;Install IOFog Agent
-
-     curl -s https://packagecloud.io/install/repositories/iofog/iofog-agent/script.deb.sh | sudo bash
-     sudo apt-get install iofog-agent (release version)
-     or
-     sudo apt-get install iofog-agent-dev (developer's version)
-	   
-    
 **Usage**
 
 1.&ensp;To view help menu
@@ -104,7 +93,7 @@ See the docs folder in this repository for architecture, project microculture, e
 - 16.04 - Xenial Xerus
 
 
-&ensp;- IOFog Agent Update:
+&ensp;- ioFog Agent Update:
 
         sudo service iofog-agent stop       
         sudo apt-get install --only-upgrade iofog-agent
