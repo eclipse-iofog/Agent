@@ -7,7 +7,7 @@ done
 
 #echo "Starting post-install process..."
 useradd -r -U -s /usr/bin/nologin iofog-agent
-usermod -aG admin,sudo iofog-agent
+usermod -aG adm,sudo iofog-agent
 echo "Added ioFog-Agent user and group"
 
 if [ -f /etc/iofog-agent/config.xml ];
