@@ -48,9 +48,10 @@ COPY --from=builder packaging/iofog-agent/etc /etc
 COPY --from=builder   packaging/iofog-agent/usr /usr
 
 RUN cd /opt && \
-  curl -SL http://www.edgeworx.io/downloads/jdk/jdk-8u211-64.tar.gz \
-  | tar -xzC /opt && \
-  update-alternatives --install /usr/bin/java java /opt/jdk1.8.0_211/bin/java 1100
+  wget --no-check-certificate "https://storage.googleapis.com/edgeworx/downloads/jdk/jdk-8u211-64.tar.gz" && \
+  tar -xvf jdk-8u211-64.tar.gz && \
+  update-alternatives --install /usr/bin/java java /opt/jdk1.8.0_211/bin/java 1100 && \
+  rm jdk-8u211-64.tar.gz
 
 RUN apt-get update && \
     apt-get install -y sudo && \
