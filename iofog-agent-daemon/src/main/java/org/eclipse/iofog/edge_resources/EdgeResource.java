@@ -12,12 +12,14 @@
  */
 package org.eclipse.iofog.edge_resources;
 
+import javax.json.JsonObject;
 import java.util.Objects;
 
 public class EdgeResource {
 
     private int id;
     private String name;
+    private JsonObject custom;
     private String description;
     private String version;
     private String interfaceProtocol;
@@ -30,8 +32,6 @@ public class EdgeResource {
         this.name = name;
         this.version = version;
     }
-
-    public static final Object deleteLock = new Object();
 
     public int getId() {
         return id;
@@ -95,6 +95,14 @@ public class EdgeResource {
 
     public void setEdgeInterface(EdgeInterface edgeInterface) {
         this.edgeInterface = edgeInterface;
+    }
+
+    public JsonObject getCustom() {
+        return custom;
+    }
+
+    public void setCustom(JsonObject custom) {
+        this.custom = custom;
     }
 
     @Override

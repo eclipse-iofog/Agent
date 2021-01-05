@@ -1675,7 +1675,6 @@ public class FieldAgentTest {
                     .add("description", "Orange Smart Door")
                     .add("version", "0.0.1")
                     .add("interfaceProtocol", "https")
-                    .add("orchestrationTags", "")
                     .add("interface", "")
                     .build();
             JsonArray jsonArray = Json.createArrayBuilder().add(edgeObject).build();

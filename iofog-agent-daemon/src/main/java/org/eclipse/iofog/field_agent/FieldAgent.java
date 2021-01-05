@@ -525,6 +525,7 @@ public class FieldAgent implements IOFogModule {
     private Function<JsonObject, EdgeResource> containerJsonObjectToEdgeResourcesFunction() {
         return jsonObj -> {
             EdgeResource edgeResource = new EdgeResource(jsonObj.getInt("id"), jsonObj.getString("name"), jsonObj.getString("version"));
+            edgeResource.setCustom(jsonObj.getJsonObject("custom"));
             Display display = new Display();
             EdgeInterface edgeInterface = new EdgeInterface();
             edgeResource.setDescription(jsonObj.getString("description", null));
