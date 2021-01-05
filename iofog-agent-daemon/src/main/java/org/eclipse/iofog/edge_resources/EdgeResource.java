@@ -12,14 +12,14 @@
  */
 package org.eclipse.iofog.edge_resources;
 
-import javax.json.JsonObject;
+import java.util.Map;
 import java.util.Objects;
 
 public class EdgeResource {
 
     private int id;
     private String name;
-    private JsonObject custom;
+    private Map<String, Object> custom;
     private String description;
     private String version;
     private String interfaceProtocol;
@@ -97,14 +97,13 @@ public class EdgeResource {
         this.edgeInterface = edgeInterface;
     }
 
-    public JsonObject getCustom() {
+    public Map<String, Object> getCustom() {
         return custom;
     }
 
-    public void setCustom(JsonObject custom) {
+    public void setCustom(Map<String, Object> custom) {
         this.custom = custom;
     }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -519,26 +519,61 @@ public class FieldAgent implements IOFogModule {
     }
 
     /**
+     * Maps the custom json field to the map
+     * @param customResponse
+     * @param mapToUpdate
+     */
+    public void updateCustomData(JsonObject customResponse, Map<String, Object> mapToUpdate) {
+        customResponse.keySet().forEach(keyStr -> {
+            Object keyValue = customResponse.get(keyStr);
+            if (keyValue instanceof JsonArray) {
+                JsonArray json = customResponse.getJsonArray(keyStr);
+                String[] jsonArray = null;
+                if (json != null && !json.getValueType().equals(JsonValue.ValueType.NULL) && json.size() > 0) {
+                    List<String> result = IntStream.range(0, json.size())
+                            .boxed()
+                            .map(json::getString)
+                            .collect(Collectors.toList());
+                    jsonArray = result.toArray(new String[result.size()]);
+                }
+                mapToUpdate.put(keyStr, jsonArray);
+            } else if (keyValue instanceof JsonObject) {
+                Map<String, Object> customMap = new HashMap<>();
+                updateCustomData((JsonObject) keyValue, customMap);
+                mapToUpdate.put(keyStr, customMap);
+            }else if(((JsonValue) keyValue).getValueType().equals(JsonValue.ValueType.NUMBER)){
+                mapToUpdate.put(keyStr, customResponse.getInt(keyStr));
+            } else if(((JsonValue) keyValue).getValueType().equals(JsonValue.ValueType.STRING)){
+                mapToUpdate.put(keyStr, customResponse.getString(keyStr));
+            } else {
+                mapToUpdate.put(keyStr, customResponse.getBoolean(keyStr));
+            }
+        });
+
+    }
+    /**
      * maps json object to EdgeResources
      * @return
      */
     private Function<JsonObject, EdgeResource> containerJsonObjectToEdgeResourcesFunction() {
         return jsonObj -> {
             EdgeResource edgeResource = new EdgeResource(jsonObj.getInt("id"), jsonObj.getString("name"), jsonObj.getString("version"));
-            edgeResource.setCustom(jsonObj.getJsonObject("custom"));
+            JsonObject customData = jsonObj.getJsonObject("custom");
+            Map<String, Object> customMap = new HashMap<>();
+            // Update map with custom data
+            updateCustomData(customData, customMap);
+            edgeResource.setCustom(customMap);
             Display display = new Display();
             EdgeInterface edgeInterface = new EdgeInterface();
             edgeResource.setDescription(jsonObj.getString("description", null));
             edgeResource.setInterfaceProtocol(jsonObj.getString("interfaceProtocol", null));
             JsonArray tags = jsonObj.getJsonArray("orchestrationTags");
             String[] orchestrationTags = null;
-            if (tags != null && tags.getValueType().equals(JsonValue.ValueType.NULL)) {
-                List<String> result = tags.size() > 0
-                        ? IntStream.range(0, tags.size())
+            if (tags != null && !tags.getValueType().equals(JsonValue.ValueType.NULL) && tags.size() > 0) {
+                List<String> result = IntStream.range(0, tags.size())
                         .boxed()
                         .map(tags::getString)
-                        .collect(Collectors.toList())
-                        : null;
+                        .collect(Collectors.toList());
                 orchestrationTags = result.toArray(new String[result.size()]);
             }
 
