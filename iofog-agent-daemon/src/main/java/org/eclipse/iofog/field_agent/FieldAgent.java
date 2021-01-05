@@ -12,6 +12,8 @@
  */
 package org.eclipse.iofog.field_agent;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
@@ -60,7 +62,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
@@ -519,39 +520,6 @@ public class FieldAgent implements IOFogModule {
     }
 
     /**
-     * Maps the custom json field to the map
-     * @param customResponse
-     * @param mapToUpdate
-     */
-    public void updateCustomData(JsonObject customResponse, Map<String, Object> mapToUpdate) {
-        customResponse.keySet().forEach(keyStr -> {
-            Object keyValue = customResponse.get(keyStr);
-            if (keyValue instanceof JsonArray) {
-                JsonArray json = customResponse.getJsonArray(keyStr);
-                String[] jsonArray = null;
-                if (json != null && !json.getValueType().equals(JsonValue.ValueType.NULL) && json.size() > 0) {
-                    List<String> result = IntStream.range(0, json.size())
-                            .boxed()
-                            .map(json::getString)
-                            .collect(Collectors.toList());
-                    jsonArray = result.toArray(new String[result.size()]);
-                }
-                mapToUpdate.put(keyStr, jsonArray);
-            } else if (keyValue instanceof JsonObject) {
-                Map<String, Object> customMap = new HashMap<>();
-                updateCustomData((JsonObject) keyValue, customMap);
-                mapToUpdate.put(keyStr, customMap);
-            }else if(((JsonValue) keyValue).getValueType().equals(JsonValue.ValueType.NUMBER)){
-                mapToUpdate.put(keyStr, customResponse.getInt(keyStr));
-            } else if(((JsonValue) keyValue).getValueType().equals(JsonValue.ValueType.STRING)){
-                mapToUpdate.put(keyStr, customResponse.getString(keyStr));
-            } else {
-                mapToUpdate.put(keyStr, customResponse.getBoolean(keyStr));
-            }
-        });
-
-    }
-    /**
      * maps json object to EdgeResources
      * @return
      */
@@ -559,10 +527,17 @@ public class FieldAgent implements IOFogModule {
         return jsonObj -> {
             EdgeResource edgeResource = new EdgeResource(jsonObj.getInt("id"), jsonObj.getString("name"), jsonObj.getString("version"));
             JsonObject customData = jsonObj.getJsonObject("custom");
-            Map<String, Object> customMap = new HashMap<>();
-            // Update map with custom data
-            updateCustomData(customData, customMap);
-            edgeResource.setCustom(customMap);
+            try {
+                if (customData != null && !customData.getValueType().equals(JsonValue.ValueType.NULL) && customData.size() > 0) {
+                    HashMap<String,Object> customMap = new ObjectMapper().readValue(
+                            customData.toString(),
+                            new TypeReference<HashMap<String,Object>>() {
+                            });
+                    edgeResource.setCustom(customMap);
+                }
+            } catch (Exception e) {
+                logError("Error mapping custom field of edgeResources", new AgentSystemException(e.getMessage(), e));
+            }
             Display display = new Display();
             EdgeInterface edgeInterface = new EdgeInterface();
             edgeResource.setDescription(jsonObj.getString("description", null));
