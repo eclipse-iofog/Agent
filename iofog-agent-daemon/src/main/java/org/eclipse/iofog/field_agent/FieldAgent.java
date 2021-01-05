@@ -12,6 +12,8 @@
  */
 package org.eclipse.iofog.field_agent;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
@@ -60,7 +62,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.netty.util.internal.StringUtil.isNullOrEmpty;
-import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
@@ -525,19 +526,29 @@ public class FieldAgent implements IOFogModule {
     private Function<JsonObject, EdgeResource> containerJsonObjectToEdgeResourcesFunction() {
         return jsonObj -> {
             EdgeResource edgeResource = new EdgeResource(jsonObj.getInt("id"), jsonObj.getString("name"), jsonObj.getString("version"));
+            JsonObject customData = jsonObj.getJsonObject("custom");
+            try {
+                if (customData != null && !customData.getValueType().equals(JsonValue.ValueType.NULL) && customData.size() > 0) {
+                    HashMap<String,Object> customMap = new ObjectMapper().readValue(
+                            customData.toString(),
+                            new TypeReference<HashMap<String,Object>>() {
+                            });
+                    edgeResource.setCustom(customMap);
+                }
+            } catch (Exception e) {
+                logError("Error mapping custom field of edgeResources", new AgentSystemException(e.getMessage(), e));
+            }
             Display display = new Display();
             EdgeInterface edgeInterface = new EdgeInterface();
             edgeResource.setDescription(jsonObj.getString("description", null));
             edgeResource.setInterfaceProtocol(jsonObj.getString("interfaceProtocol", null));
             JsonArray tags = jsonObj.getJsonArray("orchestrationTags");
             String[] orchestrationTags = null;
-            if (tags != null && tags.getValueType().equals(JsonValue.ValueType.NULL)) {
-                List<String> result = tags.size() > 0
-                        ? IntStream.range(0, tags.size())
+            if (tags != null && !tags.getValueType().equals(JsonValue.ValueType.NULL) && tags.size() > 0) {
+                List<String> result = IntStream.range(0, tags.size())
                         .boxed()
                         .map(tags::getString)
-                        .collect(Collectors.toList())
-                        : null;
+                        .collect(Collectors.toList());
                 orchestrationTags = result.toArray(new String[result.size()]);
             }
 
