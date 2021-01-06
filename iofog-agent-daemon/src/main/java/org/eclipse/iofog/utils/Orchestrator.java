@@ -188,7 +188,7 @@ public class Orchestrator {
         // disable certificates for secure mode
         boolean secure = true;
         if (!surl.toLowerCase().startsWith("https")) {
-            if (!Configuration.isSecureMode()) {
+            if (Configuration.isSecureMode()) {
             	logError(MODULE_NAME, "unable to connect over non-secure connection",
             			new AgentUserException("unable to connect over non-secure connection", null));
                 throw new AgentUserException("unable to connect over non-secure connection", null );
@@ -277,7 +277,7 @@ public class Orchestrator {
     	logDebug(MODULE_NAME, "Start get JsonObject");
         boolean secure = true;
         if (!controllerUrl.toLowerCase().startsWith("https")) {
-            if (!Configuration.isSecureMode())
+            if (Configuration.isSecureMode())
                 throw new AgentUserException("unable to connect over non-secure connection", null);
             else
                 secure = false;
