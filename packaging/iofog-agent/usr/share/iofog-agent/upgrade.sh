@@ -51,6 +51,11 @@ get_distribution() {
 	esac
 
 	# Restore config and start agent
+	cd /var/backups/iofog-agent
+	tar -xzf config_backup$iofogpackage.tar.gz
+	mv etc/iofog-agent/* /etc/iofog-agent/
+	printf 'config restored'
+
 	cp "$BACKUP" "$ORIGINAL"
 	starttimestamp=$(date +%s)
 	service iofog-agent start
