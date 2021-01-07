@@ -56,7 +56,7 @@ get_distribution() {
 	cd /var/backups/iofog-agent
 	tar -xzf config_backup$iofogpackage.tar.gz
 	mv etc/iofog-agent/* /etc/iofog-agent/
-	printf 'config restored'
+	echo 'config restored'
 
 	cp "$BACKUP" "$ORIGINAL"
 	starttimestamp=$(date +%s)
