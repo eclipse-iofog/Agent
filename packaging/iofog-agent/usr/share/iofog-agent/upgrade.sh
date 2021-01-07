@@ -23,14 +23,16 @@ get_distribution() {
 	BACKUP="/var/backups/iofog-agent/config.xml"
 	cp "$ORIGINAL" "$BACKUP"
 
+	# Stop agent
+	service iofog-agent stop
+
 	# Create backup for rollback
 	cd /var/backups/iofog-agent
 	tar -cvzf config_backup$iofogpackage.tar.gz -P /etc/iofog-agent
 	tar -cvzf log_backup_upgrade$iofogversion.tar.gz -P /var/log/iofog-agent
 	printf 'ver: %s %s' $iofogversion $iofogpackage > prev_version_data
 
-	# Stop agent
-	service iofog-agent stop
+	# remove current configs
 	rm /etc/iofog-agent/*
 
 	# Perform upgrade
