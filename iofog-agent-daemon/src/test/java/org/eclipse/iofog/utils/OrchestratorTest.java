@@ -162,7 +162,7 @@ public class OrchestratorTest {
         PowerMockito.when(Configuration.getFogType()).thenReturn(ArchitectureType.ARM);
         PowerMockito.when(Configuration.getAccessToken()).thenReturn("access-token");
         PowerMockito.when(Configuration.getControllerUrl()).thenReturn("http://controller/");
-        PowerMockito.when(Configuration.isSecureMode()).thenReturn(true);
+        PowerMockito.when(Configuration.isSecureMode()).thenReturn(false);
         PowerMockito.when(Configuration.getControllerCert()).thenReturn("controllerCert");
         PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(iOFogNetworkInterfaceManager);
         PowerMockito.when(iOFogNetworkInterfaceManager.getInetAddress()).thenReturn(inetAddress);
@@ -258,12 +258,12 @@ public class OrchestratorTest {
     }
 
     /**
-     * Test ping When Controller url is https & not devMode
+     * Test ping When Controller url is https & secureMode
      */
     @Test (expected = AgentUserException.class)
-    public void testPingWhenControllerUrlIsHttpsAndNotDevMode() throws Exception{
+    public void testPingWhenControllerUrlIsHttpsAndDevMode() throws Exception{
         PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
-        PowerMockito.when(Configuration.isSecureMode()).thenReturn(false);
+        PowerMockito.when(Configuration.isSecureMode()).thenReturn(true);
         assertFalse(orchestrator.ping());
     }
 
@@ -366,11 +366,11 @@ public class OrchestratorTest {
     }
 
     /**
-     * Test request when devMode is false
+     * Test request when devMode is true
      */
     @Test (expected = AgentUserException.class)
-    public void throwsAgentUserExceptionWhenDevModeIsFalse() throws Exception {
-        PowerMockito.when(Configuration.isSecureMode()).thenReturn(false);
+    public void throwsAgentUserExceptionWhenDevModeIsTrue() throws Exception {
+        PowerMockito.when(Configuration.isSecureMode()).thenReturn(true);
         JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
         assertEquals(jsonObject, jsonResponse);
         PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq("delete"),

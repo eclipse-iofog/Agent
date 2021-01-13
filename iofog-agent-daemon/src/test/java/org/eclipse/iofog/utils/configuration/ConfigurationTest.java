@@ -209,7 +209,7 @@ public class ConfigurationTest {
             assertEquals("Default value", ArchitectureType.INTEL_AMD, Configuration.getFogType());
             Configuration.setFogType(ArchitectureType.ARM);
             assertEquals("New Value",ArchitectureType.ARM, Configuration.getFogType());
-            assertEquals("Default value", true, Configuration.isSecureMode());
+            assertEquals("Default value", false, Configuration.isSecureMode());
             Configuration.setSecureMode(false);
             assertEquals("New Value", false, Configuration.isSecureMode());
             assertNotNull("Default value", Configuration.getIpAddressExternal());
@@ -310,7 +310,7 @@ public class ConfigurationTest {
             assertEquals("Default Value", 60, Configuration.getDeviceScanFrequency());
             assertEquals("Default value", GpsMode.AUTO, Configuration.getGpsMode());
             assertEquals("Default value", 10, Configuration.getPostDiagnosticsFreq());
-            assertEquals("Default value", true, Configuration.isSecureMode());
+            assertEquals("Default value", false, Configuration.isSecureMode());
             assertEquals("Default value", false, Configuration.isDevMode());
             assertNotNull("Default value", Configuration.getIpAddressExternal());
             assertEquals("Default value", "INFO", Configuration.getLogLevel());

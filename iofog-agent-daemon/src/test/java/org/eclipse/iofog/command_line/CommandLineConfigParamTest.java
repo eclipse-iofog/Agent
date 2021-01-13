@@ -157,7 +157,7 @@ public class CommandLineConfigParamTest {
         assertEquals("", commandLineConfigParam.GPS_COORDINATES.getDefaultValue());
         assertEquals("10", commandLineConfigParam.POST_DIAGNOSTICS_FREQ.getDefaultValue());
         assertEquals("auto", commandLineConfigParam.FOG_TYPE.getDefaultValue());
-        assertEquals("on", commandLineConfigParam.SECURE_MODE.getDefaultValue());
+        assertEquals("off", commandLineConfigParam.SECURE_MODE.getDefaultValue());
         assertEquals("1", commandLineConfigParam.DOCKER_PRUNING_FREQUENCY.getDefaultValue());
         assertEquals("20", commandLineConfigParam.AVAILABLE_DISK_THRESHOLD.getDefaultValue());
         assertEquals("off", commandLineConfigParam.DEV_MODE.getDefaultValue());

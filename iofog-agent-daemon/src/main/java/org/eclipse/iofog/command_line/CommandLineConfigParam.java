@@ -52,7 +52,7 @@ public enum CommandLineConfigParam {
     GPS_COORDINATES ("", "", "gps_coordinates", "gpscoordinates"),
     POST_DIAGNOSTICS_FREQ ("10", "df", "post_diagnostics_freq", "postdiagnosticsfreq"),
     FOG_TYPE ("auto", "ft", "fog_type", ""),
-    SECURE_MODE ("on", "sec", "secure_mode", ""),
+    SECURE_MODE ("off", "sec", "secure_mode", ""),
     ROUTER_HOST ("", "", "router_host", "routerHost"),
     ROUTER_PORT ("0", "", "router_port", "routerPort"),
     DOCKER_PRUNING_FREQUENCY ("1", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
