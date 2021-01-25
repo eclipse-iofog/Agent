@@ -951,7 +951,8 @@ public class FieldAgent implements IOFogModule {
                         .boxed()
                         .map(portMappingObjs::getJsonObject)
                         .map(portMapping -> new PortMapping(portMapping.getInt("portExternal"),
-                                portMapping.getInt("portInternal")))
+                                portMapping.getInt("portInternal"),
+                                portMapping.getBoolean("isUdp", false)))
                         .collect(toList())
                         : null;
 
