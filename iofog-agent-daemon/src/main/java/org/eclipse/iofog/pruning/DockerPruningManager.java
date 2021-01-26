@@ -51,7 +51,7 @@ public class DockerPruningManager {
     }
     private DockerPruningManager() {}
     private boolean isPruning;
-    private boolean isPruningHourly;
+    private boolean isScheduledPruning;
     private MicroserviceManager microserviceManager = MicroserviceManager.getInstance();;
     /**
      * Start docker pruning manager
@@ -67,20 +67,20 @@ public class DockerPruningManager {
     }
 
     /**
-     * prune unused objects
+     * prune unused objects as scheduled with docker pruning frequency
      */
     private final Runnable pruneAgent = () -> {
-        if (isPruningHourly) {
+        if (!isScheduledPruning) {
             try {
-                LoggingService.logInfo(MODULE_NAME, "Scheduled hourly  pruning of unwanted images");
-                isPruningHourly = true;
+                LoggingService.logInfo(MODULE_NAME, "Scheduled pruning of unwanted images");
+                isScheduledPruning = true;
                 Set<String> unwantedImages = getUnwantedImagesList();
                 removeImagesById(unwantedImages);
             } catch (Exception e){
                 LoggingService.logError(MODULE_NAME,"Error in Docker Pruning scheduler", new AgentSystemException(e.getMessage(), e));
             } finally {
-                isPruningHourly = false;
-                LoggingService.logInfo(MODULE_NAME, "Scheduled hourly  pruning of unwanted images finished");
+                isScheduledPruning = false;
+                LoggingService.logInfo(MODULE_NAME, "Scheduled pruning of unwanted images finished");
             }
         }
     };
@@ -89,7 +89,7 @@ public class DockerPruningManager {
      * Trigger prune on available disk is equal to or less than threshold
      */
     private final Runnable triggerPruneOnThresholdBreach = () -> {
-        if (!isPruning && !isPruningHourly) {
+        if (!isPruning && ! isScheduledPruning) {
             long availableDiskPercentage = StatusReporter.getResourceConsumptionManagerStatus().getAvailableDisk() * 100 /
                     StatusReporter.getResourceConsumptionManagerStatus().getTotalDiskSpace();
             if (availableDiskPercentage < Configuration.getAvailableDiskThreshold()) {
@@ -159,7 +159,7 @@ public class DockerPruningManager {
                         new AgentSystemException(e.getMessage(), e));
             }
         }
-        LoggingService.logDebug(MODULE_NAME, "Finished removing image by ID");
+        LoggingService.logInfo(MODULE_NAME, "Finished removing image by ID");
 
     }
 
