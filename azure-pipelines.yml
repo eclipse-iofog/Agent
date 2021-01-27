@@ -111,7 +111,7 @@ jobs:
 
       - task: UseRubyVersion@0
         inputs:
-          versionSpec: '>= 2.5.1'
+          versionSpec: '= 2.7.2'
           addToPath: true
         displayName: 'install rubygem to be used to install package_cloud cli'
 
