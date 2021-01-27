@@ -99,14 +99,14 @@ public class DockerPruningManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        pruningManager = null;
         container = null;
         images = null;
         pruneResponse = null;
         Field instance = DockerPruningManager.class.getDeclaredField("instance");
         instance.setAccessible(true);
         instance.set(null, null);
-        Mockito.reset(microserviceManager, dockerUtil);
+        Mockito.reset(microserviceManager, dockerUtil, pruningManager);
+        pruningManager = null;
         if (method != null)
             method.setAccessible(false);
 
@@ -192,10 +192,10 @@ public class DockerPruningManagerTest {
             method.setAccessible(true);
             method.invoke(pruningManager, imagesList);
             Mockito.verify(dockerUtil, never()).removeImageById(anyString());
-            PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logDebug("Docker Manager", "Start removing image by ID");
-            PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logDebug("Docker Manager", "Finished removing image by ID");
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+            LoggingService.logInfo("Docker Manager", "Start removing image by ID");
+            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+            LoggingService.logInfo("Docker Manager", "Finished removing image by ID");
         } catch (Exception e){
             fail("This should never happen");
         }
@@ -215,11 +215,11 @@ public class DockerPruningManagerTest {
             Mockito.verify(dockerUtil, atLeastOnce()).removeImageById(eq(id));
 
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logDebug("Docker Manager", "Start removing image by ID");
+            LoggingService.logInfo("Docker Manager", "Start removing image by ID");
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logInfo("Docker Manager", "Removing unwanted image id : " + id);
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logDebug("Docker Manager", "Finished removing image by ID");
+            LoggingService.logInfo("Docker Manager", "Finished removing image by ID");
         } catch (Exception e){
             fail("This should never happen");
         }
