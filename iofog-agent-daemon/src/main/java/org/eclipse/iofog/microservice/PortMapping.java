@@ -21,10 +21,12 @@ package org.eclipse.iofog.microservice;
 public class PortMapping implements Comparable<PortMapping> {
 	private final int outside;
 	private final int inside;
+	private boolean udp;
 
-	public PortMapping(int outside, int inside) {
+	public PortMapping(int outside, int inside, boolean udp) {
 		this.outside = outside;
 		this.inside = inside;
+		this.udp = udp;
 	}
 
 	public int getOutside() {
@@ -35,9 +37,13 @@ public class PortMapping implements Comparable<PortMapping> {
 		return inside;
 	}
 
+	public boolean isUdp() {
+		return udp;
+	}
+
 	@Override
 	public String toString() {
-		return "{" + "outside='" + outside + '\'' + ", inside='" + inside + '\'' + '}';
+		return "{" + "outside='" + outside + '\'' + ", inside='" + inside + '\'' + ", isUdp='" + udp + '\'' + '}';
 	}
 
 	@Override

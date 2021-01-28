@@ -462,10 +462,11 @@ public class DockerUtil {
         Ports ports = hostConfig != null ? hostConfig.getPortBindings() : null;
         return ports != null ? ports.getBindings().entrySet().stream()
             .flatMap(entity -> {
-                int exposedPort = entity.getKey().getPort();
+                ExposedPort exposedPort = entity.getKey();
+                boolean isUdpProtocol = exposedPort.getProtocol().equals(InternetProtocol.UDP);
                 return Arrays.stream(entity.getValue())
                     .map(Binding::getHostPortSpec)
-                    .map(hostPort -> new PortMapping(Integer.valueOf(hostPort), exposedPort));
+                    .map(hostPort -> new PortMapping(Integer.valueOf(hostPort), exposedPort.getPort(), isUdpProtocol));
             })
             .collect(Collectors.toList()) :
                 new ArrayList<>();
@@ -584,7 +585,9 @@ public class DockerUtil {
         List<ExposedPort> exposedPorts = new ArrayList<>();
         if (microservice.getPortMappings() != null && microservice.getPortMappings().size() != 0)
             microservice.getPortMappings().forEach(mapping -> {
-                ExposedPort internal = ExposedPort.tcp(mapping.getInside());
+                ExposedPort internal = mapping.isUdp() ?
+                        ExposedPort.udp(mapping.getInside()) :
+                        ExposedPort.tcp(mapping.getInside());
                 Binding external = Binding.bindPort(mapping.getOutside());
                 portBindings.bind(internal, external);
                 exposedPorts.add(internal);
