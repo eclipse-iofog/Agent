@@ -100,11 +100,12 @@ public class DockerPruningManager {
                     Set<String> unwantedImages = getUnwantedImagesList();
                     removeImagesById(unwantedImages);
                 } catch (Exception e){
-                    LoggingService.logError(MODULE_NAME,"Error in docker Pruning when available threshold breach", new AgentSystemException(e.getMessage(), e));
+                    LoggingService.logError(MODULE_NAME,"Error in docker Pruning when available threshold breach",
+                            new AgentSystemException(e.getMessage(), e));
                 } finally {
                     isPruning = false;
-                    LoggingService.logInfo(MODULE_NAME, "Pruning of unwanted images as current system available disk percentage : "
-                            + availableDiskPercentage + "finished");
+                    LoggingService.logInfo(MODULE_NAME, "Pruning of unwanted images as current system available " +
+                            "disk percentage is less than threshold is finished");
                 }
             }
         }
