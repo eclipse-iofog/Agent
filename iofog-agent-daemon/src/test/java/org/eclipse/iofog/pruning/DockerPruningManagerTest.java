@@ -36,11 +36,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -50,7 +53,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DockerPruningManager.class, DockerUtil.class, MicroserviceManager.class, Image.class, Container.class, LoggingService.class})
+@PrepareForTest({DockerPruningManager.class, DockerUtil.class, MicroserviceManager.class, Image.class, Container.class, LoggingService.class,
+        ScheduledExecutorService.class, ScheduledFuture.class})
 public class DockerPruningManagerTest {
     private DockerPruningManager pruningManager;
     private DockerUtil dockerUtil;
@@ -91,6 +95,9 @@ public class DockerPruningManagerTest {
         pruneResponse = mock(PruneResponse.class);
         PowerMockito.when(dockerUtil.dockerPrune()).thenReturn(pruneResponse);
         PowerMockito.doNothing().when(dockerUtil).removeImageById(anyString());
+        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+        ScheduledFuture future = mock(ScheduledFuture.class);
+        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), any(TimeUnit.class));
         pruningManager = PowerMockito.spy(DockerPruningManager.getInstance());
         container = Mockito.mock(Container.class);
 
