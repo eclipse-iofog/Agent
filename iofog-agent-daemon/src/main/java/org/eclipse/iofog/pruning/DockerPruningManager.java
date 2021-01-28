@@ -60,7 +60,7 @@ public class DockerPruningManager {
         LoggingService.logInfo(MODULE_NAME, "Start docker pruning manager");
         scheduler = Executors.newScheduledThreadPool(1);
         // one hour
-        scheduler.scheduleAtFixedRate(pruneAgent, 60, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
+        scheduler.scheduleAtFixedRate(pruneAgent, 1, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
         scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, 1, TimeUnit.MINUTES);
 
         LoggingService.logInfo(MODULE_NAME, "Docker pruning manager started");
@@ -103,8 +103,7 @@ public class DockerPruningManager {
                     LoggingService.logError(MODULE_NAME,"Error in docker Pruning when available threshold breach", new AgentSystemException(e.getMessage(), e));
                 } finally {
                     isPruning = false;
-                    LoggingService.logInfo(MODULE_NAME, "Pruning of unwanted images as current system available disk percentage : "
-                            + availableDiskPercentage + "finished");
+                    LoggingService.logInfo(MODULE_NAME, "Pruning of unwanted images as current system available disk percentage finished");
                 }
             }
         }
