@@ -752,7 +752,7 @@ public class DockerUtilTest {
             Mockito.verify(dockerClient).statsCmd(any());
             Mockito.verify(statsCallback).getStats();
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logError(eq(MODULE_NAME), eq("Error while getting Container Stats"), any());
+            LoggingService.logError(eq(MODULE_NAME), eq("Error while getting Container Stats for container id: " + containerID), any());
         } catch (InterruptedException e) {
             fail("This should not happen");
         }

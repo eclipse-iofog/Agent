@@ -50,22 +50,20 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void addContainer(Microservice microservice) throws Exception {
-		LoggingService.logDebug(MODULE_NAME, "Start add container");
+		LoggingService.logInfo(MODULE_NAME, "Add container for microservice : " + microservice.getImageName());
 		Optional<Container> containerOptional = docker.getContainer(microservice.getMicroserviceUuid());
 		if (!containerOptional.isPresent()) {
 			createContainer(microservice);
 		}
-		LoggingService.logDebug(MODULE_NAME, "Finished adding container");
 	}
 
 	private Registry getRegistry(Microservice microservice) throws AgentSystemException {
-		LoggingService.logDebug(MODULE_NAME, "Start get registry");
+		LoggingService.logInfo(MODULE_NAME, "Get registry for microservice : " + microservice.getImageName());
 		Registry registry;
 		registry = microserviceManager.getRegistry(microservice.getRegistryId());
 		if (registry == null) {
 			throw new AgentSystemException(String.format("registry is not valid \"%d\"", microservice.getRegistryId()), null);
 		}
-		LoggingService.logDebug(MODULE_NAME, "Finished get registry");
 		return registry;
 	}
 
@@ -76,12 +74,12 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
-		LoggingService.logDebug(MODULE_NAME, "Start update container");
+		LoggingService.logInfo(MODULE_NAME, "Start update container for microservice : " + microservice.getImageName());
 		microservice.setUpdating(true);
 		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
 		createContainer(microservice);
 		microservice.setUpdating(false);
-		LoggingService.logDebug(MODULE_NAME, "Finished update container");
+		LoggingService.logDebug(MODULE_NAME, "Finished update container for microservice : " + microservice.getImageName());
 	}
 
 	private void createContainer(Microservice microservice) throws Exception {
@@ -105,13 +103,13 @@ public class ContainerManager {
 		if (!pullImage && !docker.findLocalImage(microservice.getImageName())) {
 			throw new NotFoundException("Image not found in local cache");
 		}
-		LoggingService.logDebug(MODULE_NAME, "Creating container \"" + microservice.getImageName() + "\"");
+		LoggingService.logInfo(MODULE_NAME, "Creating container \"" + microservice.getImageName() + "\"");
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
 		String hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
-		LoggingService.logDebug(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
+		LoggingService.logInfo(MODULE_NAME, "container is created \"" + microservice.getImageName() + "\"");
 		StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microservice.getMicroserviceUuid(),
 				Constants.PERCENTAGE_COMPLETION);
 		startContainer(microservice);
@@ -123,7 +121,7 @@ public class ContainerManager {
 	 * starts a {@link Container} and sets appropriate status
 	 */
 	private void startContainer(Microservice microservice) {
-		LoggingService.logDebug(MODULE_NAME, String.format("Starting container \"%s\"", microservice.getImageName()));
+		LoggingService.logInfo(MODULE_NAME, String.format("Starting container \"%s\"", microservice.getImageName()));
 		try {
 			if (!docker.isContainerRunning(microservice.getContainerId())) {
 				docker.startContainer(microservice);
@@ -137,7 +135,7 @@ public class ContainerManager {
 					String.format("Container \"%s\" not found", microservice.getImageName()),
 					new AgentSystemException(ex.getMessage(), ex));
 		}
-		LoggingService.logDebug(MODULE_NAME, String.format("Container started \"%s\"", microservice.getImageName()));
+		LoggingService.logInfo(MODULE_NAME, String.format("Container started \"%s\"", microservice.getImageName()));
 	}
 
 	/**
@@ -182,7 +180,7 @@ public class ContainerManager {
 	}
 
 	private void removeContainer(String containerId, String imageId, boolean withCleanUp) throws AgentSystemException{
-		LoggingService.logDebug(MODULE_NAME, String.format("Removing container \"%s\"", containerId));
+		LoggingService.logInfo(MODULE_NAME, String.format("Removing container \"%s\"", containerId));
 		try {
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
@@ -197,7 +195,7 @@ public class ContainerManager {
 				}
 			}
 
-			LoggingService.logDebug(MODULE_NAME, String.format("Container \"%s\" removed", containerId));
+			LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" removed", containerId));
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, String.format("Error removing container \"%s\"", containerId),
 					new AgentSystemException(e.getMessage(), e));

@@ -86,7 +86,8 @@ import static org.powermock.api.mockito.PowerMockito.*;
 @PrepareForTest({FieldAgent.class, LoggingService.class, FieldAgentStatus.class, MicroserviceManager.class,
         Orchestrator.class, URL.class, HttpURLConnection.class, Configuration.class, StatusReporter.class,
         SshProxyManager.class, ProcessManager.class, MessageBus.class, LocalApi.class, Thread.class, BufferedReader.class,
-        InputStreamReader.class, ResourceManagerStatus.class, IOFogNetworkInterfaceManager.class, VersionHandler.class, CommandShellExecutor.class, EdgeResourceManager.class})
+        InputStreamReader.class, ResourceManagerStatus.class, IOFogNetworkInterfaceManager.class, VersionHandler.class, CommandShellExecutor.class, EdgeResourceManager.class,
+        ScheduledExecutorService.class, ScheduledFuture.class})
 public class FieldAgentTest {
     private FieldAgent fieldAgent;
     private String MODULE_NAME;
