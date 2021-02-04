@@ -9,6 +9,8 @@
 
 ### Bugs
 * Fix pruning bug when containers are not alive and updated logs
+* Logs updated
+* Microservice update container bug fix
 
 ## [v2.0.3] - 2020-11-16
 

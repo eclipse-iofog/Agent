@@ -1204,7 +1204,7 @@ public class FieldAgent implements IOFogModule {
             try {
             	logInfo("Started get proxy config");
                 JsonObject response = orchestrator.request("tunnel", RequestType.GET, null, null);
-                result = response.getJsonObject("proxy");
+                result = response.getJsonObject("tunnel");
             } catch (Exception e) {
             	logError("Unable to get proxy config ", new AgentSystemException(e.getMessage(), e));
             }
