@@ -222,7 +222,7 @@ public class ContainerManager {
 				case UPDATE:
 					if (microserviceOptional.isPresent()) {
 						Microservice microservice = microserviceOptional.get();
-						updateContainer(microserviceOptional.get(), microservice.isRebuild() && microservice.getRegistryId() != Constants.CACHE_REGISTRY_ID);
+						updateContainer(microserviceOptional.get(), false);
 					}
 					break;
 				case REMOVE:
