@@ -76,12 +76,12 @@ public class ContainerManager {
 	 * @throws Exception exception
 	 */
 	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
-		LoggingService.logInfo(MODULE_NAME, "Start update container");
+		LoggingService.logInfo(MODULE_NAME, "Start update container of microservice : " + microservice.getImageName());
 		microservice.setUpdating(true);
 		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
 		createContainer(microservice);
 		microservice.setUpdating(false);
-		LoggingService.logInfo(MODULE_NAME, "Finished update container");
+		LoggingService.logInfo(MODULE_NAME, "Finished update container of microservice : " + microservice.getImageName());
 	}
 
 	private void createContainer(Microservice microservice) throws Exception {
@@ -168,7 +168,7 @@ public class ContainerManager {
 	 * removes a {@link Container} by Microservice uuid
 	 */
 	private void removeContainerByMicroserviceUuid(String microserviceUuid, boolean withCleanUp) throws AgentSystemException {
-		LoggingService.logInfo(MODULE_NAME, "Start remove container by microserviceuuid : " + microserviceUuid);
+		LoggingService.logInfo(MODULE_NAME, "Start remove container by microserviceuuid : " + microserviceUuid + " with cleanup : " + withCleanUp);
 		synchronized (deleteLock) {
 			Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
 			if (containerOptional.isPresent()) {
@@ -182,7 +182,7 @@ public class ContainerManager {
 	}
 
 	private void removeContainer(String containerId, String imageId, boolean withCleanUp) throws AgentSystemException{
-		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\"", containerId));
+		LoggingService.logInfo(MODULE_NAME, String.format("removing container \"%s\" with imageID \"%s\"", containerId, imageId));
 		try {
 			docker.removeContainer(containerId, withCleanUp);
 			if (withCleanUp) {
@@ -190,17 +190,17 @@ public class ContainerManager {
 					docker.removeImageById(imageId);
 				} catch (ConflictException ex) {
 					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId),
-							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", containerId), ex));
+							new AgentSystemException(ex.getMessage(), ex));
 				} catch (Exception ex) {
 					LoggingService.logError(MODULE_NAME, String.format("Image for container \"%s\" cannot be removed", containerId),
-							new AgentSystemException(String.format("Image for container \"%s\" cannot be removed", containerId), ex));
+							new AgentSystemException(ex.getMessage(), ex));
 				}
 			}
 
 			LoggingService.logInfo(MODULE_NAME, String.format("Container \"%s\" removed", containerId));
 		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, String.format("Error removing container \"%s\"", containerId),
-					new AgentSystemException(String.format("Error removing container \"%s\"", containerId), e));
+					new AgentSystemException(e.getMessage(), e));
 			throw new AgentSystemException(String.format("Error removing container \"%s\"", containerId), e);
 		}
 	}
@@ -224,6 +224,8 @@ public class ContainerManager {
 				case UPDATE:
 					if (microserviceOptional.isPresent()) {
 						Microservice microservice = microserviceOptional.get();
+						LoggingService.logInfo(MODULE_NAME, "Updating microservice : " + microservice.getImageName() + " with rebuild flag : "
+								+ microservice.isRebuild() + " and registry id : " + microservice.getRegistryId());
 						updateContainer(microserviceOptional.get(), microservice.isRebuild() && microservice.getRegistryId() != Constants.CACHE_REGISTRY_ID);
 					}
 					break;

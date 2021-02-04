@@ -185,7 +185,7 @@ public class DockerUtil {
 //
 //		if (totalMemory - jvmMemory < requiredMemory)
 //			throw new Exception("Not enough memory to start the container");
-    	LoggingService.logDebug(MODULE_NAME , "start Container");
+    	LoggingService.logInfo(MODULE_NAME , "Starting Container, microservice : " + microservice.getImageName());
         dockerClient.startContainerCmd(microservice.getContainerId()).exec();
     }
 
@@ -195,7 +195,7 @@ public class DockerUtil {
      * @param id - id of {@link Container}
      */
     public void stopContainer(String id) throws NotFoundException, NotModifiedException {
-    	LoggingService.logDebug(MODULE_NAME , "stop Container");
+    	LoggingService.logInfo(MODULE_NAME , "Stopping Container id : " + id);
         if (isContainerRunning(id)) {
             dockerClient.stopContainerCmd(id).exec();
         }
@@ -208,7 +208,7 @@ public class DockerUtil {
      * @param withRemoveVolumes - true or false, Remove the volumes associated to the container
      */
     public void removeContainer(String id, Boolean withRemoveVolumes) throws NotFoundException, NotModifiedException {
-    	LoggingService.logDebug(MODULE_NAME , "remove Container");
+    	LoggingService.logInfo(MODULE_NAME , "Removing Container id : " + id);
     	dockerClient.removeContainerCmd(id).withForce(true).withRemoveVolumes(withRemoveVolumes).exec();
     }
 
@@ -310,7 +310,7 @@ public class DockerUtil {
      * @return {@link MicroserviceStatus}
      */
     public MicroserviceStatus getMicroserviceStatus(String containerId) {
-    	LoggingService.logInfo(MODULE_NAME , "get microservice status");
+    	LoggingService.logInfo(MODULE_NAME , "get microservice status container ID : " + containerId);
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
         ContainerState containerState = inspectInfo.getState();
         MicroserviceStatus result = new MicroserviceStatus();
@@ -327,7 +327,7 @@ public class DockerUtil {
             result.setContainerId(containerId);
             result.setUsage(containerId);
         }
-        LoggingService.logInfo(MODULE_NAME , "Finished get microservice status");
+        LoggingService.logInfo(MODULE_NAME , "Finished get microservice status container ID : " + containerId);
         return result;
     }
 
@@ -375,7 +375,7 @@ public class DockerUtil {
     }
 
     public Optional<Statistics> getContainerStats(String containerId) {
-    	LoggingService.logDebug(MODULE_NAME ,"Start get Container Stats");
+    	LoggingService.logDebug(MODULE_NAME ,"Start get Container Stats container ID : " + containerId);
         StatsCmd statsCmd = dockerClient.statsCmd(containerId);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         StatsCallback stats = new StatsCallback(countDownLatch);
@@ -384,7 +384,7 @@ public class DockerUtil {
         } catch (InterruptedException | IOException e) {
             LoggingService.logError(MODULE_NAME, "Error while getting Container Stats", new AgentUserException(e.getMessage(), e));
         }
-        LoggingService.logDebug(MODULE_NAME ,"Finished get Container Stats");
+        LoggingService.logDebug(MODULE_NAME ,"Finished get Container Stats container ID : " + containerId);
         return Optional.ofNullable(stats.getStats());
     }
 
@@ -410,7 +410,7 @@ public class DockerUtil {
      * @return boolean
      */
     public boolean areMicroserviceAndContainerEqual(String containerId, Microservice microservice) {
-    	LoggingService.logDebug(MODULE_NAME ,"Are Microservice And Container Equal");
+    	LoggingService.logDebug(MODULE_NAME ,"Are Microservice And Container Equal microservice : " + microservice.getImageName());
         InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
         return isPortMappingEqual(inspectInfo, microservice) && isNetworkModeEqual(inspectInfo, microservice);
     }
@@ -424,7 +424,7 @@ public class DockerUtil {
      * @return boolean
      */
     private boolean isNetworkModeEqual(InspectContainerResponse inspectInfo, Microservice microservice) {
-    	LoggingService.logDebug(MODULE_NAME ,"is NetworkMode Equal");
+    	LoggingService.logDebug(MODULE_NAME ,"is NetworkMode Equal microservice : " + microservice.getImageName());
         boolean isRootHostAccess = microservice.isRootHostAccess();
         HostConfig hostConfig = inspectInfo.getHostConfig();
         return (isRootHostAccess && "host".equals(hostConfig.getNetworkMode()))
@@ -452,7 +452,7 @@ public class DockerUtil {
     }
 
     private List<PortMapping> getMicroservicePorts(Microservice microservice) {
-    	LoggingService.logDebug(MODULE_NAME ,"get list of Microservice Ports");
+    	LoggingService.logDebug(MODULE_NAME ,"get list of Microservice Ports : " + microservice.getImageName());
         return microservice.getPortMappings() != null ? microservice.getPortMappings() : new ArrayList<>();
     }
 
@@ -475,19 +475,19 @@ public class DockerUtil {
     public Optional<String> getContainerStatus(String containerId) {
         Optional<String> result = Optional.empty();
         try {
-        	LoggingService.logDebug(MODULE_NAME ,"Start get Container status");
+        	LoggingService.logDebug(MODULE_NAME ,"Start get Container status containerID: " + containerId);
             InspectContainerResponse inspectInfo = dockerClient.inspectContainerCmd(containerId).exec();
             ContainerState status = inspectInfo.getState();
             result = Optional.ofNullable(status.getStatus());
         } catch (Exception exp) {
             logError(MODULE_NAME, "Error getting container status", new AgentSystemException(exp.getMessage(), exp));
         }
-        LoggingService.logDebug(MODULE_NAME ,"Finished get Container status");
+        LoggingService.logDebug(MODULE_NAME ,"Finished get Container status containerID: " + containerId);
         return result;
     }
 
     public boolean isContainerRunning(String containerId) {
-    	LoggingService.logDebug(MODULE_NAME ,"is Container Running");
+    	LoggingService.logDebug(MODULE_NAME ,"is Container Running containerID: " + containerId);
         Optional<String> status = getContainerStatus(containerId);
         return status.isPresent() && status.get().equalsIgnoreCase(MicroserviceState.RUNNING.toString());
     }
@@ -505,7 +505,7 @@ public class DockerUtil {
     public void removeImageById(String imageId) throws NotFoundException, NotModifiedException {
     	LoggingService.logDebug(MODULE_NAME ,"removing image by id");
         dockerClient.removeImageCmd(imageId).withForce(true).exec();
-        LoggingService.logDebug(MODULE_NAME, String.format("image \"%s\" removed", imageId));
+        LoggingService.logInfo(MODULE_NAME, String.format("Image \"%s\" removed", imageId));
     }
 
     /**
@@ -543,13 +543,13 @@ public class DockerUtil {
             res = req.exec(res);
             res.awaitCompletion();
 		} catch (NotFoundException e) {
-			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found", e));
-			throw new AgentSystemException("Image not found", e);
+			LoggingService.logError(MODULE_NAME, "", new AgentSystemException("Image not found : " + imageName, e));
+			throw new AgentSystemException("Image not found : " + imageName, e);
 		} catch (NotModifiedException e) {
-			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
+			LoggingService.logError(MODULE_NAME, "Image not found : " + imageName, new AgentSystemException("Image not found : " + imageName, e));
 			throw new AgentSystemException(e.getMessage(), e);
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Image not found", new AgentSystemException("Image not found", e));
+			LoggingService.logError(MODULE_NAME, "Image not found : " + imageName, new AgentSystemException("Image not found : " + imageName, e));
 			throw new AgentSystemException(e.getMessage(), e);
 		}
         LoggingService.logInfo(MODULE_NAME ,String.format("Finished pull image \"%s\" ", imageName));
@@ -606,7 +606,7 @@ public class DockerUtil {
                     isReadOnly = volumeMapping.getAccessMode().toLowerCase() == "ro";
                 } catch (Exception e) {
                     isReadOnly = false;
-                    LoggingService.logInfo(MODULE_NAME , String.format("volume access mode set to RW"));
+                    LoggingService.logInfo(MODULE_NAME , String.format("volume access mode set to RW for microservice : " + microservice.getImageName()));
                 }
 
                 Mount mount = (new Mount())
