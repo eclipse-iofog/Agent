@@ -224,9 +224,7 @@ public class ContainerManager {
 				case UPDATE:
 					if (microserviceOptional.isPresent()) {
 						Microservice microservice = microserviceOptional.get();
-						LoggingService.logInfo(MODULE_NAME, "Updating microservice : " + microservice.getImageName() + " with rebuild flag : "
-								+ microservice.isRebuild() + " and registry id : " + microservice.getRegistryId());
-						updateContainer(microserviceOptional.get(), microservice.isRebuild() && microservice.getRegistryId() != Constants.CACHE_REGISTRY_ID);
+						updateContainer(microserviceOptional.get(), false);
 					}
 					break;
 				case REMOVE:
