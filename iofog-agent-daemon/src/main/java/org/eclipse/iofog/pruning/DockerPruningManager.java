@@ -26,6 +26,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,7 @@ public class DockerPruningManager {
     private final static String MODULE_NAME = "Docker Manager";
 
     private ScheduledExecutorService scheduler = null;
+    private ScheduledFuture<?> futureTask;
     private DockerUtil docker = DockerUtil.getInstance();
 
     private static DockerPruningManager instance;
@@ -60,8 +62,8 @@ public class DockerPruningManager {
         LoggingService.logInfo(MODULE_NAME, "Start docker pruning manager");
         scheduler = Executors.newScheduledThreadPool(1);
         // one hour
-        scheduler.scheduleAtFixedRate(pruneAgent, 1, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
-        scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, 1, TimeUnit.MINUTES);
+        futureTask = scheduler.scheduleAtFixedRate(pruneAgent, 1, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
+        scheduler.scheduleAtFixedRate(triggerPruneOnThresholdBreach, 0, 30, TimeUnit.MINUTES);
 
         LoggingService.logInfo(MODULE_NAME, "Docker pruning manager started");
     }
@@ -167,13 +169,15 @@ public class DockerPruningManager {
      */
     public void refreshSchedule(){
         LoggingService.logInfo(MODULE_NAME, "Starting refresh scheduler of Docker pruning.");
-        if (scheduler!=null){
+        if (futureTask != null)
+        {
             try {
-                scheduler.shutdown();
-                start();
-            } catch (Exception e) {
+                futureTask.cancel(true);
+            }catch (Exception e) {
                 LoggingService.logError(MODULE_NAME,"Error starting docker pruning manager after refresh",
                         new AgentSystemException(e.getMessage(), e));
+            } finally {
+                futureTask = scheduler.scheduleAtFixedRate(pruneAgent, 1, Configuration.getDockerPruningFrequency(), TimeUnit.HOURS);
             }
         }
         LoggingService.logInfo(MODULE_NAME, "Finished updating scheduler frequency of Docker pruning.");
