@@ -1480,7 +1480,7 @@ public class FieldAgentTest {
                     .add("uuid", "response proxy")
                     .build();
             JsonObject proxyObject = jsonObjectBuilder
-                    .add("proxy", dummyObject)
+                    .add("tunnel", dummyObject)
                     .build();
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             when(orchestrator.request(eq("tunnel"), any(), any(), any())).thenReturn(proxyObject);
