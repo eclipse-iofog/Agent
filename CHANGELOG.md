@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [v2.0.4] - 2021-02-03
+## [v2.0.4] - 2021-02-16
 
 ### Features
 * Support for udp docker ports
@@ -10,7 +10,7 @@
 ### Bugs
 * Fix pruning bug when containers are not alive and updated logs
 * Logs updated
-* Microservice update container bug fix
+* Microservice update container bug fix (Rebuild flag issue)
 
 ## [v2.0.3] - 2020-11-16
 
