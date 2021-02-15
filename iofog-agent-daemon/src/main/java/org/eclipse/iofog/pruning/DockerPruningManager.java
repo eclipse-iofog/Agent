@@ -77,7 +77,9 @@ public class DockerPruningManager {
                 LoggingService.logInfo(MODULE_NAME, "Scheduled pruning of unwanted images");
                 isScheduledPruning = true;
                 Set<String> unwantedImages = getUnwantedImagesList();
-                removeImagesById(unwantedImages);
+                if (unwantedImages.size() > 0) {
+                    removeImagesById(unwantedImages);
+                }
             } catch (Exception e){
                 LoggingService.logError(MODULE_NAME,"Error in Docker Pruning scheduler", new AgentSystemException(e.getMessage(), e));
             } finally {
@@ -100,7 +102,9 @@ public class DockerPruningManager {
                             " which is less than disk threshold for pruning : " + Configuration.getAvailableDiskThreshold());
                     isPruning = true;
                     Set<String> unwantedImages = getUnwantedImagesList();
-                    removeImagesById(unwantedImages);
+                    if (unwantedImages.size() > 0) {
+                        removeImagesById(unwantedImages);
+                    }
                 } catch (Exception e){
                     LoggingService.logError(MODULE_NAME,"Error in docker Pruning when available threshold breach", new AgentSystemException(e.getMessage(), e));
                 } finally {
@@ -117,9 +121,9 @@ public class DockerPruningManager {
      */
     public Set<String> getUnwantedImagesList() {
         List<Image> images = docker.getImages();
-        LoggingService.logInfo(MODULE_NAME, "Total number of images already downloaded in the machine : " + images.size());
+        LoggingService.logDebug(MODULE_NAME, "Total number of images already downloaded in the machine : " + images.size());
         List<Container> nonIoFogContainers = docker.getRunningNonIofogContainers();
-        LoggingService.logInfo(MODULE_NAME, "Total number of running non iofog containers : " + nonIoFogContainers.size());
+        LoggingService.logDebug(MODULE_NAME, "Total number of running non iofog containers : " + nonIoFogContainers.size());
 
         // Removes the non-ioFog running container from the images to be prune list
         List<Image> ioFogImages = images.stream().filter(im -> nonIoFogContainers.stream()
@@ -150,13 +154,13 @@ public class DockerPruningManager {
      * @param imageIDsToBePruned
      */
     private void removeImagesById(Set<String> imageIDsToBePruned){
-        LoggingService.logInfo(MODULE_NAME, "Start removing image by ID");
+        LoggingService.logInfo(MODULE_NAME, "Start removing image by ID size : " + imageIDsToBePruned.size());
         for (String id: imageIDsToBePruned) {
             LoggingService.logInfo(MODULE_NAME, "Removing unwanted image id : " + id);
             try {
                 docker.removeImageById(id);
             } catch (Exception e) {
-                LoggingService.logError(MODULE_NAME,"Error removing unwanted docker image by id",
+                LoggingService.logError(MODULE_NAME,"Error removing unwanted docker image id : " + id,
                         new AgentSystemException(e.getMessage(), e));
             }
         }

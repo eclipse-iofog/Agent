@@ -200,7 +200,7 @@ public class DockerPruningManagerTest {
             method.invoke(pruningManager, imagesList);
             Mockito.verify(dockerUtil, never()).removeImageById(anyString());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-            LoggingService.logInfo("Docker Manager", "Start removing image by ID");
+            LoggingService.logInfo("Docker Manager", "Start removing image by ID size : " + imagesList.size());
             PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logInfo("Docker Manager", "Finished removing image by ID");
         } catch (Exception e){
@@ -222,7 +222,7 @@ public class DockerPruningManagerTest {
             Mockito.verify(dockerUtil, atLeastOnce()).removeImageById(eq(id));
 
             PowerMockito.verifyStatic(LoggingService.class);
-            LoggingService.logInfo("Docker Manager", "Start removing image by ID");
+            LoggingService.logInfo("Docker Manager", "Start removing image by ID size : " + imagesList.size());
             PowerMockito.verifyStatic(LoggingService.class);
             LoggingService.logInfo("Docker Manager", "Removing unwanted image id : " + id);
             PowerMockito.verifyStatic(LoggingService.class);
