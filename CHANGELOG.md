@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v2.0.5] - 2021-02-25
+
+## Bugs
+* Fix upgrade version issue
+
 ## [v2.0.4] - 2021-02-16
 
 ### Features
@@ -68,6 +73,7 @@
 * Fixed the issue with microservice status
     
 [Unreleased]: https://github.com/eclipse-iofog/agent/compare/v2.0.4..HEAD
+[v2.0.5]: https://github.com/eclipse-iofog/agent/compare/v2.0.4..v2.0.5
 [v2.0.4]: https://github.com/eclipse-iofog/agent/compare/v2.0.3..v2.0.4
 [v2.0.3]: https://github.com/eclipse-iofog/agent/compare/v2.0.2..v2.0.3
 [v2.0.2]: https://github.com/eclipse-iofog/agent/compare/v2.0.1..v2.0.2
