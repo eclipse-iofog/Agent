@@ -5,6 +5,7 @@
 * Dev mode added for enabling and disabling sentry notification on error
 * Log format updated to Json
 * Docker pull stats with percentage completion
+* Send error back to controller on failure of volume mount on microservice
 
 ## [v2.0.3] - 2020-11-24
 
