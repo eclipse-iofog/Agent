@@ -155,7 +155,7 @@ public class ConfigurationTest {
             assertEquals(5,  Configuration.getStatusReportFreqSeconds());
             assertEquals(60,  Configuration.getPingControllerFreqSeconds());
             assertEquals(1,  Configuration.getSpeedCalculationFreqMinutes());
-            assertEquals(10,  Configuration.getMonitorSshTunnelStatusFreqSeconds());
+            assertEquals(1,  Configuration.getMonitorSshTunnelStatusFreqSeconds());
             assertEquals(10,  Configuration.getMonitorContainersStatusFreqSeconds());
             assertEquals(60,  Configuration.getMonitorRegistriesStatusFreqSeconds());
             assertEquals(5,  Configuration.getGetUsageDataFreqSeconds());

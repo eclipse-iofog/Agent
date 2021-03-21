@@ -164,7 +164,7 @@ public final class Configuration {
                 getUsageDataFreqSeconds = 20;
                 dockerApiVersion = "1.23";
                 setSystemTimeFreqSeconds = 60;
-                monitorSshTunnelStatusFreqSeconds = 30;
+                monitorSshTunnelStatusFreqSeconds = 1;
                 break;
             case INTEL_AMD:
                 statusReportFreqSeconds = 5;
@@ -175,7 +175,7 @@ public final class Configuration {
                 getUsageDataFreqSeconds = 5;
                 dockerApiVersion = "1.23";
                 setSystemTimeFreqSeconds = 60;
-                monitorSshTunnelStatusFreqSeconds = 10;
+                monitorSshTunnelStatusFreqSeconds = 1;
                 break;
         }
         LoggingService.logInfo(MODULE_NAME, "Finished update Automatic ConfigParams ");
