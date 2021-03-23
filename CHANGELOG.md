@@ -1,7 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [v3.0.0-alpha1] - 24 March 2021
+
 ### Features
+* Support for EdgeResources
 * Dev mode added for enabling and disabling sentry notification on error
 * Log format updated to Json
 * Docker pull stats with percentage completion
