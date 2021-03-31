@@ -20,6 +20,7 @@ import org.apache.http.client.methods.*;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.Header;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -35,15 +36,20 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
 
 import javax.json.Json;
+import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.stream.JsonParsingException;
 import javax.naming.AuthenticationException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.SocketException;
@@ -331,16 +337,19 @@ public class Orchestrator {
 
         try (CloseableHttpResponse response = client.execute(req)) {
             String errorMessage = "";
-            if (response.getEntity() != null) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                JsonReader jsonReader = Json.createReader(in);
-
-                result = jsonReader.readObject();
-                errorMessage = result.getString("message", "");
+            HttpEntity responseBody = response.getEntity();
+            if (responseBody != null) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"))) {
+                    JsonReader jsonReader = Json.createReader(in);
+                    result = jsonReader.readObject();
+                    errorMessage = result.getString("message", "");
+                } catch (JsonException e) {
+                    logInfo(MODULE_NAME, "get config response contains non JSON payload, content-type: " + responseBody.getContentType());
+                }
             }
 
-
-            switch (response.getStatusLine().getStatusCode()) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            switch (statusCode) {
                 case 204:
                     return Json.createObjectBuilder().build();
                 case 400:
@@ -355,6 +364,12 @@ public class Orchestrator {
                     throw new NotFoundException(errorMessage);
                 case 500:
                     throw new InternalServerErrorException(errorMessage);
+                default:
+                    if (statusCode >= 400 && statusCode < 500) {
+                        throw new ClientErrorException(response.getStatusLine().getReasonPhrase(), statusCode);
+                    } else if (statusCode >= 500 && statusCode < 600) {
+                        throw new ServerErrorException(response.getStatusLine().getReasonPhrase(), statusCode);
+                    }
             }
 
         } catch (UnsupportedEncodingException exp) {

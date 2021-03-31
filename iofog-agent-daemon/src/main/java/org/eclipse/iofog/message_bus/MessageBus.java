@@ -337,7 +337,7 @@ public class MessageBus implements IOFogModule {
 					stop();
 				} catch (Exception exp) {
 				}
-				logWarning("Error starting message bus module" +
+				logWarning("Error starting message bus module: " +
 						new AgentSystemException(e.getMessage(), e));
 				StatusReporter.setSupervisorStatus().setModuleStatus(MESSAGE_BUS, STOPPED);
 				new Thread(startServer).start();
