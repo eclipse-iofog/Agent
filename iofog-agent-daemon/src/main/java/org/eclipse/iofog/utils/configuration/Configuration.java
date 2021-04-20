@@ -693,7 +693,6 @@ public final class Configuration {
                         }
                         setNode(DOCKER_PRUNING_FREQUENCY, value, configFile, configElement);
                         setDockerPruningFrequency(Long.parseLong(value));
-                        DockerPruningManager.getInstance().refreshSchedule();
                         break;
                     case AVAILABLE_DISK_THRESHOLD:
                         LoggingService.logInfo(MODULE_NAME, "Setting available disk threshold");
@@ -709,7 +708,6 @@ public final class Configuration {
                         }
                         setNode(AVAILABLE_DISK_THRESHOLD, value, configFile, configElement);
                         setAvailableDiskThreshold(Long.parseLong(value));
-                        DockerPruningManager.getInstance().refreshSchedule();
                         break;
                     case READY_TO_UPGRADE_SCAN_FREQUENCY:
                         LoggingService.logInfo(MODULE_NAME, "Setting isReadyToUpgrade scan frequency");
