@@ -2,9 +2,14 @@
 
 ## [Unreleased]
 
+## [v2.0.6] - 2021-04-28
+
+### Bugs
+* Removed configurable pruning scheduler
+
 ## [v2.0.5] - 2021-02-25
 
-## Bugs
+### Bugs
 * Fix upgrade version issue
 
 ## [v2.0.4] - 2021-02-16
@@ -73,6 +78,7 @@
 * Fixed the issue with microservice status
     
 [Unreleased]: https://github.com/eclipse-iofog/agent/compare/v2.0.4..HEAD
+[v2.0.6]: https://github.com/eclipse-iofog/agent/compare/v2.0.5..v2.0.6
 [v2.0.5]: https://github.com/eclipse-iofog/agent/compare/v2.0.4..v2.0.5
 [v2.0.4]: https://github.com/eclipse-iofog/agent/compare/v2.0.3..v2.0.4
 [v2.0.3]: https://github.com/eclipse-iofog/agent/compare/v2.0.2..v2.0.3
