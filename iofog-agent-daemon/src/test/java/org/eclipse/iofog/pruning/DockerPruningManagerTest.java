@@ -15,7 +15,6 @@ package org.eclipse.iofog.pruning;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PruneResponse;
-import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.process_manager.DockerUtil;
@@ -28,8 +27,6 @@ import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.json.JsonObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -37,13 +34,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -54,7 +47,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({DockerPruningManager.class, DockerUtil.class, MicroserviceManager.class, Image.class, Container.class, LoggingService.class,
-        ScheduledExecutorService.class, ScheduledFuture.class})
+        ScheduledExecutorService.class})
 public class DockerPruningManagerTest {
     private DockerPruningManager pruningManager;
     private DockerUtil dockerUtil;
@@ -96,8 +89,6 @@ public class DockerPruningManagerTest {
         PowerMockito.when(dockerUtil.dockerPrune()).thenReturn(pruneResponse);
         PowerMockito.doNothing().when(dockerUtil).removeImageById(anyString());
         ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-        ScheduledFuture future = mock(ScheduledFuture.class);
-        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), any(TimeUnit.class));
         pruningManager = PowerMockito.spy(DockerPruningManager.getInstance());
         container = Mockito.mock(Container.class);
 
