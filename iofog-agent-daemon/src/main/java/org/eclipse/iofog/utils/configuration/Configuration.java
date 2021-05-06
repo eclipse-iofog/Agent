@@ -591,6 +591,7 @@ public final class Configuration {
                         }
                         setNode(STATUS_FREQUENCY, value, configFile, configElement);
                         setStatusFrequency(Integer.parseInt(value));
+                        FieldAgent.getInstance().changePostStatusFrequency(Integer.parseInt(value));
                         break;
                     case CHANGE_FREQUENCY:
                         LoggingService.logInfo(MODULE_NAME, "Setting change frequency");
@@ -606,6 +607,7 @@ public final class Configuration {
                         }
                         setNode(CHANGE_FREQUENCY, value, configFile, configElement);
                         setChangeFrequency(Integer.parseInt(value));
+                        FieldAgent.getInstance().changeGetChangeListFreq();
                         break;
                     case DEVICE_SCAN_FREQUENCY:
                         LoggingService.logInfo(MODULE_NAME, "Setting device scan frequency");
@@ -636,6 +638,7 @@ public final class Configuration {
                         }
                         setNode(POST_DIAGNOSTICS_FREQ, value, configFile, configElement);
                         setPostDiagnosticsFreq(Integer.parseInt(value));
+                        FieldAgent.getInstance().changePostDiagnosticFrequency();
                         break;
                     case WATCHDOG_ENABLED:
                         LoggingService.logInfo(MODULE_NAME, "Setting watchdog enabled");

@@ -90,12 +90,18 @@ public class FieldAgent implements IOFogModule {
     private boolean initialization;
     private boolean connected = false;
     private ReentrantLock provisioningLock = new ReentrantLock();
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private ScheduledFuture<?> futureTask;
+    private ScheduledFuture<?> futureGetChangeListTask;
+    private ScheduledFuture<?> futurePostDiagnosticTask;
+    private ScheduledFuture<?> futurePingControllerTask;
+    private ScheduledFuture<?> futurePostStatusTask;
+    private int currentStatusFrequency;
 
     private FieldAgent() {
         lastGetChangesList = 0;
         initialization = true;
+        currentStatusFrequency = Configuration.getStatusFrequency();
     }
 
     @Override
@@ -193,7 +199,6 @@ public class FieldAgent implements IOFogModule {
      * sends IOFog instance status to IOFog controller
      */
     private void postStatusHelper() {
-        logInfo("posting ioFog status");
         try {
             logInfo("Start posting ioFog status");
             JsonObject status = getFogStatus();
@@ -203,73 +208,74 @@ public class FieldAgent implements IOFogModule {
             connected = isControllerConnected(false);
             if (!connected)
                 return;
-            logInfo("Controller connection verified");
-
             logInfo("Sending ioFog status...");
             orchestrator.request("status", RequestType.PUT, null, status);
             onPostStatusSuccess();
         } catch (CertificateException | SSLHandshakeException | ConnectException e) {
             verificationFailed(e);
             logError("Unable to send status due to broken certificate",
-                    new AgentSystemException("Unable to send status due to broken certificate", e));
+                    new AgentSystemException(e.getMessage(), e));
         } catch (ForbiddenException e) {
             deProvision(true);
-            logError("Unable to send status due to broken certificate",
-                    new AgentSystemException("Unable to send status due to broken certificate", e));
+            logError("Unable to send status due to Forbidden Exception",
+                    new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
-            logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
+            logError("Unable to send status due to some exception", new AgentSystemException(e.getMessage(), e));
         }
         logInfo("Finished posting ioFog status");
     }
 
-    private final Runnable postStatus = () -> {
-        while (true) {
-            try {
-                if (microserviceManager.getCurrentMicroservices().size() == StatusReporter.getProcessManagerStatus().getRunningMicroservicesCount()) {
-                    Thread.sleep(Configuration.getStatusFrequency() * 1000);
-                } else {
-                    Thread.sleep(1 * 1000);
-                }
-                postStatusHelper();
-            } catch (Exception e) {
-                logError("Unable to send status ", new AgentSystemException("Unable to send status", e));
+    public void updateStatusFrequency() {
+        int updatedStatusFreq;
+        int statusFrequency = Configuration.getStatusFrequency();
+        try {
+            if (microserviceManager.getCurrentMicroservices().size() != StatusReporter.getProcessManagerStatus().getRunningMicroservicesCount()) {
+                updatedStatusFreq = 1;
+            } else {
+                updatedStatusFreq = statusFrequency;
             }
+            if (currentStatusFrequency != updatedStatusFreq) {
+                currentStatusFrequency = updatedStatusFreq;
+                changePostStatusFrequency(updatedStatusFreq);
+            }
+        } catch (Exception e) {
+            logError("Unable to update Status Frequency", new AgentSystemException(e.getMessage(), e));
+        }
+    }
 
+    private final Runnable postStatus = () -> {
+        try {
+            postStatusHelper();
+            updateStatusFrequency();
+        } catch (Exception e) {
+            logError("Unable to send status", new AgentSystemException("Unable to send status", e));
         }
     };
 
     private final Runnable postDiagnostics = () -> {
-        while (true) {
-        	logInfo("Start posting diagnostic");
-            if (StraceDiagnosticManager.getInstance().getMonitoringMicroservices().size() > 0) {
-                JsonBuilderFactory factory = Json.createBuilderFactory(null);
-                JsonArrayBuilder arrayBuilder = factory.createArrayBuilder();
+        logInfo("Start posting diagnostic");
+        if (StraceDiagnosticManager.getInstance().getMonitoringMicroservices().size() > 0) {
+            JsonBuilderFactory factory = Json.createBuilderFactory(null);
+            JsonArrayBuilder arrayBuilder = factory.createArrayBuilder();
 
-                for (MicroserviceStraceData microservice : StraceDiagnosticManager.getInstance().getMonitoringMicroservices()) {
-                    arrayBuilder.add(factory.createObjectBuilder()
-                        .add("microserviceUuid", microservice.getMicroserviceUuid())
-                        .add("buffer", microservice.getResultBufferAsString())
-                    );
-                    microservice.getResultBuffer().clear();
-                }
-
-                JsonObject json = factory.createObjectBuilder()
-                    .add("straceData", arrayBuilder).build();
-
-                try {
-                    orchestrator.request("strace", RequestType.PUT, null, json);
-                } catch (Exception e) {
-                	logError("Unable send strace logs", new AgentSystemException("Unable send strace logs", e));
-                }
+            for (MicroserviceStraceData microservice : StraceDiagnosticManager.getInstance().getMonitoringMicroservices()) {
+                arrayBuilder.add(factory.createObjectBuilder()
+                    .add("microserviceUuid", microservice.getMicroserviceUuid())
+                    .add("buffer", microservice.getResultBufferAsString())
+                );
+                microservice.getResultBuffer().clear();
             }
+
+            JsonObject json = factory.createObjectBuilder()
+                .add("straceData", arrayBuilder).build();
 
             try {
-                Thread.sleep(Configuration.getPostDiagnosticsFreq() * 1000);
-            } catch (InterruptedException e) {
-                logError("Error posting diagnostic", new AgentSystemException("Error posting diagnostic", e));
+                orchestrator.request("strace", RequestType.PUT, null, json);
+            } catch (Exception e) {
+                logError("Unable send strace logs", new AgentSystemException("Unable send strace logs", e));
             }
-            logInfo("Finished posting diagnostic");
         }
+        logInfo("Finished posting diagnostic");
     };
 
     public final void postTracking(JsonObject events) {
@@ -369,8 +375,6 @@ public class FieldAgent implements IOFogModule {
                         changes.getBoolean("routing",false) || initialization) {
                     boolean microserviceConfig = changes.getBoolean("microserviceConfig");
                     boolean routing = changes.getBoolean("routing");
-                    int defaultFreq = Configuration.getStatusFrequency();
-                    Configuration.setStatusFrequency(1);
                     try {
                         List<Microservice> microservices = loadMicroservices(false);
 
@@ -402,7 +406,7 @@ public class FieldAgent implements IOFogModule {
                         logError("Unable to get microservices list", e);
                         resetChanges = false;
                     } finally {
-                        Configuration.setStatusFrequency(defaultFreq);
+                        updateStatusFrequency();
                     }
                 }
 
@@ -439,33 +443,17 @@ public class FieldAgent implements IOFogModule {
      * retrieves IOFog changes list from IOFog controller
      */
     private final Runnable getChangesList = () -> {
-        while (true) {
-        	logInfo("Get changes list");
+        try {
+            logInfo("Start get IOFog changes list from IOFog controller");
+
+            if (notProvisioned() || !isControllerConnected(false)) {
+                logInfo("Cannot get change list due to controller status not provisioned or controller not connected");
+                return;
+            }
+
+            JsonObject result;
             try {
-                int frequency = Configuration.getChangeFrequency() * 1000;
-                Thread.sleep(frequency);
-                logInfo("Start get IOFog changes list from IOFog controller");
-
-                if (notProvisioned() || !isControllerConnected(false)) {
-                    logInfo("Cannot get change list due to controller status not provisioned or controller not connected");
-                    continue;
-                }
-
-
-                JsonObject result;
-                try {
-                    result = orchestrator.request("config/changes", RequestType.GET, null, null);
-                } catch (CertificateException | SSLHandshakeException e) {
-                    verificationFailed(e);
-                    logError("Unable to get changes",
-                    		new AgentSystemException("Unable to get changes due to broken certificate", e));
-                    continue;
-                } catch (Exception e) {
-                    logError("Unable to get changes ", new AgentSystemException("Unable to get changes", e));
-                    continue;
-                }
-
-
+                result = orchestrator.request("config/changes", RequestType.GET, null, null);
                 StatusReporter.setFieldAgentStatus().setLastCommandTime(lastGetChangesList);
 
                 String lastUpdated = result.getString("lastUpdated", null);
@@ -492,11 +480,17 @@ public class FieldAgent implements IOFogModule {
                 }
 
                 initialization = initialization && !resetChanges;
+            } catch (CertificateException | SSLHandshakeException e) {
+                verificationFailed(e);
+                logError("Unable to get changes",
+                        new AgentSystemException("Unable to get changes due to broken certificate", e));
             } catch (Exception e) {
-            	logError("Error getting changes list ", new AgentSystemException("Error getting changes list", e));
+                logError("Unable to get changes ", new AgentSystemException("Unable to get changes", e));
             }
-            logInfo("Finish get IOFog changes list from IOFog controller");
+        } catch (Exception e) {
+            logError("Error getting changes list ", new AgentSystemException("Error getting changes list", e));
         }
+        logInfo("Finish get IOFog changes list from IOFog controller");
     };
 
     /**
@@ -882,17 +876,13 @@ public class FieldAgent implements IOFogModule {
      * pings IOFog controller
      */
     private final Runnable pingController = () -> {
-        while (true) {
-            try {
-            	logInfo("Ping controller");
-                Thread.sleep(Configuration.getPingControllerFreqSeconds() * 1000);
-                logInfo("Start Ping controller");
-                ping();
-            } catch (Exception e) {
-                logError("Exception pinging controller", new AgentUserException("Exception pinging controller", e));
-            }
-            logInfo("Finished Ping controller");
+        try {
+            logInfo("Start Ping controller");
+            ping();
+        } catch (Exception e) {
+            logError("Exception pinging controller", new AgentUserException("Exception pinging controller", e));
         }
+        logInfo("Finished Ping controller");
     };
 
     /**
@@ -1413,10 +1403,16 @@ public class FieldAgent implements IOFogModule {
             processRoutes(microservices);
         }
 
-        new Thread(pingController, Constants.FIELD_AGENT_PING_CONTROLLER).start();
-        new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
-        new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
-        new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
+//        new Thread(pingController, Constants.FIELD_AGENT_PING_CONTROLLER).start();
+//        new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
+//        new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
+//        new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
+//
+        futurePingControllerTask = scheduler.scheduleAtFixedRate(pingController, 0, Configuration.getPingControllerFreqSeconds(), TimeUnit.SECONDS);
+        futureGetChangeListTask = scheduler.scheduleAtFixedRate(getChangesList, 0, Configuration.getChangeFrequency(), TimeUnit.SECONDS);
+        futurePostStatusTask = scheduler.scheduleAtFixedRate(postStatus, 0, Configuration.getStatusFrequency(), TimeUnit.SECONDS);
+        futurePostDiagnosticTask = scheduler.scheduleAtFixedRate(postDiagnostics, 0, Configuration.getPostDiagnosticsFreq(), TimeUnit.SECONDS);
+
 
         StatusReporter.setFieldAgentStatus().setReadyToUpgrade(VersionHandler.isReadyToUpgrade());
         StatusReporter.setFieldAgentStatus().setReadyToRollback(VersionHandler.isReadyToRollback());
@@ -1629,5 +1625,40 @@ public class FieldAgent implements IOFogModule {
             futureTask.cancel(true);
         }
         futureTask = scheduler.scheduleAtFixedRate(getAgentReadyToUpgradeStatus, 0, Configuration.getReadyToUpgradeScanFrequency(), TimeUnit.HOURS);
+    }
+
+    /**
+     * This method will reschedule "post diagnostic frequency" with the new param time
+     */
+    public void changePostDiagnosticFrequency()
+    {
+        if (futurePostDiagnosticTask != null)
+        {
+            futurePostDiagnosticTask.cancel(true);
+        }
+        futurePostDiagnosticTask = futureTask = scheduler.scheduleAtFixedRate(postDiagnostics, 0, Configuration.getPostDiagnosticsFreq(), TimeUnit.SECONDS);
+    }
+    /**
+     * This method will reschedule "post status frequency" with the new param time
+     */
+    public void changePostStatusFrequency(int statusFreq)
+    {
+        if (futurePostStatusTask != null)
+        {
+            futurePostStatusTask.cancel(true);
+        }
+        futurePostStatusTask = futureTask = scheduler.scheduleAtFixedRate(postStatus, 0, statusFreq, TimeUnit.SECONDS);
+    }
+
+    /**
+     * This method will reschedule "get changes frequency" with the new param time
+     */
+    public void changeGetChangeListFreq()
+    {
+        if (futureGetChangeListTask != null)
+        {
+            futureGetChangeListTask.cancel(true);
+        }
+        futureGetChangeListTask = futureTask = scheduler.scheduleAtFixedRate(getChangesList, 0, Configuration.getChangeFrequency(), TimeUnit.SECONDS);
     }
 }

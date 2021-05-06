@@ -61,6 +61,7 @@ import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +85,8 @@ import static org.powermock.api.mockito.PowerMockito.*;
 @PrepareForTest({FieldAgent.class, LoggingService.class, FieldAgentStatus.class, MicroserviceManager.class,
         Orchestrator.class, URL.class, HttpURLConnection.class, Configuration.class, StatusReporter.class,
         SshProxyManager.class, ProcessManager.class, MessageBus.class, LocalApi.class, Thread.class, BufferedReader.class,
-        InputStreamReader.class, ResourceManagerStatus.class, VersionHandler.class, CommandShellExecutor.class, IOFogNetworkInterface.class})
+        InputStreamReader.class, ResourceManagerStatus.class, VersionHandler.class, CommandShellExecutor.class, IOFogNetworkInterface.class,
+        ScheduledExecutorService.class, ScheduledFuture.class, Executors.class})
 public class FieldAgentTest {
     private FieldAgent fieldAgent;
     private String MODULE_NAME;
@@ -105,6 +107,10 @@ public class FieldAgentTest {
     private InputStreamReader inputStreamReader;
     private ResourceManagerStatus resourceManagerStatus;
     private Method method = null;
+    private ScheduledExecutorService scheduler;
+    private ScheduledFuture future;
+    private Executors executors;
+    private ProcessManagerStatus processManagerStatus;
 
     @Before
     public void setUp() throws Exception {
@@ -120,6 +126,7 @@ public class FieldAgentTest {
         mockStatic(BufferedReader.class);
         mockStatic(InputStreamReader.class);
         mockStatic(IOFogNetworkInterface.class);
+        mockStatic(Executors.class);
 
         orchestrator = PowerMockito.mock(Orchestrator.class);
         sshProxyManager = PowerMockito.mock(SshProxyManager.class);
@@ -127,8 +134,16 @@ public class FieldAgentTest {
         messageBus = PowerMockito.mock(MessageBus.class);
         localApi = PowerMockito.mock(LocalApi.class);
         resourceManagerStatus = PowerMockito.mock(ResourceManagerStatus.class);
+        executors = PowerMockito.mock(Executors.class);
+        scheduler = PowerMockito.mock(ScheduledExecutorService.class);
+        future = PowerMockito.mock(ScheduledFuture.class);
+        PowerMockito.when(Executors.newScheduledThreadPool(10)).thenReturn(scheduler);
+        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), any(TimeUnit.class));
+        PowerMockito.mock(Runnable.class);
+        processManagerStatus = mock(ProcessManagerStatus.class);
         mockConfiguration();
         mockOthers();
+
         fieldAgent = PowerMockito.spy(FieldAgent.getInstance());
         fieldAgentStatus = PowerMockito.mock(FieldAgentStatus.class);
         setMock(fieldAgent);
@@ -203,11 +218,11 @@ public class FieldAgentTest {
     }
 
     public void initiateMockStart() {
-        thread = PowerMockito.mock(Thread.class);
+//        thread = PowerMockito.mock(Thread.class);
         try {
-            whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
-                    Mockito.anyString()).thenReturn(thread);
-            PowerMockito.doNothing().when(thread).start();
+//            whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
+//                    Mockito.anyString()).thenReturn(thread);
+//            PowerMockito.doNothing().when(thread).start();
             fieldAgent.start();
         } catch (Exception e) {
             fail("this should not happen");
@@ -243,7 +258,7 @@ public class FieldAgentTest {
     /**
      * Test postTracking with valid jsonObject
      */
-    @Test ( timeout = 5000L )
+    @Test
     public void testPostTrackingWithValidJsonObject() {
         try {
             initiateMockStart();
@@ -1569,6 +1584,8 @@ public class FieldAgentTest {
         when(Configuration.getReadyToUpgradeScanFrequency()).thenReturn(24);
         when(Configuration.getGpsCoordinates()).thenReturn("4000.0, 2000.3");
         when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
+        when(Configuration.getPingControllerFreqSeconds()).thenReturn(60);
+        when(Configuration.getPostDiagnosticsFreq()).thenReturn(10);
     }
 
     /**
@@ -1576,7 +1593,6 @@ public class FieldAgentTest {
      */
     public void mockOthers() {
         SupervisorStatus supervisorStatus = mock(SupervisorStatus.class);
-        ProcessManagerStatus processManagerStatus = mock(ProcessManagerStatus.class);
         StatusReporterStatus statusReporterStatus = mock(StatusReporterStatus.class);
         MessageBusStatus messageBusStatus = mock(MessageBusStatus.class);
         SshProxyManagerStatus sshProxyManagerStatus = mock(SshProxyManagerStatus.class);
@@ -1589,11 +1605,40 @@ public class FieldAgentTest {
         when(StatusReporter.getSshManagerStatus()).thenReturn(sshProxyManagerStatus);
         when(StatusReporter.getResourceConsumptionManagerStatus()).thenReturn(resourceConsumptionManagerStatus);
         when(supervisorStatus.getDaemonStatus()).thenReturn(Constants.ModulesStatus.RUNNING);
-        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-        ScheduledFuture future = mock(ScheduledFuture.class);
-        PowerMockito.doReturn(future).when(scheduler).scheduleAtFixedRate(any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), any(TimeUnit.class));
-        mock(Runnable.class);
+    }
 
+    /**
+     * Test changePostStatusFrequency is called when app is deployed and is not running
+     */
+    @Test
+    public void testUpdateStatusFrequencyWhenNewMicroservicesAreAdded() {
+        initiateMockStart();
+        fieldAgent.updateStatusFrequency();
+        Mockito.verify(fieldAgent).changePostStatusFrequency(1);
+    }
+
+    /**
+     * Test changePostStatusFrequency is not called when no app is deployed
+     */
+    @Test
+    public void testUpdateStatusFrequencyWhenNoApp() {
+        when(processManagerStatus.getRunningMicroservicesCount()).thenReturn(0);
+        initiateMockStart();
+        fieldAgent.updateStatusFrequency();
+        Mockito.verify(fieldAgent, Mockito.never()).changePostStatusFrequency(1);
+    }
+
+    /**
+     * Test changePostStatusFrequency is not called again till all microservices start running
+     */
+    @Test
+    public void testUpdateStatusFrequencyWhenCalledAgainOnAppStarting() {
+        initiateMockStart();
+        fieldAgent.updateStatusFrequency();
+        Mockito.verify(fieldAgent, Mockito.times(1)).changePostStatusFrequency(1);
+        // calling updateStatusFrequency should not call changePostStatusFrequency method as current freq is 1
+        fieldAgent.updateStatusFrequency();
+        Mockito.verify(fieldAgent, Mockito.times(1)).changePostStatusFrequency(1);
     }
 
 }
