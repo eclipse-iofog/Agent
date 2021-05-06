@@ -1403,11 +1403,6 @@ public class FieldAgent implements IOFogModule {
             processRoutes(microservices);
         }
 
-//        new Thread(pingController, Constants.FIELD_AGENT_PING_CONTROLLER).start();
-//        new Thread(getChangesList, Constants.FIELD_AGENT_GET_CHANGE_LIST).start();
-//        new Thread(postStatus, Constants.FIELD_AGENT_POST_STATUS).start();
-//        new Thread(postDiagnostics, Constants.FIELD_AGENT_POST_DIAGNOSTIC).start();
-//
         futurePingControllerTask = scheduler.scheduleAtFixedRate(pingController, 0, Configuration.getPingControllerFreqSeconds(), TimeUnit.SECONDS);
         futureGetChangeListTask = scheduler.scheduleAtFixedRate(getChangesList, 0, Configuration.getChangeFrequency(), TimeUnit.SECONDS);
         futurePostStatusTask = scheduler.scheduleAtFixedRate(postStatus, 0, Configuration.getStatusFrequency(), TimeUnit.SECONDS);
