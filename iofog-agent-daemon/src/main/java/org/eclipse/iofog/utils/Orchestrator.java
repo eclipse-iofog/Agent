@@ -202,6 +202,7 @@ public class Orchestrator {
             RequestConfig config = getRequestConfig();
             HttpGet get = new HttpGet(surl);
             get.setConfig(config);
+            get.addHeader("hostname", "Neha Agent");
         	CloseableHttpResponse response = client.execute(get);
 
             if (response !=null && response.getStatusLine().getStatusCode() != 200) {
@@ -324,6 +325,7 @@ public class Orchestrator {
 
         UUID requestId = UUID.randomUUID();
         req.addHeader("Request-Id", requestId.toString());
+        req.addHeader("hostname", "Neha Agent");
         logInfo("Orchestrator", String.format("(%s) %s %s", requestId, requestType.name(), uri.toString()));
 
         try (CloseableHttpResponse response = client.execute(req)) {
