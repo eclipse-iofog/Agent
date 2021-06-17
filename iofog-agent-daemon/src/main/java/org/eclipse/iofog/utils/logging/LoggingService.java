@@ -95,7 +95,7 @@ public final class LoggingService {
      * @param msg        - message
      */
     public static void logDebug(String moduleName, String msg) {
-        if (Configuration.debugging)
+        if (Configuration.debugging || logger == null)
             System.out.println(String.format("%s %s : %s (%s)", Thread.currentThread().getName(), moduleName, msg, new Date(System.currentTimeMillis())));
         else
             logger.log(Level.FINE, String.format("[%s] [%s] : %s", Thread.currentThread().getName(), moduleName, msg));
@@ -182,6 +182,7 @@ public final class LoggingService {
         if (logger != null) {
             for (Handler f : logger.getHandlers())
                 f.close();
+            logger.info("logger started.");
         }
 
         if (maxFileSize < Constants.MiB) {
@@ -332,7 +333,7 @@ public final class LoggingService {
         try {
             setupLogger();
         } catch (Exception exp) {
-            logError(MODULE_NAME, exp.getMessage(), exp);
+            logError(MODULE_NAME, "Error updating logger instance", exp);
         }
     }
 

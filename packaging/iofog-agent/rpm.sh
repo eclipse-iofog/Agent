@@ -53,6 +53,14 @@ else
 fi
 #echo "Check for config.xml"
 
+if [ -f /etc/iofog-agent/config-bck.xml ];
+then
+   rm /etc/iofog-agent/config-bck_new.xml
+else
+   mv /etc/iofog-agent/config-bck_new.xml /etc/iofog-agent/config-bck.xml
+fi
+#echo "Check for config-bck.xml"
+
 </dev/urandom tr -dc A-Za-z0-9 | head -c32 > /etc/iofog-agent/local-api
 
 mkdir -p /var/backups/iofog-agent

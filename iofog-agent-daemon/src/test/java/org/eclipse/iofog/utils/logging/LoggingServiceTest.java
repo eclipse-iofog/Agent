@@ -291,7 +291,7 @@ public class LoggingServiceTest {
      */
     @Test
     public void TestInstanceConfigUpdated() throws IOException {
-        Exception e = new SecurityException("This is exception");
+        Exception e = new SecurityException("Error updating logger instance");
         PowerMockito.doThrow(e).when(logger).setLevel(any());
         LoggingService.instanceConfigUpdated();
         PowerMockito.verifyStatic(LoggingService.class);

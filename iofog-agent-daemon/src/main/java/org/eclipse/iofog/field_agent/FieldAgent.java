@@ -986,6 +986,7 @@ public class FieldAgent implements IOFogModule {
      */
     private void getFogConfig() {
         logInfo("Starting Get ioFog config");
+        boolean hasError = false;
         if (notProvisioned() || !isControllerConnected(false)) {
             return;
         }
@@ -1126,11 +1127,21 @@ public class FieldAgent implements IOFogModule {
                     Configuration.setConfig(instanceConfig, false);
             }
         } catch (CertificateException | SSLHandshakeException e) {
+            hasError = true;
             verificationFailed(e);
             logError("Unable to get ioFog config due to broken certificate",
             		new AgentUserException("Unable to get ioFog config due to broken certificate", e));
         } catch (Exception e) {
-            logError("Unable to get ioFog config ", new AgentUserException("Unable to get ioFog config", e));
+            hasError = true;
+            try {
+                logError("Unable to get ioFog config ", new AgentUserException("Unable to get ioFog config", e));
+            } catch (Exception ex){
+                logError("We should never see this", new AgentUserException("This exception arise while logging the exception"));
+            }
+        } finally {
+            if (hasError) {
+
+            }
         }
         logInfo("Finished Get ioFog config");
     }
@@ -1250,6 +1261,7 @@ public class FieldAgent implements IOFogModule {
             Configuration.setAccessToken(provisioningResult.getString("token"));
 
             Configuration.saveConfigUpdates();
+            Configuration.updateConfigBackUpFile();
 
             postFogConfig();
             loadRegistries(false);
@@ -1270,8 +1282,6 @@ public class FieldAgent implements IOFogModule {
         } catch (UnknownHostException e) {
             StatusReporter.setFieldAgentStatus().setControllerVerified(false);
             provisioningResult = buildProvisionFailResponse("Connection error: unable to connect to fog controller.", e);
-        } catch (AgentSystemException e) {
-            provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         } catch (Exception e) {
             provisioningResult = buildProvisionFailResponse(e.getMessage(), e);
         } finally {
@@ -1339,12 +1349,22 @@ public class FieldAgent implements IOFogModule {
 
             StatusReporter.setFieldAgentStatus().setControllerStatus(NOT_PROVISIONED);
             String iofogUuid = Configuration.getIofogUuid();
+            boolean configUpdated = true;
             try {
                 Configuration.setIofogUuid("");
                 Configuration.setAccessToken("");
                 Configuration.saveConfigUpdates();
             } catch (Exception e) {
-                logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+                configUpdated = false;
+                try {
+                    logError("Error saving config updates", new AgentSystemException("Error saving config updates", e));
+                } catch (Exception ex){
+                    logError("This error should not print ever!", new AgentSystemException("Error Logging exception in saving config updates on deprovision"));
+                }
+            } finally {
+                if (configUpdated) {
+                    Configuration.updateConfigBackUpFile();
+                }
             }
             microserviceManager.clear();
             try {
