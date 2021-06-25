@@ -181,11 +181,6 @@ public final class LoggingService {
 
         final String logFilePattern = logDirectory.getPath() + "/iofog-agent.%g.log";
 
-        if (logger != null) {
-            for (Handler f : logger.getHandlers())
-                f.close();
-        }
-
         if (maxFileSize < Constants.MiB) {
             System.out.println("[" + MODULE_NAME + "] Warning: current <log_disk_consumption_limit>" +
                     " config parameter's value is negative, using default 1 Mb limit");
@@ -210,6 +205,11 @@ public final class LoggingService {
         Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
 
         logFileHandler.setFormatter(new LogFormatter());
+
+        if (logger != null) {
+            for (Handler f : logger.getHandlers())
+                f.close();
+        }
 
         logger = Logger.getLogger("org.eclipse.iofog");
         logger.addHandler(logFileHandler);
@@ -334,7 +334,7 @@ public final class LoggingService {
         try {
             setupLogger();
         } catch (Exception exp) {
-            logError(MODULE_NAME, exp.getMessage(), exp);
+            logError(MODULE_NAME, "Error updating logger instance", exp);
         }
     }
 

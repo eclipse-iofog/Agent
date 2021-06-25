@@ -100,6 +100,7 @@ public class Constants {
     public static final String DEFAULT_CONFIG_PATH = CONFIG_DIR + "config.xml";
     public static final String DEVELOPMENT_CONFIG_PATH = CONFIG_DIR + "config-development.xml";
     public static final String PRODUCTION_CONFIG_PATH = CONFIG_DIR + "config-production.xml";
+    public static String BACKUP_CONFIG_PATH = CONFIG_DIR + "config-bck.xml";
 
     public static final String CONFIG_SWITCHER_PATH = CONFIG_DIR + "config-switcher.xml";
     public static final String SWITCHER_ELEMENT = "switcher";

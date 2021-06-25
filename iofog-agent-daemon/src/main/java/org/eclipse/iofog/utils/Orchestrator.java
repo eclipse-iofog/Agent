@@ -351,7 +351,7 @@ public class Orchestrator {
                     throw new BadRequestException(errorMessage);
                 case 401:
                     logWarning(MODULE_NAME, "Invalid authentication ioFog token, switching controller status to Not provisioned");
-                    FieldAgent.getInstance().deProvision(true);
+//                    FieldAgent.getInstance().deProvision(true);
                     throw new AuthenticationException(errorMessage);
                 case 403:
                     throw new ForbiddenException(errorMessage);
