@@ -33,7 +33,7 @@ import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.eclipse.iofog.utils.trustmanager.X509TrustManagerImpl;
+import org.eclipse.iofog.utils.trustmanager.TrustManagers;
 
 import javax.json.Json;
 import javax.json.JsonException;
@@ -54,8 +54,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -143,17 +141,14 @@ public class Orchestrator {
     private void initialize(boolean secure) throws AgentSystemException {
     	logDebug(MODULE_NAME, "Start initialize TrustManager");
         if (secure) {
-            TrustManager[] trustManager = new TrustManager[]{new X509TrustManagerImpl(controllerCert)};
             SSLContext sslContext;
 			try {
 				sslContext = SSLContext.getInstance("TLS");
-				sslContext.init(null, trustManager, new SecureRandom());
+				sslContext.init(null, TrustManagers.createTrustManager(controllerCert), new SecureRandom());
 				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
 	            client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-			} catch (NoSuchAlgorithmException e) {
+			} catch (Exception e) {
 				throw new AgentSystemException(e.getMessage(), e );		
-			} catch (KeyManagementException e) {
-				throw new AgentSystemException(e.getMessage(), e );
 			}
             
         } else {
