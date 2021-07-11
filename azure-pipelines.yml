@@ -158,6 +158,7 @@ jobs:
               package_cloud push iofog/iofog-agent-snapshots/debian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
               package_cloud push iofog/iofog-agent-snapshots/raspbian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
           done
+          package_cloud push iofog/iofog-agent-snapshots/mendel/eagle $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
         displayName: 'publish deb to package-cloud'
 
       - script: |
