@@ -785,7 +785,7 @@ public final class Configuration {
             messageMap.put("invalid", "Option and value are null");
         }
         if (updateLogger) {
-            LoggingService.setupLogger();
+            LoggingService.instanceConfigUpdated();
         }
         LoggingService.logInfo(MODULE_NAME, "Finished setting configuration base on commandline parameters");
         
@@ -1408,7 +1408,6 @@ public final class Configuration {
             FieldAgent.getInstance().instanceConfigUpdated();
             ProcessManager.getInstance().instanceConfigUpdated();
             ResourceConsumptionManager.getInstance().instanceConfigUpdated();
-            LoggingService.instanceConfigUpdated();
             MessageBus.getInstance().instanceConfigUpdated();
 
             return "Successfully switched to new configuration.";
@@ -1422,7 +1421,6 @@ public final class Configuration {
                 FieldAgent.getInstance().instanceConfigUpdated();
                 ProcessManager.getInstance().instanceConfigUpdated();
                 ResourceConsumptionManager.getInstance().instanceConfigUpdated();
-                LoggingService.instanceConfigUpdated();
                 MessageBus.getInstance().instanceConfigUpdated();
 
                 return "Error while loading new config file, falling back to current configuration";
