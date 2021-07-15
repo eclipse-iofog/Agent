@@ -1,5 +1,10 @@
 # Changelog
 
+## [v3.0.0-alpha2] - 16 July 2021
+
+### Features
+* Support trusted CAs for HTTPS to ioFog Controller
+
 ## [v3.0.0-alpha1] - 24 March 2021
 
 ### Features
