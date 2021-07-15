@@ -32,6 +32,7 @@ import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.device_info.ArchitectureType;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.utils.trustmanager.TrustManagers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,9 +66,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
+
+import javax.net.ssl.TrustManagerFactory;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.InternalServerErrorException;
@@ -82,8 +86,9 @@ import javax.ws.rs.NotFoundException;
         InetAddress.class, HttpGet.class, BufferedReader.class, InputStreamReader.class, CloseableHttpResponse.class,
         HttpEntity.class, InputStream.class, StatusLine.class, JsonReader.class, Json.class, File.class,
         FileInputStream.class, CertificateFactory.class, Certificate.class, CertificateFactorySpi.class, Provider.class,
-        SSLContext.class, SSLConnectionSocketFactory.class, HttpClientBuilder.class, StringEntity.class, FieldAgent.class, MultipartEntityBuilder.class})
-@PowerMockIgnore({"java.net.ssl", "javax.security.auth.x500.X500Principal"})
+        SSLContext.class, SSLConnectionSocketFactory.class, HttpClientBuilder.class, StringEntity.class, FieldAgent.class, MultipartEntityBuilder.class,
+        TrustManagers.class, TrustManagerFactory.class})
+@PowerMockIgnore({"java.net.ssl.*"})
 public class OrchestratorTest {
     private Orchestrator orchestrator;
     private SSLConnectionSocketFactory sslConnectionSocketFactory;
@@ -113,6 +118,7 @@ public class OrchestratorTest {
     private File file;
     private MultipartEntityBuilder multipartEntityBuilder;
     private IOFogNetworkInterfaceManager iOFogNetworkInterfaceManager;
+    TrustManagerFactory trustManagerFactory;
 
     @Before
     public void setUp() throws Exception {
@@ -210,6 +216,11 @@ public class OrchestratorTest {
         PowerMockito.whenNew(StringEntity.class).withParameterTypes(String.class, ContentType.class)
                 .withArguments(Mockito.anyString(), Mockito.eq(ContentType.APPLICATION_JSON))
                 .thenReturn(stringEntity);
+        PowerMockito.mock(TrustManagers.class);
+        mockStatic(TrustManagers.class);
+        trustManagerFactory = PowerMockito.mock(TrustManagerFactory.class);
+        mockStatic(TrustManagerFactory.class);
+        PowerMockito.when(TrustManagerFactory.getInstance(anyString())).thenReturn(trustManagerFactory);
         orchestrator = spy(new Orchestrator());
     }
 
@@ -655,9 +666,9 @@ public class OrchestratorTest {
     @Test
     public void testUpdateWhenInitializeThrowsKeyManagementException() {
         try {
-           // orchestrator = spy(new Orchestrator());
+            // orchestrator = spy(new Orchestrator());
             PowerMockito.doThrow(mock(KeyManagementException.class)).when(sslContext).init(Mockito.eq(null),
-                    Mockito.any(TrustManager[].class), Mockito.any(SecureRandom.class));
+                    Mockito.any(), Mockito.any(SecureRandom.class));
             PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
             orchestrator.update();
             PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));

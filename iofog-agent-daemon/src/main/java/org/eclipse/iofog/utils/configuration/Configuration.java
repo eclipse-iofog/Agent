@@ -397,15 +397,24 @@ public final class Configuration {
      * @throws Exception
      */
     public static void saveConfigUpdates() throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start saving configuration data to config.xml");
+    	LoggingService.logInfo(MODULE_NAME, "Start updating agent configurations");
     	
         FieldAgent.getInstance().instanceConfigUpdated();
         ProcessManager.getInstance().instanceConfigUpdated();
         ResourceConsumptionManager.getInstance().instanceConfigUpdated();
         MessageBus.getInstance().instanceConfigUpdated();
+//        LoggingService.instanceConfigUpdated();
 
         updateConfigFile(getCurrentConfigPath(), configFile);
-        LoggingService.logInfo(MODULE_NAME, "Finished saving configuration data to config.xml");
+        LoggingService.logInfo(MODULE_NAME, "Finished updating agent configurations");
+    }
+
+    public static void updateConfigBackUpFile() {
+        try {
+            updateConfigFile(getBackUpConfigPath(), configFile);
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Error saving backup config File", e);
+        }
     }
 
     /**
@@ -414,13 +423,18 @@ public final class Configuration {
      * @throws Exception
      */
     private static void updateConfigFile(String filePath, Document newFile) throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start updating configuration data to config.xml");
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        StreamResult result = new StreamResult(new File(filePath));
-        DOMSource source = new DOMSource(newFile);
-        transformer.transform(source, result);
-        LoggingService.logInfo(MODULE_NAME, "Finished saving configuration data to config.xml");
+        try {
+            LoggingService.logInfo(MODULE_NAME, "Start updating configuration data to config.xml");
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            StreamResult result = new StreamResult(new File(filePath));
+            DOMSource source = new DOMSource(newFile);
+            transformer.transform(source, result);
+            LoggingService.logInfo(MODULE_NAME, "Finished saving configuration data to config.xml");
+        } catch (Exception e) {
+            LoggingService.logError(MODULE_NAME, "Error saving config File", e);
+            throw new AgentSystemException("Error updating config file : "+ filePath, e);
+        }
     }
 
     /**
@@ -430,8 +444,8 @@ public final class Configuration {
      * @throws Exception
      */
     public static HashMap<String, String> setConfig(Map<String, Object> commandLineMap, boolean defaults) throws Exception {
-    	LoggingService.logInfo(MODULE_NAME, "Start setting configuration base on commandline parameters");
-    	boolean isLogUpdated = false;
+    	LoggingService.logInfo(MODULE_NAME, "Starting setting configuration base on commandline parameters");
+    	boolean updateLogger = false;
         HashMap<String, String> messageMap = new HashMap<>();
         if (commandLineMap != null) {
             for (Map.Entry<String, Object> command : commandLineMap.entrySet()) {
@@ -548,16 +562,16 @@ public final class Configuration {
                             messageMap.put(option, "Log disk limit range must be 0.5 to 100 GB");
                             break;
                         }
-                        isLogUpdated = true;
                         setNode(LOG_DISK_CONSUMPTION_LIMIT, value, configFile, configElement);
                         setLogDiskLimit(Float.parseFloat(value));
+                        updateLogger = true;
                         break;
                     case LOG_DISK_DIRECTORY:
                         LoggingService.logInfo(MODULE_NAME, "Setting log disk directory");
                         value = addSeparator(value);
-                        isLogUpdated = true;
                         setNode(LOG_DISK_DIRECTORY, value, configFile, configElement);
                         setLogDiskDirectory(value);
+                        updateLogger = true;
                         break;
                     case LOG_FILE_COUNT:
                         LoggingService.logInfo(MODULE_NAME, "Setting log file count");
@@ -571,9 +585,9 @@ public final class Configuration {
                             messageMap.put(option, "Log file count range must be 1 to 100");
                             break;
                         }
-                        isLogUpdated = true;
                         setNode(LOG_FILE_COUNT, value, configFile, configElement);
                         setLogFileCount(Integer.parseInt(value));
+                        updateLogger = true;
                         break;
                     case LOG_LEVEL:
                         LoggingService.logInfo(MODULE_NAME, "Setting log level");
@@ -583,9 +597,9 @@ public final class Configuration {
                             messageMap.put(option, "Option -" + option + " has invalid value: " + value);
                             break;
                         }
-                        isLogUpdated = true;
                         setNode(LOG_LEVEL, value.toUpperCase(), configFile, configElement);
                         setLogLevel(value.toUpperCase());
+                        updateLogger = true;
                         break;
                     case STATUS_FREQUENCY:
                         LoggingService.logInfo(MODULE_NAME, "Setting status frequency");
@@ -703,7 +717,6 @@ public final class Configuration {
                         }
                         setNode(DOCKER_PRUNING_FREQUENCY, value, configFile, configElement);
                         setDockerPruningFrequency(Long.parseLong(value));
-                        DockerPruningManager.getInstance().refreshSchedule();
                         break;
                     case AVAILABLE_DISK_THRESHOLD:
                         LoggingService.logInfo(MODULE_NAME, "Setting available disk threshold");
@@ -719,7 +732,6 @@ public final class Configuration {
                         }
                         setNode(AVAILABLE_DISK_THRESHOLD, value, configFile, configElement);
                         setAvailableDiskThreshold(Long.parseLong(value));
-                        DockerPruningManager.getInstance().refreshSchedule();
                         break;
                     case READY_TO_UPGRADE_SCAN_FREQUENCY:
                         LoggingService.logInfo(MODULE_NAME, "Setting isReadyToUpgrade scan frequency");
@@ -753,12 +765,27 @@ public final class Configuration {
                 Tracker.getInstance().handleEvent(TrackingEventType.CONFIG,
                         TrackingInfoUtils.getConfigUpdateInfo(cmdOption.name().toLowerCase(), value));
             }
-            saveConfigUpdates();
-            if (isLogUpdated) {
-                LoggingService.instanceConfigUpdated();
+            boolean configUpdateError = true;
+            try {
+                saveConfigUpdates();
+            } catch (Exception e){
+                configUpdateError = false;
+                try {
+                    LoggingService.logError(MODULE_NAME, "Error updating configuration",e);
+                } catch (Exception ex){
+                    LoggingService.logError(MODULE_NAME, "This should not happen",e);
+                }
+                throw e;
+            } finally {
+                if (configUpdateError) {
+                    updateConfigFile(getBackUpConfigPath(), configFile);
+                }
             }
         } else {
             messageMap.put("invalid", "Option and value are null");
+        }
+        if (updateLogger) {
+            LoggingService.instanceConfigUpdated();
         }
         LoggingService.logInfo(MODULE_NAME, "Finished setting configuration base on commandline parameters");
         
@@ -948,6 +975,7 @@ public final class Configuration {
     	
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = null;
+        boolean isConfigError = false;
         try {
 			builder = factory.newDocumentBuilder();
 		} catch (ParserConfigurationException e) {
@@ -957,14 +985,19 @@ public final class Configuration {
 
         try {
         	configFile = builder.parse(getCurrentConfigPath());
-		} catch (SAXException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException(e.getMessage(), e));
-			throw new ConfigurationItemException("Error while parsing config xml");
-		} catch (IOException e) {
-			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException(e.getMessage(), e));
-			throw new ConfigurationItemException(e.getMessage(), e);
+		} catch (Exception e) {
+            isConfigError = true;
+			LoggingService.logError(MODULE_NAME, "Error while parsing config xml", new ConfigurationItemException("Error while parsing config xml", e));
 		}
-        
+        if (isConfigError) {
+            try {
+                configFile = builder.parse(getBackUpConfigPath());
+            } catch (Exception e) {
+                LoggingService.logError(MODULE_NAME, "Error while parsing backup config xml", new ConfigurationItemException("Error while parsing config xml", e));
+                throw new ConfigurationItemException("Error while parsing config xml and backup config xml");
+            }
+        }
+
         configFile.getDocumentElement().normalize();
 
         configElement = (Element) getFirstNodeByTagName("config", configFile);
@@ -1003,7 +1036,17 @@ public final class Configuration {
         try {
             updateConfigFile(getCurrentConfigPath(), configFile);
         } catch (Exception e) {
-            LoggingService.logError(MODULE_NAME, "Error saving config", e);
+            try {
+                LoggingService.logError(MODULE_NAME, "Error saving config", e);
+            } catch (Exception ex) {
+                LoggingService.logError(MODULE_NAME, "This error should not print ever on loadConfig!", new AgentSystemException("Error Logging exception in saving config updates on loadConfig"));
+            }
+        } finally {
+            try {
+                updateConfigFile(getBackUpConfigPath(), configFile);
+            } catch (Exception e) {
+                LoggingService.logError(MODULE_NAME, "Error saving config back up file", e);
+            }
         }
         LoggingService.logInfo(MODULE_NAME, "Finished load Config");
     }
@@ -1308,6 +1351,10 @@ public final class Configuration {
         }
     }
 
+    public static String getBackUpConfigPath() {
+        return Constants.BACKUP_CONFIG_PATH;
+    }
+
     public static String setupConfigSwitcher(ConfigSwitcherState state) {
         ConfigSwitcherState previousState = currentSwitcherState;
         if (state.equals(previousState)) {
@@ -1361,7 +1408,6 @@ public final class Configuration {
             FieldAgent.getInstance().instanceConfigUpdated();
             ProcessManager.getInstance().instanceConfigUpdated();
             ResourceConsumptionManager.getInstance().instanceConfigUpdated();
-            LoggingService.instanceConfigUpdated();
             MessageBus.getInstance().instanceConfigUpdated();
 
             return "Successfully switched to new configuration.";
@@ -1375,7 +1421,6 @@ public final class Configuration {
                 FieldAgent.getInstance().instanceConfigUpdated();
                 ProcessManager.getInstance().instanceConfigUpdated();
                 ResourceConsumptionManager.getInstance().instanceConfigUpdated();
-                LoggingService.instanceConfigUpdated();
                 MessageBus.getInstance().instanceConfigUpdated();
 
                 return "Error while loading new config file, falling back to current configuration";
