@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [v2.0.7] - 2021-06-30
+
+### Bugs
+* Fixed the bug when config.xml file gets truncated and results in agent crash on re-start.
+* Fixed the bug of resetting logger on every configuration update. Now logger resets only on log configuration update.
+
 ## [v2.0.6] - 2021-04-28
 
 ### Bugs
