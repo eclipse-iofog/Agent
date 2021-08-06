@@ -1,11 +1,8 @@
-FROM iofog/ubuntu-16.04-java8 AS builder
+FROM docker.io/library/ubuntu:20.04 AS builder
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends unzip && \
-    apt-get install -y apt-utils curl && \
+    apt-get install -y unzip apt-utils curl openjdk-8-jdk && \
     apt-get clean
-
-COPY . .
 
 # 1- Define a constant with the version of gradle you want to install
 ARG GRADLE_VERSION=5.4
@@ -40,23 +37,25 @@ ENV PATH $PATH:$GRADLE_HOME/bin
 
 VOLUME $GRADLE_USER_HOME
 
-RUN gradle build copyJar -x test
+COPY . .
 
-FROM jpetazzo/dind
+RUN gradle build copyJar -x test --no-daemon
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+RUN true && \
+    microdnf install -y curl ca-certificates java-11-openjdk-headless sudo shadow-utils && \
+    microdnf clean all && \
+    true
+
+RUN echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/lib/security/java.security
 
 COPY --from=builder packaging/iofog-agent/etc /etc
-COPY --from=builder   packaging/iofog-agent/usr /usr
+COPY --from=builder packaging/iofog-agent/usr /usr
 
-RUN cd /opt && \
-  wget --no-check-certificate "https://storage.googleapis.com/edgeworx/downloads/jdk/jdk-8u211-64.tar.gz" && \
-  tar -xvf jdk-8u211-64.tar.gz && \
-  update-alternatives --install /usr/bin/java java /opt/jdk1.8.0_211/bin/java 1100 && \
-  rm jdk-8u211-64.tar.gz
-
-RUN apt-get update && \
-    apt-get install -y sudo && \
+RUN true && \
     useradd -r -U -s /usr/bin/nologin iofog-agent && \
-    usermod -aG root,sudo iofog-agent && \
+    usermod -aG root,wheel iofog-agent && \
     mv /etc/iofog-agent/config_new.xml /etc/iofog-agent/config.xml && \
     mv /etc/iofog-agent/config-development_new.xml /etc/iofog-agent/config-development.xml && \
     mv /etc/iofog-agent/config-production_new.xml /etc/iofog-agent/config-production.xml && \
@@ -79,12 +78,9 @@ RUN apt-get update && \
     chmod 774 -R /var/run/iofog-agent && \
     chmod 774 -R /var/backups/iofog-agent && \
     chmod 754 -R /usr/share/iofog-agent && \
-    mv /dev/random /dev/random.real && \
-    ln -s /dev/urandom /dev/random && \
     chmod 774 /etc/init.d/iofog-agent && \
     chmod 754 /usr/bin/iofog-agent && \
     chown :iofog-agent /usr/bin/iofog-agent && \
-    update-rc.d iofog-agent defaults && \
-    ln -sf /usr/bin/iofog-agent /usr/local/bin/iofog-agent && \
-    echo "service iofog-agent start && tail -f /dev/null" >> /start.sh
-CMD [ "sh", "/start.sh" ]
+    true
+
+CMD [ "java", "-jar", "/usr/bin/iofog-agentd.jar", "start" ]
