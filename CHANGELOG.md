@@ -26,7 +26,7 @@
 * Docker pull stats with percentage completion
 * Send error back to controller on failure of volume mount on microservice
 
-## [2.0.7] - 2021-06-30
+## [v2.0.7] - 2021-06-30
 * Fixed the bug when config.xml file gets truncated and results in agent crash on re-start.
 * Fixed the bug of resetting logger on every configuration update. Now logger resets only on log configuration update.
 
