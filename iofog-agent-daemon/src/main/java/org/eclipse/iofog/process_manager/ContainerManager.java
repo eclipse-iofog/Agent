@@ -130,6 +130,7 @@ public class ContainerManager {
 			String status = statusOptional.orElse("unknown");
 			LoggingService.logInfo(MODULE_NAME, String.format("starting %s, status: %s", microservice.getImageName(), status));
 			microservice.setContainerIpAddress(docker.getContainerIpAddress(microservice.getContainerId()));
+			StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microservice.getMicroserviceUuid(), "");
 		} catch (Exception ex) {
 			LoggingService.logError(MODULE_NAME,
 					String.format("Container \"%s\" not found", microservice.getImageName()),
