@@ -735,6 +735,7 @@ public class DockerUtil {
             StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microservice.getMicroserviceUuid(), e.getMessage());
             throw e;
         }
+        StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microservice.getMicroserviceUuid(), "");
         return resp.getId();
     }
 
