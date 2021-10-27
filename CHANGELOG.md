@@ -9,6 +9,7 @@
 * Reset microservice container error message on successful microservice deployment
 
 ## [v3.0.0-beta1] - 31 Aug 2021
+
 ### Features
 * Added support for Centos 8
 
