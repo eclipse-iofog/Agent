@@ -23,7 +23,7 @@ variables:
 jobs:
   - job: Agent
     pool:
-      vmImage: 'Ubuntu-16.04'
+      vmImage: 'Ubuntu-18.04'
 
     steps:
       - task: Gradle@2
@@ -239,7 +239,7 @@ jobs:
           package=$(ls | grep *.deb)
           echo $package
 
-          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic") #Support ubuntu versions
+          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic" "focal") #Support ubuntu versions
           declare -a DEBIAN_VERS=("wheezy" "jessie" "stretch" "buster") #Also appplies to Raspbian, See related for loop
 
           for version in "${UBUNTU_VERS[@]}"
