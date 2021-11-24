@@ -119,7 +119,11 @@
 * Fixed NullPointer exception on microservice status
 * Fixed the issue with microservice status
     
-[Unreleased]: https://github.com/eclipse-iofog/agent/compare/v2.0.2..HEAD
+[Unreleased]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..HEAD
+[v3.0.0-beta2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..v3.0.0-beta3
+[v3.0.0-beta2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta1..v3.0.0-beta2
+[v3.0.0-beta1]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha2..v3.0.0-beta1
+[v3.0.0-alpha2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha1..v3.0.0-alpha2
 [v3.0.0-alpha1]: https://github.com/eclipse-iofog/agent/compare/v2.0.6..v3.0.0-alpha1
 [v2.0.7]: https://github.com/eclipse-iofog/agent/compare/v2.0.7..v2.0.7
 [v2.0.6]: https://github.com/eclipse-iofog/agent/compare/v2.0.5..v2.0.6
