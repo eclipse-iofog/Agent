@@ -579,18 +579,15 @@ public class DockerUtil {
             resultCallback = req.exec(resultCallback);
             resultCallback.awaitCompletion();
 
-        } catch (NotFoundException e) {
-            LoggingService.logError(MODULE_NAME, "Image not found : " + imageName, new AgentSystemException(e.getMessage(), e));
-            throw new AgentSystemException("Image not found", e);
-        } catch (NotModifiedException e) {
-            LoggingService.logError(MODULE_NAME, "Image not found : " + imageName, new AgentSystemException(e.getMessage(), e));
-            throw new AgentSystemException(e.getMessage(), e);
         } catch (InterruptedException e) {
+            StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microserviceUuid, e.getMessage());
             throw new AgentSystemException("Interrupted while pulling image : " + imageName, new AgentSystemException(e.getMessage(), e));
         } catch (Exception e) {
+            StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microserviceUuid, e.getMessage());
             LoggingService.logError(MODULE_NAME, "Image not found : " + imageName, new AgentSystemException(e.getMessage(), e));
             throw new AgentSystemException(e.getMessage(), e);
         }
+        StatusReporter.setProcessManagerStatus().setMicroservicesStatusErrorMessage(microserviceUuid, "");
         LoggingService.logInfo(MODULE_NAME, String.format("Finished pull image \"%s\" ", imageName));
     }
 

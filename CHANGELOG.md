@@ -1,11 +1,14 @@
 # Changelog
+## [unreleased]
+### Bugs
+* Send error message back to controller on failure to pull docker image
+* Fixed issue with remote debugging with jdk 11
 
 ## [v3.0.0-beta2] - 27 Oct 2021
-### Bugs
+#### Bugs
 * Reset microservice container error message on successful microservice deployment
 
 ## [v3.0.0-beta1] - 31 Aug 2021
-
 ### Features
 * Added support for Centos 8
 
@@ -117,11 +120,8 @@
 * Fixed the issue with microservice status
     
 [Unreleased]: https://github.com/eclipse-iofog/agent/compare/v2.0.2..HEAD
-[v3.0.0-beta2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha1..v3.0.0-beta2
-[v3.0.0-beta1]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha2..v3.0.0-beta1
-[v3.0.0-alpha2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha1..v3.0.0-alpha2
-[v3.0.0-alpha1]: https://github.com/eclipse-iofog/agent/compare/v2.0.7..v3.0.0-alpha1
-[v2.0.7]: https://github.com/eclipse-iofog/agent/compare/v2.0.6..v2.0.7
+[v3.0.0-alpha1]: https://github.com/eclipse-iofog/agent/compare/v2.0.6..v3.0.0-alpha1
+[v2.0.7]: https://github.com/eclipse-iofog/agent/compare/v2.0.7..v2.0.7
 [v2.0.6]: https://github.com/eclipse-iofog/agent/compare/v2.0.5..v2.0.6
 [v2.0.5]: https://github.com/eclipse-iofog/agent/compare/v2.0.4..v2.0.5
 [v2.0.4]: https://github.com/eclipse-iofog/agent/compare/v2.0.3..v2.0.4
