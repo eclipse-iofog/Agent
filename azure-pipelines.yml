@@ -242,7 +242,7 @@ jobs:
           echo "package..."
           package=$(ls | grep *.deb)
           echo $package
-           package_cloud yank iofog/iofog-agent-dev/ubuntu/${version} iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+           package_cloud yank iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
 
 
 #          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic" "focal") #Support ubuntu versions
