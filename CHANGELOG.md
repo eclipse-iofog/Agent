@@ -1,5 +1,12 @@
 # Changelog
 
+## [v3.0.0-beta4] -16 Dec 2021
+
+### Features
+* Added support for raspbian/bullseye
+### Bugs
+* Revert fix for jdk 11 remote debugging
+
 ## [v3.0.0-beta3] -1 Dec 2021
 ### Bugs
 * Send error message back to controller on failure to pull docker image
