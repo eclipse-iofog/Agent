@@ -186,19 +186,21 @@ jobs:
           echo "package..."
           echo $package
 
-          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic" "focal") #Support ubuntu versions
-          declare -a DEBIAN_VERS=("wheezy" "jessie" "stretch" "buster" "bullseye") #Also appplies to Raspbian, See related for loop
+          package_cloud push iofog/iofog-agent-snapshots/any/any $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
 
-          for version in "${UBUNTU_VERS[@]}"
-          do
-              package_cloud push iofog/iofog-agent-snapshots/ubuntu/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-          done
-
-          for version in "${DEBIAN_VERS[@]}"
-          do
-              package_cloud push iofog/iofog-agent-snapshots/debian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-              package_cloud push iofog/iofog-agent-snapshots/raspbian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-          done
+#          declare -a UBUNTU_VERS=("precise" "trusty" "utopic" "vivid" "wily" "xenial" "bionic" "focal") #Support ubuntu versions
+#          declare -a DEBIAN_VERS=("wheezy" "jessie" "stretch" "buster") #Also appplies to Raspbian, See related for loop
+#
+#          for version in "${UBUNTU_VERS[@]}"
+#          do
+#              package_cloud push iofog/iofog-agent-snapshots/ubuntu/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+#          done
+#
+#          for version in "${DEBIAN_VERS[@]}"
+#          do
+#              package_cloud push iofog/iofog-agent-snapshots/debian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+#              package_cloud push iofog/iofog-agent-snapshots/raspbian/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+#          done
         displayName: 'publish deb to package-cloud'
 
       - script: |
@@ -215,18 +217,20 @@ jobs:
           echo "package..."
           echo $package
 
-          declare -a FEDORA_VERS=("22" "23" "24") #Supported Fedora Versions
-          declare -a REDHAT_VERS=("6" "7" "8") #Supported Redhat versions
+          package_cloud push iofog/iofog-agent-snapshots/rpm_any/rpm_any $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
 
-          for version in ${FEDORA_VERS[@]}
-          do
-              package_cloud push iofog/iofog-agent-snapshots/fedora/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-          done
-
-          for version in ${REDHAT_VERS[@]}
-          do
-              package_cloud push iofog/iofog-agent-snapshots/el/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-          done
+#          declare -a FEDORA_VERS=("22" "23" "24") #Supported Fedora Versions
+#          declare -a REDHAT_VERS=("6" "7" "8") #Supported Redhat versions
+#
+#          for version in ${FEDORA_VERS[@]}
+#          do
+#              package_cloud push iofog/iofog-agent-snapshots/fedora/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+#          done
+#
+#          for version in ${REDHAT_VERS[@]}
+#          do
+#              package_cloud push iofog/iofog-agent-snapshots/el/${version} $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+#          done
         displayName: 'publish rpm to package-cloud'
 
       - script: |
