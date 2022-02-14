@@ -1695,7 +1695,7 @@ public class FieldAgent implements IOFogModule {
                     content.append(inputLine);
                 }
             } catch (IOException exc) {
-                logWarning("HAL is not enabled for this Iofog Agent at the moment");
+                logDebug("HAL is not enabled for this Iofog Agent at the moment");
             }
             connection.get().disconnect();
         }
@@ -1715,7 +1715,7 @@ public class FieldAgent implements IOFogModule {
             }
         } catch (IOException exc) {
             connection = null;
-            logWarning("HAL is not enabled for this Iofog Agent at the moment");
+            logDebug("HAL is not enabled for this Iofog Agent at the moment");
         }
         logDebug("Finished sending Http request");
         return Optional.ofNullable(connection);
