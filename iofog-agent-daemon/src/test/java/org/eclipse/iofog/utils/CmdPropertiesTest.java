@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2020 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2022 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -42,7 +42,7 @@ public class CmdPropertiesTest {
 
     @Test
     public void getVersionMessage() {
-        assertEquals("ioFog %s \nCopyright (C) 2020 Edgeworx, Inc. \nEclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \nhttps://www.eclipse.org/legal/epl-v20.html",
+        assertEquals("ioFog %s \nCopyright (C) 2022 Edgeworx, Inc. \nEclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \nhttps://www.eclipse.org/legal/epl-v20.html",
                 CmdProperties.getVersionMessage());
     }
 
