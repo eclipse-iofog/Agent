@@ -1,5 +1,18 @@
 # Changelog
-## [unreleased]
+
+## [v3.0.0-beta5] -16 Dec 2021
+### Features
+* Removed iofog-agent support for specific distros and Added support for any/any package which handles different distros.
+### Bugs
+* Fixed issue where microservice container was not spinning again if docker container was killed.
+
+## [v3.0.0-beta4] -16 Dec 2021
+### Features
+* Added support for raspbian/bullseye
+### Bugs
+* Revert fix for jdk 11 remote debugging
+
+## [v3.0.0-beta3] -1 Dec 2021
 ### Bugs
 * Send error message back to controller on failure to pull docker image
 * Fixed issue with remote debugging with jdk 11
@@ -26,7 +39,7 @@
 * Docker pull stats with percentage completion
 * Send error back to controller on failure of volume mount on microservice
 
-## [2.0.7] - 2021-06-30
+## [v2.0.7] - 2021-06-30
 * Fixed the bug when config.xml file gets truncated and results in agent crash on re-start.
 * Fixed the bug of resetting logger on every configuration update. Now logger resets only on log configuration update.
 
@@ -90,7 +103,7 @@
 
 ### Features
 
-* Skupper integration 
+* Skupper integration
 * Agent docker pruning
 
 ### Bug fixes
@@ -118,8 +131,11 @@
 * Fixed incorrect content type error on cli commands
 * Fixed NullPointer exception on microservice status
 * Fixed the issue with microservice status
-    
-[Unreleased]: https://github.com/eclipse-iofog/agent/compare/v2.0.2..HEAD
+
+[Unreleased]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..HEAD
+[v3.0.0-beta5]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta4..v3.0.0-beta5
+[v3.0.0-beta4]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..v3.0.0-beta4
+[v3.0.0-beta3]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta2..v3.0.0-beta3
 [v3.0.0-beta2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta1..v3.0.0-beta2
 [v3.0.0-beta1]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha2..v3.0.0-beta1
 [v3.0.0-alpha2]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-alpha1..v3.0.0-alpha2
