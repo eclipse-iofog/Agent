@@ -215,7 +215,8 @@ jobs:
           echo "package..."
           package=$(ls | grep *.deb)
           echo $package
-           package_cloud yank iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+#           package_cloud yank iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+           package_cloud push iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
         displayName: 'publish deb develop package to package-cloud'
         condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop'))
 
