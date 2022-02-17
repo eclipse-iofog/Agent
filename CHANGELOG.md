@@ -1,7 +1,12 @@
 # Changelog
 
 ## [v3.0.0-beta4] -16 Dec 2021
+### Features
+* Removed iofog-agent support for specific distros and Added support for any/any package which handles different distros.
+### Bugs
+* Fixed issue where microservice container was not spinning again if docker container was killed.
 
+## [v3.0.0-beta4] -16 Dec 2021
 ### Features
 * Added support for raspbian/bullseye
 ### Bugs
