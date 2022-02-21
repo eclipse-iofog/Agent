@@ -1,6 +1,10 @@
 # Changelog
 
-## [v3.0.0-beta5] -16 Dec 2021
+## [v3.0.0-beta6] -21 Feb 2022
+### Bugs
+* Fixed the copyright to 2022
+
+## [v3.0.0-beta5] -17 Feb 2022
 ### Features
 * Removed iofog-agent support for specific distros and Added support for any/any package which handles different distros.
 ### Bugs
@@ -133,6 +137,7 @@
 * Fixed the issue with microservice status
 
 [Unreleased]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..HEAD
+[v3.0.0-beta6]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta5..v3.0.0-beta6
 [v3.0.0-beta5]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta4..v3.0.0-beta5
 [v3.0.0-beta4]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..v3.0.0-beta4
 [v3.0.0-beta3]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta2..v3.0.0-beta3
