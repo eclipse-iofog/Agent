@@ -1,14 +1,14 @@
 # Changelog
 
-## [v3.0.0-beta6] -21 Feb 2022
-* Fixed the copyright to 2022
+## [v3.0.0-beta6] -22 Feb 2022
+* Fixed the issue with updating yum package repository
 
-## [v3.0.0-beta5] -17 Feb 2022
 ## [v3.0.0-beta5] -17 Feb 2022
 ### Features
 * Removed iofog-agent support for specific distros and Added support for any/any package which handles different distros.
 ### Bugs
 * Fixed issue where microservice container was not spinning again if docker container was killed.
+* Fixed the copyright to 2022
 
 ## [v3.0.0-beta4] -16 Dec 2021
 ### Features
