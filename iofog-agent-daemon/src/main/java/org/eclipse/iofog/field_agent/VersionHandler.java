@@ -58,14 +58,14 @@ public class VersionHandler {
 				DEV = getIofogPackageDevVersion();
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "apt-cache policy " + PACKAGE_NAME + DEV + " | grep Installed | awk '{print $2}'";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "apt-cache policy " + PACKAGE_NAME + DEV + " | grep Candidate | awk '{print $2}'";
-				UPDATE_PACKAGE_REPOSITORY = "apt-get update";
+				UPDATE_PACKAGE_REPOSITORY = "apt-get update -y";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/lib/apt/lists/lock /var/cache/apt/archives/lock";
 			} else if (distrName.contains("fedora")) {
 				GET_IOFOG_PACKAGE_DEV_VERSION = "(dnf --showduplicates list installed " + PACKAGE_NAME + "-dev && dnf --showduplicates list installed " + PACKAGE_NAME + ") | grep iofog | awk '{print $1}' | sed -e 's/iofog-agent\\(.*\\).noarch/\\1/')";
 				DEV = getIofogPackageDevVersion();
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list installed " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}'";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}' | sed -n \\$p\\";
-				UPDATE_PACKAGE_REPOSITORY = "dnf update";
+				UPDATE_PACKAGE_REPOSITORY = "dnf update -y";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/cache/dnf/metadata_lock.pid";
 			} else if (distrName.contains("red hat")
 					|| distrName.contains("centos")
@@ -74,7 +74,7 @@ public class VersionHandler {
 				DEV = getIofogPackageDevVersion();
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list installed | grep " + PACKAGE_NAME + DEV + " | awk '{print $2}'";
 				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep " + PACKAGE_NAME + DEV + "| awk '{print $2}' | sed -n \\$p\\";
-				UPDATE_PACKAGE_REPOSITORY = "yum update";
+				UPDATE_PACKAGE_REPOSITORY = "yum update -y";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/run/yum.pid";
 			} else {
 				logWarning(MODULE_NAME, "it looks like your distribution is not supported");

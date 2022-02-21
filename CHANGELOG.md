@@ -4,6 +4,7 @@
 * Fixed the copyright to 2022
 
 ## [v3.0.0-beta5] -17 Feb 2022
+## [v3.0.0-beta5] -17 Feb 2022
 ### Features
 * Removed iofog-agent support for specific distros and Added support for any/any package which handles different distros.
 ### Bugs
