@@ -134,12 +134,12 @@ public class ProcessManager implements IOFogModule {
 							if (status.getStatus().equals(MicroserviceState.STUCK_IN_RESTART)) {
 								microservice.setStuckInRestart(true);
 							}
-							logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
+							logInfo(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
 						}
 					} else if (!containerOptional.isPresent() && MicroserviceState.RUNNING.equals(StatusReporter.getProcessManagerStatus().getMicroserviceStatus(microservice.getMicroserviceUuid()).getStatus())) {
 						MicroserviceStatus status = docker.getMicroserviceStatus(microservice.getContainerId(), microservice.getMicroserviceUuid());
 						StatusReporter.setProcessManagerStatus().setMicroservicesStatus(microservice.getMicroserviceUuid(), status);
-						logDebug(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
+						logInfo(String.format("Updated microservice \"%s\" with status \"%s\" : ", microservice.getImageName(), status.getStatus().name()));
 					}
 				});
 	}
