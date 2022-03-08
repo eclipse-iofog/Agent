@@ -108,6 +108,11 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "Creating container \"" + microservice.getImageName() + "\"");
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
 		String hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
+		if(hostName.isEmpty()){
+			IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+			hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
+			LoggingService.logInfo(MODULE_NAME, "hostname updated to \"" + hostName + "\"");
+		}
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
