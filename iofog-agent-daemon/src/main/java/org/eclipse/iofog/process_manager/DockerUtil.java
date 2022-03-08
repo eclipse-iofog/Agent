@@ -662,7 +662,9 @@ public class DockerUtil {
         } else {
             hosts = new String[1];
         }
-        hosts[hosts.length - 1] = "iofog:" + host;
+        if (!host.isEmpty()) {
+            hosts[hosts.length - 1] = "iofog:" + host;
+        }
 
         Map<String, String> containerLogConfig = new HashMap<>();
         int logFiles = 1;
