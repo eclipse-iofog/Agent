@@ -655,14 +655,18 @@ public class DockerUtil {
             });
         }
         String[] hosts;
+        boolean hasIoFogExtraHost = false;
         List<String> extraHosts = microservice.getExtraHosts();
         if (extraHosts != null && extraHosts.size() > 0) {
             hosts = new String[extraHosts.size() + 1];
             hosts = extraHosts.toArray(hosts);
+            if (extraHosts.stream().filter(str -> str.trim().contains("iofog")).count() != 0) {
+                hasIoFogExtraHost = true;
+            }
         } else {
             hosts = new String[1];
         }
-        if (!host.isEmpty()) {
+        if (!host.isEmpty() && !hasIoFogExtraHost) {
             hosts[hosts.length - 1] = "iofog:" + host;
         }
 
@@ -709,13 +713,13 @@ public class DockerUtil {
         if (SystemUtils.IS_OS_WINDOWS) {
             if(microservice.isRootHostAccess()){
                 hostConfig.withNetworkMode("host").withExtraHosts(hosts).withPrivileged(true);
-            } else {
+            } else if(hosts[hosts.length - 1] != null) {
                 hostConfig.withExtraHosts(hosts).withPrivileged(true);
             }
         } else if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
             if(microservice.isRootHostAccess()){
                 hostConfig.withNetworkMode("host").withPrivileged(true);
-            } else {
+            } else if(hosts[hosts.length - 1] != null) {
                 hostConfig.withExtraHosts(hosts).withPrivileged(true);
             }
         }
