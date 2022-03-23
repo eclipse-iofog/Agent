@@ -658,11 +658,13 @@ public class DockerUtil {
         boolean hasIoFogExtraHost = false;
         List<String> extraHosts = microservice.getExtraHosts();
         if (extraHosts != null && extraHosts.size() > 0) {
-            hosts = new String[extraHosts.size() + 1];
-            hosts = extraHosts.toArray(hosts);
             if (extraHosts.stream().filter(str -> str.trim().contains("iofog")).count() != 0) {
                 hasIoFogExtraHost = true;
+                hosts = new String[extraHosts.size()];
+            } else {
+                hosts = new String[extraHosts.size() + 1];
             }
+            hosts = extraHosts.toArray(hosts);
         } else {
             hosts = new String[1];
         }
