@@ -18,21 +18,13 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.exception.AgentSystemException;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
-
-import java.net.MalformedURLException;
-import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
 import static org.eclipse.iofog.microservice.Microservice.deleteLock;
-import static org.eclipse.iofog.process_manager.ContainerTask.Tasks.REMOVE;
-import static org.eclipse.iofog.utils.Constants.ControllerStatus.OK;
 
 /**
  * provides methods to manage Docker containers
@@ -136,7 +128,7 @@ public class ContainerManager {
 				IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
 				hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
 				tries += 1;
-			} catch (InterruptedException | SocketException | MalformedURLException e) {
+			} catch (Exception e) {
 				LoggingService.logError(MODULE_NAME, "Hostname  not found", new AgentSystemException(e.getMessage(), e));
 			}
 		}
