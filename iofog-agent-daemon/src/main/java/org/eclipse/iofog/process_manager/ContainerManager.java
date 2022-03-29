@@ -18,14 +18,12 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.exception.AgentSystemException;
-import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.logging.LoggingService;
-
 import java.util.Optional;
-
+import java.util.concurrent.TimeUnit;
 import static org.eclipse.iofog.microservice.Microservice.deleteLock;
 
 /**
@@ -108,6 +106,10 @@ public class ContainerManager {
 		LoggingService.logInfo(MODULE_NAME, "Creating container \"" + microservice.getImageName() + "\"");
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.STARTING);
 		String hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
+		if(hostName.isEmpty()){
+			hostName = retryHostName(hostName);
+			LoggingService.logInfo(MODULE_NAME, "hostname updated to \"" + hostName + "\"");
+		}
 		String id = docker.createContainer(microservice, hostName);
 		microservice.setContainerId(id);
 		microservice.setContainerIpAddress(docker.getContainerIpAddress(id));
@@ -115,6 +117,22 @@ public class ContainerManager {
 		startContainer(microservice);
 		microservice.setRebuild(false);
 		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.RUNNING);
+	}
+
+	private String retryHostName(String hostName) {
+		LoggingService.logDebug(MODULE_NAME, "Retrying to get hostname");
+		int tries = 0;
+		while (hostName.equals("") && tries < 5){
+			try {
+				TimeUnit.SECONDS.sleep(10);
+				IOFogNetworkInterfaceManager.getInstance().updateIOFogNetworkInterface();
+				hostName = IOFogNetworkInterfaceManager.getInstance().getCurrentIpAddress();
+				tries += 1;
+			} catch (Exception e) {
+				LoggingService.logError(MODULE_NAME, "Hostname  not found", new AgentSystemException(e.getMessage(), e));
+			}
+		}
+		return hostName;
 	}
 
 	/**

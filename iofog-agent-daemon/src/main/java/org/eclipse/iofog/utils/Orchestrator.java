@@ -69,7 +69,7 @@ import static org.eclipse.iofog.utils.logging.LoggingService.*;
  * @author saeid
  */
 public class Orchestrator {
-    private static final int CONNECTION_TIMEOUT = 5000;
+    private static final int CONNECTION_TIMEOUT = 10000;
     private String controllerUrl;
     private String iofogUuid;
     private String iofogAccessToken;
