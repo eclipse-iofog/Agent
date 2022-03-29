@@ -1,5 +1,10 @@
 # Changelog
 
+## [v3.0.0-beta7] -29 Mar 2022
+### Bugs
+* Fixed the issue with adding extra-host while creating containers.
+* Added a retry mechanism for fetching device ip address on creating containers.
+
 ## [v3.0.0-beta6] -22 Feb 2022
 * Fixed the issue with updating yum package repository
 
@@ -137,6 +142,7 @@
 * Fixed the issue with microservice status
 
 [Unreleased]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..HEAD
+[v3.0.0-beta7]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta6..v3.0.0-beta7
 [v3.0.0-beta6]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta5..v3.0.0-beta6
 [v3.0.0-beta5]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta4..v3.0.0-beta5
 [v3.0.0-beta4]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..v3.0.0-beta4
