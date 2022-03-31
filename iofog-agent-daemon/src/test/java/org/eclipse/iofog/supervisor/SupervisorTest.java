@@ -14,7 +14,6 @@ import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.tracking.Tracker;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.After;
@@ -22,17 +21,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
 import java.lang.reflect.Method;
 
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.RUNNING;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -42,7 +37,7 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Supervisor.class, StatusReporter.class, ResourceConsumptionManager.class,
-        FieldAgent.class, ProcessManager.class, Tracker.class, SecurityManager.class,
+        FieldAgent.class, ProcessManager.class, SecurityManager.class,
         MessageBus.class, LocalApi.class, LoggingService.class, Configuration.class, IOFogNetworkInterfaceManager.class, DockerPruningManager.class,
         DockerUtil.class, SupervisorStatus.class})
 public class SupervisorTest {
@@ -62,7 +57,6 @@ public class SupervisorTest {
             mockStatic(ResourceConsumptionManager.class);
             mockStatic(FieldAgent.class);
             mockStatic(ProcessManager.class);
-            mockStatic(Tracker.class);
             mockStatic(SecurityManager.class);
             mockStatic(MessageBus.class);
             mockStatic(LocalApi.class);
@@ -84,7 +78,6 @@ public class SupervisorTest {
             PowerMockito.when(ResourceConsumptionManager.getInstance()).thenReturn(null);
             PowerMockito.when(FieldAgent.getInstance()).thenReturn(null);
             PowerMockito.when(ProcessManager.getInstance()).thenReturn(null);
-            PowerMockito.when(Tracker.getInstance()).thenReturn(mock(Tracker.class));
             PowerMockito.when(MessageBus.getInstance()).thenReturn(null);
             PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);
             PowerMockito.doNothing().when(ioFogNetworkInterfaceManager).start();
