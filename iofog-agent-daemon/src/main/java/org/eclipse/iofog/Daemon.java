@@ -12,7 +12,6 @@
  */
 package org.eclipse.iofog;
 
-import io.sentry.Sentry;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -22,8 +21,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
-import static org.eclipse.iofog.utils.CmdProperties.getVersion;
-
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -158,9 +155,6 @@ public class Daemon {
     }
 
     public static void main(String[] args) throws ParseException {
-        Sentry.init("https://0c6c3531b8b5402287e2688281bbbf06@sentry.io/1378607");
-
-        Sentry.getContext().addExtra("version", getVersion());
 
         try {
             Configuration.load();
@@ -188,7 +182,6 @@ public class Daemon {
         } catch (Exception e) {
             System.out.println(e.getMessage());
             System.out.println(ExceptionUtils.getFullStackTrace(e));
-            Sentry.capture(e);
         }
     }
 

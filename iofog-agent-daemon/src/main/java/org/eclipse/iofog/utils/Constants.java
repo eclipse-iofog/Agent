@@ -112,8 +112,6 @@ public class Constants {
 
     public static final String TRACKING_UUID_PATH = CONFIG_DIR + "tracking-uuid";
 
-    public static final String SENTRY_CACHE_PATH = CONFIG_DIR + "sentry-cache.json";
-
     public static final int CACHE_REGISTRY_ID = 2;
     
     public static final String FIELD_AGENT_PING_CONTROLLER = "FAPC";
