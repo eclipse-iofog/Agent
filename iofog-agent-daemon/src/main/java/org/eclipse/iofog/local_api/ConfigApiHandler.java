@@ -62,6 +62,7 @@ public class ConfigApiHandler implements Callable<FullHttpResponse> {
         put("ft", "fog-type");
         put("dev", "developer-mode");
         put("ll", "logs-level");
+        put("tz", "time-zone");
     }};
 
     public ConfigApiHandler(HttpRequest request, ByteBuf outputBuffer, byte[] content) {

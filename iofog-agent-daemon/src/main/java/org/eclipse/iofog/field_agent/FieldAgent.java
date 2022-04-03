@@ -1207,6 +1207,10 @@ public class FieldAgent implements IOFogModule {
                         configs.getInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty()) :
                         Integer.parseInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getDefaultValue());
 
+                String timeZone = configs.containsKey(TIME_ZONE.getJsonProperty()) ?
+                        configs.getString(TIME_ZONE.getJsonProperty()) :
+                        TIME_ZONE.getDefaultValue();
+
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -1269,6 +1273,9 @@ public class FieldAgent implements IOFogModule {
                 if ((Configuration.getReadyToUpgradeScanFrequency() != readyToUpgradeScanFreq) && (readyToUpgradeScanFreq >= 1))
                     instanceConfig.put(READY_TO_UPGRADE_SCAN_FREQUENCY.getCommandName(), readyToUpgradeScanFreq);
 
+                if (Configuration.getTimeZone()!= null && !Configuration.getTimeZone().equals(timeZone))
+                    instanceConfig.put(TIME_ZONE.getCommandName(), timeZone);
+
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);
             }
@@ -1285,8 +1292,8 @@ public class FieldAgent implements IOFogModule {
                 logError("We should never see this", new AgentUserException("This exception arise while logging the exception"));
             }
         } finally {
-            if (hasError) {
-
+            if (!hasError) {
+                Configuration.updateConfigBackUpFile();
             }
         }
         logInfo("Finished Get ioFog config");

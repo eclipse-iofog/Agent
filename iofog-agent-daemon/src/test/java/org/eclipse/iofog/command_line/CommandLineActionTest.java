@@ -427,7 +427,7 @@ public class CommandLineActionTest {
             "                 -lc <#log files>        Set the number of log files to evenly\\n" +
             "                                         split the log storage limit\\n" +
             "                 -ll <log level>         Set the standard logging levels that\\n"+
-            "                                         can be used to control logging output" +
+            "                                         can be used to control logging output\\n" +
             "                 -sf <#seconds>          Set the status update frequency\\n" +
             "                 -cf <#seconds>          Set the get changes frequency\\n" +
             "                 -df <#seconds>          Set the post diagnostics frequency\\n" +
@@ -435,7 +435,7 @@ public class CommandLineActionTest {
             "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
             "                 -dt <#percentage>       Set the available disk threshold\\n" +
             "                 -idc <on/off>           Set the mode on which any not\\n" +
-            "										  registered docker container will be\\n" +
+            "                                         registered docker container will be\\n" +
             "										  shut down\\n" +
             "                 -gps <auto/off          Set gps location of fog.\\n" +
             "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
@@ -447,6 +447,7 @@ public class CommandLineActionTest {
             "                 -sec <on/off>           Set the secure mode without using ssl \\n" +
             "                                         certificates. \\n" +
             "                 -dev <on/off>           Set the developer's mode\\n" +
+            "                 -tz                     Set the device timeZone\\n" +
             "\\n" +
             "\\n" +
             "Report bugs to: edgemaster@iofog.org\\n" +

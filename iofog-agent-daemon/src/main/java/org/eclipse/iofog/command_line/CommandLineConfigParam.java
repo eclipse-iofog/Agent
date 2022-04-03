@@ -58,7 +58,8 @@ public enum CommandLineConfigParam {
     DOCKER_PRUNING_FREQUENCY ("1", "pf", "docker_pruning_freq", "dockerPruningFrequency"),
     AVAILABLE_DISK_THRESHOLD ("20", "dt", "available_disk_threshold", "availableDiskThreshold"),
     READY_TO_UPGRADE_SCAN_FREQUENCY ("24", "uf", "upgrade_scan_frequency", "readyToUpgradeScanFrequency"),
-    DEV_MODE ("off", "dev", "dev_mode", "");
+    DEV_MODE ("off", "dev", "dev_mode", ""),
+    TIME_ZONE("", "tz", "time_zone", "");
 
     private final String commandName;
     private final String xmlTag;

@@ -106,6 +106,7 @@ public final class Configuration {
     private static long dockerPruningFrequency;
     private static long availableDiskThreshold;
     private static int readyToUpgradeScanFrequency;
+    private static String timeZone;
 
 
     public static boolean debugging = false;
@@ -750,6 +751,10 @@ public final class Configuration {
                         setNode(DEV_MODE, value, configFile, configElement);
                         setDevMode(!value.equals("off"));
                         break;
+                    case TIME_ZONE:
+                        LoggingService.logInfo(MODULE_NAME, "Setting timeZone");
+                        setTimeZone(value);
+                        break;
                     default:
                         throw new ConfigurationItemException("Invalid parameter -" + option);
                 }
@@ -1021,6 +1026,7 @@ public final class Configuration {
         setAvailableDiskThreshold(Long.parseLong(getNode(AVAILABLE_DISK_THRESHOLD, configFile)));
         setReadyToUpgradeScanFrequency(Integer.parseInt(getNode(READY_TO_UPGRADE_SCAN_FREQUENCY, configFile)));
         setDevMode(!getNode(DEV_MODE, configFile).equals("off"));
+        configureTimeZone(getNode(TIME_ZONE, configFile));
 
         try {
             updateConfigFile(getCurrentConfigPath(), configFile);
@@ -1304,6 +1310,8 @@ public final class Configuration {
         result.append(buildReportLine(getConfigParamMessage(READY_TO_UPGRADE_SCAN_FREQUENCY), format("%d", readyToUpgradeScanFrequency)));
         // dev mode
         result.append(buildReportLine(getConfigParamMessage(DEV_MODE), (devMode ? "on" : "off")));
+        // timeZone
+        result.append(buildReportLine(getConfigParamMessage(TIME_ZONE), timeZone));
         LoggingService.logDebug(MODULE_NAME, "Finished get Config Report");
         
         return result.toString();
@@ -1473,4 +1481,33 @@ public final class Configuration {
         Configuration.readyToUpgradeScanFrequency = readyToUpgradeScanFrequency;
     }
 
+
+    /**
+     * Configures the default timezone of the node
+     * @param timeZone
+     */
+    private static void configureTimeZone(String timeZone) throws ConfigurationItemException {
+        LoggingService.logDebug(MODULE_NAME, "Configuring timezone");
+        TimeZone zone;
+        String tzId;
+        if ("".equals(timeZone)) {
+            zone = TimeZone.getDefault();
+            tzId = zone.getID();
+            setTimeZone(tzId);
+        } else {
+            setTimeZone(timeZone);
+        }
+    }
+
+    public static String getTimeZone() {
+        return timeZone;
+    }
+
+    public static void setTimeZone(String timeZone)  throws ConfigurationItemException {
+        LoggingService.logDebug(MODULE_NAME, "Start set timeZone");
+        setNode(TIME_ZONE, timeZone, configFile, configElement);
+        Configuration.timeZone = timeZone;
+        LoggingService.logDebug(MODULE_NAME, "Finished set timeZone");
+
+    }
 }
