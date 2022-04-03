@@ -34,9 +34,6 @@ import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.tracking.TrackingEventType;
-import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -398,9 +395,6 @@ public class FieldAgent implements IOFogModule {
                                 resetChanges = false;
                             }
                         }
-
-                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
-                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
                     } catch (Exception e) {
                         logError("Unable to get microservices list", e);
                         resetChanges = false;
@@ -439,8 +433,6 @@ public class FieldAgent implements IOFogModule {
                         if (linkedEdgeResources) {
                             loadEdgeResources(false);
                             LocalApi.getInstance().updateEdgeResource();
-                            Tracker.getInstance().handleEvent(TrackingEventType.EDGE_RESOURCE,
-                                    TrackingInfoUtils.getEdgeResourcesInfo(loadEdgeResourcesJsonFile()));
                         }
                     } catch (Exception e) {
                         logError("Unable to update linked edge resources", e);

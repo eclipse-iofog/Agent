@@ -13,13 +13,10 @@
 
 package org.eclipse.iofog.command_line;
 
-import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
-import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -135,7 +132,6 @@ public enum CommandLineAction {
 				LoggingService.logError(MODULE_NAME, "error de-provisioning", new AgentUserException(e.getMessage(), e));
 				throw new AgentUserException(format(getDeprovisionMessage(), status));
 			}
-			Tracker.getInstance().handleEvent(TrackingEventType.DEPROVISION, status);
 			if (status.equalsIgnoreCase("\nFailure - not provisioned")) {
 				LoggingService.logError(MODULE_NAME, "error de-provisioning", new AgentUserException("error de-provisioning"));
 				throw new AgentUserException(format(getDeprovisionMessage(), status));
@@ -191,16 +187,13 @@ public enum CommandLineAction {
 			String result;
 			if (provisioningResult == null) {
 				result = getProvisionCommonErrorMessage();
-				Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
 				throw new AgentUserException(result);
 			} else if (provisioningResult.containsKey("uuid")) {
 				result = format(getProvisionStatusSuccessMessage(), provisioningResult.getString("uuid"));
 			} else {
 				result = format(getProvisionStatusErrorMessage(), provisioningResult.getString("errorMessage"));
-				Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
 				throw new AgentUserException(result);
 			}
-			Tracker.getInstance().handleEvent(TrackingEventType.PROVISION, result);
 			return format(getProvisionMessage(), provisionKey, result);
 		}
 	},

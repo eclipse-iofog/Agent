@@ -17,26 +17,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
-import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.tracking.TrackingEventType;
 import org.eclipse.iofog.utils.logging.LoggingService;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
 import static io.netty.handler.codec.http.HttpMethod.DELETE;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.iofog.utils.CmdProperties.getDeprovisionMessage;
 
 public class DeprovisionApiHandler implements Callable<FullHttpResponse> {
     private static final String MODULE_NAME = "Local API : DeprovisionApiHandler";
