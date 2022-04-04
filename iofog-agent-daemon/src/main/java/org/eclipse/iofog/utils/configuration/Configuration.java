@@ -1492,6 +1492,7 @@ public final class Configuration {
         String tzId;
         if ("".equals(timeZone)) {
             zone = TimeZone.getDefault();
+            TimeZone.setDefault(zone);
             tzId = zone.getID();
             setTimeZone(tzId);
         } else {

@@ -689,8 +689,8 @@ public class DockerUtil {
                     .map(env -> env.getKey() + "=" + env.getValue())
                     .collect(Collectors.toList()));
         }
-        if (envVars.stream().filter(str -> str.trim().contains("TZ")).count() != 0){
-            envVars.add("TZ="+ Configuration.getTimeZone());
+        if (envVars.stream().filter(str -> str.trim().contains("TZ")).count() == 0){
+            envVars.add("TZ=" + Configuration.getTimeZone());
         }
         Map<String, String> labels = new HashMap<>();
         labels.put("iofog-uuid", Configuration.getIofogUuid());
