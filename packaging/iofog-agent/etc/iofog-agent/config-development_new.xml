@@ -66,4 +66,5 @@
 	<available_disk_threshold>20</available_disk_threshold>
 
 	<upgrade_scan_frequency>24</upgrade_scan_frequency>
+	<time_zone/>
 </config>
