@@ -27,7 +27,7 @@ start)
         echo "Starting iofog-agent service..."
         echo "Using Java version ${JAVA_VERSION} found at '$(command -v java)'"
         cd $PATH_TO_JAR
-        java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=54322 -jar $JAR_FILE_NAME start &
+        java -jar $JAR_FILE_NAME start &
         ;;
 stop)
         cd $PATH_TO_JAR
