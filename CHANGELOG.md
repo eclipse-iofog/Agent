@@ -1,5 +1,9 @@
 # Changelog
 
+## [unreleased]
+* A new config called TZ (timeZone) which is configurable is added to inejct the same timezone as the device in the microservices.
+* Removed java debugger.
+
 ## [v3.0.0-beta7] -29 Mar 2022
 ### Bugs
 * Fixed the issue with adding extra-host while creating containers.
