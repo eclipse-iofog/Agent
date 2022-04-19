@@ -24,8 +24,10 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCommand;
@@ -79,7 +81,8 @@ public class ResourceConsumptionManager implements IOFogModule {
 			try {
 				logDebug("Get usage data");
 				Thread.sleep(Configuration.getGetUsageDataFreqSeconds() * 1000);
-
+				Locale usLocale = Locale.US;
+				NumberFormat usNF = NumberFormat.getInstance(usLocale);
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();
 				float diskUsage = directorySize(Configuration.getDiskDirectory() + "messages/archive/");
@@ -90,16 +93,16 @@ public class ResourceConsumptionManager implements IOFogModule {
 				long totalDiskSpace = getTotalDiskSpace();
 
 				StatusReporter.setResourceConsumptionManagerStatus()
-						.setMemoryUsage(memoryUsage / 1_000_000)
-						.setCpuUsage(cpuUsage)
-						.setDiskUsage(diskUsage / 1_000_000_000)
+						.setMemoryUsage(Float.parseFloat(usNF.format(memoryUsage / 1_000_000)))
+						.setCpuUsage(Float.parseFloat(usNF.format(cpuUsage)))
+						.setDiskUsage(Float.parseFloat(usNF.format(diskUsage / 1_000_000_000)))
 						.setMemoryViolation(memoryUsage > memoryLimit)
 						.setDiskViolation(diskUsage > diskLimit)
 						.setCpuViolation(cpuUsage > cpuLimit)
-						.setAvailableMemory(availableMemory)
-						.setAvailableDisk(availableDisk)
-						.setTotalCpu(totalCpu)
-						.setTotalDiskSpace(totalDiskSpace);
+						.setAvailableMemory(Long.parseLong(usNF.format(availableMemory)))
+						.setAvailableDisk(Long.parseLong(usNF.format(availableDisk)))
+						.setTotalCpu(Float.parseFloat(usNF.format(totalCpu)))
+						.setTotalDiskSpace(Long.parseLong(usNF.format(totalDiskSpace)));
 
 
 				if (diskUsage > diskLimit) {
@@ -211,7 +214,7 @@ public class ResourceConsumptionManager implements IOFogModule {
             return 0;
         }
         // @see https://github.com/Leo-G/DevopsWiki/wiki/How-Linux-CPU-Usage-Time-and-Percentage-is-calculated
-		final String CPU_USAGE = "LC_NUMERIC=en_US.UTF-8 grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {printf (\"%d\", usage)}'";
+		final String CPU_USAGE = "grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {printf (\"%d\", usage)}'";
 		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
 		float totalCpu = 0f;
 		if(resultSet != null && !parseOneLineResult(resultSet).isEmpty()){
