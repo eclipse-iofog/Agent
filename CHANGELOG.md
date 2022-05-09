@@ -1,7 +1,9 @@
 # Changelog
 
 ## [unreleased]
-* A new config called TZ (timeZone) which is configurable is added to inejct the same timezone as the device in the microservices.
+
+## [v3.0.0] - 09- May 2022
+* A new config called TZ (timeZone) which is configurable is added to inject the same timezone as the device in the microservices.
 * Removed java debugger.
 
 ## [v3.0.0-beta7] -29 Mar 2022
