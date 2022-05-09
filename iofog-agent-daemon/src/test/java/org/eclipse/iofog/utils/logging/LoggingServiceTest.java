@@ -12,10 +12,7 @@
  */
 package org.eclipse.iofog.utils.logging;
 
-import io.sentry.Sentry;
-import io.sentry.SentryClient;
-import io.sentry.context.Context;
-import org.apache.commons.lang.exception.ExceptionUtils;
+
 import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.junit.After;
@@ -49,8 +46,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LoggingService.class, Configuration.class, Logger.class, File.class, FileHandler.class, FileSystems.class, FileSystem.class,
-        UserPrincipalLookupService.class, Files.class, PosixFileAttributeView.class, Handler.class, Properties.class, CmdProperties.class, Sentry.class, Context.class,
-        SentryClient.class})
+        UserPrincipalLookupService.class, Files.class, PosixFileAttributeView.class, Handler.class, Properties.class, CmdProperties.class })
 public class LoggingServiceTest {
     private String MODULE_NAME;
     private String message;
@@ -64,8 +60,6 @@ public class LoggingServiceTest {
     private Files files;
     private PosixFileAttributeView posixFileAttributeView;
     private Handler handler;
-    private Context context;
-    private SentryClient sentryClient;
 
     @Before
     public void setUp() throws Exception {
@@ -75,11 +69,8 @@ public class LoggingServiceTest {
         PowerMockito.mockStatic(Files.class);
         mockStatic(Logger.class);
         mockStatic(CmdProperties.class);
-        mockStatic(Sentry.class);
         file = Mockito.mock(File.class);
         logger = Mockito.mock(Logger.class);
-        context = Mockito.mock(Context.class);
-        sentryClient = Mockito.mock(SentryClient.class);
         fileHandler = Mockito.mock(FileHandler.class);
         fileSystem = Mockito.mock(FileSystem.class);
         handler = Mockito.mock(Handler.class);
@@ -108,11 +99,6 @@ public class LoggingServiceTest {
         PowerMockito.when(fileSystem.getUserPrincipalLookupService()).thenReturn(userPrincipalLookupService);
         PowerMockito.when(Files.getFileAttributeView(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(posixFileAttributeView);
         when(CmdProperties.getVersion()).thenReturn("version");
-        when(Sentry.getContext()).thenReturn(context);
-        when(Sentry.getStoredClient()).thenReturn(sentryClient);
-        when(sentryClient.getContext()).thenReturn(context);
-        doNothing().when(context).addExtra(eq("version"), anyString());
-        doNothing().when(context).setUser(any());
     }
 
     @After

@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+## [v3.0.0] - 09- May 2022
+* A new config called TZ (timeZone) which is configurable is added to inject the same timezone as the device in the microservices.
+* Removed java debugger.
+
 ## [v3.0.0-beta7] -29 Mar 2022
 ### Bugs
 * Fixed the issue with adding extra-host while creating containers.
@@ -142,6 +148,7 @@
 * Fixed the issue with microservice status
 
 [Unreleased]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta3..HEAD
+[v3.0.0]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta7..v3.0.0
 [v3.0.0-beta7]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta6..v3.0.0-beta7
 [v3.0.0-beta6]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta5..v3.0.0-beta6
 [v3.0.0-beta5]: https://github.com/eclipse-iofog/agent/compare/v3.0.0-beta4..v3.0.0-beta5

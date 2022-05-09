@@ -12,7 +12,6 @@ dependencies {
     compile 'com.jcraft:jsch:0.1.55'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.7'
     compile 'org.apache.httpcomponents:httpmime:4.5.7'
-    compile 'io.sentry:sentry:1.7.21'
     compile 'junit:junit:4.12'
     compile 'com.github.oshi:oshi-core:3.13.0'
     compile 'org.slf4j:slf4j-nop:1.7.13'

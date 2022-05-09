@@ -34,9 +34,6 @@ import org.eclipse.iofog.proxy.SshConnection;
 import org.eclipse.iofog.proxy.SshProxyManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.tracking.TrackingEventType;
-import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -398,9 +395,6 @@ public class FieldAgent implements IOFogModule {
                                 resetChanges = false;
                             }
                         }
-
-                        Tracker.getInstance().handleEvent(TrackingEventType.MICROSERVICE,
-                                TrackingInfoUtils.getMicroservicesInfo(loadMicroservicesJsonFile()));
                     } catch (Exception e) {
                         logError("Unable to get microservices list", e);
                         resetChanges = false;
@@ -439,8 +433,6 @@ public class FieldAgent implements IOFogModule {
                         if (linkedEdgeResources) {
                             loadEdgeResources(false);
                             LocalApi.getInstance().updateEdgeResource();
-                            Tracker.getInstance().handleEvent(TrackingEventType.EDGE_RESOURCE,
-                                    TrackingInfoUtils.getEdgeResourcesInfo(loadEdgeResourcesJsonFile()));
                         }
                     } catch (Exception e) {
                         logError("Unable to update linked edge resources", e);
@@ -1215,6 +1207,10 @@ public class FieldAgent implements IOFogModule {
                         configs.getInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getJsonProperty()) :
                         Integer.parseInt(READY_TO_UPGRADE_SCAN_FREQUENCY.getDefaultValue());
 
+                String timeZone = configs.containsKey(TIME_ZONE.getJsonProperty()) ?
+                        configs.getString(TIME_ZONE.getJsonProperty()) :
+                        TIME_ZONE.getDefaultValue();
+
                 Map<String, Object> instanceConfig = new HashMap<>();
 
                 if (!NETWORK_INTERFACE.getDefaultValue().equals(Configuration.getNetworkInterface()) &&
@@ -1277,6 +1273,9 @@ public class FieldAgent implements IOFogModule {
                 if ((Configuration.getReadyToUpgradeScanFrequency() != readyToUpgradeScanFreq) && (readyToUpgradeScanFreq >= 1))
                     instanceConfig.put(READY_TO_UPGRADE_SCAN_FREQUENCY.getCommandName(), readyToUpgradeScanFreq);
 
+                if (Configuration.getTimeZone()!= null && !Configuration.getTimeZone().equals(timeZone))
+                    instanceConfig.put(TIME_ZONE.getCommandName(), timeZone);
+
                 if (!instanceConfig.isEmpty())
                     Configuration.setConfig(instanceConfig, false);
             }
@@ -1293,8 +1292,8 @@ public class FieldAgent implements IOFogModule {
                 logError("We should never see this", new AgentUserException("This exception arise while logging the exception"));
             }
         } finally {
-            if (hasError) {
-
+            if (!hasError) {
+                Configuration.updateConfigBackUpFile();
             }
         }
         logInfo("Finished Get ioFog config");

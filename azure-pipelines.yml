@@ -55,7 +55,7 @@ jobs:
       # We need nodejs for Snyk
       - task: NodeTool@0
         inputs:
-          versionSpec: '10.x'
+          versionSpec: '12.x'
         displayName: 'Install Node.js'
 
       - script: |
@@ -146,7 +146,7 @@ jobs:
           fi
           echo $pkg_version
           cd packaging/iofog-agent
-          fpm -s dir -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          fpm -s dir -d openjdk-8-jdk -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
           echo "pkg maybe created"
           echo $(ls | grep *.deb)
           echo "##vso[task.setvariable variable=pkg_version]$pkg_version"

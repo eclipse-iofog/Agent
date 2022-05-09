@@ -23,16 +23,11 @@ import org.eclipse.iofog.pruning.DockerPruningManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
 import org.eclipse.iofog.resource_manager.ResourceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.tracking.TrackingEventType;
-import org.eclipse.iofog.tracking.TrackingInfoUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.State.TERMINATED;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -96,7 +91,6 @@ public class Supervisor implements IOFogModule {
 		startModule(FieldAgent.getInstance());
 		startModule(ProcessManager.getInstance());
 		startModule(new ResourceManager());
-		startModule(Tracker.getInstance());
         messageBus = MessageBus.getInstance();
         startModule(messageBus);
 
@@ -107,7 +101,6 @@ public class Supervisor implements IOFogModule {
 
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
 		logDebug("Started Supervisor");
-        Tracker.getInstance().handleEvent(TrackingEventType.START, TrackingInfoUtils.getStartTrackingInfo());
 		DockerPruningManager.getInstance().start();
         operationDuration();
     }

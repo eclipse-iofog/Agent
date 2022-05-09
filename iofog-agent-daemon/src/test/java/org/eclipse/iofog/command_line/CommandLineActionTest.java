@@ -16,8 +16,6 @@ package org.eclipse.iofog.command_line;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.status_reporter.StatusReporter;
-import org.eclipse.iofog.tracking.Tracker;
-import org.eclipse.iofog.tracking.TrackingEvent;
 import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -46,7 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  * @author nehanaithani
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({CommandLineAction.class, StatusReporter.class, FieldAgent.class, Configuration.class, Orchestrator.class, CmdProperties.class, Tracker.class, LoggingService.class})
+@PrepareForTest({CommandLineAction.class, StatusReporter.class, FieldAgent.class, Configuration.class, Orchestrator.class, CmdProperties.class, LoggingService.class})
 public class CommandLineActionTest {
     private CommandLineAction commandLineAction;
     private StatusReporter statusReporter;
@@ -54,7 +52,6 @@ public class CommandLineActionTest {
     private List stop;
     private HashMap<String, String> result;
     private CmdProperties cmdProperties;
-    private Tracker tracker;
 
     @Before
     public void setUp() throws Exception {
@@ -71,11 +68,7 @@ public class CommandLineActionTest {
         mockStatic(Configuration.class);
         mockStatic(StatusReporter.class);
         mockStatic(CmdProperties.class);
-        mockStatic(Tracker.class);
-        tracker = mock(Tracker.class);
-        PowerMockito.when(Tracker.getInstance()).thenReturn(tracker);
         PowerMockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
-        PowerMockito.doNothing().when(tracker).handleEvent(any(), anyString());
         PowerMockito.when(fieldAgent.provision("dummy")).thenReturn(Json.createObjectBuilder().add("status", "success").add("errorMessage", "").add("uuid", "uuid").build());
         PowerMockito.when(fieldAgent.provision("anotherkey")).thenReturn(Json.createObjectBuilder().add("status", "success").add("errorMessage", "Key not valid").build());
         PowerMockito.when(fieldAgent.provision("prod")).thenReturn(null);
@@ -434,7 +427,7 @@ public class CommandLineActionTest {
             "                 -lc <#log files>        Set the number of log files to evenly\\n" +
             "                                         split the log storage limit\\n" +
             "                 -ll <log level>         Set the standard logging levels that\\n"+
-            "                                         can be used to control logging output" +
+            "                                         can be used to control logging output\\n" +
             "                 -sf <#seconds>          Set the status update frequency\\n" +
             "                 -cf <#seconds>          Set the get changes frequency\\n" +
             "                 -df <#seconds>          Set the post diagnostics frequency\\n" +
@@ -442,7 +435,7 @@ public class CommandLineActionTest {
             "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
             "                 -dt <#percentage>       Set the available disk threshold\\n" +
             "                 -idc <on/off>           Set the mode on which any not\\n" +
-            "										  registered docker container will be\\n" +
+            "                                         registered docker container will be\\n" +
             "										  shut down\\n" +
             "                 -gps <auto/off          Set gps location of fog.\\n" +
             "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
@@ -454,6 +447,7 @@ public class CommandLineActionTest {
             "                 -sec <on/off>           Set the secure mode without using ssl \\n" +
             "                                         certificates. \\n" +
             "                 -dev <on/off>           Set the developer's mode\\n" +
+            "                 -tz                     Set the device timeZone\\n" +
             "\\n" +
             "\\n" +
             "Report bugs to: edgemaster@iofog.org\\n" +

@@ -76,8 +76,6 @@ public class Constants {
     public static final int MESSAGE_BUS = 4;
     public static final int FIELD_AGENT = 5;
     public static final int RESOURCE_MANAGER = 6;
-    public static final int TRACKER = 7;
-
 
     public static PrintStream systemOut;
 
@@ -110,12 +108,6 @@ public class Constants {
 
     public static final String MICROSERVICE_FILE = "microservices.json";
 
-    public static final String TRACKING_UUID_PATH = CONFIG_DIR + "tracking-uuid";
-
-    public static final String SENTRY_CACHE_PATH = CONFIG_DIR + "sentry-cache.json";
-
-    public static final int CACHE_REGISTRY_ID = 2;
-    
     public static final String FIELD_AGENT_PING_CONTROLLER = "FAPC";
     public static final String FIELD_AGENT_GET_CHANGE_LIST = "FACL";
     public static final String FIELD_AGENT_POST_STATUS = "FAPS";
@@ -127,8 +119,6 @@ public class Constants {
 	public static final String PROCESS_MANAGER_CONTAINERS_MONITOR = "PMCM";
 	public static final String PROCESS_MANAGER_CHECK_TASKS = "PMCT";
 	public static final String RESOURCE_MANAGER_GET_USAGE_DATA = "RMUD";
-	public static final String TRACKER_SENDER_TASK = "TTST";
-	public static final String TRACKER_TIMER_LOGGER_TASK = "TTLT";
 	public static final String LOCAL_API_CONTROL_WEBSOCKET_WORKER = "LACW";
 	public static final String LOCAL_API_MESSAGE_WEBSOCKET_WORKER = "LAMW";
 
