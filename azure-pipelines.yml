@@ -146,7 +146,7 @@ jobs:
           fi
           echo $pkg_version
           cd packaging/iofog-agent
-          fpm -s dir -d openjdk-8-jdk -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
           echo "pkg maybe created"
           echo $(ls | grep *.deb)
           echo "##vso[task.setvariable variable=pkg_version]$pkg_version"
@@ -192,7 +192,7 @@ jobs:
       - script: |
           cd packaging/iofog-agent
           echo $(pkg_version)
-          fpm -s dir -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+          fpm -s dir --depends '(java-1.8.0-openjdk or java-11-openjdk)' -d docker-ce -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
           echo "pkg maybe created"
           echo $(ls | grep *.rpm)
         displayName: 'create rpm package'
