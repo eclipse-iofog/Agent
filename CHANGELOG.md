@@ -2,6 +2,9 @@
 
 ## [unreleased]
 
+## [v3.0.1] - 16- May 2022
+* Declared Agent dependency i.e. java and docker. 
+
 ## [v3.0.0] - 09- May 2022
 * A new config called TZ (timeZone) which is configurable is added to inject the same timezone as the device in the microservices.
 * Removed java debugger.
