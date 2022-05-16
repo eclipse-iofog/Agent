@@ -1,0 +1,16 @@
+com.github.docker-java/docker-java/3.2.5, Apache-2.0, approved, clearlydefined
+io.netty/netty-all/4.1.34.Final, Apache-2.0 AND BSD-3-Clause, approved, clearlydefined, CQ19460
+org.jboss.logmanager/jboss-logmanager/2.0.3.Final, Apache-2.0, approved, clearlydefined, CQ14904
+com.jcraft/jsch/0.1.55, BSD-3-Clause, approved, clearlydefined, CQ19435
+com.fasterxml.jackson.core/jackson-databind/2.8.7, Apache-2.0, approved, CQ13364
+org.apache.httpcomponents/httpmime/4.5.7, Apache-2.0, approved, clearlydefined, CQ18986
+junit/junit/, Eclipse Public License, approved, CQ9232
+com.github.oshi/oshi-core/3.13.0, MIT, approved, clearlydefined, CQ19818
+org.slf4j/slf4j-nop/1.7.13, MIT, approved, clearlydefined, CQ19782
+org.apache.qpid/qpid-jms-client/0.52.0, Apache-2.0, approved, clearlydefined
+javax.json/javax.json-api/1.1.4, CDDl, approved, clearlydefined
+org.glassfish/javax.json/1.1.4, CDDL, approved, clearlydefined
+org.mockito/mockito-core/2.9.0, MIT, approved, clearlydefined
+org.powermock/powermock-module-junit4/2.0.2, Apache-2.0, approved, clearlydefined
+org.powermock/powermock-api-mockito2/2.0.2, Apache-2.0, approved, clearlydefined
+org.powermock/powermock-core/2.0.2, Apache-2.0, approved, clearlydefined
