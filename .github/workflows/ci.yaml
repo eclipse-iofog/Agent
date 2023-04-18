@@ -34,6 +34,8 @@ jobs:
     name: Agent
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v3
         with:
           java-version: '8'
@@ -46,8 +48,57 @@ jobs:
         uses: cicirello/jacoco-badge-generator@v2
         with:
           generate-branches-badge: true
-          jacoco-csv-file: '../iofog-agent-daemon/build/reports/jacoco/jacoco.csv'
-#      - name: JaCoCo Code Coverage Report
+          jacoco-csv-file: iofog-agent-daemon/build/reports/jacoco/jacoco.csv
+      - run: ./gradlew copyJar
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 0.0.0
+      - name: Set image tag
+        shell: bash
+        id: tags
+        run: |
+          if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
+            VERSION=${{ github.ref_name }}
+            echo "VERSION=${VERSION:1}" >> "${GITHUB_OUTPUT}"
+          else
+             VERSION=${{ steps.previoustag.outputs.tag }}
+             echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
+          fi
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: "ghcr.io"
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and Push to ghcr
+        uses: docker/build-push-action@v3
+        id: build_push_ghcr
+        with:
+          file: Dockerfile
+          push: true
+          tags: |
+            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
+            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
+
+      - name: Build and Push to GCR
+        if: ${{ steps.tags.outcome }} == 'success'
+        id: build_push_gcr
+        uses: RafikFarhad/push-to-gcr-github-action@v5-beta
+        with:
+          gcloud_service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+          registry: gcr.io
+          project_id: ${{ env.PROJECT }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: latest, ${{ steps.tags.outputs.VERSION }}
+          dockerfile: Dockerfile
+
+      #      - name: JaCoCo Code Coverage Report
 #        id: jacoco_reporter
 #        uses: PavanMudigonda/jacoco-reporter@v4.8
 #        with:
@@ -61,14 +112,14 @@ jobs:
 #          publish_only_summary: false
 
       # Publish Coverage Job Summary  # Optional
-      - name: Add Coverage Job Summary
-        run: echo "${{ steps.jacoco_reporter.outputs.coverageSummary }}" >> $GITHUB_STEP_SUMMARY
+#      - name: Add Coverage Job Summary
+#        run: echo "${{ steps.jacoco_reporter.outputs.coverageSummary }}" >> $GITHUB_STEP_SUMMARY
 
       # uploads the coverage-report.md artifact  # Optional
-
-      - name: Upload Code Coverage Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: code-coverage-report-markdown
-          path: '*/coverage-results.md'
-          retention-days: 1
+#
+#      - name: Upload Code Coverage Artifacts
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: code-coverage-report-markdown
+#          path: '*/coverage-results.md'
+#          retention-days: 1
