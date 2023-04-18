@@ -42,18 +42,23 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - run: ./gradlew build
-      - name: JaCoCo Code Coverage Report
-        id: jacoco_reporter
-        uses: PavanMudigonda/jacoco-reporter@v4.8
+      - name: Generate JaCoCo Badge
+        uses: cicirello/jacoco-badge-generator@v2
         with:
-          coverage_results_path: '**/iofog-agent-daemon/build/reports/jacocoHtml'
-          coverage_report_name: Coverage
-          coverage_report_title: JaCoCo
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          skip_check_run: false
-          minimum_coverage: 80
-          fail_below_threshold: false
-          publish_only_summary: false
+          generate-branches-badge: true
+          jacoco-csv-file: '../iofog-agent-daemon/build/reports/jacoco/jacoco.csv'
+#      - name: JaCoCo Code Coverage Report
+#        id: jacoco_reporter
+#        uses: PavanMudigonda/jacoco-reporter@v4.8
+#        with:
+#          coverage_results_path: '**/iofog-agent-daemon/build/reports/jacocoHtml'
+#          coverage_report_name: Coverage
+#          coverage_report_title: JaCoCo
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          skip_check_run: false
+#          minimum_coverage: 80
+#          fail_below_threshold: false
+#          publish_only_summary: false
 
       # Publish Coverage Job Summary  # Optional
       - name: Add Coverage Job Summary
