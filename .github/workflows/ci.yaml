@@ -48,9 +48,13 @@ jobs:
       shell: bash
       id: version
       run: echo "version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')"  >> "${GITHUB_OUTPUT}"
-    - uses: fortran-lang/setup-fpm@v5
+    - name: Set up Ruby 2.7
+      uses: actions/setup-ruby@v1
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        ruby-version: 2.7
+    - run: |
+        gem install --no-document fpm
+        fpm -h
     - name: Create deb package
       shell: bash
       id: deb_package
