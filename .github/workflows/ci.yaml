@@ -48,6 +48,9 @@ jobs:
       shell: bash
       id: version
       run: echo "version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')"  >> "${GITHUB_OUTPUT}"
+    - uses: fortran-lang/setup-fpm@v5
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Create deb package
       shell: bash
       id: deb_package
@@ -58,7 +61,7 @@ jobs:
           echo "pkg_version=${{ steps.version.outputs.version }}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
         fi
         cd packaging/iofog-agent
-        fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+        fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v ${{ steps.version.outputs.version }} -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
         echo "pkg maybe created"
         echo ls | grep *.deb
     - run: echo ${{ steps.version.outputs.version }}
