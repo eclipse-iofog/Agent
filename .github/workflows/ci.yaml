@@ -40,9 +40,10 @@ jobs:
         with:
           java-version: '8'
           distribution: 'temurin'
-          cache: 'gradle'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 5.4
       - run: ./gradlew build
       - name: Generate JaCoCo Badge
         uses: cicirello/jacoco-badge-generator@v2
@@ -69,6 +70,19 @@ jobs:
              VERSION=${{ steps.previoustag.outputs.tag }}
              echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
           fi
+
+      - name: Build and Push to GCR
+        if: ${{ steps.tags.outcome }} == 'success'
+        id: build_push_gcr
+        uses: RafikFarhad/push-to-gcr-github-action@v5-beta
+        with:
+          gcloud_service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+          registry: gcr.io
+          project_id: ${{ env.PROJECT }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: latest, ${{ steps.tags.outputs.VERSION }}
+          dockerfile: Dockerfile
+
       - name: Login to Github Container Registry
         uses: docker/login-action@v2
         with:
@@ -86,17 +100,6 @@ jobs:
             ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
             ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
 
-      - name: Build and Push to GCR
-        if: ${{ steps.tags.outcome }} == 'success'
-        id: build_push_gcr
-        uses: RafikFarhad/push-to-gcr-github-action@v5-beta
-        with:
-          gcloud_service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          registry: gcr.io
-          project_id: ${{ env.PROJECT }}
-          image_name: ${{ env.IMAGE_NAME }}
-          image_tag: latest, ${{ steps.tags.outputs.VERSION }}
-          dockerfile: Dockerfile
 
       #      - name: JaCoCo Code Coverage Report
 #        id: jacoco_reporter

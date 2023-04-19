@@ -1,4 +1,4 @@
-FROM docker.io/library/ubuntu:20.04 AS builder
+FROM docker.io/library/ubuntu:22.04 AS builder
 
 RUN apt-get update && \
     apt-get install -y unzip apt-utils curl openjdk-8-jdk && \
@@ -47,6 +47,9 @@ RUN true && \
     microdnf install -y curl ca-certificates java-11-openjdk-headless sudo shadow-utils && \
     microdnf clean all && \
     true
+
+RUN mkdir -p  /etc
+RUN mkdir -p  /usr
 
 RUN echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/lib/security/java.security
 
