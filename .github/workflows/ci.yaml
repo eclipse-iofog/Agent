@@ -48,22 +48,20 @@ jobs:
       shell: bash
       id: version
       run: echo "version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')"  >> "${GITHUB_OUTPUT}"
-#    - name: Create deb package
-#      shell: bash
-#      id: deb_package
-#      run: |
-#
-#        if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
-#          echo "pkg_version=${{ version }}" >> "${GITHUB_OUTPUT}"
-#        else
-#          echo "pkg_version=${{ version }}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
-#        fi
-#        cd packaging/iofog-agent
-#        fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
-#        echo "pkg maybe created"
-#        echo ls | grep *.deb
+    - name: Create deb package
+      shell: bash
+      id: deb_package
+      run: |
+        if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
+          echo "pkg_version=${{ steps.version.outputs.version }}" >> "${GITHUB_OUTPUT}"
+        else
+          echo "pkg_version=${{ steps.version.outputs.version }}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
+        fi
+        cd packaging/iofog-agent
+        fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+        echo "pkg maybe created"
+        echo ls | grep *.deb
     - run: echo ${{ steps.version.outputs.version }}
-    - run: echo "hello"
 
 #      - name: Publish package to packagecloud
 #        if: ${{ steps.build_push_gcr.outcome }} == 'success'
