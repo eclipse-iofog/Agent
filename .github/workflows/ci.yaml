@@ -93,10 +93,10 @@ jobs:
           ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:develop
         cache-from: type=gha
         cache-to: type=gha,mode=max
-    - name: Set up Ruby 2.7
+    - name: Set up Ruby 3.1.4
       uses: actions/setup-ruby@v1
       with:
-        ruby-version: 2.7
+        ruby-version: 3.1.4
     - run: |
         gem install --no-document fpm
         fpm -h
@@ -117,14 +117,6 @@ jobs:
         else
           echo "version=${{ steps.version.outputs.version }}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
         fi
-    - name: Create deb package
-      shell: bash
-      id: deb_package
-      run: |
-        cd packaging/iofog-agent
-        fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
-        echo "pkg maybe created"
-        ls
     - run: echo ${{ steps.version.outputs.version }}
     - run: sudo apt-get install jq
     - run: |
@@ -144,26 +136,65 @@ jobs:
     - name: 'Delete ECN'
       if: always()
       run: sudo bash test/deploy_ecn.bash deleteECN
-    - name: Release Deb package
+
+    - name: Create deb package
       shell: bash
-      id: release_deb
+      id: create_deb_package
       run: |
         cd packaging/iofog-agent
-        package=*.deb
-        echo "package..."
-        echo $package
-        
-        package_cloud push iofog/iofog-agent-dev/any/any *.deb
+        fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+        echo "pkg created"
+        ls
+    - name: Create rpm package
+      shell: bash
+      id: create_rpm_package
+      run: |
+        cd packaging/iofog-agent
+        fpm -s dir --depends java-11-openjdk -d docker-ce -t rpm -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+        echo "pkg created"
+        ls
+    - uses: actions/upload-artifact@v2
+      with:
+        name: deb-package
+        path: packaging/iofog-agent/iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
 
-#      - name: Publish package to packagecloud
-#        if: ${{ steps.build_push_gcr.outcome }} == 'success'
-#        uses: danielmundi/upload-packagecloud@v1
-#        with:
-#          PACKAGE-NAME: iofog-iofogcontroller-${{ steps.version.outputs.pkg_version }}.tgz
-#          PACKAGECLOUD-USERNAME: iofog
-#          PACKAGECLOUD-REPO: iofog-controller-snapshots
-#          PACKAGECLOUD-DISTRIB: node
-#          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
+    - uses: bluwy/substitute-string-action@v1
+      id: sub
+      with:
+        _input-text: ${{ steps.pkg_version.outputs.version }}
+        '-': _
+    - run: echo ${{ steps.sub.outputs.result }}
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: rpm-package
+        path: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: deb-package
+
+    - name: Publish deb package to packagecloud
+      uses: danielmundi/upload-packagecloud@v1
+      with:
+        PACKAGE-NAME: iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
+        PACKAGECLOUD-USERNAME: iofog
+        PACKAGECLOUD-REPO: iofog-agent-dev
+        PACKAGECLOUD-DISTRIB: any/any
+        PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: rpm-package
+
+    - name: Publish rpm package to packagecloud
+      uses: danielmundi/upload-packagecloud@v1
+      with:
+        PACKAGE-NAME: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
+        PACKAGECLOUD-USERNAME: iofog
+        PACKAGECLOUD-REPO: iofog-agent-dev
+        PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
+        PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
 
 
 
