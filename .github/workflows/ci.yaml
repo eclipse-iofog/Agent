@@ -196,5 +196,11 @@ jobs:
         PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
         PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
 
+    - name: Upload Agent Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: agent
+        path: packaging/**/*
+
 
 
