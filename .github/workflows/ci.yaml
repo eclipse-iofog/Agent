@@ -100,6 +100,10 @@ jobs:
     - run: |
         gem install --no-document fpm
         fpm -h
+    - name: Install package_Cloud
+      run: |
+        gem install package_cloud
+        package_cloud -h
     - name: get gradle version
       shell: bash
       id: version
@@ -140,6 +144,16 @@ jobs:
     - name: 'Delete ECN'
       if: always()
       run: sudo bash test/deploy_ecn.bash deleteECN
+    - name: Release Deb package
+      shell: bash
+      id: release_deb
+      run: |
+        cd packaging/iofog-agent
+        package=*.deb
+        echo "package..."
+        echo $package
+        
+        package_cloud push iofog/iofog-agent-dev/any/any *.deb
 
 #      - name: Publish package to packagecloud
 #        if: ${{ steps.build_push_gcr.outcome }} == 'success'
