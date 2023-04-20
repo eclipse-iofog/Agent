@@ -62,7 +62,7 @@ jobs:
         fi
 
     - name: Build and Push to GCR
-      if: ${{ steps.tags.outcome }} == 'success' && ${{ github.ref == 'refs/heads/develop' }}
+      if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
       id: build_push_gcr
       uses: RafikFarhad/push-to-gcr-github-action@v5-beta
       with:
@@ -81,7 +81,7 @@ jobs:
         password: ${{ github.token }}
 
     - name: Build and Push to ghcr
-      if: ${{ github.ref == 'refs/heads/develop' }}
+      if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
       uses: docker/build-push-action@v3
       id: build_push_ghcr
       with:
