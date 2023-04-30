@@ -131,8 +131,6 @@ jobs:
             ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
             ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
             ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:develop
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Set up Ruby 3.1.4
         uses: actions/setup-ruby@v1
