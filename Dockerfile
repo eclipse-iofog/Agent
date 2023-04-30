@@ -48,10 +48,17 @@ RUN true && \
     microdnf clean all && \
     true
 
+#RUN mkdir -p  /etc/bash_completion.d/
+#RUN mkdir -p  /etc/init.d/
+#RUN mkdir -p  /etc/iofog-agent/
+#RUN mkdir -p  /usr
+
 RUN echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/lib/security/java.security
 
-COPY --from=builder packaging/iofog-agent/etc /etc
-COPY --from=builder packaging/iofog-agent/usr /usr
+COPY --from=builder packaging/iofog-agent/usr ./usr
+COPY --from=builder packaging/iofog-agent/etc/init.d /etc/init.d/
+COPY --from=builder packaging/iofog-agent/etc/bash_completion.d /etc/bash_completion.d/
+COPY --from=builder packaging/iofog-agent/etc/iofog-agent /etc/iofog-agent/
 
 RUN true && \
     useradd -r -U -s /usr/bin/nologin iofog-agent && \
