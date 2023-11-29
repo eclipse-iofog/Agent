@@ -17,8 +17,8 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.jms.*;
-import javax.jms.IllegalStateException;
+import jakarta.jms.*;
+import jakarta.jms.IllegalStateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +73,7 @@ public class MessageBusServer {
     }
 
     /**
-     * creates IOFog {@link javax.jms.Message} producers
+     * creates IOFog {@link jakarta.jms.Message} producers
      * and {@link Session}
      *
      * @throws Exception

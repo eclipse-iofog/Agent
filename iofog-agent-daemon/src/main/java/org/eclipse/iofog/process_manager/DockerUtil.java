@@ -25,8 +25,8 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
 import com.github.dockerjava.api.command.PullImageResultCallback;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.microservice.*;
@@ -48,7 +48,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.eclipse.iofog.microservice.MicroserviceState.fromText;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
@@ -341,7 +341,7 @@ public class DockerUtil {
             }
         } catch (Exception e) {
             LoggingService.logWarning(MODULE_NAME, "Error occurred while getting container status of microservice uuid" + microserviceUuid +
-                    " error : " + ExceptionUtils.getFullStackTrace(e));
+                    " error : " + ExceptionUtils.getStackTrace(e));
         }
         LoggingService.logDebug(MODULE_NAME , "Finished get microservice status for microservice uuid : "+ microserviceUuid);
         return result;

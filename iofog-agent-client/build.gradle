@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow"
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 description = 'iofog-agent-client'
@@ -8,9 +8,9 @@ configurations {
     extraLibs
 }
 dependencies {
-    compile 'org.slf4j:slf4j-nop:1.7.13'
-	extraLibs ('javax.json:javax.json-api:1.0', 'org.glassfish:javax.json:1.1.4')
-	configurations.compile.extendsFrom(configurations.extraLibs)
+    implementation 'org.slf4j:slf4j-nop:2.0.7'
+	extraLibs ('javax.json:javax.json-api:1.1.4', 'org.glassfish:javax.json:1.1.4')
+	configurations.implementation.extendsFrom(configurations.extraLibs)
 }
 
 processResources {

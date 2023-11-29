@@ -29,8 +29,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.MessageProducer;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;

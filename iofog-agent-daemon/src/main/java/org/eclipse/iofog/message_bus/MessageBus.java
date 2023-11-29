@@ -29,9 +29,9 @@ import org.eclipse.iofog.utils.Orchestrator;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.jms.ExceptionListener;
-import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
+import jakarta.jms.ExceptionListener;
+import jakarta.jms.JMSException;
+import jakarta.jms.MessageConsumer;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;

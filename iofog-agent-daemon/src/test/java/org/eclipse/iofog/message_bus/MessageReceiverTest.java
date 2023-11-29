@@ -23,9 +23,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
-import javax.jms.TextMessage;
+import jakarta.jms.JMSException;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.TextMessage;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;

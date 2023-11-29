@@ -37,7 +37,7 @@ import static org.powermock.api.support.membermodification.MemberModifier.suppre
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Supervisor.class, StatusReporter.class, ResourceConsumptionManager.class,
-        FieldAgent.class, ProcessManager.class, SecurityManager.class,
+        FieldAgent.class, ProcessManager.class, // SecurityManager.class,
         MessageBus.class, LocalApi.class, LoggingService.class, Configuration.class, IOFogNetworkInterfaceManager.class, DockerPruningManager.class,
         DockerUtil.class, SupervisorStatus.class})
 public class SupervisorTest {
@@ -57,7 +57,7 @@ public class SupervisorTest {
             mockStatic(ResourceConsumptionManager.class);
             mockStatic(FieldAgent.class);
             mockStatic(ProcessManager.class);
-            mockStatic(SecurityManager.class);
+//            mockStatic(SecurityManager.class);
             mockStatic(MessageBus.class);
             mockStatic(LocalApi.class);
             mockStatic(LoggingService.class);

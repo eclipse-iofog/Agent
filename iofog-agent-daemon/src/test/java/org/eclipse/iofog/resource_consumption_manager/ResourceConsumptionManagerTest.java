@@ -486,7 +486,7 @@ public class ResourceConsumptionManagerTest {
         LoggingService.logDebug(MODULE_NAME,
                 "Inside parse Stat");
         PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logError(any(), any(),  anyObject());
+        LoggingService.logError(any(), any(),  any());
     }
 
     /**

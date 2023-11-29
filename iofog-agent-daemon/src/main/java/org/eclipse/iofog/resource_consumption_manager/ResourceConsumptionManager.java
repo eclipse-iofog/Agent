@@ -12,7 +12,7 @@
  */
 package org.eclipse.iofog.resource_consumption_manager;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.exception.AgentSystemException;
@@ -27,7 +27,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.util.CommandShellExecutor.executeCommand;
 import static org.eclipse.iofog.utils.Constants.RESOURCE_CONSUMPTION_MANAGER;
 

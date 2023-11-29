@@ -29,7 +29,7 @@ import java.util.Map;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.CONTROLLER_CERT;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.existParam;
 import static org.eclipse.iofog.status_reporter.StatusReporter.getStatusReport;

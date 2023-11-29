@@ -12,8 +12,8 @@
  */
 package org.eclipse.iofog.utils.logging;
 
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 

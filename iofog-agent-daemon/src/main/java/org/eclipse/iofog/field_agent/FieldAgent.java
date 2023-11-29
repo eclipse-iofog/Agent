@@ -14,7 +14,7 @@ package org.eclipse.iofog.field_agent;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
@@ -62,7 +62,7 @@ import static io.netty.util.internal.StringUtil.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang.StringUtils.rightPad;
+import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.eclipse.iofog.command_line.CommandLineConfigParam.*;
 import static org.eclipse.iofog.resource_manager.ResourceManager.*;
 import static org.eclipse.iofog.utils.CmdProperties.*;

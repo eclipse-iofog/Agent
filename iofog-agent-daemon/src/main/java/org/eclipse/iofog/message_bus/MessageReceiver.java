@@ -17,8 +17,8 @@ import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.jms.MessageConsumer;
-import javax.jms.TextMessage;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.TextMessage;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;

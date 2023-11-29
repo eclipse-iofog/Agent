@@ -13,7 +13,7 @@
 
 package org.eclipse.iofog.command_line.util;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
 import java.io.BufferedReader;

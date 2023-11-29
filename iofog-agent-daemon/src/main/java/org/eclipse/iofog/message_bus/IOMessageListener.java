@@ -16,8 +16,8 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.local_api.MessageCallback;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
+import jakarta.jms.MessageListener;
+import jakarta.jms.TextMessage;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -40,7 +40,7 @@ public class IOMessageListener implements MessageListener {
 	}
 	
 	@Override
-	public void onMessage(javax.jms.Message msg) {
+	public void onMessage(jakarta.jms.Message msg) {
 		LoggingService.logDebug(MODULE_NAME, "Start acknowledging message onMessage");
 		try {
 			TextMessage textMessage = (TextMessage) msg;
