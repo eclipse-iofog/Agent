@@ -1,5 +1,6 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
+    id 'java'
 }
 
 allprojects {
@@ -15,9 +16,10 @@ subprojects {
         mavenCentral()
         mavenLocal()
     }
-
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
     task sourcesJar(type: Jar) {
         from sourceSets.main.allJava

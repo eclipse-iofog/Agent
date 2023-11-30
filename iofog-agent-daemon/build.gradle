@@ -34,11 +34,16 @@ build {
 }
 
 test {
-    jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.stream'
+    jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.util.stream'
 }
+//applicationDefaultJvmArgs = ["--add-opens", "java.base/jdk.internal.loader=ALL-UNNAMED"]
+//tasks.withType(Copy).all {
+//    duplicatesStrategy = DuplicatesStrategy.INHERIT
+//}
 
 task copyJar(type: Copy) {
-    from ("$buildDir/libs/") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from (layout.buildDirectory.dir("libs/")) {
         include "*-all.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')
@@ -54,16 +59,15 @@ jacoco {
     toolVersion = "0.8.11"
 }
 
-jacocoTestReport {
-    reports {
-        xml.required = true
-        csv.required = true
-        html.destination file("${buildDir}/reports/jacocoHtml")
-        csv.destination file("${buildDir}/reports/jacoco/jacoco.csv")
-    }
-}
-
-project.ext.jacocoOfflineSourceSets = [ 'main' ]
+//jacocoTestReport {
+//    reports {
+//        xml.required = true
+//        csv.required = true
+//        html.outputLocation file(layout.buildDirectory.dir("reports/jacocoHtml"))
+//        csv.outputLocation file(layout.buildDirectory.dir("reports/jacoco/jacoco.csv"))
+//    }
+//}
+//project.ext.jacocoOfflineSourceSets = [ 'main' ]
 //task doJacocoOfflineInstrumentation(dependsOn: [ classes, project.configurations.jacocoAnt ]) {
 //    inputs.files classes.outputs.files
 //    File outputDir = new File(project.buildDir, 'instrumentedClasses')
