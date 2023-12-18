@@ -2,9 +2,13 @@ description = 'iofog-version-controller'
 
 tasks.register('copyJar', Copy) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from(layout.buildDirectory.dir("libs/")) {
+//    from(layout.buildDirectory.dir("libs/")) {
+//        include "*.jar"
+//    }
+    from("$buildDir/libs/") {
         include "*.jar"
     }
+
     into file('../packaging/iofog-agent/usr/bin/')
     rename('.*?(jar$)', 'iofog-agentvc.jar')
 }
