@@ -1,11 +1,11 @@
 FROM docker.io/library/ubuntu:20.04 AS builder
 
 RUN apt-get update && \
-    apt-get install -y unzip apt-utils curl openjdk-8-jdk && \
+    apt-get install -y unzip apt-utils curl openjdk-17-jdk && \
     apt-get clean
 
 # 1- Define a constant with the version of gradle you want to install
-ARG GRADLE_VERSION=8.3
+ARG GRADLE_VERSION=8.4
 
 # 2- Define the URL where gradle can be downloaded from
 ARG GRADLE_BASE_URL=https://services.gradle.org/distributions
@@ -30,7 +30,7 @@ RUN mkdir -p /usr/share/gradle /usr/share/gradle/ref \
   && ln -s /usr/share/gradle/gradle-${GRADLE_VERSION} /usr/bin/gradle
 
 # 5- Define environmental variables required by gradle
-ENV GRADLE_VERSION 8.3
+ENV GRADLE_VERSION 8.4
 ENV GRADLE_HOME /usr/bin/gradle
 ENV GRADLE_USER_HOME /cache
 ENV PATH $PATH:$GRADLE_HOME/bin
@@ -44,7 +44,7 @@ RUN gradle build copyJar -x test --no-daemon
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 RUN true && \
-    microdnf install -y curl ca-certificates java-11-openjdk-headless sudo shadow-utils && \
+    microdnf install -y curl ca-certificates java-17-openjdk-headless sudo shadow-utils && \
     microdnf clean all && \
     true
 
