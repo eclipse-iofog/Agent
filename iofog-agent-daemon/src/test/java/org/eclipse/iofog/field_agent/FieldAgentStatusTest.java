@@ -16,19 +16,18 @@ import org.eclipse.iofog.utils.Constants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.*;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(FieldAgentStatus.class)
+@ExtendWith(MockitoExtension.class)
 public class FieldAgentStatusTest {
     private FieldAgentStatus fieldAgentStatus;
     private Constants.ControllerStatus controllerStatus;

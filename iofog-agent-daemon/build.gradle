@@ -6,23 +6,26 @@ plugins {
 description = 'iofog-agent-daemon'
 
 dependencies {
-    implementation 'com.github.docker-java:docker-java:3.3.0'
+    implementation 'com.github.docker-java:docker-java:3.3.4'
     implementation 'io.netty:netty-all:4.1.95.Final'
     implementation 'org.jboss.logmanager:jboss-logmanager:3.0.0.Final'
     implementation 'com.jcraft:jsch:0.1.55'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.1'
     implementation 'org.apache.httpcomponents:httpmime:4.5.7'
-    implementation 'junit:junit:4.13'
+    implementation 'junit:junit:4.13.2'
     implementation 'com.github.oshi:oshi-core:6.4.0'
     implementation 'org.slf4j:slf4j-nop:2.0.7'
     implementation 'org.apache.qpid:qpid-jms-client:2.4.0'
     implementation 'javax.json:javax.json-api:1.1.4'
     implementation 'org.glassfish:javax.json:1.1.4'
     testImplementation 'org.mockito:mockito-core:5.4.0'
-    testImplementation 'org.powermock:powermock-module-junit4-rule:2.0.9'
-    testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
-    testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
-    testImplementation 'org.powermock:powermock-core:2.0.9'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.11.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+//    testImplementation 'org.powermock:powermock-module-junit4-rule:2.0.9'
+//    testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
+//    testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
+//    testImplementation 'org.powermock:powermock-core:2.0.9'
 }
 
 processResources {
@@ -34,7 +37,7 @@ build {
 }
 
 test {
-    jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.util.stream'
+    jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.util.stream=ALL-UNNAMED', '--add-opens=java.base/java.lang=ALL-UNNAMED'
 }
 //applicationDefaultJvmArgs = ["--add-opens", "java.base/jdk.internal.loader=ALL-UNNAMED"]
 //tasks.withType(Copy).all {

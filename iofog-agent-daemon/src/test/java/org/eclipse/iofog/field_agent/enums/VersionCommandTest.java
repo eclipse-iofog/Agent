@@ -17,8 +17,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+//import org.powermock.core.classloader.annotations.PrepareForTest;
+//import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -28,8 +28,8 @@ import static org.junit.Assert.*;
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(VersionCommand.class)
+//@RunWith(PowerMockRunner.class)
+//@PrepareForTest(VersionCommand.class)
 public class VersionCommandTest {
     private String versionCommand;
     private JsonObject jsonObject;
