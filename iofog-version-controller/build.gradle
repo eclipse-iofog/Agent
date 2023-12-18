@@ -1,6 +1,7 @@
 description = 'iofog-version-controller'
 
 tasks.register('copyJar', Copy) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from(layout.buildDirectory.dir("libs/")) {
         include "*.jar"
     }
