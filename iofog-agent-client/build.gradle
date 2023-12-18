@@ -20,7 +20,7 @@ processResources {
 build {
     dependsOn shadowJar
 }
-//tasks.withType(Copy).all {
+//tasks.withType(Copy).configureEach {
 //    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 //}
 //tasks.withType<Jar> { duplicatesStrategy = DuplicatesStrategy.INHERIT }
@@ -35,6 +35,7 @@ tasks.register('copyJar', Copy) {
 }
 
 jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
     	configurations.extraLibs.collect { it.isDirectory() ? it : zipTree(it) }
     }
