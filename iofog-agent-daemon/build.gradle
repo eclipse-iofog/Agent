@@ -46,7 +46,7 @@ test {
 
 tasks.register('copyJar', Copy) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from("$buildDir/libs/") {
+    from(layout.buildDirectory.dir("/libs/")) {
         include "*-all.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')
