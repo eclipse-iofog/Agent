@@ -25,9 +25,9 @@ build {
 //}
 //tasks.withType<Jar> { duplicatesStrategy = DuplicatesStrategy.INHERIT }
 
-tasks.register('copyJar', Copy) {
+task copyJar(type: Copy) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from(layout.buildDirectory.dir("/libs/")) {
+    from('build/libs/') {
         include "*-all.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')
