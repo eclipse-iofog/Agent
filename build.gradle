@@ -21,7 +21,11 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    task sourcesJar(type: Jar) {
+//    task sourcesJar(type: Jar) {
+//        from sourceSets.main.allJava
+//        archiveClassifier = 'sources'
+//    }
+    tasks.register('sourcesJar', Jar) {
         from sourceSets.main.allJava
         archiveClassifier = 'sources'
     }
