@@ -20,12 +20,9 @@ processResources {
 build {
     dependsOn shadowJar
 }
-//tasks.withType(Copy).configureEach {
-//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//}
-//tasks.withType<Jar> { duplicatesStrategy = DuplicatesStrategy.INHERIT }
 
-task copyJar(type: Copy) {
+tasks.register('copy', Copy)
+copy {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from('build/libs/') {
         include "*-all.jar"

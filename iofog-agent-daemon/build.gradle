@@ -39,12 +39,9 @@ build {
 test {
     jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.util.stream=ALL-UNNAMED', '--add-opens=java.base/java.lang=ALL-UNNAMED'
 }
-//applicationDefaultJvmArgs = ["--add-opens", "java.base/jdk.internal.loader=ALL-UNNAMED"]
-//tasks.withType(Copy).all {
-//    duplicatesStrategy = DuplicatesStrategy.INHERIT
-//}
 
-task copyJar(type: Copy) {
+tasks.register('copy', Copy)
+copy {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from('build/libs/') {
         include "*-all.jar"
