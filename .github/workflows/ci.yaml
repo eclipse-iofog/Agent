@@ -43,46 +43,40 @@ jobs:
       with:
         gradle-version: 8.4
         arguments: build
-    - name: Execute Gradle build
-      run: ./gradlew build
-    - name: 'ls jars'
-      run: |
-        cd packaging/iofog-agent/usr/bin
-        ls
         
-#
-#  Integration:
-#    runs-on: ubuntu-20.04
-#    name: Integration
-#    needs: Build
-#    permissions:
-#      contents: 'read'
-#      id-token: 'write'
-#      packages: 'write'
-#    steps:
-#    - uses: actions/checkout@v3
-#    - run: sudo apt-get install jq
-#    - run: |
-#        curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
-#        sudo apt-get install iofogctl=${{ env.IOFOGCTL_VERSION }}
-#    - name: 'Install bats'
-#      run: |
-#        sudo apt-get update -y
-#        sudo apt-get install -y bats
-#    - name: 'Deploy local ecn'
-#      shell: bash
-#      run: |
-#        sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"${{ env.CONTROLLER_IMAGE }}\"|g" test/resources/env.sh
-#        sudo bash test/deploy_ecn.bash deployControlPlane
-#    - name: 'Run integration test'
-#      run: sudo bash test/run.bash
-#    - name: 'Delete ECN'
-#      if: always()
-#      run: sudo bash test/deploy_ecn.bash deleteECN
-#
+
+  Integration:
+    runs-on: ubuntu-20.04
+    name: Integration
+    needs: Build
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      packages: 'write'
+    steps:
+    - uses: actions/checkout@v3
+    - run: sudo apt-get install jq
+    - run: |
+        curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
+        sudo apt-get install iofogctl=${{ env.IOFOGCTL_VERSION }}
+    - name: 'Install bats'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y bats
+    - name: 'Deploy local ecn'
+      shell: bash
+      run: |
+        sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"${{ env.CONTROLLER_IMAGE }}\"|g" test/resources/env.sh
+        sudo bash test/deploy_ecn.bash deployControlPlane
+    - name: 'Run integration test'
+      run: sudo bash test/run.bash
+    - name: 'Delete ECN'
+      if: always()
+      run: sudo bash test/deploy_ecn.bash deleteECN
+
   Publish:
     runs-on: ubuntu-20.04
-    needs: [Build]
+    needs: [Build, Integration]
     permissions:
       contents: 'read'
       id-token: 'write'
