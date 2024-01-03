@@ -43,189 +43,194 @@ jobs:
       with:
         gradle-version: 8.4
         arguments: build
-#    - name: Execute Gradle build
-#      run: ./gradlew build
-
-  Integration:
-    runs-on: ubuntu-20.04
-    name: Integration
-    needs: Build
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-      packages: 'write'
-    steps:
-    - uses: actions/checkout@v3
-    - run: sudo apt-get install jq
-    - run: |
-        curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
-        sudo apt-get install iofogctl=${{ env.IOFOGCTL_VERSION }}
-    - name: 'Install bats'
+    - name: Execute Gradle build
+      run: ./gradlew build
+    - name: 'ls jars'
       run: |
-        sudo apt-get update -y
-        sudo apt-get install -y bats
-    - name: 'Deploy local ecn'
-      shell: bash
-      run: |
-        sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"${{ env.CONTROLLER_IMAGE }}\"|g" test/resources/env.sh
-        sudo bash test/deploy_ecn.bash deployControlPlane
-    - name: 'Run integration test'
-      run: sudo bash test/run.bash
-    - name: 'Delete ECN'
-      if: always()
-      run: sudo bash test/deploy_ecn.bash deleteECN
-
-  Publish:
-    runs-on: ubuntu-20.04
-    needs: [Build, Integration]
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-      packages: 'write'
-    name: Publish
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: 'Get Previous tag'
-        id: previoustag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
-        with:
-          fallback: 0.0.0
-      - name: Set image tag
-        shell: bash
-        id: tags
-        run: |
-          if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
-            VERSION=${{ github.ref_name }}
-            echo "VERSION=${VERSION:1}" >> "${GITHUB_OUTPUT}"
-          else
-             VERSION=${{ steps.previoustag.outputs.tag }}
-             echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
-          fi
-      - name: Build and Push to GCR
-        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
-        id: build_push_gcr
-        uses: RafikFarhad/push-to-gcr-github-action@v5-beta
-        with:
-          gcloud_service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          registry: gcr.io
-          project_id: ${{ env.PROJECT }}
-          image_name: ${{ env.IMAGE_NAME }}
-          image_tag: latest, develop, ${{ steps.tags.outputs.VERSION }}
-          dockerfile: Dockerfile
-
-      - name: Login to Github Container Registry
-        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
-        uses: docker/login-action@v2
-        with:
-          registry: "ghcr.io"
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - name: Build and Push to ghcr
-        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
-        uses: docker/build-push-action@v3
-        id: build_push_ghcr
-        with:
-          file: Dockerfile
-          push: true
-          tags: |
-            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
-            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:develop
-
-      - name: Set up Ruby 3.1.4
-        uses: actions/setup-ruby@v1
-        with:
-          ruby-version: 3.1.4
-      - run: |
-          gem install --no-document fpm
-          fpm -h
-      - name: Install package_Cloud
-        run: |
-          gem install package_cloud
-          package_cloud -h
-      - name: get gradle version
-        shell: bash
-        id: version
-        run: echo "version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')"  >> "${GITHUB_OUTPUT}"
-      - name: get package version
-        shell: bash
-        id: pkg_version
-        run: |
-          if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
-            echo "version=${{ steps.version.outputs.version }}" >> "${GITHUB_OUTPUT}"
-          else
-            echo "version=${{ steps.version.outputs.version }}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
-          fi
-      - run: echo ${{ steps.version.outputs.version }}
-      - name: Create deb package
-        shell: bash
-        id: create_deb_package
-        run: |
-          cd packaging/iofog-agent
-          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk | openjdk-17-jdk' -d docker -t deb -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
-          echo "pkg created"
-          ls
-      - name: Create rpm package
-        shell: bash
-        id: create_rpm_package
-        run: |
-          cd packaging/iofog-agent
-          fpm -s dir --depends 'java-17-openjdk' -d docker-ce -t rpm -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
-          echo "pkg created"
-          ls
-      - uses: actions/upload-artifact@v2
-        name: Upload deb package
-        with:
-          name: deb-package
-          path: packaging/iofog-agent/iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
-
-      - uses: bluwy/substitute-string-action@v1
-        id: sub
-        with:
-          _input-text: ${{ steps.pkg_version.outputs.version }}
-          '-': _
-      - run: echo ${{ steps.sub.outputs.result }}
-
-      - uses: actions/upload-artifact@v2
-        name: Upload rpm package
-        with:
-          name: rpm-package
-          path: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: deb-package
-
-      - name: Publish deb package to packagecloud
-        uses: danielmundi/upload-packagecloud@v1
-        with:
-          PACKAGE-NAME: iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
-          PACKAGECLOUD-USERNAME: iofog
-          PACKAGECLOUD-REPO: iofog-agent-dev
-          PACKAGECLOUD-DISTRIB: any/any
-          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: rpm-package
-
-      - name: Publish rpm package to packagecloud
-        uses: danielmundi/upload-packagecloud@v1
-        with:
-          PACKAGE-NAME: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
-          PACKAGECLOUD-USERNAME: iofog
-          PACKAGECLOUD-REPO: iofog-agent-dev
-          PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
-          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
-
-      - name: Upload Agent Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: agent
-          path: packaging/**/*
-
-
-
+        cd packaging/iofog-agent/usr/bin
+        ls
+        
+#
+#  Integration:
+#    runs-on: ubuntu-20.04
+#    name: Integration
+#    needs: Build
+#    permissions:
+#      contents: 'read'
+#      id-token: 'write'
+#      packages: 'write'
+#    steps:
+#    - uses: actions/checkout@v3
+#    - run: sudo apt-get install jq
+#    - run: |
+#        curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
+#        sudo apt-get install iofogctl=${{ env.IOFOGCTL_VERSION }}
+#    - name: 'Install bats'
+#      run: |
+#        sudo apt-get update -y
+#        sudo apt-get install -y bats
+#    - name: 'Deploy local ecn'
+#      shell: bash
+#      run: |
+#        sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"${{ env.CONTROLLER_IMAGE }}\"|g" test/resources/env.sh
+#        sudo bash test/deploy_ecn.bash deployControlPlane
+#    - name: 'Run integration test'
+#      run: sudo bash test/run.bash
+#    - name: 'Delete ECN'
+#      if: always()
+#      run: sudo bash test/deploy_ecn.bash deleteECN
+#
+#  Publish:
+#    runs-on: ubuntu-20.04
+#    needs: [Build, Integration]
+#    permissions:
+#      contents: 'read'
+#      id-token: 'write'
+#      packages: 'write'
+#    name: Publish
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#      - name: 'Get Previous tag'
+#        id: previoustag
+#        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+#        with:
+#          fallback: 0.0.0
+#      - name: Set image tag
+#        shell: bash
+#        id: tags
+#        run: |
+#          if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
+#            VERSION=${{ github.ref_name }}
+#            echo "VERSION=${VERSION:1}" >> "${GITHUB_OUTPUT}"
+#          else
+#             VERSION=${{ steps.previoustag.outputs.tag }}
+#             echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
+#          fi
+#      - name: Build and Push to GCR
+#        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
+#        id: build_push_gcr
+#        uses: RafikFarhad/push-to-gcr-github-action@v5-beta
+#        with:
+#          gcloud_service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+#          registry: gcr.io
+#          project_id: ${{ env.PROJECT }}
+#          image_name: ${{ env.IMAGE_NAME }}
+#          image_tag: latest, develop, ${{ steps.tags.outputs.VERSION }}
+#          dockerfile: Dockerfile
+#
+#      - name: Login to Github Container Registry
+#        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
+#        uses: docker/login-action@v2
+#        with:
+#          registry: "ghcr.io"
+#          username: ${{ github.actor }}
+#          password: ${{ github.token }}
+#
+#      - name: Build and Push to ghcr
+#        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
+#        uses: docker/build-push-action@v3
+#        id: build_push_ghcr
+#        with:
+#          file: Dockerfile
+#          push: true
+#          tags: |
+#            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
+#            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
+#            ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:develop
+#
+#      - name: Set up Ruby 3.1.4
+#        uses: actions/setup-ruby@v1
+#        with:
+#          ruby-version: 3.1.4
+#      - run: |
+#          gem install --no-document fpm
+#          fpm -h
+#      - name: Install package_Cloud
+#        run: |
+#          gem install package_cloud
+#          package_cloud -h
+#      - name: get gradle version
+#        shell: bash
+#        id: version
+#        run: echo "version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')"  >> "${GITHUB_OUTPUT}"
+#      - name: get package version
+#        shell: bash
+#        id: pkg_version
+#        run: |
+#          if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
+#            echo "version=${{ steps.version.outputs.version }}" >> "${GITHUB_OUTPUT}"
+#          else
+#            echo "version=${{ steps.version.outputs.version }}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
+#          fi
+#      - run: echo ${{ steps.version.outputs.version }}
+#      - name: Create deb package
+#        shell: bash
+#        id: create_deb_package
+#        run: |
+#          cd packaging/iofog-agent
+#          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk | openjdk-17-jdk' -d docker -t deb -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+#          echo "pkg created"
+#          ls
+#      - name: Create rpm package
+#        shell: bash
+#        id: create_rpm_package
+#        run: |
+#          cd packaging/iofog-agent
+#          fpm -s dir --depends 'java-17-openjdk' -d docker-ce -t rpm -n iofog-agent -v ${{ steps.pkg_version.outputs.version }} -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+#          echo "pkg created"
+#          ls
+#      - uses: actions/upload-artifact@v2
+#        name: Upload deb package
+#        with:
+#          name: deb-package
+#          path: packaging/iofog-agent/iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
+#
+#      - uses: bluwy/substitute-string-action@v1
+#        id: sub
+#        with:
+#          _input-text: ${{ steps.pkg_version.outputs.version }}
+#          '-': _
+#      - run: echo ${{ steps.sub.outputs.result }}
+#
+#      - uses: actions/upload-artifact@v2
+#        name: Upload rpm package
+#        with:
+#          name: rpm-package
+#          path: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: deb-package
+#
+#      - name: Publish deb package to packagecloud
+#        uses: danielmundi/upload-packagecloud@v1
+#        with:
+#          PACKAGE-NAME: iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
+#          PACKAGECLOUD-USERNAME: iofog
+#          PACKAGECLOUD-REPO: iofog-agent-dev
+#          PACKAGECLOUD-DISTRIB: any/any
+#          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: rpm-package
+#
+#      - name: Publish rpm package to packagecloud
+#        uses: danielmundi/upload-packagecloud@v1
+#        with:
+#          PACKAGE-NAME: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
+#          PACKAGECLOUD-USERNAME: iofog
+#          PACKAGECLOUD-REPO: iofog-agent-dev
+#          PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
+#          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
+#
+#      - name: Upload Agent Artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: agent
+#          path: packaging/**/*
+#
+#
+#
