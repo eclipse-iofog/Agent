@@ -43,7 +43,6 @@ jobs:
       with:
         gradle-version: 8.4
         arguments: build
-        
 
   Integration:
     runs-on: ubuntu-20.04
@@ -90,7 +89,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          #        cache: 'gradle'
       - uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 8.4
