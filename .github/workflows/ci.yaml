@@ -43,8 +43,8 @@ jobs:
       with:
         gradle-version: 8.4
         arguments: build
-    - name: Execute Gradle build
-      run: ./gradlew build
+#    - name: Execute Gradle build
+#      run: ./gradlew build
 
   Integration:
     runs-on: ubuntu-20.04
