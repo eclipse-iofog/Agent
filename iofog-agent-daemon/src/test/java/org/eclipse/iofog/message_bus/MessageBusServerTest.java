@@ -20,7 +20,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -33,8 +33,8 @@
 //import static org.junit.Assert.*;
 //import static org.mockito.ArgumentMatchers.any;
 //import static org.mockito.Mockito.*;
-//import static org.powermock.api.mockito.PowerMockito.mockStatic;
-//import static org.powermock.api.mockito.PowerMockito.spy;
+//import static org.powermock.api.mockito.Mockito.mockStatic;
+//import static org.powermock.api.mockito.Mockito.spy;
 //
 ///**
 // * @author nehanaithani
@@ -70,15 +70,15 @@
 //        mockStatic(LoggingService.class);
 //
 //        connectionFactory = mock(JmsConnectionFactory.class);
-//        PowerMockito.when(connectionFactory.createConnection()).thenReturn(connection);
-//        PowerMockito.whenNew(JmsConnectionFactory.class).withArguments(anyString()).thenReturn((JmsConnectionFactory) connectionFactory);
-//        PowerMockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
-//        PowerMockito.when(Configuration.getDiskDirectory()).thenReturn("dir/");
-//        PowerMockito.when(connection.createSession(anyBoolean(), anyInt())).thenReturn(session);
-//        PowerMockito.when(session.createTextMessage(any())).thenReturn(textMessage);
-//        PowerMockito.when(session.createQueue(any())).thenReturn(queue);
-//        PowerMockito.when(session.createConsumer(any())).thenReturn(messageConsumer);
-//        PowerMockito.when(session.createProducer(any())).thenReturn(messageProducer);
+//        Mockito.when(connectionFactory.createConnection()).thenReturn(connection);
+//        Mockito.whenNew(JmsConnectionFactory.class).withArguments(anyString()).thenReturn((JmsConnectionFactory) connectionFactory);
+//        Mockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
+//        Mockito.when(Configuration.getDiskDirectory()).thenReturn("dir/");
+//        Mockito.when(connection.createSession(anyBoolean(), anyInt())).thenReturn(session);
+//        Mockito.when(session.createTextMessage(any())).thenReturn(textMessage);
+//        Mockito.when(session.createQueue(any())).thenReturn(queue);
+//        Mockito.when(session.createConsumer(any())).thenReturn(messageConsumer);
+//        Mockito.when(session.createProducer(any())).thenReturn(messageProducer);
 //    }
 //
 //    @After
@@ -100,9 +100,9 @@
 //        try {
 //            messageBusServer.startServer("localhost", 5672);
 //            Mockito.verify(connectionFactory, Mockito.atLeastOnce()).createConnection();
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logDebug(MODULE_NAME, "Starting server");
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logDebug(MODULE_NAME, "Finished starting server");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -119,9 +119,9 @@
 //            messageBusServer.initialize();
 //            Mockito.verify(connection, Mockito.atLeastOnce()).createSession(false, Session.CLIENT_ACKNOWLEDGE);
 //            Mockito.verify(connection, Mockito.atLeastOnce()).start();
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logDebug(MODULE_NAME, "Starting initialization");
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logDebug(MODULE_NAME, "Finished initialization");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -141,9 +141,9 @@
 //            messageBusServer.stopServer();
 //            Mockito.verify(session, Mockito.atLeastOnce()).close();
 //            Mockito.verify(connection, Mockito.atLeastOnce()).close();
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logDebug(MODULE_NAME, "stopping server started");
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logDebug(MODULE_NAME, "stopped server");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -178,8 +178,8 @@
 //    @Test
 //    public void throwsExceptionWhenStoppingProducerAndConsumer() {
 //        try {
-//            PowerMockito.doThrow(mock(JMSException.class)).when(messageProducer).close();
-//            PowerMockito.doThrow(mock(JMSException.class)).when(messageConsumer).close();
+//            Mockito.doThrow(mock(JMSException.class)).when(messageProducer).close();
+//            Mockito.doThrow(mock(JMSException.class)).when(messageConsumer).close();
 //            messageBusServer.startServer("localhost", 5672);
 //            messageBusServer.initialize();
 //            messageBusServer.createConsumer("consumer");
@@ -187,9 +187,9 @@
 //            messageBusServer.stopServer();
 //            Mockito.verify(messageConsumer, Mockito.atLeastOnce()).close();
 //            Mockito.verify(messageProducer, Mockito.atLeast(2)).close();
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logError(eq(MODULE_NAME), eq("Error closing consumer"), any());
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logError(eq(MODULE_NAME), eq("Error closing producer"), any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -206,9 +206,9 @@
 //            messageBusServer.initialize();
 //            messageBusServer.createConsumer("consumer");
 //            assertEquals(messageConsumer, messageBusServer.getConsumer("consumer"));
-//            PowerMockito.verifyStatic(LoggingService.class, times(1));
+//            Mockito.verify(LoggingService.class, times(1));
 //            LoggingService.logDebug(MODULE_NAME, "Starting create consumer");
-//            PowerMockito.verifyStatic(LoggingService.class, times(1));
+//            Mockito.verify(LoggingService.class, times(1));
 //            LoggingService.logDebug(MODULE_NAME, "Finished create consumer");
 //        } catch (Exception e) {
 //            fail("This should never happen");

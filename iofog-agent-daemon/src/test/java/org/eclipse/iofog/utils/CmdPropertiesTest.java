@@ -22,7 +22,7 @@
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
 //import static org.junit.Assert.*;
-//import static org.powermock.api.mockito.PowerMockito.mockStatic;
+//import static org.powermock.api.mockito.Mockito.mockStatic;
 //
 ///**
 // * @author nehanaithani

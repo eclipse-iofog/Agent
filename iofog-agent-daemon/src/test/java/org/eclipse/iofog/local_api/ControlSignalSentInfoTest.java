@@ -16,7 +16,7 @@
 //import org.junit.Before;
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -36,7 +36,7 @@
 //    public void setUp() throws Exception {
 //        sendTryCount = 5;
 //        timeMillis = System.currentTimeMillis();
-//        controlSignalSentInfo = PowerMockito.spy(new ControlSignalSentInfo(sendTryCount, timeMillis));
+//        controlSignalSentInfo = Mockito.spy(new ControlSignalSentInfo(sendTryCount, timeMillis));
 //    }
 //
 //    @After

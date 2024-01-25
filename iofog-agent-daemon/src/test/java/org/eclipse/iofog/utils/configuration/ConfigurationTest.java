@@ -29,7 +29,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PowerMockIgnore;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
@@ -53,7 +53,7 @@
 //import static org.junit.Assert.*;
 //import static org.mockito.Mockito.atLeastOnce;
 //import static org.mockito.Mockito.never;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //import static org.powermock.api.support.membermodification.MemberMatcher.method;
 //import static org.powermock.api.support.membermodification.MemberModifier.suppress;
 //
@@ -93,26 +93,26 @@
 //        processManager =mock(ProcessManager.class);
 //        resourceConsumptionManager = mock(ResourceConsumptionManager.class);
 //        supervisor = mock(Supervisor.class);
-//        PowerMockito.mockStatic(LoggingService.class);
-//        PowerMockito.mockStatic(FieldAgent.class);
-//        PowerMockito.mockStatic(ResourceConsumptionManager.class);
-//        PowerMockito.mockStatic(MessageBus.class);
-//        PowerMockito.mockStatic(ProcessManager.class);
-//        PowerMockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
-//        PowerMockito.when(ResourceConsumptionManager.getInstance()).thenReturn(resourceConsumptionManager);
-//        PowerMockito.when(MessageBus.getInstance()).thenReturn(messageBus);
-//        PowerMockito.when(ProcessManager.getInstance()).thenReturn(processManager);
-//        PowerMockito.whenNew(DOMSource.class).withArguments(Mockito.any()).thenReturn(mock(DOMSource.class));
-//        PowerMockito.whenNew(StreamResult.class).withParameterTypes(File.class).withArguments(Mockito.any(File.class)).thenReturn(mock(StreamResult.class));
-//        PowerMockito.whenNew(Supervisor.class).withNoArguments().thenReturn(supervisor);
-//        PowerMockito.doNothing().when(supervisor).start();
+//        Mockito.mockStatic(LoggingService.class);
+//        Mockito.mockStatic(FieldAgent.class);
+//        Mockito.mockStatic(ResourceConsumptionManager.class);
+//        Mockito.mockStatic(MessageBus.class);
+//        Mockito.mockStatic(ProcessManager.class);
+//        Mockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
+//        Mockito.when(ResourceConsumptionManager.getInstance()).thenReturn(resourceConsumptionManager);
+//        Mockito.when(MessageBus.getInstance()).thenReturn(messageBus);
+//        Mockito.when(ProcessManager.getInstance()).thenReturn(processManager);
+//        Mockito.whenNew(DOMSource.class).withArguments(Mockito.any()).thenReturn(mock(DOMSource.class));
+//        Mockito.whenNew(StreamResult.class).withParameterTypes(File.class).withArguments(Mockito.any(File.class)).thenReturn(mock(StreamResult.class));
+//        Mockito.whenNew(Supervisor.class).withNoArguments().thenReturn(supervisor);
+//        Mockito.doNothing().when(supervisor).start();
 //        setFinalStatic(Constants.class.getField("CONFIG_SWITCHER_PATH"), MOCK_CONFIG_SWITCHER_PATH);
 //        setFinalStatic(Constants.class.getField("DEFAULT_CONFIG_PATH"), MOCK_DEFAULT_CONFIG_PATH);
-//        PowerMockito.when(GpsWebHandler.getGpsCoordinatesByExternalIp()).thenReturn("32.00,-121.31");
-//        PowerMockito.when(GpsWebHandler.getExternalIp()).thenReturn("0.0.0.0");
-//        PowerMockito.suppress(method(Configuration.class, "updateConfigFile"));
-//        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(networkInterfaceManager);
-//        PowerMockito.doNothing().when(networkInterfaceManager).updateIOFogNetworkInterface();
+//        Mockito.when(GpsWebHandler.getGpsCoordinatesByExternalIp()).thenReturn("32.00,-121.31");
+//        Mockito.when(GpsWebHandler.getExternalIp()).thenReturn("0.0.0.0");
+//        Mockito.suppress(method(Configuration.class, "updateConfigFile"));
+//        Mockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(networkInterfaceManager);
+//        Mockito.doNothing().when(networkInterfaceManager).updateIOFogNetworkInterface();
 //    }
 //
 //    @After
@@ -341,7 +341,7 @@
 //        try {
 //            initializeConfiguration();
 //            Configuration.writeGpsToConfigFile();
-//            PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+//            Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
 //            LoggingService.logDebug("Configuration", "Finished writing GPS coordinates and GPS mode to config file");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -358,8 +358,8 @@
 //            privateCurrentSwitcherState.setAccessible(true);
 //            privateCurrentSwitcherState.set(Configuration.class, Constants.ConfigSwitcherState.DEFAULT);
 //            Configuration.loadConfig();
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setIofogUuid", Mockito.any());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setAccessToken", Mockito.any());
+//            Mockito.verifyPrivate(Configuration.class).invoke("setIofogUuid", Mockito.any());
+//            Mockito.verifyPrivate(Configuration.class).invoke("setAccessToken", Mockito.any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -372,13 +372,13 @@
 //    public void testLoadConfigSwitcher() {
 //        try {
 //            Configuration.loadConfigSwitcher();
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME, "Start loads configuration about current config from config-switcher.xml");
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME, "Finished loading configuration about current config from config-switcher.xml");
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("getFirstNodeByTagName",
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("getFirstNodeByTagName",
 //                    Mockito.eq(SWITCHER_ELEMENT), Mockito.any(Document.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("verifySwitcherNode",
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("verifySwitcherNode",
 //                    Mockito.eq(SWITCHER_NODE), Mockito.eq(Constants.ConfigSwitcherState.DEFAULT.fullValue()));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -447,9 +447,9 @@
 //    public void testLoad() {
 //        try {
 //            Configuration.load();
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.loadConfigSwitcher();
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.loadConfig();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -475,10 +475,10 @@
 //    @Test
 //    public void testSupervisorThrowsExceptionOnSetupSupervisor() {
 //        try {
-//            PowerMockito.doThrow(mock(Exception.class)).when(supervisor).start();
+//            Mockito.doThrow(mock(Exception.class)).when(supervisor).start();
 //            Configuration.setupSupervisor();
 //            Mockito.verify(supervisor).start();
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logError(Mockito.eq("Configuration"), Mockito.eq("Error while starting supervisor"), Mockito.any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -501,7 +501,7 @@
 //                assertEquals("Parameter error", k);
 //                assertEquals("Command or value is invalid", v);
 //            });
-//            PowerMockito.verifyStatic(LoggingService.class, never());
+//            Mockito.verify(LoggingService.class, never());
 //            LoggingService.instanceConfigUpdated();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -521,9 +521,9 @@
 //                assertEquals("invalid", k);
 //                assertEquals("Option and value are null", v);
 //            });
-//            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.any(CommandLineConfigParam.class), Mockito.anyString(),
+//            Mockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.any(CommandLineConfigParam.class), Mockito.anyString(),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setLogLevel", Mockito.anyString());
+//            Mockito.verifyPrivate(Configuration.class, never()).invoke("setLogLevel", Mockito.anyString());
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -565,7 +565,7 @@
 //                assertEquals("d", k);
 //                assertEquals("Disk limit range must be 1 to 1048576 GB", v);
 //            });
-//            PowerMockito.verifyStatic(LoggingService.class, never());
+//            Mockito.verify(LoggingService.class, never());
 //            LoggingService.instanceConfigUpdated();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -587,9 +587,9 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(30, Configuration.getDiskLimit(), 0);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DISK_CONSUMPTION_LIMIT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DISK_CONSUMPTION_LIMIT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDiskLimit", Mockito.eq(Float.parseFloat(value)));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDiskLimit", Mockito.eq(Float.parseFloat(value)));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -609,11 +609,11 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals("/dir/", Configuration.getDiskDirectory());
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("addSeparator", Mockito.eq(value));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DISK_DIRECTORY), Mockito.eq("dir/"),
+//            Mockito.verifyPrivate(Configuration.class).invoke("addSeparator", Mockito.eq(value));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DISK_DIRECTORY), Mockito.eq("dir/"),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setDiskDirectory", Mockito.eq("dir/"));
-//            PowerMockito.verifyStatic(LoggingService.class, never());
+//            Mockito.verifyPrivate(Configuration.class).invoke("setDiskDirectory", Mockito.eq("dir/"));
+//            Mockito.verify(LoggingService.class, never());
 //            LoggingService.instanceConfigUpdated();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -659,8 +659,8 @@
 //                assertEquals("m", k);
 //                assertEquals("Memory limit range must be 128 to 1048576 MB", v);
 //            });
-//            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setMemoryLimit", Mockito.eq(Float.parseFloat(value)));
-//            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.eq(MEMORY_CONSUMPTION_LIMIT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, never()).invoke("setMemoryLimit", Mockito.eq(Float.parseFloat(value)));
+//            Mockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.eq(MEMORY_CONSUMPTION_LIMIT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -680,8 +680,8 @@
 //            config.put("m", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setMemoryLimit", Mockito.eq(Float.parseFloat(value)));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(MEMORY_CONSUMPTION_LIMIT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setMemoryLimit", Mockito.eq(Float.parseFloat(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(MEMORY_CONSUMPTION_LIMIT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -745,8 +745,8 @@
 //            config.put("p", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setCpuLimit", Mockito.eq(Float.parseFloat(value)));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(PROCESSOR_CONSUMPTION_LIMIT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setCpuLimit", Mockito.eq(Float.parseFloat(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(PROCESSOR_CONSUMPTION_LIMIT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -767,8 +767,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals(value+"/", Configuration.getControllerUrl());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setControllerUrl", Mockito.eq(value));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(CONTROLLER_URL), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setControllerUrl", Mockito.eq(value));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(CONTROLLER_URL), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -789,8 +789,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals(value, Configuration.getControllerCert());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setControllerCert", Mockito.eq(value));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(CONTROLLER_CERT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setControllerCert", Mockito.eq(value));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(CONTROLLER_CERT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -833,8 +833,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals(value, Configuration.getDockerUrl());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setDockerUrl", Mockito.eq(value));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DOCKER_URL), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setDockerUrl", Mockito.eq(value));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DOCKER_URL), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -855,8 +855,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals(value, Configuration.getNetworkInterface());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNetworkInterface", Mockito.eq(value));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(NETWORK_INTERFACE), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNetworkInterface", Mockito.eq(value));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(NETWORK_INTERFACE), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -921,8 +921,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals(Float.parseFloat(value), Configuration.getLogDiskLimit(), 0);
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setLogDiskLimit", Mockito.eq(Float.parseFloat(value)));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_DISK_CONSUMPTION_LIMIT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setLogDiskLimit", Mockito.eq(Float.parseFloat(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_DISK_CONSUMPTION_LIMIT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -943,8 +943,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals("/"+value+"/", Configuration.getLogDiskDirectory());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setLogDiskDirectory", Mockito.eq(value+"/"));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_DISK_DIRECTORY), Mockito.eq(value+"/"),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setLogDiskDirectory", Mockito.eq(value+"/"));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_DISK_DIRECTORY), Mockito.eq(value+"/"),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -1008,8 +1008,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertEquals(Integer.parseInt(value), Configuration.getLogFileCount());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setLogFileCount", Mockito.eq(Integer.parseInt(value)));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_FILE_COUNT), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setLogFileCount", Mockito.eq(Integer.parseInt(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_FILE_COUNT), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -1032,10 +1032,10 @@
 //                assertEquals("ll", k);
 //                assertEquals("Option -ll has invalid value: terrific", v);
 //            });
-//            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, never()).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, never()).invoke("setLogLevel", Mockito.eq(value));
-//            PowerMockito.verifyStatic(LoggingService.class, never());
+//            Mockito.verifyPrivate(Configuration.class, never()).invoke("setLogLevel", Mockito.eq(value));
+//            Mockito.verify(LoggingService.class, never());
 //            LoggingService.instanceConfigUpdated();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -1056,10 +1056,10 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(value.toUpperCase(), Configuration.getLogLevel());
 //            assertTrue(messageMap.size() == 0);
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value.toUpperCase()),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(LOG_LEVEL), Mockito.eq(value.toUpperCase()),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setLogLevel", Mockito.eq(value.toUpperCase()));
-//            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+//            Mockito.verifyPrivate(Configuration.class).invoke("setLogLevel", Mockito.eq(value.toUpperCase()));
+//            Mockito.verify(LoggingService.class, atLeastOnce());
 //            LoggingService.instanceConfigUpdated();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -1124,9 +1124,9 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(Integer.parseInt(value), Configuration.getStatusFrequency());
 //            assertTrue(messageMap.size() == 0);
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(STATUS_FREQUENCY), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(STATUS_FREQUENCY), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setStatusFrequency", Mockito.eq(Integer.parseInt(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setStatusFrequency", Mockito.eq(Integer.parseInt(value)));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1191,9 +1191,9 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(Integer.parseInt(value), Configuration.getChangeFrequency());
 //            assertTrue(messageMap.size() == 0);
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(CHANGE_FREQUENCY), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(CHANGE_FREQUENCY), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setChangeFrequency", Mockito.eq(Integer.parseInt(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setChangeFrequency", Mockito.eq(Integer.parseInt(value)));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1257,9 +1257,9 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(Integer.parseInt(value), Configuration.getDeviceScanFrequency());
 //            assertTrue(messageMap.size() == 0);
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DEVICE_SCAN_FREQUENCY), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(DEVICE_SCAN_FREQUENCY), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setDeviceScanFrequency", Mockito.eq(Integer.parseInt(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setDeviceScanFrequency", Mockito.eq(Integer.parseInt(value)));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1323,9 +1323,9 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(Integer.parseInt(value), Configuration.getPostDiagnosticsFreq());
 //            assertTrue(messageMap.size() == 0);
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(POST_DIAGNOSTICS_FREQ), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(POST_DIAGNOSTICS_FREQ), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setPostDiagnosticsFreq", Mockito.eq(Integer.parseInt(value)));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setPostDiagnosticsFreq", Mockito.eq(Integer.parseInt(value)));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1390,9 +1390,9 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
 //            assertTrue(Configuration.isWatchdogEnabled());
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(WATCHDOG_ENABLED), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class).invoke("setNode", Mockito.eq(WATCHDOG_ENABLED), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class).invoke("setWatchdogEnabled", Mockito.eq(!value.equals("off")));
+//            Mockito.verifyPrivate(Configuration.class).invoke("setWatchdogEnabled", Mockito.eq(!value.equals("off")));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1434,8 +1434,8 @@
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(GpsMode.OFF, Configuration.getGpsMode());
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1456,9 +1456,9 @@
 //            assertEquals(GpsMode.MANUAL, Configuration.getGpsMode());
 //            assertEquals(value, Configuration.getGpsCoordinates());
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("isValidCoordinates", Mockito.eq("0,0"));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("isValidCoordinates", Mockito.eq("0,0"));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1482,8 +1482,8 @@
 //                assertEquals("Option -gps has invalid value: I am invalid coordinates", v);
 //            });
 //            assertNotEquals(value, Configuration.getGpsCoordinates());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("writeGpsToConfigFile");
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureGps", Mockito.eq(value), Mockito.anyString());
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1524,9 +1524,9 @@
 //            config.put("ft", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(FOG_TYPE), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(FOG_TYPE), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureFogType", Mockito.eq(value));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("configureFogType", Mockito.eq(value));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1545,9 +1545,9 @@
 //            config.put("sec", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(SECURE_MODE), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(SECURE_MODE), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setSecureMode", Mockito.eq(!value.equals("off")));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setSecureMode", Mockito.eq(!value.equals("off")));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1566,9 +1566,9 @@
 //            config.put("sec", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(SECURE_MODE), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(SECURE_MODE), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setSecureMode", Mockito.eq(!value.equals("off")));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setSecureMode", Mockito.eq(!value.equals("off")));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1586,9 +1586,9 @@
 //            config.put("dev", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(DEV_MODE), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(DEV_MODE), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDevMode", Mockito.eq(!value.equals("off")));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDevMode", Mockito.eq(!value.equals("off")));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -1607,9 +1607,9 @@
 //            config.put("dev", value);
 //            HashMap messageMap = Configuration.setConfig(config, false);
 //            assertEquals(0, messageMap.size());
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(DEV_MODE), Mockito.eq(value),
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setNode", Mockito.eq(DEV_MODE), Mockito.eq(value),
 //                    Mockito.any(Document.class), Mockito.any(Element.class));
-//            PowerMockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDevMode", Mockito.eq(!value.equals("off")));
+//            Mockito.verifyPrivate(Configuration.class, Mockito.atLeastOnce()).invoke("setDevMode", Mockito.eq(!value.equals("off")));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }

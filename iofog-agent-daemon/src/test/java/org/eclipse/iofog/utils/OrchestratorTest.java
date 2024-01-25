@@ -38,7 +38,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PowerMockIgnore;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
@@ -68,8 +68,8 @@
 //import static org.junit.Assert.*;
 //import static org.mockito.ArgumentMatchers.anyString;
 //import static org.mockito.Mockito.mock;
-//import static org.powermock.api.mockito.PowerMockito.mockStatic;
-//import static org.powermock.api.mockito.PowerMockito.spy;
+//import static org.powermock.api.mockito.Mockito.mockStatic;
+//import static org.powermock.api.mockito.Mockito.spy;
 //
 //import javax.net.ssl.TrustManagerFactory;
 //import javax.ws.rs.BadRequestException;
@@ -150,77 +150,77 @@
 //        anotherJsonObject = mock(JsonObject.class);
 //        jsonObjectBuilder = mock(JsonObjectBuilder.class);
 //        fileInputStream = mock(FileInputStream.class);
-//        certificate = PowerMockito.mock(Certificate.class);
+//        certificate = Mockito.mock(Certificate.class);
 //        certificateFactorySpi = mock(CertificateFactorySpi.class);
 //        provider = mock(Provider.class);
-//        certificateFactory = PowerMockito.mock(CertificateFactory.class);
-//        sslContext = PowerMockito.mock(SSLContext.class);
+//        certificateFactory = Mockito.mock(CertificateFactory.class);
+//        sslContext = Mockito.mock(SSLContext.class);
 //        httpClientBuilder = mock(HttpClientBuilder.class);
 //        stringEntity = Mockito.mock(StringEntity.class);
-//        fieldAgent = PowerMockito.mock(FieldAgent.class);
-//        iOFogNetworkInterfaceManager = PowerMockito.mock(IOFogNetworkInterfaceManager.class);
-//        PowerMockito.when(file.getName()).thenReturn("fileName");
-//        PowerMockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
-//        PowerMockito.when(fieldAgent.deProvision(Mockito.anyBoolean())).thenReturn("success");
-//        PowerMockito.when(MultipartEntityBuilder.create()).thenReturn(multipartEntityBuilder);
-//        PowerMockito.when(multipartEntityBuilder.build()).thenReturn(httpEntity);
-//        PowerMockito.when(Configuration.getIofogUuid()).thenReturn("iofog-uuid");
-//        PowerMockito.when(Configuration.getFogType()).thenReturn(ArchitectureType.ARM);
-//        PowerMockito.when(Configuration.getAccessToken()).thenReturn("access-token");
-//        PowerMockito.when(Configuration.getControllerUrl()).thenReturn("http://controller/");
-//        PowerMockito.when(Configuration.isSecureMode()).thenReturn(false);
-//        PowerMockito.when(Configuration.getControllerCert()).thenReturn("controllerCert");
-//        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(iOFogNetworkInterfaceManager);
-//        PowerMockito.when(iOFogNetworkInterfaceManager.getInetAddress()).thenReturn(inetAddress);
-//        PowerMockito.whenNew(SSLConnectionSocketFactory.class)
+//        fieldAgent = Mockito.mock(FieldAgent.class);
+//        iOFogNetworkInterfaceManager = Mockito.mock(IOFogNetworkInterfaceManager.class);
+//        Mockito.when(file.getName()).thenReturn("fileName");
+//        Mockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
+//        Mockito.when(fieldAgent.deProvision(Mockito.anyBoolean())).thenReturn("success");
+//        Mockito.when(MultipartEntityBuilder.create()).thenReturn(multipartEntityBuilder);
+//        Mockito.when(multipartEntityBuilder.build()).thenReturn(httpEntity);
+//        Mockito.when(Configuration.getIofogUuid()).thenReturn("iofog-uuid");
+//        Mockito.when(Configuration.getFogType()).thenReturn(ArchitectureType.ARM);
+//        Mockito.when(Configuration.getAccessToken()).thenReturn("access-token");
+//        Mockito.when(Configuration.getControllerUrl()).thenReturn("http://controller/");
+//        Mockito.when(Configuration.isSecureMode()).thenReturn(false);
+//        Mockito.when(Configuration.getControllerCert()).thenReturn("controllerCert");
+//        Mockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(iOFogNetworkInterfaceManager);
+//        Mockito.when(iOFogNetworkInterfaceManager.getInetAddress()).thenReturn(inetAddress);
+//        Mockito.whenNew(SSLConnectionSocketFactory.class)
 //                .withParameterTypes(SSLContext.class)
 //                .withArguments(Mockito.any()).thenReturn(sslConnectionSocketFactory);
-//        PowerMockito.when(HttpClients.createDefault()).thenReturn(httpClients);
-//        PowerMockito.when(httpClients.execute(Mockito.any())).thenReturn(response);
-//        PowerMockito.when(response.getEntity()).thenReturn(httpEntity);
-//        PowerMockito.when(response.getStatusLine()).thenReturn(statusLine);
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(200);
-//        PowerMockito.when(httpEntity.getContent()).thenReturn(inputStream);
-//        PowerMockito.whenNew(HttpGet.class)
+//        Mockito.when(HttpClients.createDefault()).thenReturn(httpClients);
+//        Mockito.when(httpClients.execute(Mockito.any())).thenReturn(response);
+//        Mockito.when(response.getEntity()).thenReturn(httpEntity);
+//        Mockito.when(response.getStatusLine()).thenReturn(statusLine);
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(200);
+//        Mockito.when(httpEntity.getContent()).thenReturn(inputStream);
+//        Mockito.whenNew(HttpGet.class)
 //                .withParameterTypes(String.class)
 //                .withArguments(Mockito.any()).thenReturn(httpGet);
-//        PowerMockito.whenNew(BufferedReader.class)
+//        Mockito.whenNew(BufferedReader.class)
 //                .withParameterTypes(Reader.class)
 //                .withArguments(Mockito.any())
 //                .thenReturn(bufferedReader);
-//        PowerMockito.whenNew(InputStreamReader.class)
+//        Mockito.whenNew(InputStreamReader.class)
 //                .withParameterTypes(InputStream.class, String.class)
 //                .withArguments(Mockito.any(), Mockito.anyString())
 //                .thenReturn(reader);
-//        PowerMockito.whenNew(FileInputStream.class)
+//        Mockito.whenNew(FileInputStream.class)
 //                .withParameterTypes(String.class)
 //                .withArguments(Mockito.anyString())
 //                .thenReturn(fileInputStream);
-//        PowerMockito.whenNew(FileInputStream.class)
+//        Mockito.whenNew(FileInputStream.class)
 //                .withParameterTypes(File.class)
 //                .withArguments(Mockito.any())
 //                .thenReturn(fileInputStream);
-//        PowerMockito.when(Json.createReader(Mockito.any(Reader.class))).thenReturn(jsonReader);
-//        PowerMockito.when(Json.createObjectBuilder()).thenReturn(jsonObjectBuilder);
-//        PowerMockito.when(jsonObjectBuilder.add(Mockito.anyString(), Mockito.anyString())).thenReturn(jsonObjectBuilder);
-//        PowerMockito.when(jsonObjectBuilder.add(Mockito.anyString(), Mockito.anyInt())).thenReturn(jsonObjectBuilder);
-//        PowerMockito.when(jsonObjectBuilder.build()).thenReturn(anotherJsonObject);
-//        PowerMockito.when(jsonReader.readObject()).thenReturn(jsonObject);
-//        PowerMockito.when(SSLContext.getInstance(Mockito.anyString())).thenReturn(sslContext);
-//        PowerMockito.doNothing().when(sslContext).init(Mockito.any(KeyManager[].class),
+//        Mockito.when(Json.createReader(Mockito.any(Reader.class))).thenReturn(jsonReader);
+//        Mockito.when(Json.createObjectBuilder()).thenReturn(jsonObjectBuilder);
+//        Mockito.when(jsonObjectBuilder.add(Mockito.anyString(), Mockito.anyString())).thenReturn(jsonObjectBuilder);
+//        Mockito.when(jsonObjectBuilder.add(Mockito.anyString(), Mockito.anyInt())).thenReturn(jsonObjectBuilder);
+//        Mockito.when(jsonObjectBuilder.build()).thenReturn(anotherJsonObject);
+//        Mockito.when(jsonReader.readObject()).thenReturn(jsonObject);
+//        Mockito.when(SSLContext.getInstance(Mockito.anyString())).thenReturn(sslContext);
+//        Mockito.doNothing().when(sslContext).init(Mockito.any(KeyManager[].class),
 //                Mockito.any(TrustManager[].class), Mockito.any(SecureRandom.class));
-//        PowerMockito.when(HttpClients.custom()).thenReturn(httpClientBuilder);
-//        PowerMockito.when(httpClientBuilder.build()).thenReturn(httpClients);
-//        PowerMockito.when(CertificateFactory.getInstance(Mockito.any())).thenReturn(certificateFactory);
-//        PowerMockito.when(certificateFactory.generateCertificate(Mockito.any(InputStream.class))).thenReturn(certificate);
-//        PowerMockito.whenNew(StringEntity.class).withParameterTypes(String.class, ContentType.class)
+//        Mockito.when(HttpClients.custom()).thenReturn(httpClientBuilder);
+//        Mockito.when(httpClientBuilder.build()).thenReturn(httpClients);
+//        Mockito.when(CertificateFactory.getInstance(Mockito.any())).thenReturn(certificateFactory);
+//        Mockito.when(certificateFactory.generateCertificate(Mockito.any(InputStream.class))).thenReturn(certificate);
+//        Mockito.whenNew(StringEntity.class).withParameterTypes(String.class, ContentType.class)
 //                .withArguments(Mockito.anyString(), Mockito.eq(ContentType.APPLICATION_JSON))
 //                .thenReturn(stringEntity);
-//        PowerMockito.mock(TrustManagers.class);
+//        Mockito.mock(TrustManagers.class);
 //        mockStatic(TrustManagers.class);
-//        trustManagerFactory = PowerMockito.mock(TrustManagerFactory.class);
+//        trustManagerFactory = Mockito.mock(TrustManagerFactory.class);
 //        mockStatic(TrustManagerFactory.class);
-//        PowerMockito.when(TrustManagerFactory.getInstance(anyString())).thenReturn(trustManagerFactory);
+//        Mockito.when(TrustManagerFactory.getInstance(anyString())).thenReturn(trustManagerFactory);
 //        orchestrator = spy(new Orchestrator());
 //    }
 //
@@ -239,7 +239,7 @@
 //    public void testPingSuccess() {
 //        try {
 //            assertTrue(orchestrator.ping());
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//            Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -251,9 +251,9 @@
 //    @Test
 //    public void testPingFailure() {
 //        try {
-//            PowerMockito.when(jsonObject.isNull("status")).thenReturn(true);
+//            Mockito.when(jsonObject.isNull("status")).thenReturn(true);
 //            assertFalse(orchestrator.ping());
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//            Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -264,7 +264,7 @@
 //     */
 //    @Test (expected = Exception.class)
 //    public void throwsExceptionWhenPingIsCalled() throws Exception{
-//        PowerMockito.when(jsonReader.readObject()).thenReturn(null);
+//        Mockito.when(jsonReader.readObject()).thenReturn(null);
 //        assertFalse(orchestrator.ping());
 //    }
 //
@@ -273,8 +273,8 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void testPingWhenControllerUrlIsHttpsAndDevMode() throws Exception{
-//        PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
-//        PowerMockito.when(Configuration.isSecureMode()).thenReturn(true);
+//        Mockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
+//        Mockito.when(Configuration.isSecureMode()).thenReturn(true);
 //        assertFalse(orchestrator.ping());
 //    }
 //
@@ -283,7 +283,7 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsExceptionWhenResponseCodeIsNotOkOnPing() throws Exception{
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(400);
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(400);
 //        assertFalse(orchestrator.ping());
 //    }
 //
@@ -292,7 +292,7 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsExceptionWhenResponseCodeIs404OnPing() throws Exception{
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(404);
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(404);
 //        assertFalse(orchestrator.ping());
 //    }
 //    /**
@@ -300,21 +300,21 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsUnsupportedEncodingExceptionWhenInputStreamIsCreatedInPing() throws Exception{
-//        PowerMockito.whenNew(InputStreamReader.class)
+//        Mockito.whenNew(InputStreamReader.class)
 //                .withParameterTypes(InputStream.class, String.class)
 //                .withArguments(Mockito.any(), Mockito.anyString())
 //                .thenThrow(mock(UnsupportedEncodingException.class));
 //        orchestrator.ping();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//        Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //    }
 //    /**
 //     * Test ping When client throws ClientProtocolException
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsClientProtocolExceptionWhenHttpsClientExecuteIsCalledInPing() throws Exception{
-//        PowerMockito.doThrow(mock(ClientProtocolException.class)).when(httpClients).execute(Mockito.any());
+//        Mockito.doThrow(mock(ClientProtocolException.class)).when(httpClients).execute(Mockito.any());
 //        assertFalse(orchestrator.ping());
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//        Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //    }
 //
 //    /**
@@ -322,9 +322,9 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsIOExceptionWhenHttpsClientExecuteIsCalledInPing() throws Exception{
-//        PowerMockito.doThrow(mock(IOException.class)).when(httpClients).execute(Mockito.any());
+//        Mockito.doThrow(mock(IOException.class)).when(httpClients).execute(Mockito.any());
 //        assertFalse(orchestrator.ping());
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//        Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //    }
 //
 //    /**
@@ -332,9 +332,9 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsExceptionWhenResponseIsNullCalledInPing() throws Exception{
-//        PowerMockito.when(httpClients.execute(Mockito.any())).thenReturn(null);
+//        Mockito.when(httpClients.execute(Mockito.any())).thenReturn(null);
 //        assertFalse(orchestrator.ping());
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//        Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //    }
 //
 //    /**
@@ -342,9 +342,9 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsUnsupportedOperationExceptionWhenResponseContentIsCalledInPing() throws Exception{
-//        PowerMockito.doThrow(mock(UnsupportedOperationException.class)).when(httpEntity).getContent();
+//        Mockito.doThrow(mock(UnsupportedOperationException.class)).when(httpEntity).getContent();
 //        assertFalse(orchestrator.ping());
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
+//        Mockito.verifyPrivate(orchestrator).invoke("getJSON", Mockito.eq("http://controller/status"));
 //    }
 //
 //    /**
@@ -354,7 +354,7 @@
 //    public void testRequest() throws Exception {
 //        JsonObject jsonResponse = orchestrator.request("deprovision", RequestType.POST, null, null);
 //        assertEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.POST), Mockito.eq(stringEntity),  Mockito.any());
 //    }
 //
@@ -367,9 +367,9 @@
 //        try {
 //            jsonResponse = orchestrator.request("", RequestType.PATCH, null, jsonObject);
 //            assertEquals(jsonObject, jsonResponse);
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.isSecureMode();
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//            Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                    Mockito.eq(RequestType.PATCH), Mockito.eq(stringEntity),  Mockito.any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -381,10 +381,10 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsAgentUserExceptionWhenDevModeIsTrue() throws Exception {
-//        PowerMockito.when(Configuration.isSecureMode()).thenReturn(true);
+//        Mockito.when(Configuration.isSecureMode()).thenReturn(true);
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq("delete"),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq("delete"),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(null),  Mockito.eq(null));
 //    }
 //
@@ -393,12 +393,12 @@
 //     */
 //    @Test
 //    public void testWhenCommandIsDelete() throws Exception {
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(204);
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(204);
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(stringEntity),  Mockito.any());
 //    }
 //
@@ -407,13 +407,13 @@
 //     */
 //    @Test (expected = BadRequestException.class)
 //    public void throwsBadRequestExceptionWhenCommandIsDelete() throws Exception {
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(400);
-//        PowerMockito.when(jsonObject.getString("message")).thenReturn("Error");
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(400);
+//        Mockito.when(jsonObject.getString("message")).thenReturn("Error");
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(stringEntity),  Mockito.any());
 //        Mockito.verify(fieldAgent).deProvision(Mockito.eq(true));
 //    }
@@ -422,13 +422,13 @@
 //     */
 //    @Test (expected = AuthenticationException.class)
 //    public void throwsAuthenticationExceptionWhenCommandIsDelete() throws Exception {
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(401);
-//        PowerMockito.when(jsonObject.getString("message")).thenReturn("Error");
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(401);
+//        Mockito.when(jsonObject.getString("message")).thenReturn("Error");
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(stringEntity),  Mockito.any());
 //        Mockito.verify(fieldAgent).deProvision(Mockito.eq(true));
 //    }
@@ -438,13 +438,13 @@
 //     */
 //    @Test (expected = ForbiddenException.class)
 //    public void throwsForbiddenExceptionWhenCommandIsDelete() throws Exception {
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(403);
-//        PowerMockito.when(jsonObject.getString("message")).thenReturn("Error");
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(403);
+//        Mockito.when(jsonObject.getString("message")).thenReturn("Error");
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(stringEntity),  Mockito.any());
 //        Mockito.verify(fieldAgent).deProvision(Mockito.eq(true));
 //    }
@@ -454,13 +454,13 @@
 //     */
 //    @Test (expected = NotFoundException.class)
 //    public void throwsNotFoundExceptionWhenCommandIsDelete() throws Exception {
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(404);
-//        PowerMockito.when(jsonObject.getString("message")).thenReturn("Error");
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(404);
+//        Mockito.when(jsonObject.getString("message")).thenReturn("Error");
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(stringEntity),  Mockito.any());
 //        Mockito.verify(fieldAgent).deProvision(Mockito.eq(true));
 //    }
@@ -470,13 +470,13 @@
 //     */
 //    @Test (expected = InternalServerErrorException.class)
 //    public void throwsInternalServerErrorExceptionWhenCommandIsDelete() throws Exception {
-//        PowerMockito.when(statusLine.getStatusCode()).thenReturn(500);
-//        PowerMockito.when(jsonObject.getString("message")).thenReturn("Error");
+//        Mockito.when(statusLine.getStatusCode()).thenReturn(500);
+//        Mockito.when(jsonObject.getString("message")).thenReturn("Error");
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.DELETE, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.DELETE), Mockito.eq(stringEntity),  Mockito.any());
 //        Mockito.verify(fieldAgent).deProvision(Mockito.eq(true));
 //    }
@@ -485,15 +485,15 @@
 //     */
 //    @Test (expected = AgentUserException.class)
 //    public void throwsUnsupportedEncodingExceptionWhenInputStreamReaderIsCreated() throws Exception {
-//        PowerMockito.whenNew(InputStreamReader.class)
+//        Mockito.whenNew(InputStreamReader.class)
 //                .withParameterTypes(InputStream.class, String.class)
 //                .withArguments(Mockito.any(), Mockito.anyString())
 //                .thenThrow(mock(UnsupportedEncodingException.class));
 //        JsonObject jsonResponse = orchestrator.request("delete", RequestType.GET, null, null);
 //        assertNotEquals(jsonObject, jsonResponse);
-//        PowerMockito.verifyStatic(Json.class, Mockito.atLeastOnce());
+//        Mockito.verify(Json.class, Mockito.atLeastOnce());
 //        Json.createObjectBuilder();
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.GET), Mockito.eq(stringEntity),  Mockito.any());
 //        Mockito.verify(fieldAgent).deProvision(Mockito.eq(true));
 //    }
@@ -509,9 +509,9 @@
 //        try {
 //            jsonResponse = orchestrator.request("strace", RequestType.PUT, queryParams, jsonObject);
 //            assertEquals(jsonObject, jsonResponse);
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(queryParams),
+//            Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(queryParams),
 //                    Mockito.eq(RequestType.PUT), Mockito.eq(stringEntity),  Mockito.any());
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.isSecureMode();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -524,13 +524,13 @@
 //    public void testRequestWhenControllerUrlIsHttps() {
 //        JsonObject jsonResponse = null;
 //        try {
-//            PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
+//            Mockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
 //            orchestrator = spy(new Orchestrator());
 //            jsonResponse = orchestrator.request("strace", RequestType.PUT, null, jsonObject);
 //            assertEquals(jsonObject, jsonResponse);
-//            PowerMockito.verifyPrivate(orchestrator, Mockito.atLeastOnce()).invoke("getJsonObject", Mockito.eq(null),
+//            Mockito.verifyPrivate(orchestrator, Mockito.atLeastOnce()).invoke("getJsonObject", Mockito.eq(null),
 //                    Mockito.eq(RequestType.PUT), Mockito.eq(stringEntity),  Mockito.any());
-//            PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
+//            Mockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -556,7 +556,7 @@
 //     */
 //    @Test (expected = AgentSystemException.class)
 //    public void throwsAgentSystemExceptionOnProvision() throws Exception{
-//        PowerMockito.doThrow(mock(Exception.class)).when(orchestrator).request(Mockito.eq("provision"),
+//        Mockito.doThrow(mock(Exception.class)).when(orchestrator).request(Mockito.eq("provision"),
 //                Mockito.eq(RequestType.POST), Mockito.eq(null), Mockito.eq(anotherJsonObject));
 //        JsonObject jsonResponse = orchestrator.provision(provisionKey);
 //        assertEquals(jsonObject, jsonResponse);
@@ -571,7 +571,7 @@
 //    public void testSendFileToController() {
 //        try {
 //            orchestrator.sendFileToController("strace", file);
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//            Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                    Mockito.eq(RequestType.PUT), Mockito.eq(httpEntity),  Mockito.any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -583,9 +583,9 @@
 //     */
 //    @Test (expected = Exception.class)
 //    public void throwsExceptionSendFileToController() throws Exception{
-//        PowerMockito.doThrow(mock(Exception.class)).when(httpClients).execute(Mockito.any());
+//        Mockito.doThrow(mock(Exception.class)).when(httpClients).execute(Mockito.any());
 //        orchestrator.sendFileToController("strace", file);
-//        PowerMockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
+//        Mockito.verifyPrivate(orchestrator).invoke("getJsonObject", Mockito.eq(null),
 //                Mockito.eq(RequestType.PUT), Mockito.eq(httpEntity),  Mockito.any());
 //    }
 //
@@ -596,7 +596,7 @@
 //    public void testUpdateWhenControllerUrlIsHttp() {
 //        try {
 //            orchestrator.update();
-//            PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(false));
+//            Mockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(false));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -608,14 +608,14 @@
 //    @Test
 //    public void testUpdateFileInputStreamThrowsException() {
 //        try {
-//            PowerMockito.whenNew(FileInputStream.class)
+//            Mockito.whenNew(FileInputStream.class)
 //                    .withParameterTypes(String.class)
 //                    .withArguments(Mockito.anyString())
 //                    .thenThrow(mock(IOException.class));
-//            PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
+//            Mockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
 //            orchestrator.update();
-//            PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
-//            PowerMockito.verifyPrivate(orchestrator, Mockito.never()).invoke("getCert", Mockito.eq(fileInputStream));
+//            Mockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
+//            Mockito.verifyPrivate(orchestrator, Mockito.never()).invoke("getCert", Mockito.eq(fileInputStream));
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -627,12 +627,12 @@
 //    @Test
 //    public void testUpdateWhenGetCertThrowsException() {
 //        try {
-//            PowerMockito.when(certificateFactory.generateCertificate(Mockito.any(InputStream.class))).thenThrow(mock(CertificateException.class));
-//            PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
+//            Mockito.when(certificateFactory.generateCertificate(Mockito.any(InputStream.class))).thenThrow(mock(CertificateException.class));
+//            Mockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
 //            orchestrator.update();
-//            PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getCert", Mockito.eq(fileInputStream));
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
+//            Mockito.verifyPrivate(orchestrator).invoke("getCert", Mockito.eq(fileInputStream));
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logError(Mockito.eq("Orchestrator"),
 //                    Mockito.eq("unable to get certificate"), Mockito.any());
 //        } catch (Exception e) {
@@ -647,12 +647,12 @@
 //    public void testUpdateWhenInitializeThrowsException() {
 //        try {
 //            orchestrator = spy(new Orchestrator());
-//            PowerMockito.when(SSLContext.getInstance(Mockito.anyString())).thenThrow(mock(NoSuchAlgorithmException.class));
-//            PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
+//            Mockito.when(SSLContext.getInstance(Mockito.anyString())).thenThrow(mock(NoSuchAlgorithmException.class));
+//            Mockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
 //            orchestrator.update();
-//            PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getCert", Mockito.eq(fileInputStream));
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
+//            Mockito.verifyPrivate(orchestrator).invoke("getCert", Mockito.eq(fileInputStream));
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logError(Mockito.eq("Orchestrator"),
 //                    Mockito.eq("Error while updating local variables when changes applied"), Mockito.any());
 //        } catch (Exception e) {
@@ -667,13 +667,13 @@
 //    public void testUpdateWhenInitializeThrowsKeyManagementException() {
 //        try {
 //            // orchestrator = spy(new Orchestrator());
-//            PowerMockito.doThrow(mock(KeyManagementException.class)).when(sslContext).init(Mockito.eq(null),
+//            Mockito.doThrow(mock(KeyManagementException.class)).when(sslContext).init(Mockito.eq(null),
 //                    Mockito.any(), Mockito.any(SecureRandom.class));
-//            PowerMockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
+//            Mockito.when(Configuration.getControllerUrl()).thenReturn("https://controller/");
 //            orchestrator.update();
-//            PowerMockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
-//            PowerMockito.verifyPrivate(orchestrator).invoke("getCert", Mockito.eq(fileInputStream));
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verifyPrivate(orchestrator).invoke("initialize", Mockito.eq(true));
+//            Mockito.verifyPrivate(orchestrator).invoke("getCert", Mockito.eq(fileInputStream));
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logError(Mockito.eq("Orchestrator"),
 //                    Mockito.eq("Error while updating local variables when changes applied"), Mockito.any());
 //        } catch (Exception e) {

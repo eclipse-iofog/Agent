@@ -19,7 +19,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -31,7 +31,7 @@
 //import static org.mockito.ArgumentMatchers.*;
 //import static org.mockito.Mockito.reset;
 //import static org.mockito.Mockito.times;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
@@ -58,11 +58,11 @@
 //        ioMessageListener = mock(IOMessageListener.class);
 //        textMessage = mock(TextMessage.class);
 //        message = mock(Message.class);
-//        PowerMockito.whenNew(IOMessageListener.class).withArguments(any(MessageCallback.class)).thenReturn(ioMessageListener);
-//        PowerMockito.whenNew(Message.class).withParameterTypes(byte[].class).withArguments(any()).thenReturn(message);
-//        PowerMockito.when(messageConsumer.receiveNoWait()).thenReturn(textMessage).thenReturn(null);
-//        PowerMockito.when(messageConsumer.getMessageListener()).thenReturn(ioMessageListener);
-//        PowerMockito.when(textMessage.getText()).thenReturn("{}");
+//        Mockito.whenNew(IOMessageListener.class).withArguments(any(MessageCallback.class)).thenReturn(ioMessageListener);
+//        Mockito.whenNew(Message.class).withParameterTypes(byte[].class).withArguments(any()).thenReturn(message);
+//        Mockito.when(messageConsumer.receiveNoWait()).thenReturn(textMessage).thenReturn(null);
+//        Mockito.when(messageConsumer.getMessageListener()).thenReturn(ioMessageListener);
+//        Mockito.when(textMessage.getText()).thenReturn("{}");
 //        messageReceiver = spy(new MessageReceiver(name, messageConsumer));
 //    }
 //
@@ -78,12 +78,12 @@
 //    @Test
 //    public void testGetMessagesWhenClientConsumerReceivesNull() {
 //        try {
-//            PowerMockito.when(messageConsumer.receiveNoWait()).thenReturn(null);
+//            Mockito.when(messageConsumer.receiveNoWait()).thenReturn(null);
 //            assertEquals(0, messageReceiver.getMessages().size());
 //            Mockito.verify(messageConsumer, times(1)).receiveNoWait();
 //            Mockito.verify(textMessage, Mockito.never()).acknowledge();
 //            Mockito.verify(messageConsumer, Mockito.never()).setMessageListener(any(IOMessageListener.class));
-//            PowerMockito.verifyPrivate(messageReceiver, times(1))
+//            Mockito.verifyPrivate(messageReceiver, times(1))
 //                    .invoke("getMessage");
 //            verifyStatic(LoggingService.class);
 //            LoggingService.logDebug(MODULE_NAME, String.format("Finished getting message \"%s\"", name));
@@ -101,7 +101,7 @@
 //            Mockito.verify(messageConsumer, times(2)).receiveNoWait();
 //            Mockito.verify(textMessage).acknowledge();
 //            Mockito.verify(messageConsumer, Mockito.never()).setMessageListener(any(IOMessageListener.class));
-//            PowerMockito.verifyPrivate(messageReceiver, times(2))
+//            Mockito.verifyPrivate(messageReceiver, times(2))
 //                    .invoke("getMessage");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -120,7 +120,7 @@
 //            Mockito.verify(messageConsumer, Mockito.never()).receiveNoWait();
 //            Mockito.verify(textMessage, Mockito.never()).acknowledge();
 //            Mockito.verify(messageConsumer).setMessageListener(any(IOMessageListener.class));
-//            PowerMockito.verifyPrivate(messageReceiver).invoke("getMessage");
+//            Mockito.verifyPrivate(messageReceiver).invoke("getMessage");
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -171,7 +171,7 @@
 //    @Test
 //    public void throwsExceptionWhenSetHandlerIsCalledWhileEnableRealTimeReceiving() {
 //        try {
-//            PowerMockito.doThrow(mock(JMSException.class)).when(messageConsumer).setMessageListener(any());
+//            Mockito.doThrow(mock(JMSException.class)).when(messageConsumer).setMessageListener(any());
 //            messageReceiver.enableRealTimeReceiving();
 //            Mockito.verify(messageConsumer).setMessageListener(any(IOMessageListener.class));
 //            verifyStatic(LoggingService.class);
@@ -189,7 +189,7 @@
 //    public void throwsActiveMqExceptionWhenSetHandlerIsCalledWhileDisablingRealTimeReceiving() {
 //        try {
 //            messageReceiver.enableRealTimeReceiving();
-//            PowerMockito.doThrow(mock(JMSException.class)).when(messageConsumer).setMessageListener(any());
+//            Mockito.doThrow(mock(JMSException.class)).when(messageConsumer).setMessageListener(any());
 //            messageReceiver.disableRealTimeReceiving();
 //            Mockito.verify(messageConsumer).setMessageListener(any(IOMessageListener.class));
 //            verifyStatic(LoggingService.class);
@@ -271,7 +271,7 @@
 //    @Test
 //    public void throwsExceptionWhenCloseIsCalled() {
 //        try {
-//            PowerMockito.doThrow(mock(JMSException.class)).when(messageConsumer).close();
+//            Mockito.doThrow(mock(JMSException.class)).when(messageConsumer).close();
 //            messageReceiver.close();
 //            Mockito.verify(messageReceiver).disableRealTimeReceiving();
 //            Mockito.verify(messageConsumer).close();

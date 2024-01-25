@@ -27,7 +27,7 @@
 //import org.junit.runner.RunWith;
 //import org.mockito.Mock;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -58,24 +58,24 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        executor = Executors.newFixedThreadPool(1);
-//        httpServerCodec = PowerMockito.mock(HttpServerCodec.class);
-//        httpObjectAggregator = PowerMockito.mock(HttpObjectAggregator.class);
-//        serverHandler = PowerMockito.mock(LocalApiServerHandler.class);
-//        sslContext = PowerMockito.mock(SslContext.class);
-//        channel = PowerMockito.mock(SocketChannel.class);
-//        pipeline = PowerMockito.mock(ChannelPipeline.class);
-//        defaultEventExecutorGroup = PowerMockito.mock(DefaultEventExecutorGroup.class);
-//        PowerMockito.mockStatic(LoggingService.class);
-//        localApiServerPipelineFactory = PowerMockito.spy(new LocalApiServerPipelineFactory(sslContext));
-//        PowerMockito.when(channel.pipeline()).thenReturn(pipeline);
-//        PowerMockito.whenNew(HttpServerCodec.class).withNoArguments().thenReturn(httpServerCodec);
-//        PowerMockito.whenNew(LocalApiServerHandler.class)
+//        httpServerCodec = Mockito.mock(HttpServerCodec.class);
+//        httpObjectAggregator = Mockito.mock(HttpObjectAggregator.class);
+//        serverHandler = Mockito.mock(LocalApiServerHandler.class);
+//        sslContext = Mockito.mock(SslContext.class);
+//        channel = Mockito.mock(SocketChannel.class);
+//        pipeline = Mockito.mock(ChannelPipeline.class);
+//        defaultEventExecutorGroup = Mockito.mock(DefaultEventExecutorGroup.class);
+//        Mockito.mockStatic(LoggingService.class);
+//        localApiServerPipelineFactory = Mockito.spy(new LocalApiServerPipelineFactory(sslContext));
+//        Mockito.when(channel.pipeline()).thenReturn(pipeline);
+//        Mockito.whenNew(HttpServerCodec.class).withNoArguments().thenReturn(httpServerCodec);
+//        Mockito.whenNew(LocalApiServerHandler.class)
 //                .withArguments(Mockito.any(EventExecutorGroup.class))
 //                .thenReturn(serverHandler);
-//        PowerMockito.whenNew(HttpObjectAggregator.class)
+//        Mockito.whenNew(HttpObjectAggregator.class)
 //                .withArguments(Mockito.eq(Integer.MAX_VALUE))
 //                .thenReturn(httpObjectAggregator);
-//        PowerMockito.whenNew(DefaultEventExecutorGroup.class)
+//        Mockito.whenNew(DefaultEventExecutorGroup.class)
 //                .withArguments(Mockito.eq(10))
 //                .thenReturn(defaultEventExecutorGroup);
 //    }

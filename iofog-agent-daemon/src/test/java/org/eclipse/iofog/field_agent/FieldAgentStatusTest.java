@@ -13,16 +13,13 @@
 package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.utils.Constants;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import static java.lang.System.currentTimeMillis;
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author nehanaithani
@@ -33,7 +30,7 @@ public class FieldAgentStatusTest {
     private Constants.ControllerStatus controllerStatus;
     private long lastCommandTime;
     private boolean controllerVerified;
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fieldAgentStatus = spy(new FieldAgentStatus());
         controllerStatus = Constants.ControllerStatus.OK;
@@ -41,7 +38,7 @@ public class FieldAgentStatusTest {
         controllerVerified = true;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 
@@ -49,7 +46,7 @@ public class FieldAgentStatusTest {
      * Test get and set method of controllerStatus
      */
     @Test
-    public void testGetterAndSetterOfControllerStatus() {
+    public void testGetterStatus() {
         assertEquals("Default Status",
                 Constants.ControllerStatus.NOT_CONNECTED, fieldAgentStatus.getControllerStatus());
         fieldAgentStatus.setControllerStatus(controllerStatus);
@@ -72,8 +69,7 @@ public class FieldAgentStatusTest {
      */
     @Test
     public void testGetterAndSetterOfControllerVerified() {
-        assertEquals("Default Status",
-                false, fieldAgentStatus.isControllerVerified());
+        assertFalse("Default Status", fieldAgentStatus.isControllerVerified());
         fieldAgentStatus.setControllerVerified(controllerVerified);
         assertEquals("controllerVerified after update",
                 controllerVerified, fieldAgentStatus.isControllerVerified());

@@ -24,14 +24,14 @@
 //import org.junit.rules.Timeout;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
 //import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 //import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 //import static org.junit.Assert.*;
-//import static org.powermock.api.mockito.PowerMockito.mockStatic;
+//import static org.powermock.api.mockito.Mockito.mockStatic;
 //
 ///**
 // * @author nehanaithani
@@ -61,43 +61,43 @@
 //    public Timeout globalTimeout = Timeout.millis(100000l);
 //    @Before
 //    public void setUp() throws Exception {
-//        httpRequest = PowerMockito.mock(FullHttpRequest.class);
-//        httpHeaders = PowerMockito.mock(HttpHeaders.class);
-//        byteBuf = PowerMockito.mock(ByteBuf.class);
-//        nioEventLoopGroup = PowerMockito.mock(NioEventLoopGroup.class);
-//        bootstrap = PowerMockito.mock(Bootstrap.class);
-//        channelInitializer = PowerMockito.mock(ChannelInitializer.class);
-//        channel = PowerMockito.mock(Channel.class);
-//        channelFuture = PowerMockito.mock(ChannelFuture.class);
-//        defaultFullHttpRequest = PowerMockito.mock(DefaultFullHttpRequest.class);
+//        httpRequest = Mockito.mock(FullHttpRequest.class);
+//        httpHeaders = Mockito.mock(HttpHeaders.class);
+//        byteBuf = Mockito.mock(ByteBuf.class);
+//        nioEventLoopGroup = Mockito.mock(NioEventLoopGroup.class);
+//        bootstrap = Mockito.mock(Bootstrap.class);
+//        channelInitializer = Mockito.mock(ChannelInitializer.class);
+//        channel = Mockito.mock(Channel.class);
+//        channelFuture = Mockito.mock(ChannelFuture.class);
+//        defaultFullHttpRequest = Mockito.mock(DefaultFullHttpRequest.class);
 //        mockStatic(LoggingService.class);
 //        content = "content";
 //        bytes = content.getBytes();
-//        bluetoothApiHandler = PowerMockito.spy(new BluetoothApiHandler(httpRequest, byteBuf, bytes));
-//        PowerMockito.whenNew(NioEventLoopGroup.class)
+//        bluetoothApiHandler = Mockito.spy(new BluetoothApiHandler(httpRequest, byteBuf, bytes));
+//        Mockito.whenNew(NioEventLoopGroup.class)
 //                .withArguments(Mockito.anyInt())
 //                .thenReturn(nioEventLoopGroup);
-//        PowerMockito.whenNew(Bootstrap.class)
+//        Mockito.whenNew(Bootstrap.class)
 //                .withNoArguments()
 //                .thenReturn(bootstrap);
-//        PowerMockito.whenNew(ChannelInitializer.class)
+//        Mockito.whenNew(ChannelInitializer.class)
 //                .withNoArguments()
 //                .thenReturn(channelInitializer);
-//        PowerMockito.whenNew(DefaultFullHttpRequest.class)
+//        Mockito.whenNew(DefaultFullHttpRequest.class)
 //                .withParameterTypes(HttpVersion.class, HttpMethod.class, String.class, ByteBuf.class)
 //                .withArguments(Mockito.eq(HttpVersion.HTTP_1_1), Mockito.eq(HttpMethod.POST), Mockito.anyString(), Mockito.any(ByteBuf.class))
 //                .thenReturn(defaultFullHttpRequest);
-//        PowerMockito.when(defaultFullHttpRequest.headers()).thenReturn(httpHeaders);
-//        PowerMockito.when(bootstrap.channel(Mockito.any())).thenReturn(bootstrap);
-//        PowerMockito.when(bootstrap.option(Mockito.any(), Mockito.anyBoolean())).thenReturn(bootstrap);
-//        PowerMockito.when(bootstrap.group(Mockito.any())).thenReturn(bootstrap);
-//        PowerMockito.when(bootstrap.handler(Mockito.any())).thenReturn(bootstrap);
-//        PowerMockito.when(bootstrap.connect(Mockito.anyString(), Mockito.anyInt())).thenReturn(channelFuture);
-//        PowerMockito.when(channelFuture.sync()).thenReturn(channelFuture);
-//        PowerMockito.when(channelFuture.channel()).thenReturn(channel);
-//        PowerMockito.when(httpRequest.uri()).thenReturn("http://0.0.0.0:5000/");
-//        PowerMockito.when(httpRequest.headers()).thenReturn(httpHeaders);
-//        PowerMockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
+//        Mockito.when(defaultFullHttpRequest.headers()).thenReturn(httpHeaders);
+//        Mockito.when(bootstrap.channel(Mockito.any())).thenReturn(bootstrap);
+//        Mockito.when(bootstrap.option(Mockito.any(), Mockito.anyBoolean())).thenReturn(bootstrap);
+//        Mockito.when(bootstrap.group(Mockito.any())).thenReturn(bootstrap);
+//        Mockito.when(bootstrap.handler(Mockito.any())).thenReturn(bootstrap);
+//        Mockito.when(bootstrap.connect(Mockito.anyString(), Mockito.anyInt())).thenReturn(channelFuture);
+//        Mockito.when(channelFuture.sync()).thenReturn(channelFuture);
+//        Mockito.when(channelFuture.channel()).thenReturn(channel);
+//        Mockito.when(httpRequest.uri()).thenReturn("http://0.0.0.0:5000/");
+//        Mockito.when(httpRequest.headers()).thenReturn(httpHeaders);
+//        Mockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
 //    }
 //
 //    @After
@@ -117,7 +117,7 @@
 //            defaultResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
 //            assertEquals(defaultResponse, bluetoothApiHandler.call());
 //            Mockito.verify(bootstrap).connect(Mockito.eq("localhost"), Mockito.eq(10500));
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logError(Mockito.eq("Local Api : Bluetooth API"), Mockito.eq("Error unable to reach RESTblue container!"), Mockito.any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -130,14 +130,14 @@
 //    @Test
 //    public void testCallWhenResponseNotFoundAndChannelFlush() {
 //        try {
-//            PowerMockito.when(channel.writeAndFlush(Mockito.any())).thenReturn(channelFuture);
-//            PowerMockito.when(channelFuture.addListener(Mockito.any())).thenReturn(channelFuture);
+//            Mockito.when(channel.writeAndFlush(Mockito.any())).thenReturn(channelFuture);
+//            Mockito.when(channelFuture.addListener(Mockito.any())).thenReturn(channelFuture);
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, NOT_FOUND, byteBuf);
 //            HttpUtil.setContentLength(defaultResponse, byteBuf.readableBytes());
 //            defaultResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
 //            assertEquals(defaultResponse, bluetoothApiHandler.call());
 //            Mockito.verify(bootstrap).connect(Mockito.eq("localhost"), Mockito.eq(10500));
-//            PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
+//            Mockito.verify(LoggingService.class, Mockito.never());
 //            LoggingService.logError(Mockito.eq("Local Api : Bluetooth API"), Mockito.eq("Error unable to reach RESTblue container!"), Mockito.any());
 //        } catch (Exception e) {
 //            fail("This should not happen");

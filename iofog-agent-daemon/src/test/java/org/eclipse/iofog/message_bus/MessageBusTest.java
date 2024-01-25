@@ -25,7 +25,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -43,7 +43,7 @@
 //import static org.junit.Assert.*;
 //import static org.mockito.ArgumentMatchers.anyString;
 //import static org.mockito.Mockito.*;
-//import static org.powermock.api.mockito.PowerMockito.whenNew;
+//import static org.powermock.api.mockito.Mockito.whenNew;
 //
 ///**
 // * @author nehanaithani
@@ -77,9 +77,9 @@
 //        MODULE_NAME = "Message Bus";
 //        messageBus = spy(MessageBus.class);
 //        setMock(messageBus);
-//        PowerMockito.mockStatic(MicroserviceManager.class);
-//        PowerMockito.mockStatic(LoggingService.class);
-//        PowerMockito.mockStatic(StatusReporter.class);
+//        Mockito.mockStatic(MicroserviceManager.class);
+//        Mockito.mockStatic(LoggingService.class);
+//        Mockito.mockStatic(StatusReporter.class);
 //        microserviceManager = mock(MicroserviceManager.class);
 //        messageBusServer = mock(MessageBusServer.class);
 //        messageReceiver = mock(MessageReceiver.class);
@@ -87,11 +87,11 @@
 //        messagePublisher = mock(MessagePublisher.class);
 //        messageBusStatus = mock(MessageBusStatus.class);
 //        supervisorStatus = mock(SupervisorStatus.class);
-//        PowerMockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
-//        PowerMockito.whenNew(MessageBusServer.class).withNoArguments().thenReturn(messageBusServer);
-//        PowerMockito.whenNew(MessageReceiver.class).withArguments(anyString(), any(MessageConsumer.class))
+//        Mockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
+//        Mockito.whenNew(MessageBusServer.class).withNoArguments().thenReturn(messageBusServer);
+//        Mockito.whenNew(MessageReceiver.class).withArguments(anyString(), any(MessageConsumer.class))
 //                .thenReturn(messageReceiver);
-//        PowerMockito.whenNew(MessagePublisher.class).withArguments(anyString(), any(Route.class), any(MessageProducer.class))
+//        Mockito.whenNew(MessagePublisher.class).withArguments(anyString(), any(Route.class), any(MessageProducer.class))
 //                .thenReturn(messagePublisher);
 //        route = new Route();
 //        receivers = new ArrayList<>();
@@ -104,16 +104,16 @@
 //        mapRoutes.put("1", route);
 //        publishedMessagesPerMicroservice = new HashMap<>();
 //        publishedMessagesPerMicroservice.put("1", 100l);
-//        PowerMockito.when(microserviceManager.getRoutes()).thenReturn(mapRoutes);
-//        PowerMockito.when(messageBusStatus.getPublishedMessagesPerMicroservice()).thenReturn(publishedMessagesPerMicroservice);
-//        PowerMockito.when(messageBusServer.getConsumer(any())).thenReturn(mock(MessageConsumer.class));
-//        PowerMockito.when(messageBusServer.getProducer(any(), any())).thenReturn(mock(List.class));
-//        PowerMockito.when(messageBusServer.isConnected()).thenReturn(true);
-//        PowerMockito.doNothing().when(messageReceiver).enableRealTimeReceiving();
-//        PowerMockito.doNothing().when(messageReceiver).disableRealTimeReceiving();
-//        PowerMockito.when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
-//        PowerMockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
-//        PowerMockito.when(StatusReporter.setSupervisorStatus()).thenReturn(supervisorStatus);
+//        Mockito.when(microserviceManager.getRoutes()).thenReturn(mapRoutes);
+//        Mockito.when(messageBusStatus.getPublishedMessagesPerMicroservice()).thenReturn(publishedMessagesPerMicroservice);
+//        Mockito.when(messageBusServer.getConsumer(any())).thenReturn(mock(MessageConsumer.class));
+//        Mockito.when(messageBusServer.getProducer(any(), any())).thenReturn(mock(List.class));
+//        Mockito.when(messageBusServer.isConnected()).thenReturn(true);
+//        Mockito.doNothing().when(messageReceiver).enableRealTimeReceiving();
+//        Mockito.doNothing().when(messageReceiver).disableRealTimeReceiving();
+//        Mockito.when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
+//        Mockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
+//        Mockito.when(StatusReporter.setSupervisorStatus()).thenReturn(supervisorStatus);
 //        orchestrator = mock(Orchestrator.class);
 //        whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
 //
@@ -185,9 +185,9 @@
 //        initiateMockStart();
 //        messageBus.enableRealTimeReceiving(null);
 //        Mockito.verify(messageReceiver, never()).enableRealTimeReceiving();
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logDebug(MODULE_NAME,"Starting enable real time receiving");
-//        PowerMockito.verifyStatic(LoggingService.class, never());
+//        Mockito.verify(LoggingService.class, never());
 //        LoggingService.logDebug(MODULE_NAME,"Finishing enable real time receiving");
 //    }
 //
@@ -199,7 +199,7 @@
 //        initiateMockStart();
 //        messageBus.enableRealTimeReceiving("receiver");
 //        Mockito.verify(messageReceiver, never()).enableRealTimeReceiving();
-//        PowerMockito.verifyStatic(LoggingService.class, never());
+//        Mockito.verify(LoggingService.class, never());
 //        LoggingService.logInfo(MODULE_NAME,"Finishing enable real time receiving");
 //    }
 //
@@ -211,7 +211,7 @@
 //        initiateMockStart();
 //        messageBus.disableRealTimeReceiving(null);
 //        Mockito.verify(messageReceiver, never()).disableRealTimeReceiving();
-//        PowerMockito.verifyStatic(LoggingService.class, never());
+//        Mockito.verify(LoggingService.class, never());
 //        LoggingService.logInfo(MODULE_NAME,"Finishing disable real time receiving");
 //    }
 //
@@ -254,9 +254,9 @@
 //            initiateMockStart();
 //            Mockito.verify(messageBusServer, atLeastOnce()).startServer("localhost", 5672);
 //            Mockito.verify(messageBusServer, atLeastOnce()).initialize();
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME,"STARTING MESSAGE BUS SERVER");
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME,"MESSAGE BUS SERVER STARTED");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -272,9 +272,9 @@
 //            initiateMockStart();
 //            messageBus.stop();
 //            Mockito.verify(messageBusServer, atLeastOnce()).stopServer();
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME,"Start closing receivers and publishers and stops ActiveMQ server");
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME,"Finished closing receivers and publishers and stops ActiveMQ server");
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -287,11 +287,11 @@
 //    @Test (timeout = 100000L)
 //    public void throwsExceptionWhenMessageServerStopIsCalled() {
 //        try {
-//            PowerMockito.doThrow(mock(Exception.class)).when(messageBusServer).stopServer();
+//            Mockito.doThrow(mock(Exception.class)).when(messageBusServer).stopServer();
 //            initiateMockStart();
 //            messageBus.stop();
 //            Mockito.verify(messageBusServer, atLeastOnce()).stopServer();
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logError(eq(MODULE_NAME), eq("Error closing receivers and publishers and stops ActiveMQ server"), any());
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -333,11 +333,11 @@
 //        speedThread = mock(Thread.class);
 //        Thread startThread = mock(Thread.class);
 //        try {
-//            PowerMockito.whenNew(Thread.class).withParameterTypes(Runnable.class).withArguments(Mockito.any(Runnable.class)).thenReturn(startThread);
-//            PowerMockito.whenNew(Thread.class).withParameterTypes(Runnable.class, String.class).withArguments(Mockito.any(Runnable.class),
+//            Mockito.whenNew(Thread.class).withParameterTypes(Runnable.class).withArguments(Mockito.any(Runnable.class)).thenReturn(startThread);
+//            Mockito.whenNew(Thread.class).withParameterTypes(Runnable.class, String.class).withArguments(Mockito.any(Runnable.class),
 //                    anyString()).thenReturn(speedThread);
-//            PowerMockito.doNothing().when(speedThread).start();
-//            PowerMockito.doNothing().when(startThread).start();
+//            Mockito.doNothing().when(speedThread).start();
+//            Mockito.doNothing().when(startThread).start();
 //            messageBus.start();
 //
 //            JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();

@@ -18,7 +18,7 @@
 //import org.junit.Before;
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -42,20 +42,20 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        fogNetworkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
-//        PowerMockito.mockStatic(IOFogNetworkInterfaceManager.class);
-//        PowerMockito.mockStatic(Configuration.class);
-//        PowerMockito.when(Configuration.getIofogUuid()).thenReturn("uuid");
-//        PowerMockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(fogNetworkInterfaceManager);
-//        PowerMockito.when(fogNetworkInterfaceManager.getPid()).thenReturn((long) 12324);
-//        PowerMockito.when(fogNetworkInterfaceManager.getHostName()).thenReturn("hostname");
+//        Mockito.mockStatic(IOFogNetworkInterfaceManager.class);
+//        Mockito.mockStatic(Configuration.class);
+//        Mockito.when(Configuration.getIofogUuid()).thenReturn("uuid");
+//        Mockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(fogNetworkInterfaceManager);
+//        Mockito.when(fogNetworkInterfaceManager.getPid()).thenReturn((long) 12324);
+//        Mockito.when(fogNetworkInterfaceManager.getHostName()).thenReturn("hostname");
 //
 //        logRecord = mock(LogRecord.class);
-//        logFormatter = PowerMockito.spy(new LogFormatter());
-//        PowerMockito.when(logRecord.getMessage()).thenReturn("log");
-//        PowerMockito.when(logRecord.getLevel()).thenReturn(Level.SEVERE);
-//        PowerMockito.when(logRecord.getSourceClassName()).thenReturn("Thread");
-//        PowerMockito.when(logRecord.getSourceMethodName()).thenReturn("module");
-//        PowerMockito.when(logRecord.getThrown()).thenReturn(new Exception("I'm a mock exception"));
+//        logFormatter = Mockito.spy(new LogFormatter());
+//        Mockito.when(logRecord.getMessage()).thenReturn("log");
+//        Mockito.when(logRecord.getLevel()).thenReturn(Level.SEVERE);
+//        Mockito.when(logRecord.getSourceClassName()).thenReturn("Thread");
+//        Mockito.when(logRecord.getSourceMethodName()).thenReturn("module");
+//        Mockito.when(logRecord.getThrown()).thenReturn(new Exception("I'm a mock exception"));
 //    }
 //
 //    @After

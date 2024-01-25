@@ -21,7 +21,7 @@
 //
 //import static org.junit.Assert.*;
 //import static org.mockito.Mockito.reset;
-//import static org.powermock.api.mockito.PowerMockito.spy;
+//import static org.powermock.api.mockito.Mockito.spy;
 //
 ///**
 // * @author nehanaithani

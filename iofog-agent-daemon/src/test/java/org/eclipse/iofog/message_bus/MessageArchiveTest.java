@@ -19,7 +19,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -35,7 +35,7 @@
 //import static org.junit.Assert.assertEquals;
 //import static org.mockito.ArgumentMatchers.*;
 //import static org.mockito.Mockito.reset;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
@@ -72,13 +72,13 @@
 //        when(file.listFiles(any(FilenameFilter.class))).thenReturn(files);
 //        when(files[0].isFile()).thenReturn(true);
 //        when(file.getName()).thenReturn("message.idx");
-//        PowerMockito.whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
-//        PowerMockito.whenNew(RandomAccessFile.class).withParameterTypes(File.class, String.class)
+//        Mockito.whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
+//        Mockito.whenNew(RandomAccessFile.class).withParameterTypes(File.class, String.class)
 //                .withArguments(any(), anyString()).thenReturn(randomAccessFile);
-//        PowerMockito.when(Runtime.getRuntime()).thenReturn(runtime);
-//        PowerMockito.when(runtime.maxMemory()).thenReturn(1048576460l * 32);
-//        PowerMockito.when(runtime.totalMemory()).thenReturn(1l);
-//        PowerMockito.when(runtime.freeMemory()).thenReturn(1l);
+//        Mockito.when(Runtime.getRuntime()).thenReturn(runtime);
+//        Mockito.when(runtime.maxMemory()).thenReturn(1048576460l * 32);
+//        Mockito.when(runtime.totalMemory()).thenReturn(1l);
+//        Mockito.when(runtime.freeMemory()).thenReturn(1l);
 //        messageArchive = spy(new MessageArchive("message.idx"));
 //    }
 //
@@ -120,7 +120,7 @@
 //    public void testSave() {
 //        try {
 //            messageArchive.save(message.getBytes(UTF_8),timestamp);
-//            PowerMockito.verifyPrivate(messageArchive).invoke("openFiles", anyLong());
+//            Mockito.verifyPrivate(messageArchive).invoke("openFiles", anyLong());
 //            Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).seek(anyLong());
 //            Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).length();
 //            Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).getFilePointer();
@@ -137,7 +137,7 @@
 //        try {
 //            messageArchive.save(message.getBytes(UTF_8),timestamp);
 //            messageArchive.close();
-//            PowerMockito.verifyPrivate(messageArchive).invoke("openFiles", anyLong());
+//            Mockito.verifyPrivate(messageArchive).invoke("openFiles", anyLong());
 //            Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).seek(anyLong());
 //            Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).length();
 //            Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).getFilePointer();

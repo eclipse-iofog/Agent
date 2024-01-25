@@ -19,7 +19,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -35,7 +35,7 @@
 //import static org.mockito.ArgumentMatchers.*;
 //import static org.mockito.Mockito.atLeastOnce;
 //import static org.mockito.Mockito.reset;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
@@ -72,15 +72,15 @@
 //        messageList = mock(ArrayList.class);
 //        mockStatic(LoggingService.class);
 //        mockStatic(MessageBusServer.class);
-//        PowerMockito.when(message.getBytes()).thenReturn(bytes);
-//        PowerMockito.when(message.getTimestamp()).thenReturn(System.currentTimeMillis());
-//        PowerMockito.when(MessageBusServer.createMessage(anyString())).thenReturn(textMessage);
-//        PowerMockito.when(route.getReceivers()).thenReturn(receivers);
-//        PowerMockito.whenNew(MessageArchive.class).withArguments(anyString()).thenReturn(messageArchive);
+//        Mockito.when(message.getBytes()).thenReturn(bytes);
+//        Mockito.when(message.getTimestamp()).thenReturn(System.currentTimeMillis());
+//        Mockito.when(MessageBusServer.createMessage(anyString())).thenReturn(textMessage);
+//        Mockito.when(route.getReceivers()).thenReturn(receivers);
+//        Mockito.whenNew(MessageArchive.class).withArguments(anyString()).thenReturn(messageArchive);
 //        messagePublisher = spy(new MessagePublisher(name, route, messageProducers));
-//        PowerMockito.doNothing().when(messageArchive).save(Mockito.any(byte[].class), anyLong());
-//        PowerMockito.doNothing().when(messageArchive).close();
-//        PowerMockito.when(messageArchive.messageQuery(anyLong(), anyLong())).thenReturn(messageList);
+//        Mockito.doNothing().when(messageArchive).save(Mockito.any(byte[].class), anyLong());
+//        Mockito.doNothing().when(messageArchive).close();
+//        Mockito.when(messageArchive.messageQuery(anyLong(), anyLong())).thenReturn(messageList);
 //    }
 //
 //    @After
@@ -120,7 +120,7 @@
 //    @Test
 //    public void throwExceptionWhenArchiveMessageSaveIsCalled() {
 //        try {
-//            PowerMockito.doThrow(mock(Exception.class)).when(messageArchive).save(Mockito.any(byte[].class), anyLong());
+//            Mockito.doThrow(mock(Exception.class)).when(messageArchive).save(Mockito.any(byte[].class), anyLong());
 //            messagePublisher.publish(message);
 //            Mockito.verify(messageArchive, atLeastOnce()).save(any(byte[].class), anyLong());
 //            verifyStatic(LoggingService.class);
@@ -168,7 +168,7 @@
 //    @Test
 //    public void throwsExceptionWhenCloseIsCalled() {
 //        try {
-//            PowerMockito.doThrow(mock(RuntimeException.class)).when(messageArchive).close();
+//            Mockito.doThrow(mock(RuntimeException.class)).when(messageArchive).close();
 //            messagePublisher.close();
 //            Mockito.verify(messageArchive, atLeastOnce()).close();
 //            verifyStatic(LoggingService.class);

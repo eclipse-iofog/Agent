@@ -20,7 +20,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -39,7 +39,7 @@
 //
 //import static org.junit.Assert.*;
 //import static org.mockito.ArgumentMatchers.*;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
@@ -64,9 +64,9 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        mockStatic(LoggingService.class, Mockito.CALLS_REAL_METHODS);
-//        PowerMockito.mockStatic(Configuration.class);
-//        PowerMockito.mockStatic(FileSystems.class);
-//        PowerMockito.mockStatic(Files.class);
+//        Mockito.mockStatic(Configuration.class);
+//        Mockito.mockStatic(FileSystems.class);
+//        Mockito.mockStatic(Files.class);
 //        mockStatic(Logger.class);
 //        mockStatic(CmdProperties.class);
 //        file = Mockito.mock(File.class);
@@ -82,22 +82,22 @@
 //        logSize = 10;
 //        Handler[] handlers = new Handler[1];
 //        handlers[0] = handler;
-//        PowerMockito.when(Configuration.getDiskLimit()).thenReturn(1000.0f);
-//        PowerMockito.when(Configuration.getLogDiskLimit()).thenReturn(10.0f);
-//        PowerMockito.when(Configuration.getLogFileCount()).thenReturn(10);
-//        PowerMockito.when(Configuration.getLogLevel()).thenReturn("info");
-//        PowerMockito.when(Configuration.getLogDiskDirectory()).thenReturn("/log/");
-//        PowerMockito.whenNew(File.class).withParameterTypes(String.class).withArguments(Mockito.any()).thenReturn(file);
-//        PowerMockito.whenNew(FileHandler.class)
+//        Mockito.when(Configuration.getDiskLimit()).thenReturn(1000.0f);
+//        Mockito.when(Configuration.getLogDiskLimit()).thenReturn(10.0f);
+//        Mockito.when(Configuration.getLogFileCount()).thenReturn(10);
+//        Mockito.when(Configuration.getLogLevel()).thenReturn("info");
+//        Mockito.when(Configuration.getLogDiskDirectory()).thenReturn("/log/");
+//        Mockito.whenNew(File.class).withParameterTypes(String.class).withArguments(Mockito.any()).thenReturn(file);
+//        Mockito.whenNew(FileHandler.class)
 //                .withArguments(anyString(), Mockito.anyInt(), Mockito.anyInt()).thenReturn(fileHandler);
-//        PowerMockito.when(file.getPath()).thenReturn("/log/");
-//        PowerMockito.when(Logger.getLogger(anyString())).thenReturn(logger);
-//        PowerMockito.doNothing().when(logger).addHandler(Mockito.any());
-//        PowerMockito.when(logger.getHandlers()).thenReturn(handlers);
-//        PowerMockito.doNothing().when(handler).close();
-//        PowerMockito.when(FileSystems.getDefault()).thenReturn(fileSystem);
-//        PowerMockito.when(fileSystem.getUserPrincipalLookupService()).thenReturn(userPrincipalLookupService);
-//        PowerMockito.when(Files.getFileAttributeView(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(posixFileAttributeView);
+//        Mockito.when(file.getPath()).thenReturn("/log/");
+//        Mockito.when(Logger.getLogger(anyString())).thenReturn(logger);
+//        Mockito.doNothing().when(logger).addHandler(Mockito.any());
+//        Mockito.when(logger.getHandlers()).thenReturn(handlers);
+//        Mockito.doNothing().when(handler).close();
+//        Mockito.when(FileSystems.getDefault()).thenReturn(fileSystem);
+//        Mockito.when(fileSystem.getUserPrincipalLookupService()).thenReturn(userPrincipalLookupService);
+//        Mockito.when(Files.getFileAttributeView(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(posixFileAttributeView);
 //        when(CmdProperties.getVersion()).thenReturn("version");
 //    }
 //
@@ -173,8 +173,8 @@
 //    public void testSetupLogger() {
 //        try {
 //            LoggingService.setupLogger();
-//            PowerMockito.verifyNew(File.class, Mockito.atLeastOnce()).withArguments(eq(Configuration.getLogDiskDirectory()));
-//            PowerMockito.verifyNew(FileHandler.class).withArguments(eq(file.getPath()+"/iofog-agent.%g.log"), Mockito.anyInt(), Mockito.anyInt());
+//            Mockito.verifyNew(File.class, Mockito.atLeastOnce()).withArguments(eq(Configuration.getLogDiskDirectory()));
+//            Mockito.verifyNew(FileHandler.class).withArguments(eq(file.getPath()+"/iofog-agent.%g.log"), Mockito.anyInt(), Mockito.anyInt());
 //            Mockito.verify(logger).addHandler(fileHandler);
 //            Mockito.verify(logger).setLevel(Level.INFO);
 //        } catch (Exception e) {
@@ -188,9 +188,9 @@
 //    @Test
 //    public void testSetupMicroserviceLogger() {
 //        try {
-//            PowerMockito.when(Logger.getLogger(microUuid)).thenReturn(logger);
+//            Mockito.when(Logger.getLogger(microUuid)).thenReturn(logger);
 //            LoggingService.setupMicroserviceLogger(microUuid, logSize);
-//            PowerMockito.verifyStatic(Logger.class);
+//            Mockito.verify(Logger.class);
 //            Logger.getLogger(microUuid);
 //            Mockito.verify(logger).addHandler(fileHandler);
 //            Mockito.verify(logger).setUseParentHandlers(eq(false));
@@ -208,7 +208,7 @@
 //            String errorMsg = " Log message parsing error, Logger initialized null";
 //            LoggingService.setupLogger();
 //            assertFalse(LoggingService.microserviceLogInfo("uuid", message));
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.logWarning(MODULE_NAME, errorMsg);
 //            Mockito.verify(logger).logp(Level.WARNING, Thread.currentThread().getName(), MODULE_NAME, errorMsg);
 //        } catch (Exception e) {
@@ -265,7 +265,7 @@
 //    public void testInstanceConfigUpdated() {
 //        try {
 //            LoggingService.instanceConfigUpdated();
-//            PowerMockito.verifyStatic(LoggingService.class);
+//            Mockito.verify(LoggingService.class);
 //            LoggingService.setupLogger();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -278,11 +278,11 @@
 //    @Test
 //    public void TestInstanceConfigUpdated() throws IOException {
 //        Exception e = new SecurityException("Error updating logger instance");
-//        PowerMockito.doThrow(e).when(logger).setLevel(any());
+//        Mockito.doThrow(e).when(logger).setLevel(any());
 //        LoggingService.instanceConfigUpdated();
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.setupLogger();
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logError(MODULE_NAME, e.getMessage(), e);
 //        Mockito.verify(logger).logp(Level.SEVERE, Thread.currentThread().getName(), MODULE_NAME, e.getMessage(), e);
 //    }

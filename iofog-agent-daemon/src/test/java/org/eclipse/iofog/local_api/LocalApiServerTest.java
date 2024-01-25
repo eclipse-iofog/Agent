@@ -25,7 +25,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -54,37 +54,37 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        MODULE_NAME = "Local API";
-//        PowerMockito.mockStatic(LoggingService.class);
-//        nioEventLoopGroup = PowerMockito.mock(NioEventLoopGroup.class);
-//        channel = PowerMockito.mock(Channel.class);
-//        controlWebsocketWorker = PowerMockito.mock(ControlWebsocketWorker.class);
-//        messageWebsocketWorker = PowerMockito.mock(MessageWebsocketWorker.class);
-//        channelFuture = PowerMockito.mock(ChannelFuture.class);
-//        selfSignedCertificate = PowerMockito.mock(SelfSignedCertificate.class);
-//        serverBootstrap = PowerMockito.mock(ServerBootstrap.class);
-//        localApiServerPipelineFactory = PowerMockito.mock(LocalApiServerPipelineFactory.class);
-//        localApiServer = PowerMockito.spy(new LocalApiServer());
-//        PowerMockito.whenNew(NioEventLoopGroup.class).withArguments(Mockito.eq(1))
+//        Mockito.mockStatic(LoggingService.class);
+//        nioEventLoopGroup = Mockito.mock(NioEventLoopGroup.class);
+//        channel = Mockito.mock(Channel.class);
+//        controlWebsocketWorker = Mockito.mock(ControlWebsocketWorker.class);
+//        messageWebsocketWorker = Mockito.mock(MessageWebsocketWorker.class);
+//        channelFuture = Mockito.mock(ChannelFuture.class);
+//        selfSignedCertificate = Mockito.mock(SelfSignedCertificate.class);
+//        serverBootstrap = Mockito.mock(ServerBootstrap.class);
+//        localApiServerPipelineFactory = Mockito.mock(LocalApiServerPipelineFactory.class);
+//        localApiServer = Mockito.spy(new LocalApiServer());
+//        Mockito.whenNew(NioEventLoopGroup.class).withArguments(Mockito.eq(1))
 //                .thenReturn(nioEventLoopGroup);
-//        PowerMockito.whenNew(NioEventLoopGroup.class).withArguments(Mockito.eq(10))
+//        Mockito.whenNew(NioEventLoopGroup.class).withArguments(Mockito.eq(10))
 //                .thenReturn(nioEventLoopGroup);
-//        PowerMockito.whenNew(SelfSignedCertificate.class).withNoArguments()
+//        Mockito.whenNew(SelfSignedCertificate.class).withNoArguments()
 //                .thenReturn(selfSignedCertificate);
-//        PowerMockito.whenNew(LocalApiServerPipelineFactory.class).withArguments(Mockito.any())
+//        Mockito.whenNew(LocalApiServerPipelineFactory.class).withArguments(Mockito.any())
 //                .thenReturn(localApiServerPipelineFactory);
-//        PowerMockito.whenNew(ServerBootstrap.class).withNoArguments()
+//        Mockito.whenNew(ServerBootstrap.class).withNoArguments()
 //                .thenReturn(serverBootstrap);
-//        PowerMockito.whenNew(MessageWebsocketWorker.class).withNoArguments()
+//        Mockito.whenNew(MessageWebsocketWorker.class).withNoArguments()
 //                .thenReturn(messageWebsocketWorker);
-//        PowerMockito.whenNew(ControlWebsocketWorker.class).withNoArguments()
+//        Mockito.whenNew(ControlWebsocketWorker.class).withNoArguments()
 //                .thenReturn(controlWebsocketWorker);
-//        PowerMockito.when(serverBootstrap.group(Mockito.any(NioEventLoopGroup.class), Mockito.any(NioEventLoopGroup.class))).thenReturn(serverBootstrap);
-//        PowerMockito.when(serverBootstrap.channel(Mockito.any())).thenReturn(serverBootstrap);
-//        PowerMockito.when(serverBootstrap.childHandler(Mockito.any())).thenReturn(serverBootstrap);
-//        PowerMockito.when(serverBootstrap.bind(Mockito.eq(54321))).thenReturn(channelFuture);
-//        PowerMockito.when(channelFuture.sync()).thenReturn(channelFuture);
-//        PowerMockito.when(channelFuture.channel()).thenReturn(channel);
-//        PowerMockito.when(channel.closeFuture()).thenReturn(channelFuture);
+//        Mockito.when(serverBootstrap.group(Mockito.any(NioEventLoopGroup.class), Mockito.any(NioEventLoopGroup.class))).thenReturn(serverBootstrap);
+//        Mockito.when(serverBootstrap.channel(Mockito.any())).thenReturn(serverBootstrap);
+//        Mockito.when(serverBootstrap.childHandler(Mockito.any())).thenReturn(serverBootstrap);
+//        Mockito.when(serverBootstrap.bind(Mockito.eq(54321))).thenReturn(channelFuture);
+//        Mockito.when(channelFuture.sync()).thenReturn(channelFuture);
+//        Mockito.when(channelFuture.channel()).thenReturn(channel);
+//        Mockito.when(channel.closeFuture()).thenReturn(channelFuture);
 //    }
 //
 //    @After
@@ -127,9 +127,9 @@
 //    public void testStop() {
 //        try {
 //            localApiServer.stop();
-//            PowerMockito.mockStatic(LoggingService.class);
+//            Mockito.mockStatic(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME, "Start stopping Local api server\n");
-//            PowerMockito.mockStatic(LoggingService.class);
+//            Mockito.mockStatic(LoggingService.class);
 //            LoggingService.logInfo(MODULE_NAME, "Local api server stopped\n");
 //        } catch (Exception e) {
 //            fail("This should not happen");

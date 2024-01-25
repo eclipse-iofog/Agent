@@ -26,7 +26,7 @@
 //import org.junit.rules.Timeout;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -71,39 +71,39 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        MODULE_NAME = "Local API";
-//        httpRequest = PowerMockito.mock(HttpRequest.class);
-//        httpHeaders = PowerMockito.mock(HttpHeaders.class);
-//        webSocketServerHandshakerFactory = PowerMockito.mock(WebSocketServerHandshakerFactory.class);
-//        channel = PowerMockito.mock(Channel.class);
-//        handShaker = PowerMockito.mock(WebSocketServerHandshaker00.class);
-//        channelFuture = PowerMockito.mock(ChannelFuture.class);
-//        localApiStatus = PowerMockito.mock(LocalApiStatus.class);
-//        webSocketFrame = PowerMockito.mock(WebSocketFrame.class);
-//        pingWebSocketFrame = PowerMockito.mock(PingWebSocketFrame.class);
-//        byteBuf = PowerMockito.mock(ByteBuf.class);
-//        byteBufAllocator = PowerMockito.mock(ByteBufAllocator.class);
-//        binaryWebSocketFrame = PowerMockito.mock(BinaryWebSocketFrame.class);
-//        closeWebSocketFrame = PowerMockito.mock(CloseWebSocketFrame.class);
+//        httpRequest = Mockito.mock(HttpRequest.class);
+//        httpHeaders = Mockito.mock(HttpHeaders.class);
+//        webSocketServerHandshakerFactory = Mockito.mock(WebSocketServerHandshakerFactory.class);
+//        channel = Mockito.mock(Channel.class);
+//        handShaker = Mockito.mock(WebSocketServerHandshaker00.class);
+//        channelFuture = Mockito.mock(ChannelFuture.class);
+//        localApiStatus = Mockito.mock(LocalApiStatus.class);
+//        webSocketFrame = Mockito.mock(WebSocketFrame.class);
+//        pingWebSocketFrame = Mockito.mock(PingWebSocketFrame.class);
+//        byteBuf = Mockito.mock(ByteBuf.class);
+//        byteBufAllocator = Mockito.mock(ByteBufAllocator.class);
+//        binaryWebSocketFrame = Mockito.mock(BinaryWebSocketFrame.class);
+//        closeWebSocketFrame = Mockito.mock(CloseWebSocketFrame.class);
 //        contextMap = new HashMap<>();
-//        PowerMockito.mockStatic(StatusReporter.class);
-//        PowerMockito.mockStatic(LoggingService.class);
-//        PowerMockito.mockStatic(WebsocketUtil.class);
-//        PowerMockito.mockStatic(WebSocketServerHandshakerFactory.class);
-//        channelHandlerContext = PowerMockito.mock(ChannelHandlerContext.class);
-//        controlWebsocketHandler = PowerMockito.spy(new ControlWebsocketHandler());
-//        PowerMockito.when(httpRequest.uri()).thenReturn("http://localhost:54321/token/qwld");
-//        PowerMockito.when(channelHandlerContext.channel()).thenReturn(channel);
-//        PowerMockito.when(httpRequest.headers()).thenReturn(httpHeaders);
-//        PowerMockito.when(httpHeaders.get(HOST)).thenReturn("host");
-//        PowerMockito.whenNew(WebSocketServerHandshakerFactory.class)
+//        Mockito.mockStatic(StatusReporter.class);
+//        Mockito.mockStatic(LoggingService.class);
+//        Mockito.mockStatic(WebsocketUtil.class);
+//        Mockito.mockStatic(WebSocketServerHandshakerFactory.class);
+//        channelHandlerContext = Mockito.mock(ChannelHandlerContext.class);
+//        controlWebsocketHandler = Mockito.spy(new ControlWebsocketHandler());
+//        Mockito.when(httpRequest.uri()).thenReturn("http://localhost:54321/token/qwld");
+//        Mockito.when(channelHandlerContext.channel()).thenReturn(channel);
+//        Mockito.when(httpRequest.headers()).thenReturn(httpHeaders);
+//        Mockito.when(httpHeaders.get(HOST)).thenReturn("host");
+//        Mockito.whenNew(WebSocketServerHandshakerFactory.class)
 //                .withArguments(Mockito.anyString(), Mockito.eq(null), Mockito.anyBoolean(), Mockito.anyInt())
 //                .thenReturn(webSocketServerHandshakerFactory);
-//        PowerMockito.doReturn(handShaker).when(webSocketServerHandshakerFactory).newHandshaker(Mockito.any(HttpRequest.class));
-//        PowerMockito.doReturn(channelFuture).when(handShaker).handshake(Mockito.any(), Mockito.any());
-//        PowerMockito.when(StatusReporter.setLocalApiStatus()).thenReturn(localApiStatus);
-//        PowerMockito.when(WebsocketUtil.hasContextInMap(Mockito.any(), Mockito.any())).thenReturn(true);
-//        PowerMockito.when(channelHandlerContext.alloc()).thenReturn(byteBufAllocator);
-//        PowerMockito.when(byteBufAllocator.buffer()).thenReturn(byteBuf);
+//        Mockito.doReturn(handShaker).when(webSocketServerHandshakerFactory).newHandshaker(Mockito.any(HttpRequest.class));
+//        Mockito.doReturn(channelFuture).when(handShaker).handshake(Mockito.any(), Mockito.any());
+//        Mockito.when(StatusReporter.setLocalApiStatus()).thenReturn(localApiStatus);
+//        Mockito.when(WebsocketUtil.hasContextInMap(Mockito.any(), Mockito.any())).thenReturn(true);
+//        Mockito.when(channelHandlerContext.alloc()).thenReturn(byteBufAllocator);
+//        Mockito.when(byteBufAllocator.buffer()).thenReturn(byteBuf);
 //    }
 //
 //    @After
@@ -119,7 +119,7 @@
 //    @Test
 //    public void testHandleWhenReqAndContextAreNull() {
 //        controlWebsocketHandler.handle(null, null);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logError(Mockito.eq(MODULE_NAME), Mockito.eq("Error in Handler to open the websocket for the real-time control signals"),
 //                Mockito.any());
 //    }
@@ -130,9 +130,9 @@
 //     */
 //    @Test
 //    public void testHandleWhenReqAndContextAreNotNullAndTokenIsLessThan5() {
-//        PowerMockito.when(httpRequest.uri()).thenReturn("http://localhost:54321/qwld");
+//        Mockito.when(httpRequest.uri()).thenReturn("http://localhost:54321/qwld");
 //        controlWebsocketHandler.handle(channelHandlerContext, httpRequest);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logError(Mockito.eq(MODULE_NAME), Mockito.eq(" Missing ID or ID value in URL "),
 //                Mockito.any());
 //    }
@@ -145,11 +145,11 @@
 //    public void testHandleWhenReqAndContextAreNotNullAndTokenIsNotLessThan5() {
 //        try {
 //            controlWebsocketHandler.handle(channelHandlerContext, httpRequest);
-//            PowerMockito.verifyNew(WebSocketServerHandshakerFactory.class)
+//            Mockito.verifyNew(WebSocketServerHandshakerFactory.class)
 //                    .withArguments(Mockito.eq("ws://host/v2/control/socket"), Mockito.eq(null), Mockito.eq(true), Mockito.eq(Integer.MAX_VALUE));
 //            Mockito.verify(webSocketServerHandshakerFactory).newHandshaker(Mockito.eq(httpRequest));
 //            Mockito.verify(handShaker).handshake(Mockito.eq(channel), Mockito.eq(httpRequest));
-//            PowerMockito.verifyStatic(StatusReporter.class);
+//            Mockito.verify(StatusReporter.class);
 //            StatusReporter.setLocalApiStatus();
 //            Mockito.verify(localApiStatus).setOpenConfigSocketsCount(Mockito.eq(WebSocketMap.controlWebsocketMap.size()));
 //        } catch (Exception e) {
@@ -164,14 +164,14 @@
 //    @Test
 //    public void testHandleWhenReqAndContextAreNotNullAndWebSocketServerHandShakerIsNull() {
 //        try {
-//            PowerMockito.doReturn(null).when(webSocketServerHandshakerFactory).newHandshaker(Mockito.any(HttpRequest.class));
+//            Mockito.doReturn(null).when(webSocketServerHandshakerFactory).newHandshaker(Mockito.any(HttpRequest.class));
 //            controlWebsocketHandler.handle(channelHandlerContext, httpRequest);
-//            PowerMockito.verifyNew(WebSocketServerHandshakerFactory.class)
+//            Mockito.verifyNew(WebSocketServerHandshakerFactory.class)
 //                    .withArguments(Mockito.eq("ws://host/v2/control/socket"), Mockito.eq(null), Mockito.eq(true), Mockito.eq(Integer.MAX_VALUE));
 //            Mockito.verify(webSocketServerHandshakerFactory).newHandshaker(Mockito.eq(httpRequest));
-//            PowerMockito.verifyStatic(WebSocketServerHandshakerFactory.class);
+//            Mockito.verify(WebSocketServerHandshakerFactory.class);
 //            WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(channel);
-//            PowerMockito.verifyStatic(StatusReporter.class);
+//            Mockito.verify(StatusReporter.class);
 //            StatusReporter.setLocalApiStatus();
 //            Mockito.verify(localApiStatus).setOpenConfigSocketsCount(Mockito.eq(WebSocketMap.controlWebsocketMap.size()));
 //        } catch (Exception e) {
@@ -185,9 +185,9 @@
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsNull() {
 //        controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, null);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Send control signals to container on configuration change");
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Finished handling the websocket frame");
 //    }
 //
@@ -197,9 +197,9 @@
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsNotNull() {
 //        controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, webSocketFrame);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Send control signals to container on configuration change");
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Finished handling the websocket frame");
 //    }
 //
@@ -209,14 +209,14 @@
 //     */
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsInstanceOfPingWebSocketFrame() {
-//        PowerMockito.when(pingWebSocketFrame.content()).thenReturn(byteBuf);
-//        PowerMockito.when(byteBuf.readableBytes()).thenReturn(1);
-//        PowerMockito.when(byteBuf.readByte()).thenReturn((byte)9);
+//        Mockito.when(pingWebSocketFrame.content()).thenReturn(byteBuf);
+//        Mockito.when(byteBuf.readableBytes()).thenReturn(1);
+//        Mockito.when(byteBuf.readByte()).thenReturn((byte)9);
 //        controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, pingWebSocketFrame);
 //        Mockito.verify(pingWebSocketFrame).content();
 //        Mockito.verify(byteBuf).readableBytes();
 //        Mockito.verify(channelHandlerContext).alloc();
-//        PowerMockito.verifyStatic(WebsocketUtil.class);
+//        Mockito.verify(WebsocketUtil.class);
 //        WebsocketUtil.hasContextInMap(Mockito.eq(channelHandlerContext), Mockito.eq(WebSocketMap.controlWebsocketMap));
 //    }
 //
@@ -226,14 +226,14 @@
 //     */
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsInstanceOfPingWebSocketFrameAndReadableBytesIs0() {
-//        PowerMockito.when(pingWebSocketFrame.content()).thenReturn(byteBuf);
-//        PowerMockito.when(byteBuf.readableBytes()).thenReturn(0);
-//        PowerMockito.when(byteBuf.readByte()).thenReturn((byte)9);
+//        Mockito.when(pingWebSocketFrame.content()).thenReturn(byteBuf);
+//        Mockito.when(byteBuf.readableBytes()).thenReturn(0);
+//        Mockito.when(byteBuf.readByte()).thenReturn((byte)9);
 //        controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, pingWebSocketFrame);
 //        Mockito.verify(pingWebSocketFrame).content();
-//        PowerMockito.verifyStatic(WebsocketUtil.class, Mockito.never());
+//        Mockito.verify(WebsocketUtil.class, Mockito.never());
 //        WebsocketUtil.hasContextInMap(Mockito.eq(channelHandlerContext), Mockito.eq(WebSocketMap.controlWebsocketMap));
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Ping opcode not found");
 //    }
 //
@@ -243,9 +243,9 @@
 //     */
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsInstanceOfbinaryWebSocketFrame() {
-//        PowerMockito.when(binaryWebSocketFrame.content()).thenReturn(byteBuf);
-//        PowerMockito.when(byteBuf.readableBytes()).thenReturn(1);
-//        PowerMockito.when(byteBuf.readByte()).thenReturn((byte)9);
+//        Mockito.when(binaryWebSocketFrame.content()).thenReturn(byteBuf);
+//        Mockito.when(byteBuf.readableBytes()).thenReturn(1);
+//        Mockito.when(byteBuf.readByte()).thenReturn((byte)9);
 //        controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, binaryWebSocketFrame);
 //        Mockito.verify(binaryWebSocketFrame).content();
 //        Mockito.verify(byteBuf).readableBytes();
@@ -258,9 +258,9 @@
 //     */
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsInstanceOfCloseWebSocketFrame() {
-//        PowerMockito.when(binaryWebSocketFrame.content()).thenReturn(byteBuf);
-//        PowerMockito.when(byteBuf.readableBytes()).thenReturn(1);
-//        PowerMockito.when(byteBuf.readByte()).thenReturn((byte)11);
+//        Mockito.when(binaryWebSocketFrame.content()).thenReturn(byteBuf);
+//        Mockito.when(byteBuf.readableBytes()).thenReturn(1);
+//        Mockito.when(byteBuf.readByte()).thenReturn((byte)11);
 //        controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, binaryWebSocketFrame);
 //        Mockito.verify(binaryWebSocketFrame).content();
 //        Mockito.verify(byteBuf).readableBytes();
@@ -274,13 +274,13 @@
 //    @Test
 //    public void testHandleWebSocketFrameWhenWebSocketFrameIsInstanceOfbinaryWebSocketFrameAndByteIs11() {
 //        try {
-//            PowerMockito.when(closeWebSocketFrame.content()).thenReturn(byteBuf);
-//            PowerMockito.when(channelHandlerContext.channel()).thenReturn(channel);
-//            PowerMockito.doNothing().when(WebsocketUtil.class, "removeWebsocketContextFromMap", Mockito.any(), Mockito.any());
+//            Mockito.when(closeWebSocketFrame.content()).thenReturn(byteBuf);
+//            Mockito.when(channelHandlerContext.channel()).thenReturn(channel);
+//            Mockito.doNothing().when(WebsocketUtil.class, "removeWebsocketContextFromMap", Mockito.any(), Mockito.any());
 //            controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, closeWebSocketFrame);
-//            PowerMockito.verifyStatic(WebsocketUtil.class);
+//            Mockito.verify(WebsocketUtil.class);
 //            WebsocketUtil.removeWebsocketContextFromMap(Mockito.eq(channelHandlerContext), Mockito.eq(WebSocketMap.controlWebsocketMap));
-//            PowerMockito.verifyStatic(StatusReporter.class);
+//            Mockito.verify(StatusReporter.class);
 //            StatusReporter.setLocalApiStatus();
 //        } catch (Exception e){
 //            fail("This should not happen");
@@ -293,9 +293,9 @@
 //    @Test
 //    public void testInitiateControlSignalWhenOldAndNewConfigMapIsNull() {
 //        controlWebsocketHandler.initiateControlSignal(null, null);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Start Helper method to compare the configuration map control signals");
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Finished Helper method to compare the configuration map control signals");
 //    }
 //
@@ -310,9 +310,9 @@
 //        oldConfigMap.put("log-level", "SEVERE");
 //        WebSocketMap.addWebsocket('C', "log-directory", channelHandlerContext);
 //        controlWebsocketHandler.initiateControlSignal(oldConfigMap, newConfigMap);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Start Helper method to compare the configuration map control signals");
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Finished Helper method to compare the configuration map control signals");
 //    }
 //
@@ -327,9 +327,9 @@
 //        oldConfigMap.put("log-directory", "SEVERE");
 //        WebSocketMap.addWebsocket('C', "log-directory", channelHandlerContext);
 //        controlWebsocketHandler.initiateControlSignal(oldConfigMap, newConfigMap);
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Start Helper method to compare the configuration map control signals");
-//        PowerMockito.verifyStatic(LoggingService.class);
+//        Mockito.verify(LoggingService.class);
 //        LoggingService.logInfo(MODULE_NAME, "Finished Helper method to compare the configuration map control signals");
 //    }
 //

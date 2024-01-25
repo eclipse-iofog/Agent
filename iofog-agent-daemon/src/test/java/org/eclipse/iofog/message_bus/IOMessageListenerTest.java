@@ -18,7 +18,7 @@
 //import org.junit.Before;
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -29,7 +29,7 @@
 //import static org.mockito.ArgumentMatchers.*;
 //import static org.mockito.Mockito.reset;
 //import static org.mockito.Mockito.verify;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
@@ -53,9 +53,9 @@
 //        mockStatic(LoggingService.class);
 //        ioMessageListener = spy(new IOMessageListener(messageCallback));
 //        doNothing().when(textMessage).acknowledge();
-//        PowerMockito.when(textMessage.getText()).thenReturn("{}");
-//        PowerMockito.whenNew(Message.class).withArguments(anyString()).thenReturn(message);
-//        PowerMockito.doNothing().when(messageCallback).sendRealtimeMessage(any(Message.class));
+//        Mockito.when(textMessage.getText()).thenReturn("{}");
+//        Mockito.whenNew(Message.class).withArguments(anyString()).thenReturn(message);
+//        Mockito.doNothing().when(messageCallback).sendRealtimeMessage(any(Message.class));
 //    }
 //
 //    @After
@@ -88,7 +88,7 @@
 //    @Test
 //    public void throwsExceptionOnMessage() {
 //        try {
-//            PowerMockito.doThrow(mock(JMSException.class)).when(textMessage).acknowledge();
+//            Mockito.doThrow(mock(JMSException.class)).when(textMessage).acknowledge();
 //            ioMessageListener.onMessage(textMessage);
 //            LoggingService.logError(eq(MODULE_NAME), eq("Error acknowledging message"), any());
 //        } catch (Exception e) {

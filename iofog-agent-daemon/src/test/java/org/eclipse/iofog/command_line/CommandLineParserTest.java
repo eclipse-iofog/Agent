@@ -1,97 +1,143 @@
-///*
-// * *******************************************************************************
-// *  * Copyright (c) 2018-2022 Edgeworx, Inc.
-// *  *
-// *  * This program and the accompanying materials are made available under the
-// *  * terms of the Eclipse Public License v. 2.0 which is available at
-// *  * http://www.eclipse.org/legal/epl-2.0
-// *  *
-// *  * SPDX-License-Identifier: EPL-2.0
-// *  *******************************************************************************
-// *
-// */
-//package org.eclipse.iofog.command_line;
-//
-//import org.eclipse.iofog.exception.AgentUserException;
-//import org.eclipse.iofog.field_agent.FieldAgent;
-//import org.junit.After;
-//import org.junit.Before;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
-//import org.powermock.api.mockito.PowerMockito;
-//import org.powermock.core.classloader.annotations.PrepareForTest;
-//import org.powermock.modules.junit4.PowerMockRunner;
-//
-//import javax.json.JsonObject;
-//import java.lang.reflect.Constructor;
-//
-//import static org.mockito.ArgumentMatchers.*;
-//import static org.mockito.Mockito.mock;
-//import static org.junit.Assert.*;
-//import static org.powermock.api.mockito.PowerMockito.*;
-//
-///**
-// * @author nehanaithani
-// */
-//@RunWith(PowerMockRunner.class)
-//@PrepareForTest({CommandLineParser.class, CommandLineAction.class, FieldAgent.class})
-//public class CommandLineParserTest {
-//    private CommandLineParser commandLineParser;
-//    private String[] mockArguments = {"help", "-h", "--help"};
-//    private FieldAgent fieldAgent;
-//
-//    @Before
-//    public void setUp() throws Exception {
-//        commandLineParser = mock(CommandLineParser.class);
-//        mockStatic(CommandLineAction.class);
-//        mockStatic(FieldAgent.class);
-//        fieldAgent = mock(FieldAgent.class);
-//        when(FieldAgent.getInstance()).thenReturn(fieldAgent);
-//        when(fieldAgent.provision(anyString())).thenReturn(null);
-//        when(CommandLineAction.getActionByKey(anyString())).thenReturn(CommandLineAction.HELP_ACTION);
-//        when(CommandLineAction.getActionByKey(anyString()).perform(mockArguments)).thenReturn("Test perform");
-//    }
-//
-//    @After
-//    public void tearDown() throws Exception {
-//        commandLineParser = null;
-//    }
-//
-//    /**
-//     * Test parse method
-//     * throws AgentUserException
-//     */
-//    @Test(expected = AgentUserException.class)
-//    public void throwsAgentUserExceptionWhenParse() throws AgentUserException {
-//        when(CommandLineAction.getActionByKey(anyString())).thenReturn(CommandLineAction.PROVISION_ACTION);
-//        when(fieldAgent.provision(anyString())).thenReturn(mock(JsonObject.class));
-//        when(CommandLineAction.getActionByKey(anyString()).perform(mockArguments)).thenThrow(mock(AgentUserException.class));
-//        commandLineParser.parse("provision key");
-//        PowerMockito.verifyStatic(CommandLineAction.class);
-//        CommandLineAction.getActionByKey("provision");
-//    }
-//
-//    /**
-//     * Test parse method
-//     */
-//    @Test
-//    public void testParse() {
-//        try {
-//            assertEquals("Test perform", commandLineParser.parse("help"));
-//            PowerMockito.verifyStatic(CommandLineAction.class);
-//            CommandLineAction.getActionByKey("help");
-//        } catch (AgentUserException e) {
-//            fail("This should never happen");
-//        }
-//    }
-//
-//    /**
-//     * Test CommandLineParser constructor throws UnsupportedOperationException
-//     */
-//    @Test(expected = UnsupportedOperationException.class)
-//    public void testNotSupportedConstructor() throws Exception {
-//        Constructor<CommandLineParser> constructor = CommandLineParser.class.getDeclaredConstructor();
-//        constructor.setAccessible(true);
-//        commandLineParser = constructor.newInstance();
-//    }
-//}
+/*
+ * *******************************************************************************
+ *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
+ *
+ */
+package org.eclipse.iofog.command_line;
+
+import org.eclipse.iofog.exception.AgentUserException;
+import org.eclipse.iofog.field_agent.FieldAgent;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import javax.json.JsonObject;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * @author nehanaithani
+ */
+@ExtendWith(MockitoExtension.class)
+public class CommandLineParserTest {
+    private MockedStatic<CommandLineAction> cmdLineAction;
+    @BeforeEach
+    public void setUp() throws Exception {
+        cmdLineAction = mockStatic(CommandLineAction.class);
+        String[] args = {"help", "provision"};
+        cmdLineAction.when(() -> CommandLineAction.getActionByKey(args[0]))
+                .thenReturn(CommandLineAction.HELP_ACTION);
+        cmdLineAction.when(() -> CommandLineAction.HELP_ACTION.perform(args)).thenReturn(helpContent);
+        cmdLineAction.when(() -> CommandLineAction.getActionByKey(args[1]))
+                .thenReturn(CommandLineAction.PROVISION_ACTION);
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        cmdLineAction.close();
+    }
+
+    /**
+     * Test parse method
+     */
+    @Test
+    public void testParse() {
+        try {
+            Assertions.assertEquals(helpContent, CommandLineParser.parse("help"));
+            CommandLineAction.getActionByKey("help");
+        } catch (AgentUserException e) {
+            fail("This should never happen");
+        }
+    }
+
+    static String helpContent = "Usage 1: iofog-agent [OPTION]\\n" +
+            "Usage 2: iofog-agent [COMMAND] <Argument>\\n" +
+            "Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\\n" +
+            "\\n" +
+            "Option           GNU long option         Meaning\\n" +
+            "======           ===============         =======\\n" +
+            "-h, -?           --help                  Show this message\\n" +
+            "-v               --version               Display the software version and\\n" +
+            "                                         license information\\n" +
+            "\\n" +
+            "\\n" +
+            "Command          Arguments               Meaning\\n" +
+            "=======          =========               =======\\n" +
+            "help                                     Show this message\\n" +
+            "version                                  Display the software version and\\n" +
+            "                                         license information\\n" +
+            "status                                   Display current status information\\n" +
+            "                                         about the software\\n" +
+            "provision        <provisioning key>      Attach this software to the\\n" +
+            "                                         configured ioFog controller\\n" +
+            "deprovision                              Detach this software from all\\n" +
+            "                                         ioFog controllers\\n" +
+            "info                                     Display the current configuration\\n" +
+            "                                         and other information about the\\n" +
+            "                                         software\\n" +
+            "switch           <dev|prod|def>          Switch to different config \\n" +
+            "config           [Parameter] [VALUE]     Change the software configuration\\n" +
+            "                                         according to the options provided\\n" +
+            "                 defaults                Reset configuration to default values\\n" +
+            "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
+            "                                         that the message archive is allowed to use\\n" +
+            "                 -dl <dir>               Set the message archive directory to use for disk\\n" +
+            "                                         storage\\n" +
+            "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
+            "                                         the software is allowed to use for\\n" +
+            "                                         messages\\n" +
+            "                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\\n" +
+            "                                         time that the software is allowed\\n" +
+            "                                         to use\\n" +
+            "                 -a <uri>                Set the uri of the fog controller\\n" +
+            "                                         to which this software connects\\n" +
+            "                 -ac <filepath>          Set the file path of the SSL/TLS\\n" +
+            "                                         certificate for validating the fog\\n" +
+            "                                         controller identity\\n" +
+            "                 -c <uri>                Set the UNIX socket or network address\\n" +
+            "                                         that the Docker daemon is using\\n" +
+            "                 -n <network adapter>    Set the name of the network adapter\\n" +
+            "                                         that holds the correct IP address of \\n" +
+            "                                         this machine\\n" +
+            "                 -l <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
+            "                                         that the log files can consume\\n" +
+            "                 -ld <dir>               Set the directory to use for log file\\n" +
+            "                                         storage\\n" +
+            "                 -lc <#log files>        Set the number of log files to evenly\\n" +
+            "                                         split the log storage limit\\n" +
+            "                 -ll <log level>         Set the standard logging levels that\\n" +
+            "                                         can be used to control logging output\\n" +
+            "                 -sf <#seconds>          Set the status update frequency\\n" +
+            "                 -cf <#seconds>          Set the get changes frequency\\n" +
+            "                 -df <#seconds>          Set the post diagnostics frequency\\n" +
+            "                 -sd <#seconds>          Set the scan devices frequency\\n" +
+            "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
+            "                 -dt <#percentage>       Set the available disk threshold\\n" +
+            "                 -idc <on/off>           Set the mode on which any not\\n" +
+            "                                         registered docker container will be\\n" +
+            "										  shut down\\n" +
+            "                 -gps <auto/off          Set gps location of fog.\\n" +
+            "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
+            "                            DD.DDD(lon)  use off to forbid gps,\\n" +
+            "                                         use GPS coordinates in DD format to set them manually\\n" +
+            "                 -ft <auto               Set fog type.\\n" +
+            "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
+            "                                         use arm or intel_amd to set it manually\\n" +
+            "                 -sec <on/off>           Set the secure mode without using ssl \\n" +
+            "                                         certificates. \\n" +
+            "                 -dev <on/off>           Set the developer's mode\\n" +
+            "                 -tz                     Set the device timeZone\\n" +
+            "\\n" +
+            "\\n" +
+            "Report bugs to: edgemaster@iofog.org\\n" +
+            "ioFog home page: http://iofog.org\\n" +
+            "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog";
+}

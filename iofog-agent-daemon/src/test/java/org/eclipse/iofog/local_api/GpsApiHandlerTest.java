@@ -22,7 +22,7 @@
 //import org.junit.rules.Timeout;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -65,32 +65,32 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        executor = Executors.newFixedThreadPool(1);
-//        PowerMockito.mockStatic(ApiHandlerHelpers.class);
-//        PowerMockito.mockStatic(Configuration.class);
-//        PowerMockito.mockStatic(LoggingService.class);
-//        PowerMockito.mockStatic(Json.class);
-//        httpRequest = PowerMockito.mock(HttpRequest.class);
-//        byteBuf = PowerMockito.mock(ByteBuf.class);
+//        Mockito.mockStatic(ApiHandlerHelpers.class);
+//        Mockito.mockStatic(Configuration.class);
+//        Mockito.mockStatic(LoggingService.class);
+//        Mockito.mockStatic(Json.class);
+//        httpRequest = Mockito.mock(HttpRequest.class);
+//        byteBuf = Mockito.mock(ByteBuf.class);
 //        content = "content";
 //        bytes = content.getBytes();
 //        result = "result";
-//        jsonReader = PowerMockito.mock(JsonReader.class);
-//        jsonObject = PowerMockito.mock(JsonObject.class);
-//        jsonBuilderFactory = PowerMockito.mock(JsonBuilderFactory.class);
-//        jsonObjectBuilder = PowerMockito.mock(JsonObjectBuilder.class);
-//        gpsApiHandler = PowerMockito.spy(new GpsApiHandler(httpRequest, byteBuf, bytes));
+//        jsonReader = Mockito.mock(JsonReader.class);
+//        jsonObject = Mockito.mock(JsonObject.class);
+//        jsonBuilderFactory = Mockito.mock(JsonBuilderFactory.class);
+//        jsonObjectBuilder = Mockito.mock(JsonObjectBuilder.class);
+//        gpsApiHandler = Mockito.spy(new GpsApiHandler(httpRequest, byteBuf, bytes));
 //        defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, byteBuf);
-//        PowerMockito.when(ApiHandlerHelpers.validateContentType(Mockito.any(), Mockito.anyString())).thenReturn(null);
-//        PowerMockito.when(Json.createReader(Mockito.any(StringReader.class))).thenReturn(jsonReader);
-//        PowerMockito.when(jsonReader.readObject()).thenReturn(jsonObject);
-//        PowerMockito.doNothing().when(Configuration.class, "setGpsDataIfValid", Mockito.any(), Mockito.anyString());
-//        PowerMockito.doNothing().when(Configuration.class, "writeGpsToConfigFile");
-//        PowerMockito.doNothing().when(Configuration.class, "saveConfigUpdates");
-//        PowerMockito.when(Json.createBuilderFactory(Mockito.eq(null))).thenReturn(jsonBuilderFactory);
-//        PowerMockito.when(jsonBuilderFactory.createObjectBuilder()).thenReturn(jsonObjectBuilder);
-//        PowerMockito.when(jsonObjectBuilder.build()).thenReturn(jsonObject);
-//        PowerMockito.when(jsonObjectBuilder.add(Mockito.anyString(), Mockito.anyString())).thenReturn(jsonObjectBuilder);
-//        PowerMockito.when(jsonObject.toString()).thenReturn(result);
+//        Mockito.when(ApiHandlerHelpers.validateContentType(Mockito.any(), Mockito.anyString())).thenReturn(null);
+//        Mockito.when(Json.createReader(Mockito.any(StringReader.class))).thenReturn(jsonReader);
+//        Mockito.when(jsonReader.readObject()).thenReturn(jsonObject);
+//        Mockito.doNothing().when(Configuration.class, "setGpsDataIfValid", Mockito.any(), Mockito.anyString());
+//        Mockito.doNothing().when(Configuration.class, "writeGpsToConfigFile");
+//        Mockito.doNothing().when(Configuration.class, "saveConfigUpdates");
+//        Mockito.when(Json.createBuilderFactory(Mockito.eq(null))).thenReturn(jsonBuilderFactory);
+//        Mockito.when(jsonBuilderFactory.createObjectBuilder()).thenReturn(jsonObjectBuilder);
+//        Mockito.when(jsonObjectBuilder.build()).thenReturn(jsonObject);
+//        Mockito.when(jsonObjectBuilder.add(Mockito.anyString(), Mockito.anyString())).thenReturn(jsonObjectBuilder);
+//        Mockito.when(jsonObject.toString()).thenReturn(result);
 //
 //    }
 //
@@ -117,13 +117,13 @@
 //    public void testCallWhenContentTypeIsInvalid() {
 //        try {
 //            String errorMsg = "Incorrect content type text/html";
-//            PowerMockito.when(ApiHandlerHelpers.validateContentType(Mockito.any(), Mockito.anyString())).thenReturn(errorMsg);
+//            Mockito.when(ApiHandlerHelpers.validateContentType(Mockito.any(), Mockito.anyString())).thenReturn(errorMsg);
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
-//            PowerMockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
 //            assertEquals(defaultResponse, gpsApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateContentType(Mockito.eq(httpRequest), Mockito.eq("application/json"));
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -137,12 +137,12 @@
 //    @Test
 //    public void testCallWhenRequestTypeIsDelete() {
 //        try {
-//            PowerMockito.when(httpRequest.method()).thenReturn(HttpMethod.DELETE);
+//            Mockito.when(httpRequest.method()).thenReturn(HttpMethod.DELETE);
 //            String errorMsg = "Not supported method: " + httpRequest.method();
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
-//            PowerMockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
 //            assertEquals(defaultResponse, gpsApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -157,19 +157,19 @@
 //    public void testCallWhenRequestTypeIsPostAndSaveConfigurationThrowsException() {
 //        try {
 //            Exception exp = new Exception("Error");
-//            PowerMockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
-//            PowerMockito.doThrow(exp).when(Configuration.class, "saveConfigUpdates");
+//            Mockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
+//            Mockito.doThrow(exp).when(Configuration.class, "saveConfigUpdates");
 //            String errorMsg = " Error with setting GPS, " + exp.getMessage();
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
-//            PowerMockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
 //            assertEquals(defaultResponse, gpsApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg));
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.writeGpsToConfigFile();
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.saveConfigUpdates();
-//            PowerMockito.verifyPrivate(gpsApiHandler).invoke("setAgentGpsCoordinates");
+//            Mockito.verifyPrivate(gpsApiHandler).invoke("setAgentGpsCoordinates");
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -182,16 +182,16 @@
 //    @Test
 //    public void testCallWhenRequestTypeIsPost() {
 //        try {
-//            PowerMockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
-//            PowerMockito.when(ApiHandlerHelpers.successResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
+//            Mockito.when(ApiHandlerHelpers.successResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
 //            assertEquals(defaultResponse, gpsApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.eq(result));
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.writeGpsToConfigFile();
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.saveConfigUpdates();
-//            PowerMockito.verifyPrivate(gpsApiHandler).invoke("setAgentGpsCoordinates");
+//            Mockito.verifyPrivate(gpsApiHandler).invoke("setAgentGpsCoordinates");
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -204,15 +204,15 @@
 //    @Test
 //    public void testCallWhenRequestTypeIsGET() {
 //        try {
-//            PowerMockito.when(httpRequest.method()).thenReturn(HttpMethod.GET);
-//            PowerMockito.when(ApiHandlerHelpers.successResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
-//            PowerMockito.when(Configuration.getGpsCoordinates()).thenReturn("10.20.30,120.90.80");
+//            Mockito.when(httpRequest.method()).thenReturn(HttpMethod.GET);
+//            Mockito.when(ApiHandlerHelpers.successResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(Configuration.getGpsCoordinates()).thenReturn("10.20.30,120.90.80");
 //            assertEquals(defaultResponse, gpsApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.eq(result));
-//            PowerMockito.verifyStatic(Configuration.class);
+//            Mockito.verify(Configuration.class);
 //            Configuration.getGpsCoordinates();
-//            PowerMockito.verifyPrivate(gpsApiHandler).invoke("getAgentGpsCoordinates");
+//            Mockito.verifyPrivate(gpsApiHandler).invoke("getAgentGpsCoordinates");
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }

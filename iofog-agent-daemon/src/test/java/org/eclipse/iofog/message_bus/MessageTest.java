@@ -17,7 +17,7 @@
 //import org.junit.Before;
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -34,7 +34,7 @@
 //import static org.junit.Assert.*;
 //import static org.mockito.ArgumentMatchers.any;
 //import static org.mockito.ArgumentMatchers.eq;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.powermock.api.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
@@ -454,7 +454,7 @@
 //        mockStatic(Base64.class);
 //        Base64.Decoder decoder = mock(Base64.Decoder.class);
 //        when(Base64.getDecoder()).thenReturn(decoder);
-//        PowerMockito.doThrow(new RuntimeException()).when(decoder).decode( any(byte[].class));
+//        Mockito.doThrow(new RuntimeException()).when(decoder).decode( any(byte[].class));
 //        message.decodeBase64(message.encodeBase64());
 //        verifyStatic(LoggingService.class);
 //        LoggingService.logError(eq(MODULE_NAME), eq("Error in decodeBase64"), any());
@@ -476,7 +476,7 @@
 //        mockStatic(Base64.class);
 //        Base64.Encoder encoder = mock(Base64.Encoder.class);
 //        when(Base64.getEncoder()).thenReturn(encoder);
-//        PowerMockito.doThrow(new RuntimeException()).when(encoder).encode( any(byte[].class));
+//        Mockito.doThrow(new RuntimeException()).when(encoder).encode( any(byte[].class));
 //        message.encodeBase64();
 //        verifyStatic(LoggingService.class);
 //        LoggingService.logError(eq(MODULE_NAME), eq("Error in encodeBase64"), any());

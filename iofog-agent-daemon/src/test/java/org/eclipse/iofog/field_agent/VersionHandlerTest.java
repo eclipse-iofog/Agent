@@ -15,15 +15,19 @@
 //import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 //import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 //import org.eclipse.iofog.field_agent.enums.VersionCommand;
+//import org.eclipse.iofog.resource_manager.ResourceManager;
 //import org.eclipse.iofog.utils.logging.LoggingService;
-//import org.junit.After;
-//import org.junit.Before;
-//import org.junit.Ignore;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
+//import org.junit.jupiter.api.AfterEach;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.jupiter.api.Disabled;
+//import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.extension.ExtendWith;
+//import org.mockito.MockedConstruction;
+//import org.mockito.MockedStatic;
 //import org.mockito.Mockito;
-//import org.powermock.core.classloader.annotations.PrepareForTest;
-//import org.powermock.modules.junit4.PowerMockRunner;
+//import org.mockito.junit.jupiter.MockitoExtension;
+//import org.mockito.junit.jupiter.MockitoSettings;
+//import org.mockito.quality.Strictness;
 //
 //import javax.json.Json;
 //import javax.json.JsonObject;
@@ -33,20 +37,17 @@
 //import java.io.IOException;
 //import java.util.ArrayList;
 //import java.util.List;
+//import java.util.Objects;
 //
-//import static org.junit.Assert.*;
+//import static org.junit.jupiter.api.Assertions.*;
 //import static org.mockito.ArgumentMatchers.*;
-//import static org.mockito.Mockito.atLeastOnce;
-//import static org.mockito.Mockito.never;
-//import static org.mockito.Mockito.when;
-//import static org.powermock.api.mockito.PowerMockito.*;
+//import static org.mockito.Mockito.*;
 //
 ///**
 // * @author nehanaithani
 // */
-//@RunWith(PowerMockRunner.class)
-//@PrepareForTest({VersionHandler.class, LoggingService.class, File.class, Runtime.class,
-//        CommandShellExecutor.class})
+//@ExtendWith(MockitoExtension.class)
+//@MockitoSettings(strictness = Strictness.LENIENT)
 //public class VersionHandlerTest {
 //    private VersionHandler versionHandler;
 //    private JsonObject jsonObject;
@@ -58,30 +59,48 @@
 //    private CommandShellResultSet<List<String>, List<String>> resultSetWithPath = null;
 //    private String[] fileList = {"file1", "file2"};
 //    private Runtime runtime;
-//    @Before
+//    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+//    private MockedStatic<Runtime> runtimeMockedStatic;
+//    private MockedStatic<CommandShellExecutor> commandShellExecutorMockedStatic;
+//    private MockedConstruction<File> fileMockedConstruction;
+////    private MockedStatic<VersionCommand> versionCommandMockedStatic;
+//    @BeforeEach
 //    public void setUp() throws Exception {
 //        MODULE_NAME = "Version Handler";
-//        versionHandler = spy(new VersionHandler());
-//        mockStatic(LoggingService.class);
-//        mockStatic(Runtime.class);
-//        mockStatic(CommandShellExecutor.class);
+//        versionHandler = spy(VersionHandler.class);
+//        loggingServiceMockedStatic = mockStatic(LoggingService.class);
+//        runtimeMockedStatic = mockStatic(Runtime.class);
+//        commandShellExecutorMockedStatic = mockStatic(CommandShellExecutor.class);
 //        file = mock(File.class);
 //        runtime = mock(Runtime.class);
-//        whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
-//        when(file.list()).thenReturn(fileList);
+//        fileMockedConstruction = Mockito.mockConstruction(File.class, (mock, context) -> {
+//                    Mockito.when(mock.list()).thenReturn(fileList);
+//                });
+////        whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
+////        VersionCommand versionCommand = mock(VersionCommand.class);
+////        versionCommandMockedStatic = mockStatic(VersionCommand.class);
+////        when(VersionCommand.parseJson(any())).thenReturn(mock(VersionCommand.class));
+////        when(file.list()).thenReturn(fileList);
 //        jsonObjectBuilder = Json.createObjectBuilder();
 //        error = new ArrayList<>();
 //        value = new ArrayList<>();
 //        when(Runtime.getRuntime()).thenReturn(runtime);
 //    }
 //
-//    @After
+//    @AfterEach
 //    public void tearDown() throws Exception {
 //        MODULE_NAME = null;
 //        jsonObject = null;
 //        error = null;
 //        value = null;
 //        fileList = null;
+//        jsonObjectBuilder = null;
+//        loggingServiceMockedStatic.close();
+//        runtimeMockedStatic.close();
+//        commandShellExecutorMockedStatic.close();
+//        fileMockedConstruction.close();
+//        reset(versionHandler);
+////        versionCommandMockedStatic.close();
 //    }
 //
 //    /**
@@ -90,11 +109,11 @@
 //    @Test
 //    public void testChangeVersionCommandWhenNull() {
 //        VersionHandler.changeVersion(null);
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logInfo(MODULE_NAME, "Start performing change version operation, received from ioFog controller");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logError(eq(MODULE_NAME), eq("Error performing change version operation : Invalid command"), any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 //    }
 //
@@ -107,11 +126,11 @@
 //                .add("versionCommand", "versionCommand")
 //                .add("provisionKey", "provisionKey").build();
 //        VersionHandler.changeVersion(jsonObject);
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logInfo(MODULE_NAME, "Start performing change version operation, received from ioFog controller");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logError(eq(MODULE_NAME), eq("Error performing change version operation : Invalid command"), any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 //    }
 //
@@ -121,18 +140,18 @@
 //     */
 //    @Test
 //    public void testChangeVersionCommandRollbackAndSystemIsNotReady() {
-//        jsonObject = jsonObjectBuilder
+//        JsonObject jsonObject1 = Json.createObjectBuilder()
 //                .add("versionCommand", VersionCommand.ROLLBACK.toString())
 //                .add("provisionKey", "provisionKey").build();
 //        when(file.list()).thenReturn(null);
-//        VersionHandler.changeVersion(jsonObject);
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        VersionHandler.changeVersion(jsonObject1);
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logInfo(MODULE_NAME, "Start performing change version operation, received from ioFog controller");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Checking is ready to rollback");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : false");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 //    }
 //
@@ -142,7 +161,7 @@
 //     * Runtime script exec throws IOException
 //     */
 //    @Test
-//    @Ignore
+//    @Disabled
 //    public void throwsIOEXceptionWhenChangeVersionCommandRollback() {
 //        try {
 //            jsonObject = jsonObjectBuilder
@@ -150,13 +169,13 @@
 //                    .add("provisionKey", "provisionKey").build();
 //            when(runtime.exec(anyString())).thenThrow(mock(IOException.class));
 //            VersionHandler.changeVersion(jsonObject);
-//            verifyStatic(LoggingService.class, atLeastOnce());
+//            verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logInfo(MODULE_NAME, "Checking is ready to rollback");
-//            verifyStatic(LoggingService.class, atLeastOnce());
+//            verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logInfo(MODULE_NAME, "Is ready to rollback : true");
-//            verifyStatic(LoggingService.class, atLeastOnce());
+//            verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logError(eq(MODULE_NAME), eq("Error executing sh script to change version"), any());
-//            verifyStatic(LoggingService.class, atLeastOnce());
+//            verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 //        } catch (Exception e) {
 //            fail("This should never happen");
@@ -169,7 +188,7 @@
 //     * Rollback success
 //     */
 //    @Test
-//    @Ignore
+//    @Disabled
 //    public void testChangeVersionCommandRollbackSuccess() {
 //        try {
 //            jsonObject = jsonObjectBuilder
@@ -177,11 +196,11 @@
 //                    .add("provisionKey", "provisionKey").build();
 //            when(runtime.exec(anyString())).thenReturn(mock(Process.class));
 //            VersionHandler.changeVersion(jsonObject);
-//            verifyStatic(LoggingService.class, atLeastOnce());
+//            verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logInfo(MODULE_NAME, "Checking is ready to rollback");
-//            verifyStatic(LoggingService.class, atLeastOnce());
+//            verify(LoggingService.class, atLeastOnce());
 //            LoggingService.logInfo(MODULE_NAME, "Is ready to rollback : true");
-//            verifyStatic(LoggingService.class, never());
+//            verify(LoggingService.class, never());
 //            LoggingService.logError(eq(MODULE_NAME), eq("Error executing sh script to change version"), any());
 //        } catch (Exception e) {
 //            fail("This should never happen");
@@ -199,11 +218,11 @@
 //                .add("provisionKey", "provisionKey").build();
 //        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
 //        VersionHandler.changeVersion(jsonObject);
-//        verifyStatic(CommandShellExecutor.class, atLeastOnce());
+//        verify(CommandShellExecutor.class, atLeastOnce());
 //        CommandShellExecutor.executeCommand(any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : false");
-//        verifyStatic(LoggingService.class, never());
+//        verify(LoggingService.class, never());
 //        LoggingService.logDebug(MODULE_NAME, "Performing change version operation");
 //    }
 //
@@ -230,11 +249,11 @@
 //        CommandShellResultSet<List<String>, List<String>> fogResultSetWithPath = new CommandShellResultSet<>(fogValue, fogError);
 //        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath, resultSetWithPath, anotherResultSetWithPath, fogResultSetWithPath);
 //        VersionHandler.changeVersion(jsonObject);
-//        verifyStatic(CommandShellExecutor.class, atLeastOnce());
+//        verify(CommandShellExecutor.class, atLeastOnce());
 //        CommandShellExecutor.executeCommand(any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Checking is ready to upgrade");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : true");
 //    }
 //
@@ -252,9 +271,9 @@
 //        resultSetWithPath = new CommandShellResultSet<>(value, error);
 //        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
 //        VersionHandler.changeVersion(jsonObject);
-//        verifyStatic(CommandShellExecutor.class, atLeastOnce());
+//        verify(CommandShellExecutor.class, atLeastOnce());
 //        CommandShellExecutor.executeCommand(any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : false");
 //    }
 //
@@ -277,11 +296,11 @@
 //        CommandShellResultSet<List<String>, List<String>> fogResultSetWithPath = new CommandShellResultSet<>(fogValue, fogError);
 //        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath, resultSetWithPath, anotherResultSetWithPath, fogResultSetWithPath);
 //        assertTrue(VersionHandler.isReadyToUpgrade());
-//        verifyStatic(CommandShellExecutor.class, atLeastOnce());
+//        verify(CommandShellExecutor.class, atLeastOnce());
 //        CommandShellExecutor.executeCommand(any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Checking is ready to upgrade");
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : true");
 //    }
 //
@@ -304,9 +323,9 @@
 //        CommandShellResultSet<List<String>, List<String>> fogResultSetWithPath = new CommandShellResultSet<>(fogValue, fogError);
 //        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath, resultSetWithPath, anotherResultSetWithPath, fogResultSetWithPath);
 //        assertFalse(VersionHandler.isReadyToUpgrade());
-//        verifyStatic(CommandShellExecutor.class, atLeastOnce());
+//        verify(CommandShellExecutor.class, atLeastOnce());
 //        CommandShellExecutor.executeCommand(any());
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : false");
 //    }
 //
@@ -318,7 +337,7 @@
 //        when(file.list()).thenReturn(null);
 //        assertFalse(VersionHandler.isReadyToRollback());
 //        Mockito.verify(file).list();
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : false");
 //    }
 //
@@ -329,7 +348,7 @@
 //    public void isReadyToRollbackTrue() {
 //        assertTrue(VersionHandler.isReadyToRollback());
 //        Mockito.verify(file).list();
-//        verifyStatic(LoggingService.class, atLeastOnce());
+//        verify(LoggingService.class, atLeastOnce());
 //        LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : true");
 //    }
 //}

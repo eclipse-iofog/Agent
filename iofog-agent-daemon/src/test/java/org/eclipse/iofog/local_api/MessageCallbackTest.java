@@ -18,7 +18,7 @@
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -38,10 +38,10 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        name = "message";
-//        message = PowerMockito.mock(Message.class);
-//        messageWebsocketHandler = PowerMockito.mock(MessageWebsocketHandler.class);
-//        messageCallback = PowerMockito.spy(new MessageCallback(name));
-//        PowerMockito.whenNew(MessageWebsocketHandler.class).withNoArguments().thenReturn(messageWebsocketHandler);
+//        message = Mockito.mock(Message.class);
+//        messageWebsocketHandler = Mockito.mock(MessageWebsocketHandler.class);
+//        messageCallback = Mockito.spy(new MessageCallback(name));
+//        Mockito.whenNew(MessageWebsocketHandler.class).withNoArguments().thenReturn(messageWebsocketHandler);
 //    }
 //
 //    @After

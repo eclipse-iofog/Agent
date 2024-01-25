@@ -14,16 +14,18 @@
 //
 //import io.netty.buffer.ByteBuf;
 //import io.netty.handler.codec.http.*;
+//import org.eclipse.iofog.microservice.MicroserviceStatus;
 //import org.eclipse.iofog.utils.logging.LoggingService;
-//import org.junit.After;
-//import org.junit.Before;
-//import org.junit.Ignore;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
+//import org.junit.jupiter.api.AfterEach;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.extension.ExtendWith;
+//import org.mockito.MockedConstruction;
+//import org.mockito.MockedStatic;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
-//import org.powermock.core.classloader.annotations.PrepareForTest;
-//import org.powermock.modules.junit4.PowerMockRunner;
+//import org.mockito.junit.jupiter.MockitoExtension;
+//import org.mockito.junit.jupiter.MockitoSettings;
+//import org.mockito.quality.Strictness;
 //
 //import java.io.BufferedReader;
 //import java.io.FileReader;
@@ -32,18 +34,16 @@
 //
 //import static io.netty.handler.codec.http.HttpResponseStatus.*;
 //import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-//import static org.junit.Assert.*;
-//import static org.powermock.api.mockito.PowerMockito.mock;
-//import static org.powermock.api.mockito.PowerMockito.mockStatic;
+//import static org.junit.jupiter.api.Assertions.*;
+//import static org.mockito.Mockito.*;
+//import static org.mockito.Mockito.when;
 //
 ///**
 // * @author nehanaithani
 // *
 // */
-//@RunWith(PowerMockRunner.class)
-//@PrepareForTest({ApiHandlerHelpers.class, HttpRequest.class, HttpHeaders.class, LoggingService.class, ByteBuf.class,
-//        BufferedReader.class, FileReader.class})
-//@Ignore
+//@ExtendWith(MockitoExtension.class)
+//@MockitoSettings(strictness = Strictness.LENIENT)
 //public class ApiHandlerHelpersTest {
 //    private HttpRequest request;
 //    private HttpMethod expectedMethod;
@@ -54,33 +54,42 @@
 //    private DefaultFullHttpResponse defaultResponse;
 //    private BufferedReader bufferedReader;
 //    private FileReader fileReader;
+//    private MockedStatic<ApiHandlerHelpers> apiHandlerHelpersMockedStatic;
+//    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+//    private MockedConstruction<BufferedReader> bufferedReaderMockedConstruction;
 //
-//    @Before
+//    @BeforeEach
 //    public void setUp() throws Exception {
-//        mockStatic(ApiHandlerHelpers.class, Mockito.CALLS_REAL_METHODS);
-//        mockStatic(LoggingService.class);
-//        request = PowerMockito.mock(HttpRequest.class);
-//        httpHeaders = PowerMockito.mock(HttpHeaders.class);
-//        byteBuf = PowerMockito.mock(ByteBuf.class);
-//        bufferedReader = PowerMockito.mock(BufferedReader.class);
-//        fileReader = PowerMockito.mock(FileReader.class);
+//        apiHandlerHelpersMockedStatic = mockStatic(ApiHandlerHelpers.class, Mockito.CALLS_REAL_METHODS);
+//        loggingServiceMockedStatic = mockStatic(LoggingService.class);
+//        request = mock(HttpRequest.class);
+//        httpHeaders = mock(HttpHeaders.class);
+//        byteBuf = mock(ByteBuf.class);
+//        bufferedReader = mock(BufferedReader.class);
+//        fileReader = mock(FileReader.class);
 //        expectedMethod = HttpMethod.POST;
 //        contentType = "Application/json";
 //        content = "response content";
 //        defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.OK);
-//        PowerMockito.whenNew(BufferedReader.class)
-//                .withParameterTypes(Reader.class)
-//                .withArguments(Mockito.any(Reader.class))
-//                .thenReturn(bufferedReader);
-//        PowerMockito.whenNew(FileReader.class)
-//                .withParameterTypes(String.class)
-//                .withArguments(Mockito.anyString())
-//                .thenReturn(fileReader);
+//        bufferedReaderMockedConstruction =  mockConstruction(BufferedReader.class, (mock, context) -> {
+//            when(mock.readLine()).thenReturn("token");
+//        });
+////        Mockito.whenNew(BufferedReader.class)
+////                .withParameterTypes(Reader.class)
+////                .withArguments(Mockito.any(Reader.class))
+////                .thenReturn(bufferedReader);
+////        Mockito.whenNew(FileReader.class)
+////                .withParameterTypes(String.class)
+////                .withArguments(Mockito.anyString())
+////                .thenReturn(fileReader);
 //    }
 //
-//    @After
+//    @AfterEach
 //    public void tearDown() throws Exception {
 //        Mockito.reset(request, httpHeaders, byteBuf);
+//        loggingServiceMockedStatic.close();
+//        apiHandlerHelpersMockedStatic.close();
+//        bufferedReaderMockedConstruction.close();
 //
 //    }
 //
@@ -90,7 +99,7 @@
 //    @Test
 //    public void testValidateMethodWhenEqual() {
 //        try {
-//            PowerMockito.when(request.method()).thenReturn(HttpMethod.POST);
+//            Mockito.when(request.method()).thenReturn(HttpMethod.POST);
 //            assertTrue(ApiHandlerHelpers.validateMethod(request, expectedMethod));
 //        } catch (Exception e){
 //            fail("This should not happen");
@@ -102,7 +111,7 @@
 //    @Test
 //    public void testValidateMethodWhenUnEqual() {
 //        try {
-//            PowerMockito.when(request.method()).thenReturn(HttpMethod.GET);
+//            Mockito.when(request.method()).thenReturn(HttpMethod.GET);
 //            assertFalse(ApiHandlerHelpers.validateMethod(request, expectedMethod));
 //        } catch (Exception e){
 //            fail("This should not happen");
@@ -127,8 +136,8 @@
 //    @Test
 //    public void testValidateContentTypeAreDifferent() {
 //        try {
-//            PowerMockito.when(request.headers()).thenReturn(httpHeaders);
-//            PowerMockito.when(httpHeaders.get(HttpHeaderNames.CONTENT_TYPE, "")).thenReturn("text/html");
+//            Mockito.when(request.headers()).thenReturn(httpHeaders);
+//            Mockito.when(httpHeaders.get(HttpHeaderNames.CONTENT_TYPE, "")).thenReturn("text/html");
 //            assertEquals("Incorrect content type text/html", ApiHandlerHelpers.validateContentType(request, contentType));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -141,8 +150,8 @@
 //    @Test
 //    public void testValidateContentTypeAreSame() {
 //        try {
-//            PowerMockito.when(request.headers()).thenReturn(httpHeaders);
-//            PowerMockito.when(httpHeaders.get(HttpHeaderNames.CONTENT_TYPE, "")).thenReturn(contentType);
+//            Mockito.when(request.headers()).thenReturn(httpHeaders);
+//            Mockito.when(httpHeaders.get(HttpHeaderNames.CONTENT_TYPE, "")).thenReturn(contentType);
 //            assertNull(ApiHandlerHelpers.validateContentType(request, contentType));
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -156,7 +165,7 @@
 //    public void testValidateAccessTokenFalse() {
 //        try {
 //            assertFalse(ApiHandlerHelpers.validateAccessToken(request));
-//            PowerMockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
+////            Mockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -168,11 +177,11 @@
 //    @Test
 //    public void testValidateAccessTokenTrue() {
 //        try {
-//            PowerMockito.when(request.headers()).thenReturn(httpHeaders);
-//            PowerMockito.when(httpHeaders.get(HttpHeaderNames.AUTHORIZATION, "")).thenReturn("token");
-//            PowerMockito.when(bufferedReader.readLine()).thenReturn("token");
+//            Mockito.when(request.headers()).thenReturn(httpHeaders);
+//            Mockito.when(httpHeaders.get(HttpHeaderNames.AUTHORIZATION, "")).thenReturn("token");
+////            Mockito.when(bufferedReader.readLine()).thenReturn("token");
 //            assertTrue(ApiHandlerHelpers.validateAccessToken(request));
-//            PowerMockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
+////            Mockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
 //        } catch (Exception e) {
 //            fail("This should not happen");
 //        }
@@ -184,11 +193,11 @@
 //    @Test
 //    public void testValidateAccesswhenFetchTokenThrowsException() {
 //        try {
-//            PowerMockito.when(request.headers()).thenReturn(httpHeaders);
-//            PowerMockito.when(httpHeaders.get(HttpHeaderNames.AUTHORIZATION, "")).thenReturn("token");
-//            PowerMockito.when(bufferedReader.readLine()).thenThrow(mock(IOException.class));
+//            Mockito.when(request.headers()).thenReturn(httpHeaders);
+//            Mockito.when(httpHeaders.get(HttpHeaderNames.AUTHORIZATION, "")).thenReturn("token");
+//            Mockito.when(bufferedReader.readLine()).thenThrow(mock(IOException.class));
 //            assertFalse(ApiHandlerHelpers.validateAccessToken(request));
-//            PowerMockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
+////            Mockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
 //            LoggingService.logError(Mockito.eq("Local API"), Mockito.eq("unable to load api token"),
 //                    Mockito.any());
 //

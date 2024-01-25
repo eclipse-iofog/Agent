@@ -23,7 +23,7 @@
 //import org.junit.rules.Timeout;
 //import org.junit.runner.RunWith;
 //import org.mockito.Mockito;
-//import org.powermock.api.mockito.PowerMockito;
+//import org.powermock.api.mockito.Mockito;
 //import org.powermock.core.classloader.annotations.PrepareForTest;
 //import org.powermock.modules.junit4.PowerMockRunner;
 //
@@ -35,8 +35,8 @@
 //import static io.netty.handler.codec.http.HttpResponseStatus.*;
 //import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 //import static org.junit.Assert.*;
-//import static org.powermock.api.mockito.PowerMockito.mock;
-//import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+//import static org.powermock.api.mockito.Mockito.mock;
+//import static org.powermock.api.mockito.Mockito.verify;
 //
 ///**
 // * @author nehanaithani
@@ -62,19 +62,19 @@
 //    @Before
 //    public void setUp() throws Exception {
 //        executor = Executors.newFixedThreadPool(1);
-//        PowerMockito.mockStatic(ApiHandlerHelpers.class);
-//        PowerMockito.mockStatic(LoggingService.class);
-//        PowerMockito.mockStatic(FieldAgent.class);
-//        httpRequest = PowerMockito.mock(HttpRequest.class);
-//        byteBuf = PowerMockito.mock(ByteBuf.class);
-//        fieldAgent = PowerMockito.mock(FieldAgent.class);
+//        Mockito.mockStatic(ApiHandlerHelpers.class);
+//        Mockito.mockStatic(LoggingService.class);
+//        Mockito.mockStatic(FieldAgent.class);
+//        httpRequest = Mockito.mock(HttpRequest.class);
+//        byteBuf = Mockito.mock(ByteBuf.class);
+//        fieldAgent = Mockito.mock(FieldAgent.class);
 //        content = "content";
 //        bytes = content.getBytes();
 //        defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, byteBuf);
-//        deprovisionApiHandler = PowerMockito.spy(new DeprovisionApiHandler(httpRequest, byteBuf, bytes));
-//        PowerMockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(DELETE))).thenReturn(true);
-//        PowerMockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(true);
-//        PowerMockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
+//        deprovisionApiHandler = Mockito.spy(new DeprovisionApiHandler(httpRequest, byteBuf, bytes));
+//        Mockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(DELETE))).thenReturn(true);
+//        Mockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(true);
+//        Mockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
 //    }
 //
 //    @After
@@ -94,14 +94,14 @@
 //    @Test
 //    public void testCallWhenMethodTypeIsInvalid() {
 //        try {
-//            PowerMockito.when(httpRequest.method()).thenReturn(HttpMethod.GET);
+//            Mockito.when(httpRequest.method()).thenReturn(HttpMethod.GET);
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, METHOD_NOT_ALLOWED);
-//            PowerMockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(DELETE))).thenReturn(false);
-//            PowerMockito.when(ApiHandlerHelpers.methodNotAllowedResponse()).thenReturn(defaultResponse);
+//            Mockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(DELETE))).thenReturn(false);
+//            Mockito.when(ApiHandlerHelpers.methodNotAllowedResponse()).thenReturn(defaultResponse);
 //            assertEquals(defaultResponse, deprovisionApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(DELETE));
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.methodNotAllowedResponse();
 //        } catch (Exception e) {
 //            fail("This should not happen");
@@ -117,8 +117,8 @@
 //            String errorMsg = "Incorrect access token";
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, UNAUTHORIZED, byteBuf);
 //            HttpUtil.setContentLength(defaultResponse, byteBuf.readableBytes());
-//            PowerMockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(false);
-//            PowerMockito.when(ApiHandlerHelpers.unauthorizedResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
+//            Mockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(false);
+//            Mockito.when(ApiHandlerHelpers.unauthorizedResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
 //            assertEquals(defaultResponse, deprovisionApiHandler.call());
 //            verifyStatic(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
@@ -136,8 +136,8 @@
 //    public void testCallWhenFieldAgentDeprovisionReturnsFailureStatus() {
 //        try {
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, INTERNAL_SERVER_ERROR, byteBuf);
-//            PowerMockito.when(ApiHandlerHelpers.internalServerErrorResponse(Mockito.eq(byteBuf), Mockito.anyString())).thenReturn(defaultResponse);
-//            PowerMockito.when(fieldAgent.deProvision(false)).thenReturn("\nFailure - not provisioned");
+//            Mockito.when(ApiHandlerHelpers.internalServerErrorResponse(Mockito.eq(byteBuf), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(fieldAgent.deProvision(false)).thenReturn("\nFailure - not provisioned");
 //            assertEquals(defaultResponse, deprovisionApiHandler.call());
 //            verifyStatic(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
@@ -156,8 +156,8 @@
 //            RuntimeException e = new RuntimeException("Error while deprovisioning");
 //            String errorMsg = "Log message parsing error, " + e.getMessage();
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
-//            PowerMockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.anyString())).thenReturn(defaultResponse);
-//            PowerMockito.when(fieldAgent.deProvision(false)).thenThrow(e);
+//            Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(fieldAgent.deProvision(false)).thenThrow(e);
 //            assertEquals(defaultResponse, deprovisionApiHandler.call());
 //            verifyStatic(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
@@ -175,10 +175,10 @@
 //    public void testCallWhenFieldAgentDeprovisionReturnsFailureStatusIsNull() {
 //        try {
 //            defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, byteBuf);
-//            PowerMockito.when(ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.anyString())).thenReturn(defaultResponse);
-//            PowerMockito.when(fieldAgent.deProvision(false)).thenReturn("\nSuccess - tokens, identifiers and keys removed");
+//            Mockito.when(ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.anyString())).thenReturn(defaultResponse);
+//            Mockito.when(fieldAgent.deProvision(false)).thenReturn("\nSuccess - tokens, identifiers and keys removed");
 //            assertEquals(defaultResponse, deprovisionApiHandler.call());
-//            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+//            Mockito.verify(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(DELETE));
 //            verifyStatic(ApiHandlerHelpers.class);
 //            ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
