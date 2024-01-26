@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -33,7 +34,8 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ResourceManagerTest {
     private ResourceManager resourceManager;
-    private FieldAgent fieldAgent;
+    private MockedStatic<FieldAgent> fieldAgentMockedStatic;
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
 
     /**
      * @throws Exception
@@ -41,9 +43,9 @@ public class ResourceManagerTest {
     @BeforeEach
     public void setUp() throws Exception {
         resourceManager = spy(new ResourceManager());
-        fieldAgent = mock(FieldAgent.class);
-        Mockito.mockStatic(FieldAgent.class);
-        Mockito.mockStatic(LoggingService.class);
+        FieldAgent fieldAgent = mock(FieldAgent.class);
+        fieldAgentMockedStatic = Mockito.mockStatic(FieldAgent.class);
+        loggingServiceMockedStatic = Mockito.mockStatic(LoggingService.class);
         when(FieldAgent.getInstance()).thenReturn(fieldAgent);
         Mockito.doNothing().when(fieldAgent).sendUSBInfoFromHalToController();
         Mockito.doNothing().when(fieldAgent).sendHWInfoFromHalToController();
@@ -55,7 +57,8 @@ public class ResourceManagerTest {
     @AfterEach
     public void tearDown() throws Exception {
         resourceManager = null;
-        fieldAgent = null;
+        fieldAgentMockedStatic.close();
+        loggingServiceMockedStatic.close();
     }
 
     /**

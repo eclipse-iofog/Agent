@@ -57,7 +57,6 @@ public class ImageDownloadManagerTest {
     private static String microserviceUuid;
     private static DockerClient dockerClient;
     private static MockedStatic<CommandShellExecutor> cmdShellExecutor;
-    private static DockerClientBuilder dockerClientBuilder;
     private static Container container;
     private static CommandShellResultSet<List<String>, List<String>> resultSetWithPath;
     private static List<String> error;
@@ -75,7 +74,7 @@ public class ImageDownloadManagerTest {
 //        when(Configuration.getDockerApiVersion()).thenReturn("19.03.1");
         orchestrator = mock(Orchestrator.class);
         mock(DefaultDockerClientConfig.class);
-        dockerClientBuilder = mock(DockerClientBuilder.class);
+//        DockerClientBuilder dockerClientBuilder = mock(DockerClientBuilder.class);
 //        mockStatic(DockerClientBuilder.class);
 
 //        dockerClient = mock(DockerClient.class);

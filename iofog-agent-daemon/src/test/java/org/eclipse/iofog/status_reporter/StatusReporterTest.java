@@ -49,15 +49,15 @@ public class StatusReporterTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		statusReporter = mock(StatusReporter.class);
+		loggingServiceMockedStatic = mockStatic(LoggingService.class);
 		configurationMockedStatic = mockStatic(Configuration.class);
 		ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
-		loggingServiceMockedStatic = mockStatic(LoggingService.class);
 		executorsMockedStatic = mockStatic(Executors.class);
 		when(Configuration.getSetSystemTimeFreqSeconds()).thenReturn(1);
 		when(Executors.newScheduledThreadPool(anyInt())).thenReturn(scheduledExecutorService);
 		Mockito.when(scheduledExecutorService
 				.scheduleAtFixedRate(any(),anyLong(),anyLong(),any())).thenReturn(null);
+		statusReporter = spy(StatusReporter.class);
 	}
 
 	@AfterEach

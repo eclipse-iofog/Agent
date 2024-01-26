@@ -48,8 +48,6 @@ public class ProcessManagerStatusTest {
     private MicroserviceManager microserviceManager;
     private MicroserviceState microserviceState;
     private String microserviceUuid;
-    private List<Registry> registries;
-    private Registry registry;
     private MockedStatic<MicroserviceManager> microserviceManagerMockedStatic;
 
     @BeforeEach
@@ -57,10 +55,10 @@ public class ProcessManagerStatusTest {
         processManagerStatus = spy(new ProcessManagerStatus());
         microserviceStatus = mock(MicroserviceStatus.class);
         microserviceManager = mock(MicroserviceManager.class);
-        registry = mock(Registry.class);
+        Registry registry = mock(Registry.class);
         microserviceState = mock(MicroserviceState.class);
         arrayBuilder = Json.createArrayBuilder();
-        registries = new ArrayList<>();
+        List<Registry> registries = new ArrayList<>();
         microserviceManagerMockedStatic = mockStatic(MicroserviceManager.class);
         microserviceUuid = "microserviceUuid";
         Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
