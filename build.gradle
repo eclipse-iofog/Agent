@@ -25,8 +25,4 @@ subprojects {
         from sourceSets.main.allJava
         archiveClassifier = 'sources'
     }
-//    tasks.register('sourcesJar', Jar) {
-//        from sourceSets.main.allJava
-//        archiveClassifier = 'sources'
-//    }
 }

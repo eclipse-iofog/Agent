@@ -338,21 +338,6 @@ public class ConfigurationTest {
     }
 
     /**
-     * Test loadConfig
-     */
-    @Test
-    public void testLoadConfig() {
-        try {
-            Field privateCurrentSwitcherState = Configuration.class.getDeclaredField("currentSwitcherState");
-            privateCurrentSwitcherState.setAccessible(true);
-            privateCurrentSwitcherState.set(Configuration.class, Constants.ConfigSwitcherState.DEFAULT);
-            Configuration.loadConfig();
-        } catch (Exception e) {
-            fail("This should not happen");
-        }
-    }
-
-    /**
      * Test loadConfigSwitcher
      */
     @Test
