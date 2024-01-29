@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -56,18 +56,13 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ProcessManagerTest {
     private ProcessManager processManager;
-    private ProcessManagerStatus processManagerStatus;
-    private SupervisorStatus supervisorStatus;
     private MicroserviceManager microserviceManager;
     private Microservice microservice;
     private Container container;
     private DockerUtil dockerUtil;
-    private ContainerManager containerManager;
     private ContainerTask containerTask;
     private MicroserviceStatus microserviceStatus;
-    private StraceDiagnosticManager straceDiagnosticManager;
     private FieldAgentStatus fieldAgentStatus;
-    private Thread thread;
     private String MODULE_NAME;
     List<Microservice> microservicesList;
     List<Container> containerList;
@@ -86,23 +81,21 @@ public class ProcessManagerTest {
     @BeforeEach
     public void setUp() throws Exception {
         MODULE_NAME = "Process Manager";
-//        setMock(processManager);
         loggingServiceMockedStatic = Mockito.mockStatic(LoggingService.class);
         statusReporterMockedStatic = Mockito.mockStatic(StatusReporter.class);
         dockerUtilMockedStatic = Mockito.mockStatic(DockerUtil.class);
         microserviceManagerMockedStatic = Mockito.mockStatic(MicroserviceManager.class);
         configurationrMockedStatic = Mockito.mockStatic(Configuration.class);
         straceDiagnosticManagerMockedStatic = Mockito.mockStatic(StraceDiagnosticManager.class);
-        processManagerStatus = mock(ProcessManagerStatus.class);
+        ProcessManagerStatus processManagerStatus = mock(ProcessManagerStatus.class);
         microserviceManager = mock(MicroserviceManager.class);
         microservice = mock(Microservice.class);
-        supervisorStatus = mock(SupervisorStatus.class);
+        SupervisorStatus supervisorStatus = mock(SupervisorStatus.class);
         container = mock(Container.class);
         dockerUtil = mock(DockerUtil.class);
         containerTask = mock(ContainerTask.class);
-        containerManager = mock(ContainerManager.class);
         microserviceStatus = mock(MicroserviceStatus.class);
-        straceDiagnosticManager = mock(StraceDiagnosticManager.class);
+        StraceDiagnosticManager straceDiagnosticManager = mock(StraceDiagnosticManager.class);
         fieldAgentStatus = mock(FieldAgentStatus.class);
         microservicesList = new ArrayList<>();
         microservicesList.add(microservice);
@@ -128,16 +121,10 @@ public class ProcessManagerTest {
         Mockito.doNothing().when(straceDiagnosticManager).disableMicroserviceStraceDiagnostics(anyString());
         Mockito.when(microserviceManager.getLatestMicroservices()).thenReturn(microservicesList);
         Mockito.when(microserviceManager.getCurrentMicroservices()).thenReturn(microservicesList);
-
-
-//        Mockito.whenNew(ContainerManager.class).withNoArguments().thenReturn(containerManager);
         Mockito.when(Configuration.isWatchdogEnabled()).thenReturn(false);
         Mockito.when(Configuration.getIofogUuid()).thenReturn("Uuid");
-//        Mockito.whenNew(ContainerTask.class).withArguments(Mockito.any(), Mockito.anyString())
-//                .thenReturn(containerTask);
         processManager = Mockito.spy(ProcessManager.getInstance());
         initiateMockStart();
-
     }
 
     @AfterEach
@@ -151,7 +138,6 @@ public class ProcessManagerTest {
         containerManagerMockedConstruction.close();
         containerTaskMockedConstruction.close();
         threadMockedConstruction.close();
-//        reset(straceDiagnosticManager, thread, supervisorStatus, processManagerStatus);
         Field instance = ProcessManager.class.getDeclaredField("instance");
         instance.setAccessible(true);
         instance.set(null, null);
@@ -195,21 +181,12 @@ public class ProcessManagerTest {
     }
 
     /**
-     * Asserts mock is same as the ProcessManager.getInstance()
-     */
-    @Test
-    public void testGetInstanceIsSameAsMock() {
-//        assertEquals(processManager, ProcessManager.getInstance());
-    }
-
-    /**
      * Test update
      */
     @Test
     public void testUpdate() {
         try {
             processManager.update();
-//            Mockito.verifyPrivate(processManager).invoke("updateRegistriesStatus");
             Mockito.verify(StatusReporter.class, Mockito.atLeastOnce());
             StatusReporter.getProcessManagerStatus();
         } catch (Exception e) {
@@ -229,9 +206,6 @@ public class ProcessManagerTest {
             processManager.deleteRemainingMicroservices();
             Mockito.verify(microserviceManager).getLatestMicroservices();
             Mockito.verify(microserviceManager).getCurrentMicroservices();
-//            Mockito.verifyPrivate(processManager).invoke("deleteOldAgentContainers", Mockito.any(Set.class));
-//            Mockito.verifyPrivate(processManager).invoke("deleteUnknownContainers", Mockito.any(Set.class));
-//            Mockito.verifyPrivate(processManager).invoke("disableMicroserviceFeaturesBeforeRemoval", Mockito.any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -253,38 +227,13 @@ public class ProcessManagerTest {
             Mockito.when(dockerUtil.getContainerMicroserviceUuid(Mockito.any())).thenReturn("Containeruuid", "uuid", "anotherUuid");
             Mockito.when(dockerUtil.getContainerName(Mockito.any())).thenReturn("containerName", "containerName1", "containerName2");
             Mockito.when(dockerUtil.getIoFogContainerName(Mockito.any())).thenReturn("containerName", "containerName1", "containerName2");
-//            initiateMockStart();
             processManager.deleteRemainingMicroservices();
             Mockito.verify(microserviceManager).getLatestMicroservices();
             Mockito.verify(microserviceManager).getCurrentMicroservices();
-//            Mockito.verifyPrivate(processManager).invoke("deleteOldAgentContainers", Mockito.any(Set.class));
-//            Mockito.verifyPrivate(processManager).invoke("deleteUnknownContainers", Mockito.any(Set.class));
         } catch (Exception e) {
             fail("This should not happen");
         }
     }
-
-    /**
-     * Test deleteRemainingMicroservices
-     * getLatestMicroservices returns null;
-     */
-    /*@Test
-    public void testDeleteRemainingMicroserviceswhenGetLatestMicroservicesReturnNull() {
-        try {
-            Mockito.when(microserviceManager.getLatestMicroservices()).thenReturn(null);
-            Mockito.when(dockerUtil.getContainerMicroserviceUuid(Mockito.any())).thenReturn( "Anotheruuid");
-            Mockito.when(dockerUtil.getContainerName(Mockito.any())).thenReturn("containerName");
-            Mockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid", "anotherUUid");
-            initiateMockStart();
-            processManager.deleteRemainingMicroservices();
-            Mockito.verify(microserviceManager).getLatestMicroservices();
-            Mockito.verify(microserviceManager).getCurrentMicroservices();
-            Mockito.verifyPrivate(processManager).invoke("deleteOldAgentContainers", Mockito.any(Set.class));
-            Mockito.verifyPrivate(processManager).invoke("deleteUnknownContainers", Mockito.any(Set.class));
-        } catch (Exception e) {
-            fail("This should not happen");
-        }
-    }*/
 
     /**
      * Test instanceConfigUpdated
@@ -293,7 +242,6 @@ public class ProcessManagerTest {
     public void testInstanceConfigUpdated() {
         try {
             Mockito.doNothing().when(dockerUtil).reInitDockerClient();
-//            initiateMockStart();
             processManager.instanceConfigUpdated();
             verify(dockerUtil).reInitDockerClient();
         } catch (Exception e) {
@@ -314,7 +262,6 @@ public class ProcessManagerTest {
             Mockito.when(microservice.isDelete()).thenReturn(false);
             Mockito.when(microserviceManager.getLatestMicroservices()).thenReturn(microservicesList);
             Mockito.when(dockerUtil.getContainer(Mockito.any())).thenReturn(Optional.empty());
-//            initiateMockStart();
             method = ProcessManager.class.getDeclaredMethod("handleLatestMicroservices");
             method.setAccessible(true);
             method.invoke(processManager);
@@ -322,7 +269,6 @@ public class ProcessManagerTest {
             Mockito.verify(dockerUtil).getContainer(any());
             Mockito.verify(microservice).isDelete();
             Mockito.verify(microservice).isUpdating();
-//            Mockito.verifyPrivate(processManager, never()).invoke("addMicroservice", Mockito.any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -348,7 +294,6 @@ public class ProcessManagerTest {
             Mockito.when(dockerUtil.getContainerIpAddress(Mockito.any())).thenReturn("containerIpAddress");
             Mockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
-//            initiateMockStart();
             method = ProcessManager.class.getDeclaredMethod("handleLatestMicroservices");
             method.setAccessible(true);
             method.invoke(processManager);
@@ -356,7 +301,6 @@ public class ProcessManagerTest {
             Mockito.verify(dockerUtil).getContainer(any());
             Mockito.verify(microservice, Mockito.times(2)).isDelete();
             Mockito.verify(microservice).isUpdating();
-//            Mockito.verifyPrivate(processManager).invoke("updateMicroservice", Mockito.any(), Mockito.any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -385,7 +329,6 @@ public class ProcessManagerTest {
             Mockito.when(dockerUtil.getContainerIpAddress(Mockito.any())).thenReturn("containerIpAddress");
             Mockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
-//            initiateMockStart();
             method = ProcessManager.class.getDeclaredMethod("handleLatestMicroservices");
             method.setAccessible(true);
             method.invoke(processManager);
@@ -393,9 +336,6 @@ public class ProcessManagerTest {
             Mockito.verify(dockerUtil).getContainer(any());
             Mockito.verify(microservice, Mockito.times(1)).isDelete();
             Mockito.verify(microservice).isUpdating();
-//            Mockito.verifyPrivate(processManager).invoke("deleteMicroservice", Mockito.any());
-//            Mockito.verifyPrivate(processManager).invoke("disableMicroserviceFeaturesBeforeRemoval", Mockito.any());
-//            Mockito.verifyPrivate(processManager).invoke("addTask", Mockito.any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -423,7 +363,6 @@ public class ProcessManagerTest {
             Mockito.when(dockerUtil.getContainerIpAddress(Mockito.any())).thenReturn("containerIpAddress");
             Mockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
-//            initiateMockStart();
             method = ProcessManager.class.getDeclaredMethod("handleLatestMicroservices");
             method.setAccessible(true);
             method.invoke(processManager);
@@ -431,9 +370,6 @@ public class ProcessManagerTest {
             Mockito.verify(dockerUtil).getContainer(any());
             Mockito.verify(microservice, Mockito.times(1)).isDelete();
             Mockito.verify(microservice).isUpdating();
-//            Mockito.verifyPrivate(processManager).invoke("deleteMicroservice", Mockito.any());
-//            Mockito.verifyPrivate(processManager).invoke("disableMicroserviceFeaturesBeforeRemoval", Mockito.any());
-//            Mockito.verifyPrivate(processManager).invoke("addTask", Mockito.any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -463,14 +399,12 @@ public class ProcessManagerTest {
             Mockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).getContainerIpAddress(Mockito.any());
             Mockito.when(dockerUtil.areMicroserviceAndContainerEqual(Mockito.any(), Mockito.any())).thenReturn(true);
             Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
-//            initiateMockStart();
             method = ProcessManager.class.getDeclaredMethod("handleLatestMicroservices");
             method.setAccessible(true);
             method.invoke(processManager);
             Mockito.verify(microserviceManager).getLatestMicroservices();
             Mockito.verify(dockerUtil).getContainer(any());
             Mockito.verify(microservice, Mockito.times(2)).isDelete();
-//            Mockito.verifyPrivate(processManager).invoke("updateMicroservice", Mockito.any(), Mockito.any());
             verify(microservice).setContainerIpAddress(any());
 
         } catch (Exception e) {
@@ -530,7 +464,6 @@ public class ProcessManagerTest {
             method.setAccessible(true);
             method.invoke(processManager, containerTask);
             Mockito.verify(containerTask).incrementRetries();
-//            Mockito.verifyPrivate(processManager).invoke("addTask", Mockito.any());
         } catch (Exception e) {
             System.out.println(e);
             fail("This should not happen");
@@ -552,7 +485,6 @@ public class ProcessManagerTest {
             method.setAccessible(true);
             method.invoke(processManager, containerTask);
             Mockito.verify(containerTask, never()).incrementRetries();
-//            Mockito.verifyPrivate(processManager, never()).invoke("addTask", Mockito.any());
             Mockito.verify(StatusReporter.class);
             StatusReporter.setProcessManagerStatus();
         } catch (Exception e) {
@@ -579,14 +511,11 @@ public class ProcessManagerTest {
      * Helper method
      */
     public void initiateMockStart() {
-        thread = mock(Thread.class);
+        Thread thread = mock(Thread.class);
         try {
             threadMockedConstruction = mockConstruction(Thread.class, (mock, context) -> {
                 Mockito.doNothing().when(mock).start();
             });
-//            Mockito.whenNew(Thread.class).withParameterTypes(Runnable.class,String.class)
-//                    .withArguments(Mockito.any(Runnable.class), Mockito.anyString())
-//                    .thenReturn(thread);
             Mockito.doNothing().when(thread).start();
             processManager.start();
         } catch (Exception e) {

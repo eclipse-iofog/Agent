@@ -1,7 +1,6 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'jacoco'
-//    id "org.jetbrains.kotlin.jvm" version "1.9.22"
 }
 
 description = 'iofog-agent-daemon'
@@ -13,7 +12,6 @@ dependencies {
     implementation 'com.jcraft:jsch:0.1.55'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.1'
     implementation 'org.apache.httpcomponents:httpmime:4.5.7'
-//    implementation 'junit:junit:4.13.2'
     implementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
     implementation 'com.github.oshi:oshi-core:6.4.0'
     implementation 'org.slf4j:slf4j-nop:2.0.7'
@@ -27,10 +25,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation 'org.testng:testng:7.7.0'
-//    testImplementation 'org.powermock:powermock-module-junit4-rule:2.0.9'
-//    testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
-//    testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
-//    testImplementation 'org.powermock:powermock-core:2.0.9'
 }
 
 processResources {

@@ -79,7 +79,6 @@ public class InfoApiHandlerTest {
         objectMapperMockedConstruction = mockConstruction(ObjectMapper.class, (mock,context) -> {
             when(mock.writeValueAsString(any())).thenReturn(result);
         });
-//        Mockito.whenNew(ObjectMapper.class).withNoArguments().thenReturn(objectMapper);
         Mockito.when(objectMapper.writeValueAsString(Mockito.any())).thenReturn(result);
         infoApiHandler = Mockito.spy(new InfoApiHandler(httpRequest, byteBuf, bytes));
 
@@ -180,7 +179,6 @@ public class InfoApiHandlerTest {
             objectMapperMockedConstruction = mockConstruction(ObjectMapper.class, (mock,context) -> {
                 when(mock.writeValueAsString(any())).thenThrow(JsonProcessingException.class);
             });
-//            Mockito.doThrow(Mockito.mock(JsonProcessingException.class)).when(objectMapper).writeValueAsString(Mockito.any());
             Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
             assertEquals(defaultResponse, infoApiHandler.call());
             verify(ApiHandlerHelpers.class);

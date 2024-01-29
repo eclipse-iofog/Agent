@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -59,15 +59,11 @@ public class MessageBusTest {
     private MessageBus messageBus;
     private MicroserviceManager microserviceManager;
     private MessageBusServer messageBusServer;
-    private Thread speedThread;
-    private Route route;
     private String MODULE_NAME;
     private String receiverValue;
     private MessageReceiver messageReceiver;
     private MessageConsumer messageConsumer;
     private MessagePublisher messagePublisher;
-    private MessageBusStatus messageBusStatus;
-    private SupervisorStatus supervisorStatus;
     private Map<String, Long> publishedMessagesPerMicroservice;
     private Orchestrator orchestrator = null;
     Map<String, Route> mapRoutes;
@@ -93,21 +89,14 @@ public class MessageBusTest {
         messageReceiver = mock(MessageReceiver.class);
         messageConsumer = mock(MessageConsumer.class);
         messagePublisher = mock(MessagePublisher.class);
-        messageBusStatus = mock(MessageBusStatus.class);
-        supervisorStatus = mock(SupervisorStatus.class);
+        MessageBusStatus messageBusStatus = mock(MessageBusStatus.class);
+        SupervisorStatus supervisorStatus = mock(SupervisorStatus.class);
         Mockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
         messageBusServerMockedConstruction = Mockito.mockConstruction(MessageBusServer.class);
         messageReceiverMockedConstruction = Mockito.mockConstruction(MessageReceiver.class);
         messagePublisherMockedConstruction = Mockito.mockConstruction(MessagePublisher.class);
         orchestratorMockedConstruction = Mockito.mockConstruction(Orchestrator.class);
-//        Mockito.whenNew(MessageBusServer.class).withNoArguments().thenReturn(messageBusServer);
-//        Mockito.whenNew(MessageReceiver.class).withArguments(anyString(), any(MessageConsumer.class))
-//                .thenReturn(messageReceiver);
-//        Mockito.whenNew(MessagePublisher.class).withArguments(anyString(), any(Route.class), any(MessageProducer.class))
-//                .thenReturn(messagePublisher);
-//        whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
-//        whenNew(MessagePublisher.class).withAnyArguments().thenReturn(messagePublisher);
-        route = new Route();
+        Route route = new Route();
         receivers = new ArrayList<>();
         receiverValue = "1";
         receivers.add(receiverValue);
@@ -129,9 +118,6 @@ public class MessageBusTest {
         Mockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
         Mockito.when(StatusReporter.setSupervisorStatus()).thenReturn(supervisorStatus);
         orchestrator = mock(Orchestrator.class);
-
-//        MessagePublisher messagePublisher = mock(MessagePublisher.class);
-
     }
 
     @AfterEach
@@ -350,12 +336,7 @@ public class MessageBusTest {
      * Helper method
      */
     public void initiateMockStart() {
-        speedThread = mock(Thread.class);
-        Thread startThread = mock(Thread.class);
         try {
-//            Mockito.whenNew(Thread.class).withParameterTypes(Runnable.class).withArguments(Mockito.any(Runnable.class)).thenReturn(startThread);
-//            Mockito.whenNew(Thread.class).withParameterTypes(Runnable.class, String.class).withArguments(Mockito.any(Runnable.class),
-//                    anyString()).thenReturn(speedThread);
             Mockito.doNothing().when(messageBus).start();
             messageBus.start();
 

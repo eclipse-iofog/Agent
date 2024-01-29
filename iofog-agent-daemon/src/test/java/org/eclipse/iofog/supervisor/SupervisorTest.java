@@ -121,8 +121,6 @@ public class SupervisorTest {
             Mockito.when(StatusReporter.setLocalApiStatus()).thenReturn(mock(LocalApiStatus.class));
             supervisor = spy(new Supervisor());
             Mockito.doNothing().when(supervisor).operationDuration();
-//            Mockito.doNothing().when(supervisor).start();
-//            Mockito.doNothing().when(StatusReporter.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -169,7 +167,6 @@ public class SupervisorTest {
         ResourceManager resourceManager = mock(ResourceManager.class);
         Mockito.when(resourceManager.getModuleIndex()).thenReturn(6);
         Mockito.when(resourceManager.getModuleName()).thenReturn("ResourceManager");
-//        Mockito.when(StatusReporter.setSupervisorStatus().setModuleStatus(6, RUNNING)).thenReturn(null);
         Method method = Supervisor.class.getDeclaredMethod("startModule", IOFogModule.class);
         method.setAccessible(true);
         Mockito.doNothing().when(resourceManager).start();

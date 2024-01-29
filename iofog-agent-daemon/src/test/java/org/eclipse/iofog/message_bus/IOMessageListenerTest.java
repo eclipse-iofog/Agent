@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -41,7 +41,6 @@ public class IOMessageListenerTest {
     private IOMessageListener ioMessageListener;
     private MessageCallback messageCallback;
     private TextMessage textMessage;
-    private Message message;
     private String MODULE_NAME = "MessageListener";
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedConstruction<Message> messageMockedConstruction;
@@ -51,7 +50,6 @@ public class IOMessageListenerTest {
         MODULE_NAME = "MessageListener";
         messageCallback = mock(MessageCallback.class);
         textMessage = mock(TextMessage.class);
-        message = mock(Message.class);
         loggingServiceMockedStatic = mockStatic(LoggingService.class);
         doNothing().when(textMessage).acknowledge();
         Mockito.when(textMessage.getText()).thenReturn("{}");

@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -168,7 +168,6 @@ public class GpsApiHandlerTest {
             Exception exp = new Exception("Error");
             Mockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
             configurationMockedStatic.when(Configuration::saveConfigUpdates).thenThrow(exp);
-            String errorMsg = " Error with setting GPS, " + exp.getMessage();
             defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
             Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
             assertEquals(defaultResponse, gpsApiHandler.call());

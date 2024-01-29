@@ -1,7 +1,7 @@
 package org.eclipse.iofog.command_line.util;
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -29,7 +29,6 @@ import static org.mockito.Mockito.spy;
  */
 @ExtendWith(MockitoExtension.class)
 public class CommandShellExecutorTest {
-    private static CommandShellExecutor commandShellExecutor;
     private CommandShellResultSet<List<String>, List<String>> commandShellResultSet;
     private String command;
     List<String> value;
@@ -37,15 +36,11 @@ public class CommandShellExecutorTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        commandShellExecutor = spy(new CommandShellExecutor());
+        spy(new CommandShellExecutor());
     }
 
     @AfterAll
     public static void tearDown() throws Exception {
-//        command = null;
-//        value = null;
-//        errors = null;
-//        commandShellResultSet = null;
     }
 
     /**

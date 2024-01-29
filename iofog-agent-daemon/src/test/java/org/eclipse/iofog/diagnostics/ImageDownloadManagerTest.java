@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -55,7 +55,6 @@ public class ImageDownloadManagerTest {
     @Mock
     private static DockerUtil dockerUtil;
     private static String microserviceUuid;
-    private static DockerClient dockerClient;
     private static MockedStatic<CommandShellExecutor> cmdShellExecutor;
     private static Container container;
     private static CommandShellResultSet<List<String>, List<String>> resultSetWithPath;
@@ -69,19 +68,8 @@ public class ImageDownloadManagerTest {
     public void setUp() throws Exception {
         cmdShellExecutor = mockStatic(CommandShellExecutor.class);
         microserviceUuid = "microservice-id";
-//        mockStatic(Configuration.class);
-//        when(Configuration.getDockerUrl()).thenReturn("unix://dockerUrl/");
-//        when(Configuration.getDockerApiVersion()).thenReturn("19.03.1");
         orchestrator = mock(Orchestrator.class);
         mock(DefaultDockerClientConfig.class);
-//        DockerClientBuilder dockerClientBuilder = mock(DockerClientBuilder.class);
-//        mockStatic(DockerClientBuilder.class);
-
-//        dockerClient = mock(DockerClient.class);
-//        mockStatic(DockerClient.class);
-//        when(DockerClientBuilder.getInstance(any(DefaultDockerClientConfig.class))).thenReturn(dockerClientBuilder);
-//        when(dockerClientBuilder.build()).thenReturn(dockerClient);
-//        dockerUtil = mock(DockerUtil.class);
         dockerUtilStatic = mockStatic(DockerUtil.class);
         container = mock(Container.class);
         when(DockerUtil.getInstance()).thenReturn(dockerUtil);
@@ -94,13 +82,6 @@ public class ImageDownloadManagerTest {
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
         cmdShellExecutor.when(() -> CommandShellExecutor.executeCommand(any()))
                 .thenReturn(resultSetWithPath);
-//        cmdShellExecutor.when(CommandShellExecutor::executeCommand(any())).thenReturn(resultSetWithPath);
-
-//        error = new ArrayList<>();
-//        value = new ArrayList<>();
-//        value.add("local/path/newFile");
-//        resultSetWithPath = new CommandShellResultSet<>(value, error);
-//        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -116,8 +97,6 @@ public class ImageDownloadManagerTest {
         value = null;
         resultSetWithPath = null;
         MODULE_NAME = null;
-//        dockerClient.close();
-//        reset(dockerClientBuilder);
         cmdShellExecutor.close();
         reset(dockerUtil);
         dockerUtilStatic.close();
@@ -146,7 +125,6 @@ public class ImageDownloadManagerTest {
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
         verify(orchestrator, atLeastOnce()).sendFileToController(any(), any());
         Mockito.verify(LoggingService.class, atLeastOnce());
-//        LoggingService.logInfo(MODULE_NAME, "Image snapshot deleted");
         LoggingService.logDebug(MODULE_NAME, "Finished Create image snapshot");
     }
 
@@ -177,16 +155,9 @@ public class ImageDownloadManagerTest {
      */
     @Test
     public void createImageSnapshotWhenCommandExecuteReturnsEmpty() throws Exception {
-//        error = new ArrayList<>();
-//        value = new ArrayList<>();
-//        resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(dockerUtil.getContainer(microserviceUuid)).thenReturn(Optional.of(container));
-//        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         ImageDownloadManager.createImageSnapshot(orchestrator, microserviceUuid);
         verify(dockerUtil, atLeastOnce()).getContainer(microserviceUuid);
-//        verify(orchestrator, never()).sendFileToController(any(), any());
-//        Mockito.verify(LoggingService.class);
-//        LoggingService.logDebug(MODULE_NAME, "Finished Create image snapshot");
     }
 
     /**

@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,15 +12,12 @@
  */
 package org.eclipse.iofog.local_api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 import org.eclipse.iofog.utils.logging.LoggingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +29,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -61,11 +57,9 @@ public class LocalApiServerPipelineFactoryTest {
     @BeforeEach
     public void setUp() throws Exception {
         executor = Executors.newFixedThreadPool(1);
-//        serverHandler = Mockito.mock(LocalApiServerHandler.class);
         sslContext = Mockito.mock(SslContext.class);
         channel = Mockito.mock(SocketChannel.class);
         pipeline = Mockito.mock(ChannelPipeline.class);
-//        defaultEventExecutorGroup = Mockito.mock(DefaultEventExecutorGroup.class);
         loggingServiceMockedStatic = Mockito.mockStatic(LoggingService.class);
         localApiServerPipelineFactory = Mockito.spy(new LocalApiServerPipelineFactory(sslContext));
         Mockito.when(channel.pipeline()).thenReturn(pipeline);
@@ -84,10 +78,6 @@ public class LocalApiServerPipelineFactoryTest {
         loggingServiceMockedStatic.close();
         localApiServerPipelineFactory = null;
         sslContext = null;
-//        httpObjectAggregator = null;
-//        serverHandler = null;
-//        httpServerCodec = null;
-//        defaultEventExecutorGroup = null;
         pipeline = null;
         channel = null;
         executor.shutdown();

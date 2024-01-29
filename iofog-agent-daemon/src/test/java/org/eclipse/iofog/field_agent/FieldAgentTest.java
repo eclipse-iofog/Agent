@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -68,12 +68,9 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.iofog.resource_manager.ResourceManager.COMMAND_USB_INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-//import static org.powermock.api.mockito.Mockito.*;
 
 /**
  * @author nehanaithani
@@ -91,18 +88,7 @@ public class FieldAgentTest {
     private URL url;
     private HttpURLConnection httpURLConnection;
     private FieldAgentStatus fieldAgentStatus;
-    private MicroserviceManager microserviceManager;
-    private SshProxyManager sshProxyManager;
-    private ProcessManager processManager;
-    private MessageBus messageBus;
-    private LocalApi localApi;
-    private Thread thread;
-    private BufferedReader bufferedReader;
-    private InputStreamReader inputStreamReader;
-    private ResourceManagerStatus resourceManagerStatus;
     private Method method = null;
-    private IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager;
-    private EdgeResourceManager edgeResourceManager;
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedStatic<StatusReporter> statusReporterMockedStatic;
     private MockedStatic<Configuration> configurationMockedStatic;
@@ -138,25 +124,22 @@ public class FieldAgentTest {
         bufferedReaderMockedStatic = mockStatic(BufferedReader.class);
         inputStreamReaderMockedStatic = mockStatic(InputStreamReader.class);
         edgeResourceManagerMockedStatic = mockStatic(EdgeResourceManager.class);
-
         orchestrator = Mockito.mock(Orchestrator.class);
-        sshProxyManager = Mockito.mock(SshProxyManager.class);
-        processManager = Mockito.mock(ProcessManager.class);
-        messageBus = Mockito.mock(MessageBus.class);
-        localApi = Mockito.mock(LocalApi.class);
-        resourceManagerStatus = Mockito.mock(ResourceManagerStatus.class);
-        edgeResourceManager = Mockito.mock(EdgeResourceManager.class);
+        ProcessManager processManager = Mockito.mock(ProcessManager.class);
+        MessageBus messageBus = Mockito.mock(MessageBus.class);
+        LocalApi localApi = Mockito.mock(LocalApi.class);
+        ResourceManagerStatus resourceManagerStatus = Mockito.mock(ResourceManagerStatus.class);
+        EdgeResourceManager edgeResourceManager = Mockito.mock(EdgeResourceManager.class);
         mockConfiguration();
         mockOthers();
         fieldAgent = Mockito.spy(FieldAgent.getInstance());
         fieldAgentStatus = Mockito.mock(FieldAgentStatus.class);
-        ioFogNetworkInterfaceManager = Mockito.mock(IOFogNetworkInterfaceManager.class);
         MODULE_NAME = "Field Agent";
         when(StatusReporter.getFieldAgentStatus()).thenReturn(fieldAgentStatus);
         when(StatusReporter.setFieldAgentStatus()).thenReturn(fieldAgentStatus);
         when(StatusReporter.setResourceManagerStatus()).thenReturn(resourceManagerStatus);
         when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.NOT_PROVISIONED);
-        microserviceManager = Mockito.mock(MicroserviceManager.class);
+        MicroserviceManager microserviceManager = Mockito.mock(MicroserviceManager.class);
         microserviceManagerMockedStatic = mockStatic(MicroserviceManager.class);
         orchestratorMockedConstruction = mockConstruction(Orchestrator.class, (mock, context) -> {
             when(mock.request(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
@@ -174,39 +157,25 @@ public class FieldAgentTest {
             when(mock.readLine()).thenReturn("Response from HAL").thenReturn(null);
 
         });
-//        Mockito.whenNew(Orchestrator.class).withNoArguments().thenReturn(orchestrator);
-//        Mockito.whenNew(SshProxyManager.class).withArguments(Mockito.any(SshConnection.class)).thenReturn(sshProxyManager);
-//        whenNew(URL.class).withArguments(Mockito.any()).thenReturn(url);
-        //        Mockito.whenNew(InputStreamReader.class).withParameterTypes(InputStream.class, Charset.class).
-//                withArguments(Mockito.any(String.class), Mockito.eq(UTF_8)).thenReturn(inputStreamReader);
-//        Mockito.whenNew(InputStreamReader.class).withParameterTypes(InputStream.class, Charset.class).
-//                withArguments(Mockito.eq(null), Mockito.eq(UTF_8)).thenReturn(inputStreamReader);
-//        Mockito.whenNew(BufferedReader.class).withArguments(inputStreamReader).thenReturn(bufferedReader);
         when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
         when(EdgeResourceManager.getInstance()).thenReturn(edgeResourceManager);
         when(ProcessManager.getInstance()).thenReturn(processManager);
         when(MessageBus.getInstance()).thenReturn(messageBus);
         when(LocalApi.getInstance()).thenReturn(localApi);
         Mockito.doNothing().when(processManager).deleteRemainingMicroservices();
-//        url = Mockito.mock(URL.class);
 
-//        bufferedReader = Mockito.mock(BufferedReader.class);
-//        inputStreamReader = Mockito.mock(InputStreamReader.class);
         when(VersionHandler.isReadyToUpgrade()).thenReturn(false);
         when(VersionHandler.isReadyToRollback()).thenReturn(false);
-//        jsonObjectBuilder = Json.createObjectBuilder();
-//        jsonObject = jsonObjectBuilder
-//                .add("uuid", "uuid")
-//                .add("token", "token")
-//                .add("message", "success").build();
-//        provisionJsonObject = jsonObjectBuilder
-//                .add("uuid", "uuid")
-//                .add("token", "token")
-//                .add("message", "success").build();
+        jsonObjectBuilder = Json.createObjectBuilder();
+        jsonObject = jsonObjectBuilder
+                .add("uuid", "uuid")
+                .add("token", "token")
+                .add("message", "success").build();
+        provisionJsonObject = jsonObjectBuilder
+                .add("uuid", "uuid")
+                .add("token", "token")
+                .add("message", "success").build();
         Mockito.doNothing().when(processManager).updateMicroserviceStatus();
-//        setMock(fieldAgent,microserviceManager,orchestrator, sshProxyManager, edgeResourceManager);
-
-
     }
 
     @AfterEach
@@ -235,45 +204,16 @@ public class FieldAgentTest {
         instance.set(null, null);
         MODULE_NAME = null;
         fieldAgent = null;
-        Mockito.reset(fieldAgentStatus, orchestrator, inputStreamReader);
+        Mockito.reset(fieldAgentStatus, orchestrator);
         if (method != null) {
             method.setAccessible(false);
         }
         jsonObject = null;
     }
-    /**
-     * Set a mock to the {@link FieldAgent} instance
-     * Throws {@link RuntimeException} in case if reflection failed, see a {@link Field#set(Object, Object)} method description.
-     * @param mock the mock to be inserted to a class
-     */
-//    private void setMock(FieldAgent mock, MicroserviceManager m1,Orchestrator m2, SshProxyManager m3, EdgeResourceManager m4) {
-//        try {
-//            Field instance = FieldAgent.class.getDeclaredField("instance");
-//            instance.setAccessible(true);
-//            instance.set(instance, mock);
-//            Field microserviceManager = FieldAgent.class.getDeclaredField("microserviceManager");
-//            instance.setAccessible(true);
-//            instance.set(microserviceManager, m1);
-//            Field orchestrator = FieldAgent.class.getDeclaredField("orchestrator");
-//            instance.setAccessible(true);
-//            instance.set(orchestrator, m2);
-//            Field sshProxyManager = FieldAgent.class.getDeclaredField("sshProxyManager");
-//            instance.setAccessible(true);
-//            instance.set(sshProxyManager, m3);
-//            Field edgeResourceManager = FieldAgent.class.getDeclaredField("edgeResourceManager");
-//            instance.setAccessible(true);
-//            instance.set(edgeResourceManager, m4);
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     public void initiateMockStart() {
-        thread = Mockito.mock(Thread.class);
+        Thread thread = Mockito.mock(Thread.class);
         try {
-//            whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class),
-//                    Mockito.anyString()).thenReturn(thread);
             Mockito.doNothing().when(thread).start();
             fieldAgent.start();
         } catch (Exception e) {
@@ -352,14 +292,6 @@ public class FieldAgentTest {
             assertTrue(response.containsKey("message"));
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("notifyModules");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
         } catch (Exception e) {
@@ -382,14 +314,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -414,14 +338,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -449,14 +365,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -485,15 +393,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
-//
-//            Mockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -532,14 +431,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, Mockito.times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -575,14 +466,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -627,14 +510,6 @@ public class FieldAgentTest {
             assertEquals("success", response.getString("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processMicroserviceConfig", any());
-//            Mockito.verifyPrivate(fieldAgent).invoke("processRoutes", any());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, times(2)).invoke("notifyModules");
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -712,11 +587,6 @@ public class FieldAgentTest {
             assertTrue(response.containsKey("message"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
             Mockito.verify(fieldAgentStatus, atLeastOnce()).getControllerStatus();
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             Mockito.verify(ProcessManager.class, Mockito.atLeastOnce());
             ProcessManager.getInstance();
             Mockito.verify(Configuration.class, Mockito.atLeastOnce());
@@ -769,10 +639,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("microservices"), any(), any(), any())).thenThrow(new CertificateException("Certificate Error"));
             fieldAgent.provision("provisonKey");
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             Mockito.verify(LoggingService.class, Mockito.never());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
             Mockito.verify(LoggingService.class);
@@ -804,11 +670,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("registries"), any(), any(), any())).thenThrow(new AgentUserException("Agent user error"));
             fieldAgent.provision("provisonKey");
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get registries"), any());
             Mockito.verify(LoggingService.class, Mockito.never());
@@ -834,18 +695,12 @@ public class FieldAgentTest {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             when(orchestrator.provision(any())).thenReturn(jsonObject);
             when(orchestrator.request(any(), any(), any(), any())).thenReturn(mock(JsonObject.class));
-//            Mockito.whenNew(BufferedReader.class).withArguments(inputStreamReader).thenThrow(new Exception("invalid operation"));
             JsonObject provisioningResult = fieldAgent.provision("provisonKey");
             assertTrue(provisioningResult.containsKey("status"));
             assertTrue(provisioningResult.containsKey("errorMessage"));
             assertEquals("failed", provisioningResult.getString("status"));
             assertEquals("invalid operation", provisioningResult.getString("errorMessage"));
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadEdgeResources", anyBoolean());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Provisioning failed"), any());
         } catch (AgentSystemException e) {
@@ -864,7 +719,6 @@ public class FieldAgentTest {
             initiateMockStart();
             String response = fieldAgent.deProvision(true);
             assertTrue(response.equals("\nFailure - not provisioned"));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator, never()).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished Deprovisioning : Failure - not provisioned");
@@ -883,7 +737,6 @@ public class FieldAgentTest {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             String response = fieldAgent.deProvision(true);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator, never()).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start Deprovisioning");
@@ -905,7 +758,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished Deprovisioning : Success - tokens, identifiers and keys removed");
@@ -926,7 +778,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenThrow(new Exception("Error while deProvsioning"));
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME),eq("Unable to make deprovision request "), any());
@@ -947,7 +798,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("deprovision"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME),eq("Unable to make deprovision request due to broken certificate "), any());
@@ -970,7 +820,6 @@ public class FieldAgentTest {
             Configuration.saveConfigUpdates();
             String response = fieldAgent.deProvision(false);
             assertTrue(response.equals("\nSuccess - tokens, identifiers and keys removed"));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME),eq("Error saving config updates"), any());
@@ -989,7 +838,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             Mockito.verify(LoggingService.class, never());
@@ -1010,7 +858,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenReturn(mock(JsonObject.class));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Post ioFog config");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1032,7 +879,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new SSLHandshakeException("Invalid operation"));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config due to broken certificate "), any());
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1054,7 +900,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("config"), any(), any(), any())).thenThrow(new Exception("Invalid operation"));
             fieldAgent.instanceConfigUpdated();
             Mockito.verify(orchestrator).update();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService. logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1072,12 +917,6 @@ public class FieldAgentTest {
     public void testStartWhenControllerStatusIsNotProvisioned() {
         try {
             initiateMockStart();
-//            Mockito.verifyPrivate(fieldAgent).invoke("ping");
-//            Mockito.verifyPrivate(fieldAgent).invoke("getFogConfig");
-//            Mockito.verifyPrivate(fieldAgent,never()).invoke("isControllerConnected", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("loadRegistries", anyBoolean());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Start the Field Agent");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1102,12 +941,6 @@ public class FieldAgentTest {
             when(orchestrator.ping()).thenReturn(false);
             when(fieldAgentStatus.isControllerVerified()).thenReturn(true);
             initiateMockStart();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("ping");
-//            Mockito.verifyPrivate(fieldAgent).invoke("getFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("isControllerConnected", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Finished Ping : " + false);
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1136,12 +969,6 @@ public class FieldAgentTest {
             when(orchestrator.ping()).thenReturn(false);
             when(fieldAgentStatus.isControllerVerified()).thenReturn(false);
             initiateMockStart();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("ping");
-//            Mockito.verifyPrivate(fieldAgent).invoke("getFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("isControllerConnected", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             LoggingService.logInfo(MODULE_NAME, "Started Ping");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Finished Ping : " + false);
@@ -1165,12 +992,6 @@ public class FieldAgentTest {
             when(fieldAgentStatus.getControllerStatus()).thenReturn(Constants.ControllerStatus.OK);
             when(orchestrator.ping()).thenReturn(true);
             initiateMockStart();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("ping");
-//            Mockito.verifyPrivate(fieldAgent).invoke("getFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("isControllerConnected", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             LoggingService.logInfo(MODULE_NAME, "Finished Ping : " + true);
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "checked is Controller Connected : true ");
@@ -1207,12 +1028,6 @@ public class FieldAgentTest {
             when(orchestrator.ping()).thenReturn(true);
             initiateMockStart();
             Mockito.verify(orchestrator).ping();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("ping");
-//            Mockito.verifyPrivate(fieldAgent).invoke("getFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("isControllerConnected", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Finished Ping : " + true);
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1235,7 +1050,6 @@ public class FieldAgentTest {
             JsonObject output = (JsonObject) method.invoke(fieldAgent);
             assertTrue(output.containsKey("daemonStatus"));
             assertTrue(output.getString("ipAddress").equals("ip"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("getFogStatus");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "get Fog Status");
         } catch (Exception e){
@@ -1256,7 +1070,6 @@ public class FieldAgentTest {
             method.invoke(fieldAgent);
             Mockito.verify(orchestrator).request(eq("delete-node"), eq(RequestType.DELETE), eq(null), eq(null));
             Mockito.verify(fieldAgent).deProvision(eq(false));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "start deleting current fog node from controller and make it deprovision");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1280,7 +1093,6 @@ public class FieldAgentTest {
             method.invoke(fieldAgent);
             Mockito.verify(orchestrator).request(eq("delete-node"), eq(RequestType.DELETE), eq(null), eq(null));
             Mockito.verify(fieldAgent).deProvision(eq(false));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Finished Deprovisioning : Success - tokens, identifiers and keys removed");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1306,7 +1118,6 @@ public class FieldAgentTest {
             method.invoke(fieldAgent);
             Mockito.verify(orchestrator).request(eq("delete-node"), eq(RequestType.DELETE), eq(null), eq(null));
             Mockito.verify(fieldAgent).deProvision(eq(false));
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("notProvisioned");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("deprovision"), eq(RequestType.POST), eq(null), any());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Can't send delete node command"), any());
@@ -1333,7 +1144,6 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("reboot");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("reboot");
             Mockito.verify(CommandShellExecutor.class, atLeastOnce());
             CommandShellExecutor.executeCommand(any());
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1361,7 +1171,6 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("reboot");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("reboot");
             Mockito.verify(CommandShellExecutor.class, atLeastOnce());
             CommandShellExecutor.executeCommand(any());
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1383,7 +1192,6 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("reboot");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("reboot");
             Mockito.verify(CommandShellExecutor.class, atLeastOnce());
             CommandShellExecutor.executeCommand(any());
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1404,7 +1212,6 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("changeVersion");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("changeVersion");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("version"), eq(RequestType.GET), eq(null), eq(null));
             Mockito.verify(VersionHandler.class, atLeastOnce());
             VersionHandler.changeVersion(any());
@@ -1430,9 +1237,7 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("changeVersion");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("changeVersion");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("version"), eq(RequestType.GET), eq(null), eq(null));
-//            Mockito.verifyPrivate(fieldAgent).invoke("verificationFailed", any());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: BROKEN_CERTIFICATE");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1455,9 +1260,7 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("changeVersion");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("changeVersion");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("version"), eq(RequestType.GET), eq(null), eq(null));
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("verificationFailed", any());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get version command"), any());
         } catch (Exception e){
@@ -1476,7 +1279,6 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("updateDiagnostics");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("updateDiagnostics");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("strace"), eq(RequestType.GET), eq(null), eq(null));
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logInfo(MODULE_NAME, "Start update diagnostics");
@@ -1500,9 +1302,7 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("updateDiagnostics");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("updateDiagnostics");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("strace"), eq(RequestType.GET), eq(null), eq(null));
-//            Mockito.verifyPrivate(fieldAgent).invoke("verificationFailed", any());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logWarning(MODULE_NAME, "controller verification failed: BROKEN_CERTIFICATE");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1525,9 +1325,7 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("updateDiagnostics");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent).invoke("updateDiagnostics");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("strace"), eq(RequestType.GET), eq(null), eq(null));
-//            Mockito.verifyPrivate(fieldAgent, never()).invoke("verificationFailed", any());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get diagnostics update"), any());
         } catch (Exception e){
@@ -1548,7 +1346,6 @@ public class FieldAgentTest {
             method = FieldAgent.class.getDeclaredMethod("getProxyConfig");
             method.setAccessible(true);
             method.invoke(fieldAgent);
-//            Mockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("getProxyConfig");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("tunnel"), eq(RequestType.GET), eq(null), eq(null));
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get proxy config "), any());
@@ -1578,7 +1375,6 @@ public class FieldAgentTest {
             JsonObject response = (JsonObject) method.invoke(fieldAgent);
             assertTrue(response.containsKey("uuid"));
             assertEquals("response proxy", response.getString("uuid"));
-//            Mockito.verifyPrivate(fieldAgent, Mockito.atLeastOnce()).invoke("getProxyConfig");
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("tunnel"), eq(RequestType.GET), eq(null), eq(null));
             Mockito.verify(LoggingService.class, never());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to get proxy config "), any());
@@ -1598,10 +1394,7 @@ public class FieldAgentTest {
             when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenReturn(jsonObject);
             initiateMockStart();
             fieldAgent.sendUSBInfoFromHalToController();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("getResponse", any());
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("config"), eq(RequestType.PATCH), eq(null), any());
-            /*Mockito.verify(StatusReporter.class, atLeastOnce());
-            StatusReporter.setResourceManagerStatus();*/
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Start send USB Info from hal To Controller");
             Mockito.verify(LoggingService.class, atLeastOnce());
@@ -1622,7 +1415,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq(COMMAND_USB_INFO), any(), any(), any())).thenThrow(mock(Exception.class));
             initiateMockStart();
             fieldAgent.sendUSBInfoFromHalToController();
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("getResponse", any());
             Mockito.verify(orchestrator, atLeastOnce()).request(eq("config"), eq(RequestType.PATCH), eq(null), any());
             Mockito.verify(StatusReporter.class, atLeastOnce());
             StatusReporter.setResourceManagerStatus();
@@ -1702,10 +1494,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("edgeResources"), any(), any(), any())).thenThrow(new CertificateException("Certificate Error"));
             fieldAgent.provision("provisonKey");
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
             Mockito.verify(LoggingService.class, Mockito.never());
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to post ioFog config "), any());
             Mockito.verify(LoggingService.class);
@@ -1746,12 +1534,6 @@ public class FieldAgentTest {
             when(orchestrator.request(eq("edgeResources"), any(), any(), any())).thenReturn(edgeResources);
             fieldAgent.provision("provisonKey");
             Mockito.verify(orchestrator).provision(eq("provisonKey"));
-//            Mockito.verifyPrivate(fieldAgent).invoke("postFogConfig");
-//            Mockito.verifyPrivate(fieldAgent).invoke("sendHWInfoFromHalToController");
-//            Mockito.verifyPrivate(fieldAgent, atLeastOnce()).invoke("loadRegistries", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadMicroservices", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("loadEdgeResources", anyBoolean());
-//            Mockito.verifyPrivate(fieldAgent).invoke("saveFile", any(), eq("/etc/iofog-agent/edge_resources.json"));
             Mockito.verify(orchestrator).request(eq("edgeResources"), eq(RequestType.GET), eq(null), eq(null));
             Mockito.verify(LoggingService.class);
             LoggingService.logDebug(eq(MODULE_NAME), eq("Finished loading edge resources..."));

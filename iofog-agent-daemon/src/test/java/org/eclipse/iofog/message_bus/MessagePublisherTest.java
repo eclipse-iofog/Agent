@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -51,9 +51,6 @@ public class MessagePublisherTest {
     private String name;
     private Route route;
     private Message message;
-    private TextMessage textMessage;
-    private byte[] bytes;
-    private List<String> receivers;
     private List<Message> messageList;
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedStatic<MessageBusServer> messageBusServerMockedStatic;
@@ -63,11 +60,11 @@ public class MessagePublisherTest {
     @BeforeEach
     public void setUp() throws Exception {
         name = "name";
-        bytes = new byte[20];
+        byte[] bytes = new byte[20];
         route = mock(Route.class);
         message = mock(Message.class);
-        textMessage = mock(TextMessage.class);
-        receivers = new ArrayList<>();
+        TextMessage textMessage = mock(TextMessage.class);
+        List<String> receivers = new ArrayList<>();
         receivers.add("receivers");
         messageList = mock(ArrayList.class);
         loggingServiceMockedStatic = mockStatic(LoggingService.class);

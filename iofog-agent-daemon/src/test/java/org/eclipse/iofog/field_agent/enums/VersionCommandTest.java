@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -34,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class VersionCommandTest {
-    private String versionCommand;
     private JsonObject jsonObject;
     private JsonObjectBuilder jsonObjectBuilder = null;
 
@@ -51,7 +50,6 @@ public class VersionCommandTest {
      * Test parseCommandString with null command
      */
     @Test
-//            (expected = UnknownVersionCommandException.class)
     public void throwsUnknownVersionCommandExceptionWhenParseCommandStringWithNullCommand() {
         assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseCommandString(null));
     }
@@ -60,7 +58,6 @@ public class VersionCommandTest {
      * Test parseCommandString with invalid command
      */
     @Test
-//            (expected = UnknownVersionCommandException.class)
     public void throwsUnknownVersionCommandExceptionWhenParseCommandStringWithInvalidCommand() {
         assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseCommandString("Command"));
     }
@@ -78,7 +75,6 @@ public class VersionCommandTest {
      * Test parseJson with Null versionData
      */
     @Test
-//            (expected = UnknownVersionCommandException.class)
     public void throwsUnknownVersionCommandExceptionWhenParseJsonWithNullVersionData() {
         assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseJson(null));
     }
@@ -87,7 +83,6 @@ public class VersionCommandTest {
      * Test parseJson with invalid versionData
      */
     @Test
-//            (expected = UnknownVersionCommandException.class)
     public void throwsUnknownVersionCommandExceptionWhenParseJsonWithInvalidVersionData() {
         jsonObject = jsonObjectBuilder
                 .add("versionCommandDummy", "versionCommand").build();

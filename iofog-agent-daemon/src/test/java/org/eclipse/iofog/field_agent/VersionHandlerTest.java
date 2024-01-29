@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -64,7 +64,6 @@ public class VersionHandlerTest {
     private MockedStatic<Runtime> runtimeMockedStatic;
     private MockedStatic<CommandShellExecutor> commandShellExecutorMockedStatic;
     private MockedConstruction<File> fileMockedConstruction;
-//    private MockedStatic<VersionCommand> versionCommandMockedStatic;
     @BeforeEach
     public void setUp() throws Exception {
         MODULE_NAME = "Version Handler";
@@ -77,11 +76,6 @@ public class VersionHandlerTest {
         fileMockedConstruction = Mockito.mockConstruction(File.class, (mock, context) -> {
                     Mockito.when(mock.list()).thenReturn(fileList);
                 });
-//        whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
-//        VersionCommand versionCommand = mock(VersionCommand.class);
-//        versionCommandMockedStatic = mockStatic(VersionCommand.class);
-//        when(VersionCommand.parseJson(any())).thenReturn(mock(VersionCommand.class));
-//        when(file.list()).thenReturn(fileList);
         jsonObjectBuilder = Json.createObjectBuilder();
         error = new ArrayList<>();
         value = new ArrayList<>();
@@ -350,7 +344,6 @@ public class VersionHandlerTest {
     @Test
     public void isReadyToRollbackTrue() {
         assertTrue(VersionHandler.isReadyToRollback());
-//        Mockito.verify(file).list();
         verify(LoggingService.class, atLeastOnce());
         LoggingService.logDebug(MODULE_NAME, "Is ready to rollback : true");
     }

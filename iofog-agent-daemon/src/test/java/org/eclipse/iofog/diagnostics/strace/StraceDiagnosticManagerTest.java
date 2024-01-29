@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -90,7 +90,6 @@ public class StraceDiagnosticManagerTest {
     @AfterEach
     public void tearDown() throws Exception {
         commandShellExecutor.close();
-//        reset(CommandShellExecutor.class);
         loggingService.close();
         reset(iterator);
         microserviceUuid = null;
@@ -151,10 +150,6 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.updateMonitoringMicroservices(jsonObject);
         verify(jsonObject, times(1)).getJsonArray("straceValues");
         verify(iterator, atLeastOnce()).hasNext();
-//        verify(microserviceObject, atLeastOnce()).getString("microserviceUuid");
-//        verify(microserviceObject, atLeastOnce()).getBoolean("straceRun");
-//        CommandShellExecutor.executeCommand(any());
-//        verify(CommandShellExecutor.class, times(1));
         verify(LoggingService.class, times(1));
         LoggingService.logError(any(), any(), any());
     }
@@ -301,18 +296,6 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics("Uuid");
         assertEquals(1, straceDiagnosticManager.getMonitoringMicroservices().size());
     }
-
-    /**
-     * Test disableMicroserviceStraceDiagnostics with microserviceUuid which is not present
-     */
-//    @Test
-//    public void testDisableMicroserviceStraceDiagnosticsWhenMicroserviceUuidIsNotPresent() {
-//        microserviceStraceData = new MicroserviceStraceData("newMicroserviceUuid", 1234, true);
-//        straceDiagnosticManager.getMonitoringMicroservices().add(microserviceStraceData);
-//        straceDiagnosticManager.disableMicroserviceStraceDiagnostics("Uuid");
-//        assertEquals(0, straceDiagnosticManager.getMonitoringMicroservices().size());
-//
-//    }
 
     /**
      * Test disableMicroserviceStraceDiagnostics with microserviceUuid null

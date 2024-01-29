@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -30,10 +30,8 @@ import static org.mockito.Mockito.spy;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ResourceManagerStatusTest {
 	private ResourceManagerStatus resourceManagerStatus;
-	private String hwInfo = "Info";
-	private String usbConnectionsInfo = "USB_INFO";
 
-	@BeforeEach
+    @BeforeEach
 	public void setUp() throws Exception {
 		resourceManagerStatus = spy(new ResourceManagerStatus());
 	}
@@ -44,8 +42,10 @@ public class ResourceManagerStatusTest {
 
 	@Test
 	public void testGetterAndSetter() {
-		resourceManagerStatus.setHwInfo(hwInfo);
-		resourceManagerStatus.setUsbConnectionsInfo(usbConnectionsInfo);
+        String hwInfo = "Info";
+        resourceManagerStatus.setHwInfo(hwInfo);
+        String usbConnectionsInfo = "USB_INFO";
+        resourceManagerStatus.setUsbConnectionsInfo(usbConnectionsInfo);
 		assertEquals(hwInfo, resourceManagerStatus.getHwInfo());
 		assertEquals(usbConnectionsInfo, resourceManagerStatus.getUsbConnectionsInfo());
 	}

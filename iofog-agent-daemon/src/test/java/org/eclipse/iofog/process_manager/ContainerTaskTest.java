@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -99,7 +99,7 @@ public class ContainerTaskTest {
     @Test
     public void testHashCodeWhenObjectAreNotEqual() {
         ContainerTask anotherTask = new ContainerTask(ContainerTask.Tasks.REMOVE_WITH_CLEAN_UP, microserviceId);
-        assertFalse(containerTask.equals(anotherTask));
+        assertNotEquals(containerTask, anotherTask);
         assertNotEquals(containerTask.hashCode(), anotherTask.hashCode());
     }
 }

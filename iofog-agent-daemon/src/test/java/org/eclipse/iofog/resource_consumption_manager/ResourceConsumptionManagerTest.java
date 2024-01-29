@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -73,7 +73,6 @@ public class ResourceConsumptionManagerTest {
         Mockito.when(Configuration.getDiskLimit()).thenReturn(1.0f);
         Mockito.when(Configuration.getDiskDirectory()).thenReturn("");
         Thread thread = Mockito.mock(Thread.class);
-//        whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class), Mockito.anyString()).thenReturn(thread);
         Mockito.doNothing().when(thread).start();
     }
     @AfterEach

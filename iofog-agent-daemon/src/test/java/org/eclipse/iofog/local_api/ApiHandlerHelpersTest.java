@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -68,9 +68,7 @@ public class ApiHandlerHelpersTest {
         contentType = "Application/json";
         content = "response content";
         defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.OK);
-        fileReaderMockedConstruction = mockConstruction(FileReader.class, (mock, context) -> {
-
-        });
+        fileReaderMockedConstruction = mockConstruction(FileReader.class);
         bufferedReaderMockedConstruction =  mockConstruction(BufferedReader.class, (mock, context) -> {
             when(mock.readLine()).thenReturn("token");
         });

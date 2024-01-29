@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -80,7 +80,6 @@ public class CommandLineActionTest {
                 .thenReturn(new HashMap<>())
                 .thenThrow(new Exception("item not found or defined more than once"));
 
-        // CommandProperties mock
         Mockito.when(CmdProperties.getVersion()).thenReturn("1.2.2");
         Mockito.when(CmdProperties.getVersionMessage()).thenReturn(version);
         Mockito.when(CmdProperties.getDeprovisionMessage()).thenReturn("Deprovisioning from controller ... %s");
@@ -108,7 +107,6 @@ public class CommandLineActionTest {
     @Test
     public void testGetKeys() {
         Assertions.assertFalse(CommandLineAction.HELP_ACTION.getKeys().isEmpty());
-//        Assertions.assertTrue(isEqual(stop, CommandLineAction.getActionByKey("stop").getKeys()));
     }
 
     /**

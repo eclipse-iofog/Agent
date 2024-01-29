@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -45,7 +45,6 @@ public class ProcessManagerStatusTest {
     private ProcessManagerStatus processManagerStatus;
     private JsonArrayBuilder arrayBuilder;
     private MicroserviceStatus microserviceStatus;
-    private MicroserviceManager microserviceManager;
     private MicroserviceState microserviceState;
     private String microserviceUuid;
     private MockedStatic<MicroserviceManager> microserviceManagerMockedStatic;
@@ -54,16 +53,13 @@ public class ProcessManagerStatusTest {
     public void setUp() throws Exception {
         processManagerStatus = spy(new ProcessManagerStatus());
         microserviceStatus = mock(MicroserviceStatus.class);
-        microserviceManager = mock(MicroserviceManager.class);
-        Registry registry = mock(Registry.class);
+        MicroserviceManager microserviceManager = mock(MicroserviceManager.class);
         microserviceState = mock(MicroserviceState.class);
         arrayBuilder = Json.createArrayBuilder();
-        List<Registry> registries = new ArrayList<>();
         microserviceManagerMockedStatic = mockStatic(MicroserviceManager.class);
         microserviceUuid = "microserviceUuid";
         Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
         Mockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
-//        Mockito.whenNew(MicroserviceStatus.class).withNoArguments().thenReturn(microserviceStatus);
     }
 
     @AfterEach

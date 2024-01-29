@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -23,8 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import static org.mockito.Mockito.when;
-
 /**
  * @author nehanaithani
  *
@@ -34,7 +32,6 @@ import static org.mockito.Mockito.when;
 public class MessageCallbackTest {
     private MessageCallback messageCallback;
     private String name;
-    private MessageWebsocketHandler messageWebsocketHandler;
     private Message message;
     private MockedConstruction<MessageWebsocketHandler> messageWebsocketHandlerMockedConstruction;
 
@@ -42,12 +39,10 @@ public class MessageCallbackTest {
     public void setUp() throws Exception {
         name = "message";
         message = Mockito.mock(Message.class);
-        messageWebsocketHandler = Mockito.mock(MessageWebsocketHandler.class);
         messageCallback = Mockito.spy(new MessageCallback(name));
         messageWebsocketHandlerMockedConstruction = Mockito.mockConstruction(MessageWebsocketHandler.class, (mock, context) -> {
             Mockito.doNothing().when(mock).sendRealTimeMessage(Mockito.any(), Mockito.any());
         });
-//        Mockito.whenNew(MessageWebsocketHandler.class).withNoArguments().thenReturn(messageWebsocketHandler);
     }
 
     @AfterEach
@@ -56,7 +51,6 @@ public class MessageCallbackTest {
         name = null;
         messageCallback = null;
         message = null;
-        messageWebsocketHandler = null;
     }
 
     /**

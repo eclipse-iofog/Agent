@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -58,7 +58,6 @@ public class MessageReceiverTest {
         messageConsumer = mock(MessageConsumer.class);
         ioMessageListener = mock(IOMessageListener.class);
         textMessage = mock(TextMessage.class);
-        Message message = mock(Message.class);
         ioMessageListenerMockedConstruction = Mockito.mockConstruction(IOMessageListener.class, (mock, context) -> {
             Mockito.when(messageConsumer.getMessageListener()).thenReturn(mock);
         });

@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -49,13 +49,11 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 @Disabled
 public class MessageArchiveTest {
-    private String MODULE_NAME;
     private MessageArchive messageArchive;
     private long timestamp;
     private String message;
     private File file;
     private RandomAccessFile randomAccessFile;
-    private Runtime runtime;
     private File[] files;
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedStatic<Configuration> configurationMockedStatic;
@@ -64,16 +62,13 @@ public class MessageArchiveTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        MODULE_NAME = "MessageArchive";
         timestamp = currentTimeMillis();
         message = "message";
         configurationMockedStatic = mockStatic(Configuration.class);
         loggingServiceMockedStatic = mockStatic(LoggingService.class);
-//        mockStatic(Runtime.class);
         when(Configuration.getDiskDirectory()).thenReturn("dir/");
         file = mock(File.class);
         randomAccessFile = mock(RandomAccessFile.class);
-        runtime = mock(Runtime.class);
         files = new File[1];
         files[0] = spy(new File("message1234545.idx"));
         when(file.listFiles(any(FilenameFilter.class))).thenReturn(files);
@@ -86,19 +81,11 @@ public class MessageArchiveTest {
             when(mock.read(any(byte[].class), anyInt(), anyInt())).thenReturn(1);
             when(mock.readLong()).thenReturn(1L);
         });
-//        Mockito.whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
-//        Mockito.whenNew(RandomAccessFile.class).withParameterTypes(File.class, String.class)
-//                .withArguments(any(), anyString()).thenReturn(randomAccessFile);
-//        when(Runtime.getRuntime()).thenReturn(runtime);
-//        when(runtime.maxMemory()).thenReturn(1048576460L * 32);
-//        when(runtime.totalMemory()).thenReturn(1L);
-//        when(runtime.freeMemory()).thenReturn(1L);
         messageArchive = spy(new MessageArchive("message.idx"));
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        MODULE_NAME = null;
         files = null;
         reset(messageArchive, randomAccessFile);
         deleteDirectory("dir/messages/archive");
@@ -138,7 +125,6 @@ public class MessageArchiveTest {
     public void testSave() {
         try {
             messageArchive.save(message.getBytes(UTF_8),timestamp);
-//            Mockito.verify(messageArchive.invoke("openFiles", anyLong());
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).seek(anyLong());
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).length();
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).getFilePointer();
@@ -155,7 +141,6 @@ public class MessageArchiveTest {
         try {
             messageArchive.save(message.getBytes(UTF_8),timestamp);
             messageArchive.close();
-//            Mockito.verifyPrivate(messageArchive).invoke("openFiles", anyLong());
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).seek(anyLong());
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).length();
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).getFilePointer();
@@ -173,10 +158,6 @@ public class MessageArchiveTest {
         try{
             when(files[0].isFile()).thenReturn(true);
             when(files[0].getName()).thenReturn("message1234545.idx");
-
-//            whenNew(File.class).withParameterTypes(String.class).withArguments(any()).thenReturn(file);
-//            whenNew(RandomAccessFile.class).withParameterTypes(File.class, String.class)
-//                    .withArguments(any(), anyString()).thenReturn(randomAccessFile);
             messageArchive.messageQuery(1, 50);
             Mockito.verify(file, Mockito.atLeastOnce()).listFiles(any(FilenameFilter.class));
             Mockito.verify(randomAccessFile, Mockito.atLeastOnce()).getFilePointer();

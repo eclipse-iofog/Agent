@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -63,13 +63,9 @@ public class DockerUtilTest {
     private DefaultDockerClientConfig.Builder dockerClientConfig;
     private DefaultDockerClientConfig defaultDockerClientConfig;
     private DockerClient dockerClient;
-    private DockerClientBuilder dockerClientBuilder;
     private ProcessManagerStatus processManagerStatus;
-    private EventsCmd eventsCmd;
     private ListNetworksCmd listNetworksCmd;
     private PullImageCmd pullImageCmd;
-    private PullImageResultCallback pullImageResultCallback;
-    private Network network;
     private InspectContainerResponse inspectContainerResponse;
     private InspectContainerResponse.ContainerState containerState;
     private InspectContainerCmd inspectContainerCmd;
@@ -77,8 +73,6 @@ public class DockerUtilTest {
     private RemoveImageCmd removeImageCmd;
     private InspectImageCmd inspectImageCmd;
     private CreateContainerCmd createContainerCmd;
-    private CreateContainerResponse createContainerResponse;
-    private NetworkSettings networkSettings;
     private StatsCmd statsCmd;
     private HostConfig hostConfig;
     private CountDownLatch countDownLatch;
@@ -86,14 +80,9 @@ public class DockerUtilTest {
     private StatsCallback statsCallback;
     private Container container;
     private Registry registry;
-    private PortMapping portMapping;
-    private VolumeMapping volumeMapping;
-    private LogConfig logConfig;
     private List<Network> networkList;
     private List<PortMapping> portMappingList;
     private List<VolumeMapping> volumeMappingList;
-    private Map<String, String> dockerBridgeMap;
-    private String bridgeName;
     private Microservice microservice;
     private StartContainerCmd startContainerCmd;
     private StopContainerCmd stopContainerCmd;
@@ -102,12 +91,12 @@ public class DockerUtilTest {
     private String containerID;
     private String imageID;
     private String ipAddress;
-    private String[] containerNames = {".iofog_containerName1",".iofog_containerName2"};
-    private String microserviceUuid = "microserviceUuid";
+    private final String[] containerNames = {".iofog_containerName1",".iofog_containerName2"};
+    private final String microserviceUuid = "microserviceUuid";
     private List<Container> containerList;
-    private String MODULE_NAME = "Docker Util";
-    private String[] extraHost = {"extraHost1", "extraHost2"};
-    private Method method = null;
+    private final String MODULE_NAME = "Docker Util";
+    private final String[] extraHost = {"extraHost1", "extraHost2"};
+    private final Method method = null;
     private MockedStatic<DefaultDockerClientConfig> defaultDockerClientConfigMockedStatic;
     private MockedStatic<Configuration> configurationMockedStatic;
     private MockedStatic<DockerClient> dockerClientMockedStatic;
@@ -124,9 +113,9 @@ public class DockerUtilTest {
         dockerClientConfig = mock(DefaultDockerClientConfig.Builder.class);
         defaultDockerClientConfig = mock(DefaultDockerClientConfig.class);
         processManagerStatus = mock(ProcessManagerStatus.class);
-        dockerClientBuilder = mock(DockerClientBuilder.class);
+        DockerClientBuilder dockerClientBuilder = mock(DockerClientBuilder.class);
         dockerClient = mock(DockerClient.class);
-        eventsCmd = mock(EventsCmd.class);
+        EventsCmd eventsCmd = mock(EventsCmd.class);
         registry = mock(Registry.class);
         listNetworksCmd = mock(ListNetworksCmd.class);
         microservice = mock(Microservice.class);
@@ -135,36 +124,35 @@ public class DockerUtilTest {
         removeContainerCmd = mock(RemoveContainerCmd.class);
         removeImageCmd = mock(RemoveImageCmd.class);
         pullImageCmd = mock(PullImageCmd.class);
-        pullImageResultCallback = mock(PullImageResultCallback.class);
-        network = mock(Network.class);
+        PullImageResultCallback pullImageResultCallback = mock(PullImageResultCallback.class);
+        Network network = mock(Network.class);
         inspectImageCmd = mock(InspectImageCmd.class);
         hostConfig = mock(HostConfig.class);
         inspectContainerResponse = mock(InspectContainerResponse.class);
-        createContainerResponse = mock(CreateContainerResponse.class);
+        CreateContainerResponse createContainerResponse = mock(CreateContainerResponse.class);
         containerState = mock(InspectContainerResponse.ContainerState.class);
         inspectContainerCmd = mock(InspectContainerCmd.class);
-        networkSettings = mock(NetworkSettings.class);
+        NetworkSettings networkSettings = mock(NetworkSettings.class);
         listContainersCmd = mock(ListContainersCmd.class);
         createContainerCmd = mock(CreateContainerCmd.class);
-        logConfig = mock(LogConfig.class);
         container = mock(Container.class);
         statsCmd = mock(StatsCmd.class);
         countDownLatch = mock(CountDownLatch.class);
         statistics = mock(Statistics.class);
         statsCallback = mock(StatsCallback.class);
         microserviceStatus = mock(MicroserviceStatus.class);
-        portMapping = mock(PortMapping.class);
-        volumeMapping = mock(VolumeMapping.class);
+        PortMapping portMapping = mock(PortMapping.class);
+        VolumeMapping volumeMapping = mock(VolumeMapping.class);
         networkList = new ArrayList<>();
         containerList = new ArrayList<>();
         networkList.add(network);
         containerList.add(container);
-        dockerBridgeMap = mock(HashMap.class);
+        Map<String, String> dockerBridgeMap = mock(HashMap.class);
         portMappingList = new ArrayList<>();
         portMappingList.add(portMapping);
         volumeMappingList = new ArrayList<>();
         volumeMappingList.add(volumeMapping);
-        bridgeName = "default_bridge";
+        String bridgeName = "default_bridge";
         containerID = "containerID";
         imageID = "imageID";
         ipAddress = "ipAddress";
@@ -248,13 +236,7 @@ public class DockerUtilTest {
             Mockito.when(mock.getStats()).thenReturn(statistics);
         });
         countDownLatchMockedConstruction = mockConstruction(CountDownLatch.class);
-//        Mockito.whenNew(MicroserviceStatus.class).withNoArguments().thenReturn(microserviceStatus);
-//        Mockito.whenNew(CountDownLatch.class).withArguments(anyInt()).thenReturn(countDownLatch);
-//        Mockito.whenNew(StatsCallback.class).withArguments(any(CountDownLatch.class)).thenReturn(statsCallback);
-//        Mockito.whenNew(PullImageResultCallback.class).withNoArguments().thenReturn(pullImageResultCallback);
-//        Mockito.whenNew(LogConfig.class).withArguments(any(LogConfig.LoggingType.class), any(Map.class)).thenReturn(logConfig);
         dockerUtil = spy(DockerUtil.getInstance());
-        setMock(dockerUtil);
     }
 
     @AfterEach
@@ -282,31 +264,6 @@ public class DockerUtilTest {
     }
 
     /**
-     * Set a mock to the {@link DockerUtil} instance
-     * Throws {@link RuntimeException} in case if reflection failed, see a {@link Field#set(Object, Object)} method description.
-     * @param mock the mock to be inserted to a class
-     */
-    private void setMock(DockerUtil mock) {
-        try {
-//            Field instance = DockerUtil.class.getDeclaredField("instance");
-//            instance.setAccessible(true);
-//            instance.set(instance, mock);
-//            method = DockerUtil.class.getDeclaredMethod("initDockerClient");
-//            method.setAccessible(true);
-//            method.invoke(dockerUtil);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    /**
-     * Asserts mock is same as the DockerUtil.getInstance()
-     */
-    @Test
-    public void testGetInstanceIsSameAsMock() {
-//        assertSame(dockerUtil, DockerUtil.getInstance());
-    }
-
-    /**
      * Test reInitDockerClient
      */
     @Test
@@ -317,7 +274,6 @@ public class DockerUtilTest {
             Mockito.verify(dockerClient).close();
             Mockito.verify(dockerClientConfig, Mockito.atLeastOnce()).withDockerHost(any());
             Mockito.verify(dockerClientConfig, Mockito.atLeastOnce()).withApiVersion(anyString());
-//            verifyPrivate(dockerUtil, Mockito.atLeastOnce()).invoke("addDockerEventHandler");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -559,7 +515,6 @@ public class DockerUtilTest {
             assertEquals(containerID, dockerUtil.getMicroserviceStatus(containerID, microserviceUuid).getContainerId());
             Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME , "Get microservice status for microservice uuid : "+ microserviceUuid);
-//            Mockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -670,7 +625,6 @@ public class DockerUtilTest {
         try {
             assertEquals(0, dockerUtil.getRunningContainers().size());
             Mockito.verify(dockerUtil).getContainers();
-//            Mockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -687,7 +641,6 @@ public class DockerUtilTest {
             assertEquals(containerList, list);
             assertEquals(1, list.size());
             Mockito.verify(dockerUtil).getContainers();
-//            Mockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -703,7 +656,6 @@ public class DockerUtilTest {
             List<Container> list = dockerUtil.getRunningIofogContainers();
             assertEquals(0, list.size());
             Mockito.verify(dockerUtil).getContainers();
-//            Mockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -721,7 +673,6 @@ public class DockerUtilTest {
             assertEquals(1, list.size());
             assertEquals(containerList, list);
             Mockito.verify(dockerUtil).getContainers();
-//            Mockito.verifyPrivate(dockerUtil).invoke("containerToMicroserviceState", any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -798,8 +749,6 @@ public class DockerUtilTest {
     public void testAreMicroserviceAndContainerEqualWhenContainerAndMicorserivceAreNotEqual() {
         try {
             assertFalse(dockerUtil.areMicroserviceAndContainerEqual(containerID, microservice));
-//            Mockito.verifyPrivate(dockerUtil).invoke("isPortMappingEqual", any(), any());
-//            Mockito.verifyPrivate(dockerUtil).invoke("isNetworkModeEqual", any(), any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -818,10 +767,6 @@ public class DockerUtilTest {
             Mockito.when(hostConfig.getNetworkMode()).thenReturn("host");
             Mockito.when(microservice.isRootHostAccess()).thenReturn(true);
             assertTrue(dockerUtil.areMicroserviceAndContainerEqual(containerID, microservice));
-//            Mockito.verifyPrivate(dockerUtil).invoke("isPortMappingEqual", any(), any());
-//            Mockito.verifyPrivate(dockerUtil).invoke("isNetworkModeEqual", any(), any());
-//            Mockito.verifyPrivate(dockerUtil).invoke("getMicroservicePorts", any());
-//            Mockito.verifyPrivate(dockerUtil).invoke("getContainerPorts", any());
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -869,7 +814,6 @@ public class DockerUtilTest {
     public void testIsContainerRunningWhenContainerStateIsStopped() {
         try {
             assertFalse(dockerUtil.isContainerRunning(containerID));
-//            Mockito.verifyPrivate(dockerUtil).invoke("getContainerStatus", any());
             Mockito.verify(dockerClient).inspectContainerCmd(any());
         } catch (Exception e) {
             fail("This should not happen");
@@ -884,7 +828,6 @@ public class DockerUtilTest {
         try {
             Mockito.when(containerState.getStatus()).thenReturn("RUNNING");
             assertTrue(dockerUtil.isContainerRunning(containerID));
-//            Mockito.verifyPrivate(dockerUtil).invoke("getContainerStatus", any());
             Mockito.verify(dockerClient).inspectContainerCmd(any());
         } catch (Exception e) {
             fail("This should not happen");
@@ -943,7 +886,6 @@ public class DockerUtilTest {
      * throws AgentSystemException
      */
     @Test
-//            (expected = AgentSystemException.class)
     public void testPullImageWhenRegistryIsNull() throws AgentSystemException {
         assertThrows(AgentSystemException.class, () -> dockerUtil.pullImage(imageID, containerID,null));
     }

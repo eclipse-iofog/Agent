@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -70,7 +70,6 @@ public class MessageTest {
     private byte[] contextData;
     private byte[] contentData;
     private JsonObject jsonObject;
-    private JsonObjectBuilder jsonObjectBuilder;
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
 
 
@@ -98,11 +97,7 @@ public class MessageTest {
         difficultyTarget = 2;
         infoType = "infoType";
         infoFormat = "infoFormat";
-        String content = "contentData";
-        String context = "contextData";
-//        contentData = Base64.getDecoder().decode(content.getBytes(UTF_8));
-//        contextData = Base64.getDecoder().decode(context.getBytes(UTF_8));
-        jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         jsonObject = jsonObjectBuilder.add("id", id)
                 .add("tag",tag )
                 .add("groupid", messageGroupId)
@@ -120,8 +115,6 @@ public class MessageTest {
                 .add("difficultytarget", difficultyTarget)
                 .add("infotype", infoType)
                 .add("infoformat", infoFormat)
-//                .add("contentdata", content)
-//                .add("contextdata", context)
                 .build();
         message = spy(new Message());
     }
@@ -237,8 +230,6 @@ public class MessageTest {
      */
     @Test
     public void testGetterAndSetterTimestamp() {
-//        message = new Message(jsonObject);
-//        timestamp = currentTimeMillis();
         message.setTimestamp(timestamp);
         assertEquals(timestamp, message.getTimestamp());
     }
@@ -393,7 +384,8 @@ public class MessageTest {
     @Test
     public void throwsExceptionWhenByteArrayOutputStreamIsCreatedInBytes() {
         try {
-            MockedConstruction<ByteArrayOutputStream> byteArrayOutputStreamMockedConstruction = Mockito.mockConstructionWithAnswer(ByteArrayOutputStream.class, invocation -> {
+            MockedConstruction<ByteArrayOutputStream> byteArrayOutputStreamMockedConstruction =
+                    Mockito.mockConstructionWithAnswer(ByteArrayOutputStream.class, invocation -> {
                 throw new IOException();
             });
             message = spy(new Message(jsonObject));

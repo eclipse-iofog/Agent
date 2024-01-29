@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -98,10 +98,6 @@ public class ControlWebsocketHandlerTest {
         webSocketServerHandshakerFactoryMockedConstruction = mockConstruction(WebSocketServerHandshakerFactory.class, (mock, context) -> {
             Mockito.when(mock.newHandshaker(Mockito.eq(httpRequest))).thenReturn(handShaker);
                 });
-//        Mockito.whenNew(WebSocketServerHandshakerFactory.class)
-//                .withArguments(Mockito.anyString(), Mockito.eq(null), Mockito.anyBoolean(), Mockito.anyInt())
-//                .thenReturn(webSocketServerHandshakerFactory);
-//        Mockito.doReturn(handShaker).when(webSocketServerHandshakerFactory).newHandshaker(Mockito.any(HttpRequest.class));
         Mockito.doReturn(channelFuture).when(handShaker).handshake(Mockito.any(), Mockito.any());
         Mockito.when(StatusReporter.setLocalApiStatus()).thenReturn(localApiStatus);
         Mockito.when(WebsocketUtil.hasContextInMap(Mockito.any(), Mockito.any())).thenReturn(true);
@@ -153,7 +149,6 @@ public class ControlWebsocketHandlerTest {
     public void testHandleWhenReqAndContextAreNotNullAndTokenIsNotLessThan5() {
         try {
             controlWebsocketHandler.handle(channelHandlerContext, httpRequest);
-//            Mockito.verify(webSocketServerHandshakerFactoryMockedConstruction).newHandshaker(Mockito.eq(httpRequest));
             Mockito.verify(handShaker).handshake(Mockito.eq(channel), Mockito.eq(httpRequest));
             Mockito.verify(StatusReporter.class);
             StatusReporter.setLocalApiStatus();
@@ -273,7 +268,6 @@ public class ControlWebsocketHandlerTest {
         try {
             Mockito.when(closeWebSocketFrame.content()).thenReturn(byteBuf);
             Mockito.when(channelHandlerContext.channel()).thenReturn(channel);
-//            Mockito.doNothing().when(WebsocketUtil.class);
             controlWebsocketHandler.handleWebSocketFrame(channelHandlerContext, closeWebSocketFrame);
             Mockito.verify(WebsocketUtil.class);
             WebsocketUtil.removeWebsocketContextFromMap(Mockito.eq(channelHandlerContext), Mockito.eq(WebSocketMap.controlWebsocketMap));
