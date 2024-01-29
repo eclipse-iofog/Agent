@@ -52,8 +52,6 @@ public class ApiHandlerHelpersTest {
     private HttpHeaders httpHeaders;
     private ByteBuf byteBuf;
     private DefaultFullHttpResponse defaultResponse;
-    private BufferedReader bufferedReader;
-    private FileReader fileReader;
     private MockedStatic<ApiHandlerHelpers> apiHandlerHelpersMockedStatic;
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedConstruction<BufferedReader> bufferedReaderMockedConstruction;
@@ -66,8 +64,6 @@ public class ApiHandlerHelpersTest {
         request = mock(HttpRequest.class);
         httpHeaders = mock(HttpHeaders.class);
         byteBuf = mock(ByteBuf.class);
-        bufferedReader = mock(BufferedReader.class);
-        fileReader = mock(FileReader.class);
         expectedMethod = HttpMethod.POST;
         contentType = "Application/json";
         content = "response content";
@@ -78,14 +74,6 @@ public class ApiHandlerHelpersTest {
         bufferedReaderMockedConstruction =  mockConstruction(BufferedReader.class, (mock, context) -> {
             when(mock.readLine()).thenReturn("token");
         });
-//        Mockito.whenNew(BufferedReader.class)
-//                .withParameterTypes(Reader.class)
-//                .withArguments(Mockito.any(Reader.class))
-//                .thenReturn(bufferedReader);
-//        Mockito.whenNew(FileReader.class)
-//                .withParameterTypes(String.class)
-//                .withArguments(Mockito.anyString())
-//                .thenReturn(fileReader);
     }
 
     @AfterEach
@@ -170,7 +158,6 @@ public class ApiHandlerHelpersTest {
     public void testValidateAccessTokenFalse() {
         try {
             assertFalse(ApiHandlerHelpers.validateAccessToken(request));
-//            Mockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -184,9 +171,7 @@ public class ApiHandlerHelpersTest {
         try {
             Mockito.when(request.headers()).thenReturn(httpHeaders);
             Mockito.when(httpHeaders.get(HttpHeaderNames.AUTHORIZATION, "")).thenReturn("token");
-//            Mockito.when(bufferedReader.readLine()).thenReturn("token");
             assertTrue(ApiHandlerHelpers.validateAccessToken(request));
-//            Mockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -205,7 +190,6 @@ public class ApiHandlerHelpersTest {
                 when(mock.readLine()).thenThrow(IOException.class);
             });
             assertFalse(ApiHandlerHelpers.validateAccessToken(request));
-//            Mockito.verifyPrivate(ApiHandlerHelpers.class).invoke("fetchAccessToken");
             LoggingService.logError(Mockito.eq("Local API"), Mockito.eq("unable to load api token"),
                     Mockito.any());
 
