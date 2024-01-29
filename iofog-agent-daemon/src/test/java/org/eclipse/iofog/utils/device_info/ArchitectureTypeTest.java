@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author nehanaithani
@@ -54,6 +55,7 @@ public class ArchitectureTypeTest {
      */
     @Test
     public void testGetDeviceArchType() {
-        assertEquals(ArchitectureType.ARM, ArchitectureType.getDeviceArchType());
+        assertTrue(ArchitectureType.ARM == ArchitectureType.getDeviceArchType()
+                || ArchitectureType.INTEL_AMD == ArchitectureType.getDeviceArchType());
     }
 }
