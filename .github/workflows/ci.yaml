@@ -233,10 +233,6 @@ jobs:
           PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
           PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
 
-      - uses: actions/download-artifact@v2
-        with:
-          name: deb-package
-
       - name: Publish tagged deb package to packagecloud
         if: contains(github.ref_name, '^v.*')
         uses: danielmundi/upload-packagecloud@v1
@@ -246,10 +242,6 @@ jobs:
           PACKAGECLOUD-REPO: iofog-agent
           PACKAGECLOUD-DISTRIB: any/any
           PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: rpm-package
 
       - name: Publish tagged rpm package to packagecloud
         if: contains(github.ref_name, '^v.*')
