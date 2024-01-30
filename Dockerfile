@@ -1,4 +1,4 @@
-FROM docker.io/library/ubuntu:20.04 AS builder
+FROM docker.io/library/ubuntu:22.04 AS builder
 
 RUN apt-get update && \
     apt-get install -y unzip apt-utils curl openjdk-17-jdk && \
@@ -12,7 +12,7 @@ ARG GRADLE_BASE_URL=https://services.gradle.org/distributions
 
 # 3- Define the SHA key to validate the gradle download
 #    obtained from here https://gradle.org/release-checksums/
-ARG GRADLE_SHA=c8c17574245ecee9ed7fe4f6b593b696d1692d1adbfef425bef9b333e3a0e8de
+ARG GRADLE_SHA=3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae
 
 # 4- Create the directories, download gradle, validate the download, install it, remove downloaded file and set links
 RUN mkdir -p /usr/share/gradle /usr/share/gradle/ref \
@@ -39,9 +39,9 @@ VOLUME $GRADLE_USER_HOME
 
 COPY . .
 
-RUN gradle build copyJar -x test --no-daemon
+RUN gradle build copy -x test --no-daemon
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5
 
 RUN true && \
     microdnf install -y curl ca-certificates java-17-openjdk-headless sudo shadow-utils && \
