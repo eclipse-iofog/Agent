@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -15,31 +15,30 @@ package org.eclipse.iofog.message_bus;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static java.lang.System.currentTimeMillis;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageBusUtil.class, MessageBus.class, StatusReporter.class, MessageBusStatus.class, Message.class, LoggingService.class, MessagePublisher.class, MessageReceiver.class, Route.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class MessageBusUtilTest {
     private MessageBusUtil messageBusUtil;
     private MessageBus messageBus;
@@ -52,9 +51,11 @@ public class MessageBusUtilTest {
     private List<Message> messages;
     private List<String> receivers;
     private Map<String, Route> routes;
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+    private MockedStatic<StatusReporter> statusReporterMockedStatic;
+    private MockedStatic<MessageBus> messageBusMockedStatic;
 
-
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         MODULE_NAME = "Message Bus Util";
         messageBus = mock(MessageBus.class);
@@ -62,27 +63,30 @@ public class MessageBusUtilTest {
         messagePublisher = mock(MessagePublisher.class);
         messageReceiver = mock(MessageReceiver.class);
         route = mock(Route.class);
-        mockStatic(LoggingService.class);
-        mockStatic(MessageBus.class);
-        mockStatic(StatusReporter.class);
+        loggingServiceMockedStatic = mockStatic(LoggingService.class);
+        messageBusMockedStatic = mockStatic(MessageBus.class);
+        statusReporterMockedStatic = mockStatic(StatusReporter.class);
         messages = mock(ArrayList.class);
         receivers = mock(ArrayList.class);
         routes = mock(HashMap.class);
         messageBusStatus = mock(MessageBusStatus.class);
-        PowerMockito.when(MessageBus.getInstance()).thenReturn(messageBus);
-        PowerMockito.when(messageBus.getReceiver(any())).thenReturn(messageReceiver);
-        PowerMockito.when(messageBus.getPublisher(any())).thenReturn(messagePublisher);
-        PowerMockito.when(messageBus.getRoutes()).thenReturn(routes);
-        PowerMockito.when(routes.get(any())).thenReturn(route);
-        PowerMockito.when(route.getReceivers()).thenReturn(receivers);
-        PowerMockito.when(messageReceiver.getMessages()).thenReturn(messages);
-        PowerMockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
-        PowerMockito.when(receivers.contains(eq("receiver"))).thenReturn(true);
+        Mockito.when(MessageBus.getInstance()).thenReturn(messageBus);
+        Mockito.when(messageBus.getReceiver(any())).thenReturn(messageReceiver);
+        Mockito.when(messageBus.getPublisher(any())).thenReturn(messagePublisher);
+        Mockito.when(messageBus.getRoutes()).thenReturn(routes);
+        Mockito.when(routes.get(any())).thenReturn(route);
+        Mockito.when(route.getReceivers()).thenReturn(receivers);
+        Mockito.when(messageReceiver.getMessages()).thenReturn(messages);
+        Mockito.when(StatusReporter.setMessageBusStatus()).thenReturn(messageBusStatus);
+        Mockito.when(receivers.contains(eq("receiver"))).thenReturn(true);
         messageBusUtil = spy(new MessageBusUtil());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        statusReporterMockedStatic.close();
+        loggingServiceMockedStatic.close();
+        messageBusMockedStatic.close();
         MODULE_NAME = null;
         Mockito.reset(messageBusUtil);
         Mockito.reset(messageBusStatus);
@@ -99,13 +103,13 @@ public class MessageBusUtilTest {
     @Test
     public void testPublishMessageWhenPublisherIsNull() {
         try {
-            PowerMockito.when(messageBus.getPublisher(message.getPublisher())).thenReturn(null);
+            Mockito.when(messageBus.getPublisher(message.getPublisher())).thenReturn(null);
             messageBusUtil.publishMessage(message);
             Mockito.verify(messageBus).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).publish(any(Message.class));
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logDebug(MODULE_NAME, "Start publish message");
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logDebug(MODULE_NAME, "Finishing publish message");
         } catch (Exception e) {
             fail("This should not happen");
@@ -118,7 +122,7 @@ public class MessageBusUtilTest {
     @Test
     public void testPublishMessageWhenPublisherIsNotNull() {
         try {
-            PowerMockito.when(messageBus.getPublisher(message.getPublisher())).thenReturn(messagePublisher);
+            Mockito.when(messageBus.getPublisher(message.getPublisher())).thenReturn(messagePublisher);
             messageBusUtil.publishMessage(message);
             Mockito.verify(messageBus).getPublisher(any());
             Mockito.verify(messagePublisher).publish(any(Message.class));
@@ -133,14 +137,14 @@ public class MessageBusUtilTest {
      */
     @Test
     public void throwsExceptionWhenPublisherIsCalled() {
-        PowerMockito.when(messageBus.getPublisher(message.getPublisher())).thenReturn(messagePublisher);
-        PowerMockito.when(messagePublisher.getName()).thenReturn("MP");
+        Mockito.when(messageBus.getPublisher(message.getPublisher())).thenReturn(messagePublisher);
+        Mockito.when(messagePublisher.getName()).thenReturn("MP");
         try {
-            PowerMockito.doThrow(mock(Exception.class)).when(messagePublisher).publish(any());
+            Mockito.doThrow(mock(Exception.class)).when(messagePublisher).publish(any());
             messageBusUtil.publishMessage(message);
             Mockito.verify(messageBus).getPublisher(any());
             Mockito.verify(messagePublisher).publish(any(Message.class));
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Unable to send message : Message Publisher (MP)"), any());
         } catch (Exception e) {
             fail("This Should not happen");
@@ -153,13 +157,13 @@ public class MessageBusUtilTest {
     @Test
     public void testGetMessagesWhenMessageReceiverIsNull() {
         try {
-            PowerMockito.when(messageBus.getReceiver(any())).thenReturn(null);
+            Mockito.when(messageBus.getReceiver(any())).thenReturn(null);
             assertEquals(0, messageBusUtil.getMessages("receiver").size());
             Mockito.verify(messageBus).getReceiver(any());
             Mockito.verify(messageReceiver, Mockito.never()).getMessages();
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logDebug(MODULE_NAME, "Starting get message");
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logDebug(MODULE_NAME, "Finishing get message");
         } catch (Exception e) {
             fail("This should not happen");
@@ -186,11 +190,11 @@ public class MessageBusUtilTest {
     @Test
     public void throwsExceptionWhenMessagePublisherIsCalledInGetMessages() {
         try {
-            PowerMockito.doThrow(mock(Exception.class)).when(messageReceiver).getMessages();
+            Mockito.doThrow(mock(Exception.class)).when(messageReceiver).getMessages();
             assertEquals(0, messageBusUtil.getMessages("receiver").size());
             Mockito.verify(messageBus).getReceiver(any());
             Mockito.verify(messageReceiver).getMessages();
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("unable to receive messages : Message Receiver (receiver)"), any());
         } catch (Exception e) {
             fail("This should not happen");
@@ -204,14 +208,14 @@ public class MessageBusUtilTest {
     @Test
     public void testMessageQueryWhenRouteIsNull() {
         try {
-            PowerMockito.when(routes.get(any())).thenReturn(null);
+            Mockito.when(routes.get(any())).thenReturn(null);
             assertNull(messageBusUtil.messageQuery("publisher", "receiver", currentTimeMillis(), 100l));
             Mockito.verify(messageBus).getRoutes();
             Mockito.verify(messageBus, Mockito.never()).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).messageQuery(anyLong(), anyLong());
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logDebug(MODULE_NAME, "Starting message query");
-            PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
+            Mockito.verify(LoggingService.class, Mockito.never());
             LoggingService.logDebug(MODULE_NAME, "Finishing message query");
         } catch (Exception e) {
             fail("This should not happen");
@@ -228,9 +232,9 @@ public class MessageBusUtilTest {
             Mockito.verify(messageBus).getRoutes();
             Mockito.verify(messageBus, Mockito.never()).getPublisher(any());
             Mockito.verify(messagePublisher, Mockito.never()).messageQuery(anyLong(), anyLong());
-            PowerMockito.verifyStatic(LoggingService.class);
+            Mockito.verify(LoggingService.class);
             LoggingService.logDebug(MODULE_NAME, "Starting message query");
-            PowerMockito.verifyStatic(LoggingService.class, Mockito.never());
+            Mockito.verify(LoggingService.class, Mockito.never());
             LoggingService.logDebug(MODULE_NAME, "Finishing message query");
         } catch (Exception e) {
             fail("This should not happen");
@@ -243,7 +247,7 @@ public class MessageBusUtilTest {
     @Test
     public void testMessageQueryWhenRouteDoseNotHaveReceiver() {
         try {
-            PowerMockito.when(receivers.contains(eq("receiver"))).thenReturn(false);
+            Mockito.when(receivers.contains(eq("receiver"))).thenReturn(false);
             assertNull(messageBusUtil.messageQuery("publisher", "receiver", 100l, currentTimeMillis()));
             Mockito.verify(messageBus).getRoutes();
             Mockito.verify(route).getReceivers();
@@ -261,7 +265,7 @@ public class MessageBusUtilTest {
     @Test
     public void testMessageQueryWhenRouteHaveReceiverButNotPublisher() {
         try {
-            PowerMockito.when(messageBus.getPublisher(any())).thenReturn(null);
+            Mockito.when(messageBus.getPublisher(any())).thenReturn(null);
             assertNull(messageBusUtil.messageQuery("publisher", "receiver", 100l, currentTimeMillis()));
             Mockito.verify(messageBus).getRoutes();
             Mockito.verify(route).getReceivers();
@@ -279,7 +283,7 @@ public class MessageBusUtilTest {
     @Test
     public void testMessageQueryWhenRouteHaveReceiverAndPublisher() {
         try {
-            PowerMockito.when(messagePublisher.messageQuery(anyLong(), anyLong())).thenReturn(messages);
+            Mockito.when(messagePublisher.messageQuery(anyLong(), anyLong())).thenReturn(messages);
             assertEquals(messages, messageBusUtil.messageQuery("publisher", "receiver", 100l, currentTimeMillis()));
             Mockito.verify(messageBus).getRoutes();
             Mockito.verify(messageBus).getPublisher(any());

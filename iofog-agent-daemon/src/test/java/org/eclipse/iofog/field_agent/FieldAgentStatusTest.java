@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,28 +13,24 @@
 package org.eclipse.iofog.field_agent;
 
 import org.eclipse.iofog.utils.Constants;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import static java.lang.System.currentTimeMillis;
-import static org.junit.Assert.*;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.mockito.Mockito.spy;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(FieldAgentStatus.class)
+@ExtendWith(MockitoExtension.class)
 public class FieldAgentStatusTest {
     private FieldAgentStatus fieldAgentStatus;
     private Constants.ControllerStatus controllerStatus;
     private long lastCommandTime;
     private boolean controllerVerified;
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fieldAgentStatus = spy(new FieldAgentStatus());
         controllerStatus = Constants.ControllerStatus.OK;
@@ -42,7 +38,7 @@ public class FieldAgentStatusTest {
         controllerVerified = true;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 
@@ -50,7 +46,7 @@ public class FieldAgentStatusTest {
      * Test get and set method of controllerStatus
      */
     @Test
-    public void testGetterAndSetterOfControllerStatus() {
+    public void testGetterStatus() {
         assertEquals("Default Status",
                 Constants.ControllerStatus.NOT_CONNECTED, fieldAgentStatus.getControllerStatus());
         fieldAgentStatus.setControllerStatus(controllerStatus);
@@ -73,8 +69,7 @@ public class FieldAgentStatusTest {
      */
     @Test
     public void testGetterAndSetterOfControllerVerified() {
-        assertEquals("Default Status",
-                false, fieldAgentStatus.isControllerVerified());
+        assertFalse("Default Status", fieldAgentStatus.isControllerVerified());
         fieldAgentStatus.setControllerVerified(controllerVerified);
         assertEquals("controllerVerified after update",
                 controllerVerified, fieldAgentStatus.isControllerVerified());

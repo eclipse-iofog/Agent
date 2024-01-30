@@ -22,7 +22,7 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import javax.json.JsonObject;
 import java.util.concurrent.CompletableFuture;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.eclipse.iofog.proxy.SshConnectionStatus.*;
 import static org.eclipse.iofog.utils.functional.Unit.UNIT;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;

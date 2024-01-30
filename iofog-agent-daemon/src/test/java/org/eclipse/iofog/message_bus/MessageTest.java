@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,13 +13,16 @@
 package org.eclipse.iofog.message_bus;
 
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -31,17 +34,17 @@ import java.util.Base64;
 
 import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Message.class, Base64.class, LoggingService.class, ByteArrayOutputStream.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class MessageTest {
     private short VERSION;
     private String MODULE_NAME;
@@ -67,12 +70,12 @@ public class MessageTest {
     private byte[] contextData;
     private byte[] contentData;
     private JsonObject jsonObject;
-    private JsonObjectBuilder jsonObjectBuilder = null;
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
 
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        mockStatic(LoggingService.class);
+        loggingServiceMockedStatic = mockStatic(LoggingService.class);
         MODULE_NAME = "Message";
         VERSION = 4;
         byte[] byteArray = new byte[] { (byte)0xe0, (byte)0xf4 };
@@ -94,12 +97,7 @@ public class MessageTest {
         difficultyTarget = 2;
         infoType = "infoType";
         infoFormat = "infoFormat";
-        message = spy(new Message());
-        String content = "contentData";
-        String context = "contextData";
-        contentData = Base64.getDecoder().decode(content.getBytes(UTF_8));
-        contextData = Base64.getDecoder().decode(context.getBytes(UTF_8));
-        jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         jsonObject = jsonObjectBuilder.add("id", id)
                 .add("tag",tag )
                 .add("groupid", messageGroupId)
@@ -117,12 +115,11 @@ public class MessageTest {
                 .add("difficultytarget", difficultyTarget)
                 .add("infotype", infoType)
                 .add("infoformat", infoFormat)
-                .add("contentdata", content)
-                .add("contextdata", context).build();
-
+                .build();
+        message = spy(new Message());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         MODULE_NAME = null;
         VERSION = 0;
@@ -145,6 +142,8 @@ public class MessageTest {
         infoFormat = null;
         contentData = null;
         contextData = null;
+        loggingServiceMockedStatic.close();
+        message = null;
     }
 
     /**
@@ -385,12 +384,16 @@ public class MessageTest {
     @Test
     public void throwsExceptionWhenByteArrayOutputStreamIsCreatedInBytes() {
         try {
-            whenNew(ByteArrayOutputStream.class).withNoArguments().thenThrow(mock(IOException.class) );
+            MockedConstruction<ByteArrayOutputStream> byteArrayOutputStreamMockedConstruction =
+                    Mockito.mockConstructionWithAnswer(ByteArrayOutputStream.class, invocation -> {
+                throw new IOException();
+            });
             message = spy(new Message(jsonObject));
             byte[] rawByte = message.getBytes();
-            assertTrue(rawByte.length == 0);
-            verifyStatic(LoggingService.class);
+            assertEquals(0, rawByte.length);
+            verify(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME), eq("Error in getBytes"), any());
+            byteArrayOutputStreamMockedConstruction.close();
         } catch (Exception e) {
             fail("This should never happen");
         }
@@ -451,13 +454,14 @@ public class MessageTest {
      */
     @Test
     public void throwsExceptionWhenDecodeBase64() {
-        mockStatic(Base64.class);
+        MockedStatic<Base64> base64 = mockStatic(Base64.class);
         Base64.Decoder decoder = mock(Base64.Decoder.class);
         when(Base64.getDecoder()).thenReturn(decoder);
-        PowerMockito.doThrow(new RuntimeException()).when(decoder).decode( any(byte[].class));
+        Mockito.doThrow(new RuntimeException()).when(decoder).decode( any(byte[].class));
         message.decodeBase64(message.encodeBase64());
-        verifyStatic(LoggingService.class);
+        verify(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Error in decodeBase64"), any());
+        base64.close();
     }
 
     /**
@@ -473,12 +477,13 @@ public class MessageTest {
      */
     @Test
     public void throwsExceptionWhenEncodeBase64() {
-        mockStatic(Base64.class);
+        MockedStatic<Base64> base64 = mockStatic(Base64.class);
         Base64.Encoder encoder = mock(Base64.Encoder.class);
         when(Base64.getEncoder()).thenReturn(encoder);
-        PowerMockito.doThrow(new RuntimeException()).when(encoder).encode( any(byte[].class));
+        Mockito.doThrow(new RuntimeException()).when(encoder).encode( any(byte[].class));
         message.encodeBase64();
-        verifyStatic(LoggingService.class);
+        verify(LoggingService.class);
         LoggingService.logError(eq(MODULE_NAME), eq("Error in encodeBase64"), any());
+        base64.close();
     }
 }

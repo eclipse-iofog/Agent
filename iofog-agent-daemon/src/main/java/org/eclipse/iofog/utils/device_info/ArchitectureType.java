@@ -40,7 +40,7 @@ public enum ArchitectureType {
 	 * common type for popular arm architectures:
 	 * arm, arm32, aarch64, armv{VERSION}{CODE}
 	 */
-	ARM("^(arm|arm32|armv[0-9]+.*|aarch64)$") {
+	ARM("^(arm|arm32|arm64|armv[0-9]+.*|aarch64)$") {
 		@Override
 		public int getCode() {
 			return 2;

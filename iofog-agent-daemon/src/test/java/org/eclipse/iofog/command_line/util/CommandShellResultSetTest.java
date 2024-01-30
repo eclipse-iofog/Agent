@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,35 +12,32 @@
  */
 package org.eclipse.iofog.command_line.util;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({CommandShellResultSet.class})
+@ExtendWith(MockitoExtension.class)
 public class CommandShellResultSetTest {
-    private CommandShellResultSet commandShellResultSet;
-    List<String> value;
-    List<String> errors;
-    @Before
+    private static CommandShellResultSet commandShellResultSet;
+    static List<String> value;
+    static List<String> errors;
+    @BeforeEach
     public void setUp() throws Exception {
         value = new ArrayList<>();
         errors = new ArrayList<>();
         commandShellResultSet = new CommandShellResultSet<>(value, errors);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         value = null;
         errors = null;
@@ -72,7 +69,7 @@ public class CommandShellResultSetTest {
         List<String> value1 = new ArrayList<>();
         List<String> errors1 = new ArrayList<>();
         CommandShellResultSet commandShellResultSetLocal = new CommandShellResultSet<>(value1, errors1);
-        assertTrue(commandShellResultSetLocal.equals(commandShellResultSet));
+        assertEquals(commandShellResultSetLocal, commandShellResultSet);
     }
 
     /**
@@ -84,7 +81,7 @@ public class CommandShellResultSetTest {
         value1.add("value");
         List<String> errors1 = new ArrayList<>();
         CommandShellResultSet commandShellResultSetLocal = new CommandShellResultSet<>(value1, errors1);
-        assertFalse(commandShellResultSetLocal.equals(commandShellResultSet));
+        assertNotEquals(commandShellResultSetLocal, commandShellResultSet);
     }
 
     /**
@@ -95,8 +92,8 @@ public class CommandShellResultSetTest {
         List<String> value1 = new ArrayList<>();
         List<String> errors1 = new ArrayList<>();
         CommandShellResultSet commandShellResultSetLocal = new CommandShellResultSet<>(value1, errors1);
-        assertEquals("HashCodes should be equal", commandShellResultSetLocal.hashCode(), commandShellResultSet.hashCode());
-        assertTrue(commandShellResultSetLocal.equals(commandShellResultSet));
+        assertEquals(commandShellResultSetLocal.hashCode(), commandShellResultSet.hashCode());
+        assertEquals(commandShellResultSetLocal, commandShellResultSet);
     }
 
     /**
@@ -109,7 +106,7 @@ public class CommandShellResultSetTest {
         List<String> errors1 = new ArrayList<>();
         errors1.add("error");
         CommandShellResultSet commandShellResultSetLocal = new CommandShellResultSet<>(value1, errors1);
-        assertNotEquals("HashCodes should not be equal", commandShellResultSetLocal.hashCode(), commandShellResultSet.hashCode());
-        assertFalse(commandShellResultSetLocal.equals(commandShellResultSet));
+        assertNotEquals( commandShellResultSetLocal.hashCode(), commandShellResultSet.hashCode());
+        assertNotEquals(commandShellResultSetLocal, commandShellResultSet);
     }
 }

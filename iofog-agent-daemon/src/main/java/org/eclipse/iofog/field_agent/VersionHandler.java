@@ -13,7 +13,7 @@
 
 package org.eclipse.iofog.field_agent;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.exception.AgentSystemException;
@@ -26,7 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.eclipse.iofog.field_agent.enums.VersionCommand.parseJson;
 import static org.eclipse.iofog.utils.Constants.SNAP_COMMON;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;

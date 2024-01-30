@@ -1,18 +1,16 @@
 package org.eclipse.iofog.local_api;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LocalApiServerHandlerTest {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 

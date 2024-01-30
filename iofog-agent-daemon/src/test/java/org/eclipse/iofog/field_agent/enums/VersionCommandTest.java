@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,51 +13,53 @@
 package org.eclipse.iofog.field_agent.enums;
 
 import org.eclipse.iofog.field_agent.exceptions.UnknownVersionCommandException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(VersionCommand.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class VersionCommandTest {
-    private String versionCommand;
     private JsonObject jsonObject;
     private JsonObjectBuilder jsonObjectBuilder = null;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         jsonObjectBuilder = Json.createObjectBuilder();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 
     /**
      * Test parseCommandString with null command
      */
-    @Test (expected = UnknownVersionCommandException.class)
+    @Test
     public void throwsUnknownVersionCommandExceptionWhenParseCommandStringWithNullCommand() {
-        VersionCommand.parseCommandString(null);
+        assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseCommandString(null));
     }
 
     /**
      * Test parseCommandString with invalid command
      */
-    @Test (expected = UnknownVersionCommandException.class)
+    @Test
     public void throwsUnknownVersionCommandExceptionWhenParseCommandStringWithInvalidCommand() {
-        VersionCommand.parseCommandString("Command");
+        assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseCommandString("Command"));
     }
 
     /**
@@ -72,22 +74,22 @@ public class VersionCommandTest {
     /**
      * Test parseJson with Null versionData
      */
-    @Test (expected = UnknownVersionCommandException.class)
+    @Test
     public void throwsUnknownVersionCommandExceptionWhenParseJsonWithNullVersionData() {
-        VersionCommand.parseJson(null);
+        assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseJson(null));
     }
 
     /**
      * Test parseJson with invalid versionData
      */
-    @Test (expected = UnknownVersionCommandException.class)
+    @Test
     public void throwsUnknownVersionCommandExceptionWhenParseJsonWithInvalidVersionData() {
         jsonObject = jsonObjectBuilder
                 .add("versionCommandDummy", "versionCommand").build();
-        VersionCommand.parseJson(jsonObject);
+        assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseJson(jsonObject));
         jsonObject = jsonObjectBuilder
                 .add("versionCommand", "versionCommand").build();
-        VersionCommand.parseJson(jsonObject);
+        assertThrows(UnknownVersionCommandException.class, () -> VersionCommand.parseJson(jsonObject));
     }
 
     /**

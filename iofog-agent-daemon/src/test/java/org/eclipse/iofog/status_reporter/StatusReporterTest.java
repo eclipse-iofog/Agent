@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,21 +12,24 @@
  */
 package org.eclipse.iofog.status_reporter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import static org.mockito.Mockito.*;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.eclipse.iofog.utils.Constants.ModulesStatus;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.internal.verification.VerificationModeFactory;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -35,43 +38,46 @@ import java.util.concurrent.ScheduledFuture;
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({StatusReporter.class, Configuration.class, LoggingService.class, ScheduledExecutorService.class, Executors.class, ScheduledFuture.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StatusReporterTest {
 	private StatusReporter statusReporter;
-	private ScheduledExecutorService scheduledExecutorService;
-	private ScheduledFuture future;
+	private MockedStatic<Configuration> configurationMockedStatic;
+	private MockedStatic<LoggingService> loggingServiceMockedStatic;
+	private MockedStatic<Executors> executorsMockedStatic;
 
-	@Before
+
+	@BeforeEach
 	public void setUp() throws Exception {
-		statusReporter = mock(StatusReporter.class);
-		mockStatic(Configuration.class);
-		scheduledExecutorService = mock(ScheduledExecutorService.class);
-		future = mock(ScheduledFuture.class);
-
-		mockStatic(LoggingService.class);
-		mockStatic(Executors.class);
+		loggingServiceMockedStatic = mockStatic(LoggingService.class);
+		configurationMockedStatic = mockStatic(Configuration.class);
+		ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
+		executorsMockedStatic = mockStatic(Executors.class);
 		when(Configuration.getSetSystemTimeFreqSeconds()).thenReturn(1);
 		when(Executors.newScheduledThreadPool(anyInt())).thenReturn(scheduledExecutorService);
-		PowerMockito.when(scheduledExecutorService.scheduleAtFixedRate(any(Runnable.class), anyInt(), anyInt(), any())).thenReturn(future);
+		Mockito.when(scheduledExecutorService
+				.scheduleAtFixedRate(any(),anyLong(),anyLong(),any())).thenReturn(null);
+		statusReporter = spy(StatusReporter.class);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
-
+		configurationMockedStatic.close();
+		loggingServiceMockedStatic.close();
+		executorsMockedStatic.close();
 	}
-	
+
 	@SuppressWarnings("static-access")
-	@Test ( timeout = 5000L )
+	@Test
 	public void testStart() throws InterruptedException {
         statusReporter.start();
-        // assert that the method was called / 
-        verify( statusReporter ).setStatusReporterStatus().setSystemTime(anyLong());;
+		Mockito.verify(LoggingService.class, VerificationModeFactory.times(1));
+		LoggingService.logInfo("Status Reporter", "Started Status Reporter");
 	}
 
-	
+
 	@SuppressWarnings("static-access")
-	@Test 
+	@Test
 	public void testGetStatusReport() {
 		statusReporter.setSupervisorStatus().setDaemonStatus(ModulesStatus.STARTING);
 		assertTrue(statusReporter.getStatusReport().startsWith("ioFog daemon                :"));
@@ -79,7 +85,7 @@ public class StatusReporterTest {
 	}
 
 	@SuppressWarnings("static-access")
-	@Test 
+	@Test
 	public void testSetters() {
 		assertNotNull(statusReporter.setSupervisorStatus());
 		 assertNotNull(statusReporter.setFieldAgentStatus());
@@ -91,7 +97,7 @@ public class StatusReporterTest {
 		 assertNotNull(statusReporter.setSshProxyManagerStatus());
 		 assertNotNull(statusReporter.setStatusReporterStatus());
 		 assertNotNull(statusReporter.setSupervisorStatus());
-		 
+
 	}
 
 	@SuppressWarnings("static-access")

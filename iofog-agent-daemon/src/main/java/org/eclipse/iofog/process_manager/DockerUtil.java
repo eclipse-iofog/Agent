@@ -25,8 +25,8 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.EventsResultCallback;
 import com.github.dockerjava.api.command.PullImageResultCallback;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.microservice.*;
@@ -48,7 +48,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.eclipse.iofog.microservice.MicroserviceState.fromText;
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
@@ -124,7 +124,7 @@ public class DockerUtil {
         dockerClient.eventsCmd().exec(new EventsResultCallback() {
             @Override
             public void onNext(Event item) {
-                switch (item.getType()) {
+                switch (Objects.requireNonNull(item.getType())) {
                     case CONTAINER:
                     case IMAGE:
                         StatusReporter.setProcessManagerStatus().getMicroserviceStatus(item.getId()).setStatus(
@@ -341,7 +341,7 @@ public class DockerUtil {
             }
         } catch (Exception e) {
             LoggingService.logWarning(MODULE_NAME, "Error occurred while getting container status of microservice uuid" + microserviceUuid +
-                    " error : " + ExceptionUtils.getFullStackTrace(e));
+                    " error : " + ExceptionUtils.getStackTrace(e));
         }
         LoggingService.logDebug(MODULE_NAME , "Finished get microservice status for microservice uuid : "+ microserviceUuid);
         return result;
@@ -361,29 +361,18 @@ public class DockerUtil {
             return MicroserviceState.UNKNOWN;
         }
 
-        switch (containerState.getStatus().toLowerCase()) {
-            case "running":
-                return MicroserviceState.RUNNING;
-            case "create":
-                return MicroserviceState.CREATING;
-            case "attach":
-            case "start":
-                return MicroserviceState.STARTING;
-            case "restart":
-                return MicroserviceState.RESTARTING;
-            case "kill":
-            case "die":
-            case "stop":
-                return MicroserviceState.STOPPING;
-            case "destroy":
-                return MicroserviceState.DELETING;
-            case "exited":
-                return MicroserviceState.EXITING;
-            case "created":
-                return MicroserviceState.CREATED;
-        }
+        return switch (Objects.requireNonNull(containerState.getStatus()).toLowerCase()) {
+            case "running" -> MicroserviceState.RUNNING;
+            case "create" -> MicroserviceState.CREATING;
+            case "attach", "start" -> MicroserviceState.STARTING;
+            case "restart" -> MicroserviceState.RESTARTING;
+            case "kill", "die", "stop" -> MicroserviceState.STOPPING;
+            case "destroy" -> MicroserviceState.DELETING;
+            case "exited" -> MicroserviceState.EXITING;
+            case "created" -> MicroserviceState.CREATED;
+            default -> MicroserviceState.UNKNOWN;
+        };
 
-        return MicroserviceState.UNKNOWN;
     }
 
     public List<Container> getRunningContainers() {

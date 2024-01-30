@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,25 +12,23 @@
  */
 package org.eclipse.iofog.diagnostics.strace;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Agent Exception
  *
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({MicroserviceStraceData.class})
+@ExtendWith(MockitoExtension.class)
 public class MicroserviceStraceDataTest {
     private MicroserviceStraceData microserviceStraceData;
     private String microserviceUuid;
@@ -38,7 +36,7 @@ public class MicroserviceStraceDataTest {
     private boolean straceRun;
     private List<String> resultBuffer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         microserviceUuid = "microserviceUuid";
         pid = 4001;
@@ -48,7 +46,7 @@ public class MicroserviceStraceDataTest {
 
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         microserviceUuid = null;
         pid = 0;
@@ -81,8 +79,8 @@ public class MicroserviceStraceDataTest {
     public void testGetAndSetStraceRun() {
         assertEquals(straceRun, microserviceStraceData.getStraceRun().get());
         microserviceStraceData.setStraceRun(false);
-        assertEquals(false, microserviceStraceData.getStraceRun().get());
-        assertTrue(microserviceStraceData.equals(microserviceStraceData));
+        assertFalse(microserviceStraceData.getStraceRun().get());
+        assertEquals(microserviceStraceData, microserviceStraceData);
     }
 
     /**
@@ -93,7 +91,7 @@ public class MicroserviceStraceDataTest {
         MicroserviceStraceData newMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, straceRun);
         assertFalse(microserviceStraceData.toString().contains("@"));
         assertEquals(microserviceStraceData.toString(), newMicroserviceStraceData.toString());
-        assertTrue(microserviceStraceData.equals(newMicroserviceStraceData));
+        assertEquals(microserviceStraceData, newMicroserviceStraceData);
 
     }
 
@@ -102,7 +100,7 @@ public class MicroserviceStraceDataTest {
      */
     @Test
     public void testEqualsTestWhenObjectsAreSame() {
-        assertTrue(microserviceStraceData.equals(microserviceStraceData));
+        assertEquals(microserviceStraceData, microserviceStraceData);
     }
 
     /**
@@ -111,7 +109,7 @@ public class MicroserviceStraceDataTest {
     @Test
     public void testEqualsTestWhenObjectIsDifferentButValuesAreSame() {
         MicroserviceStraceData anotherMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, straceRun);
-        assertTrue(microserviceStraceData.equals(anotherMicroserviceStraceData));
+        assertEquals(microserviceStraceData, anotherMicroserviceStraceData);
     }
 
     /**
@@ -120,7 +118,7 @@ public class MicroserviceStraceDataTest {
     @Test
     public void testEqualsTestWhenObjectIsDifferent() {
         MicroserviceStraceData anotherMicroserviceStraceData = new MicroserviceStraceData("newUuid", pid, straceRun);
-        assertFalse(microserviceStraceData.equals(anotherMicroserviceStraceData));
+        assertNotEquals(microserviceStraceData, anotherMicroserviceStraceData);
     }
 
     /**
@@ -129,7 +127,7 @@ public class MicroserviceStraceDataTest {
     @Test
     public void testEqualsTestWhenObjectIsOfDifferentType() {
         Object diffObject = new Object();
-        assertFalse(microserviceStraceData.equals(diffObject));
+        assertNotEquals(microserviceStraceData, diffObject);
     }
 
     /**
@@ -138,7 +136,7 @@ public class MicroserviceStraceDataTest {
     @Test
     public void testHashCodeWhenObjectAreEqual() {
         MicroserviceStraceData anotherMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, pid, straceRun);
-        assertTrue(microserviceStraceData.equals(anotherMicroserviceStraceData));
+        assertEquals(microserviceStraceData, anotherMicroserviceStraceData);
         assertEquals(microserviceStraceData.hashCode(), anotherMicroserviceStraceData.hashCode());
     }
 
@@ -148,7 +146,7 @@ public class MicroserviceStraceDataTest {
     @Test
     public void testHashCodeWhenObjectAreDifferent() {
         MicroserviceStraceData anotherMicroserviceStraceData = new MicroserviceStraceData(microserviceUuid, 4002, straceRun);
-        assertFalse(microserviceStraceData.equals(anotherMicroserviceStraceData));
+        assertNotEquals(microserviceStraceData, anotherMicroserviceStraceData);
         assertNotEquals(microserviceStraceData.hashCode(), anotherMicroserviceStraceData.hashCode());
     }
 
@@ -160,7 +158,7 @@ public class MicroserviceStraceDataTest {
         resultBuffer.add("data");
         microserviceStraceData.setResultBuffer(resultBuffer);
         assertEquals(resultBuffer, microserviceStraceData.getResultBuffer());
-        assertTrue(microserviceStraceData.equals(microserviceStraceData));
+        assertEquals(microserviceStraceData, microserviceStraceData);
         assertEquals(microserviceStraceData.hashCode(), microserviceStraceData.hashCode());
     }
 
@@ -171,8 +169,8 @@ public class MicroserviceStraceDataTest {
     public void testGetResultBufferAsString() {
         resultBuffer.add("data");
         microserviceStraceData.setResultBuffer(resultBuffer);
-        assertTrue(microserviceStraceData.getResultBufferAsString() instanceof String);
+        assertNotNull(microserviceStraceData.getResultBufferAsString());
         assertEquals("data\n", microserviceStraceData.getResultBufferAsString());
-        assertTrue(microserviceStraceData.getResultBuffer() instanceof List);
+        assertNotNull(microserviceStraceData.getResultBuffer());
     }
 }

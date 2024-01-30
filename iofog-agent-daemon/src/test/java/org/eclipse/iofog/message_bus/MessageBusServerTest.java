@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -15,47 +15,49 @@ package org.eclipse.iofog.message_bus;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.jms.*;
+import jakarta.jms.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 
 /**
  * @author nehanaithani
  *
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageBusServer.class, Configuration.class, LoggingService.class,})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class MessageBusServerTest {
     private final List<String> receivers = new ArrayList<String>() { { add("ABCD"); add("EFGH"); } };
     private MessageBusServer messageBusServer;
     private String MODULE_NAME;
     private Session session;
     private Connection connection;
-    private ConnectionFactory connectionFactory;
     private MessageProducer messageProducer;
     private MessageConsumer messageConsumer;
     private TextMessage textMessage;
     private Queue queue;
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+    private MockedStatic<Configuration> configurationMockedStatic;
+    private MockedConstruction<JmsConnectionFactory> jmsConnectionFactoryMockedConstruction;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         MODULE_NAME = "Message Bus Server";
         messageBusServer = spy(new MessageBusServer());
@@ -65,31 +67,31 @@ public class MessageBusServerTest {
         messageConsumer = mock(MessageConsumer.class);
         textMessage = mock(TextMessage.class);
         queue = mock(Queue.class);
-
-        mockStatic(Configuration.class);
-        mockStatic(LoggingService.class);
-
-        connectionFactory = mock(JmsConnectionFactory.class);
-        PowerMockito.when(connectionFactory.createConnection()).thenReturn(connection);
-        PowerMockito.whenNew(JmsConnectionFactory.class).withArguments(anyString()).thenReturn((JmsConnectionFactory) connectionFactory);
-        PowerMockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
-        PowerMockito.when(Configuration.getDiskDirectory()).thenReturn("dir/");
-        PowerMockito.when(connection.createSession(anyBoolean(), anyInt())).thenReturn(session);
-        PowerMockito.when(session.createTextMessage(any())).thenReturn(textMessage);
-        PowerMockito.when(session.createQueue(any())).thenReturn(queue);
-        PowerMockito.when(session.createConsumer(any())).thenReturn(messageConsumer);
-        PowerMockito.when(session.createProducer(any())).thenReturn(messageProducer);
+        configurationMockedStatic = mockStatic(Configuration.class);
+        loggingServiceMockedStatic = mockStatic(LoggingService.class);
+        jmsConnectionFactoryMockedConstruction = Mockito.mockConstruction(JmsConnectionFactory.class, (mock, context) -> {
+            when(mock.createConnection()).thenReturn(connection);
+            Mockito.when(connection.createSession(anyBoolean(), anyInt())).thenReturn(session);
+            Mockito.when(session.createTextMessage(any())).thenReturn(textMessage);
+            Mockito.when(session.createQueue(any())).thenReturn(queue);
+            Mockito.when(session.createConsumer(any())).thenReturn(messageConsumer);
+            Mockito.when(session.createProducer(any())).thenReturn(messageProducer);
+        });
+        Mockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
+        Mockito.when(Configuration.getDiskDirectory()).thenReturn("dir/");
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         messageBusServer.stopServer();
         reset(messageBusServer);
         reset(connection);
-        reset(connectionFactory);
         reset(queue);
         reset(session);
         MODULE_NAME = null;
+        loggingServiceMockedStatic.close();
+        configurationMockedStatic.close();
+        jmsConnectionFactoryMockedConstruction.close();
     }
 
     /**
@@ -99,10 +101,11 @@ public class MessageBusServerTest {
     public void testStartServer() {
         try {
             messageBusServer.startServer("localhost", 5672);
-            Mockito.verify(connectionFactory, Mockito.atLeastOnce()).createConnection();
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            JmsConnectionFactory mock = jmsConnectionFactoryMockedConstruction.constructed().get(0);
+            Mockito.verify(mock, Mockito.atLeastOnce()).createConnection();
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Starting server");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Finished starting server");
         } catch (Exception e) {
             fail("This should not happen");
@@ -119,9 +122,9 @@ public class MessageBusServerTest {
             messageBusServer.initialize();
             Mockito.verify(connection, Mockito.atLeastOnce()).createSession(false, Session.CLIENT_ACKNOWLEDGE);
             Mockito.verify(connection, Mockito.atLeastOnce()).start();
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Starting initialization");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "Finished initialization");
         } catch (Exception e) {
             fail("This should not happen");
@@ -141,9 +144,9 @@ public class MessageBusServerTest {
             messageBusServer.stopServer();
             Mockito.verify(session, Mockito.atLeastOnce()).close();
             Mockito.verify(connection, Mockito.atLeastOnce()).close();
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "stopping server started");
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logDebug(MODULE_NAME, "stopped server");
         } catch (Exception e) {
             fail("This should not happen");
@@ -178,8 +181,8 @@ public class MessageBusServerTest {
     @Test
     public void throwsExceptionWhenStoppingProducerAndConsumer() {
         try {
-            PowerMockito.doThrow(mock(JMSException.class)).when(messageProducer).close();
-            PowerMockito.doThrow(mock(JMSException.class)).when(messageConsumer).close();
+            Mockito.doThrow(mock(JMSException.class)).when(messageProducer).close();
+            Mockito.doThrow(mock(JMSException.class)).when(messageConsumer).close();
             messageBusServer.startServer("localhost", 5672);
             messageBusServer.initialize();
             messageBusServer.createConsumer("consumer");
@@ -187,9 +190,9 @@ public class MessageBusServerTest {
             messageBusServer.stopServer();
             Mockito.verify(messageConsumer, Mockito.atLeastOnce()).close();
             Mockito.verify(messageProducer, Mockito.atLeast(2)).close();
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Error closing consumer"), any());
-            PowerMockito.verifyStatic(LoggingService.class, atLeastOnce());
+            Mockito.verify(LoggingService.class, atLeastOnce());
             LoggingService.logError(eq(MODULE_NAME), eq("Error closing producer"), any());
         } catch (Exception e) {
             fail("This should not happen");
@@ -206,9 +209,9 @@ public class MessageBusServerTest {
             messageBusServer.initialize();
             messageBusServer.createConsumer("consumer");
             assertEquals(messageConsumer, messageBusServer.getConsumer("consumer"));
-            PowerMockito.verifyStatic(LoggingService.class, times(1));
+            Mockito.verify(LoggingService.class, times(1));
             LoggingService.logDebug(MODULE_NAME, "Starting create consumer");
-            PowerMockito.verifyStatic(LoggingService.class, times(1));
+            Mockito.verify(LoggingService.class, times(1));
             LoggingService.logDebug(MODULE_NAME, "Finished create consumer");
         } catch (Exception e) {
             fail("This should never happen");

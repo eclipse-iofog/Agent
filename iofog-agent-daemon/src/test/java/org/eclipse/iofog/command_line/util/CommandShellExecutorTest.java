@@ -1,7 +1,7 @@
 package org.eclipse.iofog.command_line.util;
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,44 +12,35 @@ package org.eclipse.iofog.command_line.util;
  *
  */
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-
-import static org.junit.Assert.*;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.spy;
 
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({CommandShellExecutor.class})
+@ExtendWith(MockitoExtension.class)
 public class CommandShellExecutorTest {
-    private CommandShellExecutor commandShellExecutor;
     private CommandShellResultSet<List<String>, List<String>> commandShellResultSet;
     private String command;
     List<String> value;
     List<String> errors;
 
-    @Before
-    public void setUp() throws Exception {
-        commandShellExecutor = spy(new CommandShellExecutor());
+    @BeforeAll
+    public static void setUp() throws Exception {
+        spy(new CommandShellExecutor());
     }
 
-    @After
-    public void tearDown() throws Exception {
-        command = null;
-        value = null;
-        errors = null;
-        commandShellResultSet = null;
+    @AfterAll
+    public static void tearDown() throws Exception {
     }
 
     /**
@@ -63,7 +54,7 @@ public class CommandShellExecutorTest {
         value.add("Iofog");
         errors = new ArrayList<>();
         commandShellResultSet = new CommandShellResultSet<>(value, errors);
-        assertEquals(commandShellResultSet, commandShellExecutor.executeCommand(command));
+        assertEquals(commandShellResultSet, CommandShellExecutor.executeCommand(command));
     }
 
     /**
@@ -76,7 +67,7 @@ public class CommandShellExecutorTest {
         errors = new ArrayList<>();
         errors.add("/bin/sh: some: command not found");
         commandShellResultSet = new CommandShellResultSet<>(value, errors);
-        assertNotNull( commandShellExecutor.executeCommand(command));
+        Assertions.assertNotNull( CommandShellExecutor.executeCommand(command));
     }
 
     /**
@@ -89,7 +80,7 @@ public class CommandShellExecutorTest {
         errors = new ArrayList<>();
         errors.add("/bin/echo: /bin/echo: cannot execute binary file");
         commandShellResultSet = new CommandShellResultSet<>(value, errors);
-        assertNotNull(commandShellExecutor.executeScript(command, "agent"));
+        Assertions.assertNotNull(CommandShellExecutor.executeScript(command, "agent"));
     }
 
     /**
@@ -101,7 +92,7 @@ public class CommandShellExecutorTest {
         value = new ArrayList<>();
         errors = new ArrayList<>();
         commandShellResultSet = new CommandShellResultSet<>(value, errors);
-        assertNotNull(commandShellExecutor.executeDynamicCommand(command,commandShellResultSet,
+        Assertions.assertNotNull(CommandShellExecutor.executeDynamicCommand(command,commandShellResultSet,
                 new AtomicBoolean(true),new Thread()));
 
     }
@@ -115,7 +106,7 @@ public class CommandShellExecutorTest {
         value = new ArrayList<>();
         errors = new ArrayList<>();
         commandShellResultSet = new CommandShellResultSet<>(value, errors);
-        assertNotNull(commandShellExecutor.executeDynamicCommand(command,commandShellResultSet,
+        Assertions.assertNotNull(CommandShellExecutor.executeDynamicCommand(command,commandShellResultSet,
                 new AtomicBoolean(false),new Thread()));
 
     }

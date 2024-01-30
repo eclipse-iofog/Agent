@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.iofog.network.IOFogNetworkInterface;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -52,7 +52,7 @@ public class LogFormatter extends Formatter {
 		jsonObjectBuilder.add("message", record.getMessage());
 		if (record.getThrown() != null) {
 			jsonObjectBuilder.add("exception_message", record.getThrown().getLocalizedMessage());
-			jsonObjectBuilder.add("stacktrace", ExceptionUtils.getFullStackTrace(record.getThrown()));
+			jsonObjectBuilder.add("stacktrace", ExceptionUtils.getStackTrace(record.getThrown()));
 		}
 		return jsonObjectBuilder.build().toString().concat("\n");
 	}

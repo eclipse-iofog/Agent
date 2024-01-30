@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,29 +12,33 @@
  */
 package org.eclipse.iofog.status_reporter;
 
-import static org.junit.Assert.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import static org.powermock.api.mockito.PowerMockito.spy;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.spy;
 
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({StatusReporterStatus.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StatusReporterStatusTest {
 	private StatusReporterStatus statusReporterStatus;
-	private long lastUpdate = System.currentTimeMillis();
-	private long systemTime = System.currentTimeMillis();
+	private final long lastUpdate = System.currentTimeMillis();
+	private final long systemTime = System.currentTimeMillis();
 	/**
 	 * @throws Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		statusReporterStatus = spy(new StatusReporterStatus());
 	}
@@ -42,7 +46,7 @@ public class StatusReporterStatusTest {
 	/**
 	 * @throws Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -51,12 +55,10 @@ public class StatusReporterStatusTest {
 	 */
 	@Test
 	public void testGetterAndSetter() {
-		
+
 		assertNotNull(statusReporterStatus.setLastUpdate(lastUpdate));
 		assertNotNull(statusReporterStatus.setSystemTime(systemTime));
-		assertNotNull(statusReporterStatus.getLastUpdate());
-		assertNotNull(statusReporterStatus.getSystemTime());
-		assertEquals(lastUpdate, statusReporterStatus.getLastUpdate());
+        assertEquals(lastUpdate, statusReporterStatus.getLastUpdate());
 		assertEquals(systemTime, statusReporterStatus.getSystemTime());
 		assertEquals(statusReporterStatus.setLastUpdate(lastUpdate).getLastUpdate(), lastUpdate);
 		assertEquals(statusReporterStatus.setSystemTime(systemTime).getSystemTime(), systemTime);

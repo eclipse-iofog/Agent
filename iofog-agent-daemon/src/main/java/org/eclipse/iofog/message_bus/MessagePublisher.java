@@ -17,7 +17,7 @@ import org.eclipse.iofog.microservice.Microservice;
 import org.eclipse.iofog.microservice.Route;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.jms.*;
+import jakarta.jms.*;
 import java.util.List;
 
 import static org.eclipse.iofog.message_bus.MessageBus.MODULE_NAME;
@@ -66,7 +66,7 @@ public class MessagePublisher implements AutoCloseable{
 		for (MessageProducer producer: producers) {
 			try {
 				TextMessage msg = MessageBusServer.createMessage(message.toJson().toString());
-				producer.send(msg, DeliveryMode.NON_PERSISTENT, javax.jms.Message.DEFAULT_PRIORITY, javax.jms.Message.DEFAULT_TIME_TO_LIVE);
+				producer.send(msg, DeliveryMode.NON_PERSISTENT, jakarta.jms.Message.DEFAULT_PRIORITY, jakarta.jms.Message.DEFAULT_TIME_TO_LIVE);
 			} catch (Exception e) {
 				logError(MODULE_NAME, "Message Publisher (" + this.name + ") unable to send message",
 						new AgentSystemException(e.getMessage(), e));

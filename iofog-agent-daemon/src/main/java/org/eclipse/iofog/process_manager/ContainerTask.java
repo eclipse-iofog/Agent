@@ -14,7 +14,7 @@ package org.eclipse.iofog.process_manager;
 
 import com.github.dockerjava.api.model.Container;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 /**
  * represents tasks applied on a {@link Container}

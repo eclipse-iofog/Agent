@@ -1,7 +1,9 @@
 description = 'iofog-version-controller'
 
-task copyJar(type: Copy) {
-    from ("$buildDir/libs/") {
+tasks.register('copy', Copy)
+copy {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from('build/libs/') {
         include "*.jar"
     }
     into file('../packaging/iofog-agent/usr/bin/')

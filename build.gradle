@@ -1,5 +1,6 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "5.0.0" apply false
+    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
+    id 'java'
 }
 
 allprojects {
@@ -15,11 +16,12 @@ subprojects {
         mavenCentral()
         mavenLocal()
     }
-
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
-    task sourcesJar(type: Jar) {
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    tasks.register('sourcesJar', Jar)
+    sourcesJar {
         from sourceSets.main.allJava
         archiveClassifier = 'sources'
     }

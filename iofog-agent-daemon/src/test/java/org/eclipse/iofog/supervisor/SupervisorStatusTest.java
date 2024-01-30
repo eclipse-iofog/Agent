@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,39 +13,43 @@
 package org.eclipse.iofog.supervisor;
 
 import org.eclipse.iofog.utils.Constants;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.spy;
+
 
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({SupervisorStatus.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SupervisorStatusTest {
     private SupervisorStatus supervisorStatus;
     private long daemonLastStart;
     private long operationDuration;
 
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        supervisorStatus = new SupervisorStatus();
-        daemonLastStart = 10000l;
-        operationDuration = 5000l;
+        supervisorStatus = spy(new SupervisorStatus());
+        daemonLastStart = 10000L;
+        operationDuration = 5000L;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         supervisorStatus = null;
-        daemonLastStart = 0l;
-        operationDuration = 0l;
+        daemonLastStart = 0L;
+        operationDuration = 0L;
     }
 
     /**
@@ -54,7 +58,7 @@ public class SupervisorStatusTest {
     @Test
     public void testSetModuleStatusWithInvalidValue(){
         supervisorStatus.setModuleStatus(8, Constants.ModulesStatus.STARTING);
-        assertEquals(null, supervisorStatus.getModuleStatus(8));
+        assertNull(supervisorStatus.getModuleStatus(8));
     }
 
     /**
@@ -89,7 +93,7 @@ public class SupervisorStatusTest {
      */
     @Test
     public void testWhenOperationDurationIsGreaterThanDaemonLAstStart(){
-        operationDuration = 100000l;
+        operationDuration = 100000L;
         assertEquals(daemonLastStart, supervisorStatus.setDaemonLastStart(daemonLastStart).getDaemonLastStart());
         assertEquals((operationDuration - daemonLastStart), supervisorStatus.setOperationDuration(operationDuration).getOperationDuration());
     }

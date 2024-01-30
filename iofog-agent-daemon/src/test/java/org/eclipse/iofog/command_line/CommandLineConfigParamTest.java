@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,36 +12,32 @@
  */
 package org.eclipse.iofog.command_line;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.*;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({CommandLineConfigParam.class})
+@ExtendWith(MockitoExtension.class)
 public class CommandLineConfigParamTest {
     private CommandLineConfigParam commandLineConfigParam;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         commandLineConfigParam = mock(CommandLineConfigParam.class);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         commandLineConfigParam = null;
     }
-    
+
     @SuppressWarnings("static-access")
     @Test
     public void testGetCommandName() {
@@ -202,7 +198,7 @@ public class CommandLineConfigParamTest {
 
     @Test
     public void testGetAllCmdTextNames() {
-        assertTrue(CommandLineConfigParam.getAllCmdTextNames().size() != 0);
+        assertFalse(CommandLineConfigParam.getAllCmdTextNames().isEmpty());
     }
 
     @Test

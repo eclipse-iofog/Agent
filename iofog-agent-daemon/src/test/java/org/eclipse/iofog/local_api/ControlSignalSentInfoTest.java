@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,34 +12,37 @@
  */
 package org.eclipse.iofog.local_api;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ControlSignalSentInfo.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ControlSignalSentInfoTest {
     private ControlSignalSentInfo controlSignalSentInfo;
     private int sendTryCount = 0;
     private long timeMillis;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         sendTryCount = 5;
         timeMillis = System.currentTimeMillis();
-        controlSignalSentInfo = PowerMockito.spy(new ControlSignalSentInfo(sendTryCount, timeMillis));
+        controlSignalSentInfo = Mockito.spy(new ControlSignalSentInfo(sendTryCount, timeMillis));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     }
 

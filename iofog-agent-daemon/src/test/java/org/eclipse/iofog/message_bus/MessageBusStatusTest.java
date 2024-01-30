@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,30 +12,32 @@
  */
 package org.eclipse.iofog.message_bus;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.reset;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.mockito.Mockito.spy;
 
 /**
  * @author nehanaithani
  *
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({MessageBusStatus.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class MessageBusStatusTest {
     private MessageBusStatus messageBusStatus;
     private long processedMessages;
     private float averageSpeed;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         messageBusStatus = spy(new MessageBusStatus());
         processedMessages = 1000L;
@@ -43,7 +45,7 @@ public class MessageBusStatusTest {
 
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         reset(messageBusStatus);
         processedMessages = 0;

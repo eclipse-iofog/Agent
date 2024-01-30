@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,36 +12,36 @@
  */
 package org.eclipse.iofog.process_manager;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.reset;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ContainerTask.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ContainerTaskTest {
     private ContainerTask containerTask;
     private ContainerTask.Tasks task;
     private String microserviceId;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         task = ContainerTask.Tasks.ADD;
         microserviceId = "microserviceId";
         containerTask = new ContainerTask(task, microserviceId);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         microserviceId = null;
     }
@@ -78,9 +78,9 @@ public class ContainerTaskTest {
     @Test
     public void testEquals() {
         ContainerTask newContainerTask = new ContainerTask(task, microserviceId);
-        assertTrue(containerTask.equals(newContainerTask));
+        assertEquals(containerTask, newContainerTask);
         ContainerTask anotherTask = new ContainerTask(ContainerTask.Tasks.REMOVE_WITH_CLEAN_UP, microserviceId);
-        assertFalse(containerTask.equals(anotherTask));
+        assertNotEquals(containerTask, anotherTask);
     }
 
     /**
@@ -89,9 +89,8 @@ public class ContainerTaskTest {
     @Test
     public void testHashCodeWhenObjectAreEqual() {
         ContainerTask newContainerTask = new ContainerTask(task, microserviceId);
-        assertTrue(containerTask.equals(newContainerTask));
-        assertEquals("When Objects are equal they have equal hashcode",
-                containerTask.hashCode(), newContainerTask.hashCode());
+        assertEquals(containerTask, newContainerTask);
+        assertEquals(containerTask.hashCode(), newContainerTask.hashCode());
     }
 
     /**
@@ -100,8 +99,7 @@ public class ContainerTaskTest {
     @Test
     public void testHashCodeWhenObjectAreNotEqual() {
         ContainerTask anotherTask = new ContainerTask(ContainerTask.Tasks.REMOVE_WITH_CLEAN_UP, microserviceId);
-        assertFalse(containerTask.equals(anotherTask));
-        assertNotEquals("When Objects are not equal then they have different hashcode",
-                containerTask.hashCode(), anotherTask.hashCode());
+        assertNotEquals(containerTask, anotherTask);
+        assertNotEquals(containerTask.hashCode(), anotherTask.hashCode());
     }
 }

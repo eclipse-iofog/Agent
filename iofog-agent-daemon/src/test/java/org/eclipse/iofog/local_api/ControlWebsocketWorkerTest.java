@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -18,72 +18,72 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.*;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ControlWebsocketWorker.class, LoggingService.class, ChannelHandlerContext.class, ControlSignalSentInfo.class,
-        ByteBufAllocator.class, ByteBuf.class, Channel.class, WebsocketUtil.class, StatusReporter.class, LocalApiStatus.class})
-@Ignore
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ControlWebsocketWorkerTest {
     private String MODULE_NAME;
     private ControlWebsocketWorker controlWebsocketWorker;
     private ChannelHandlerContext context;
     private ControlSignalSentInfo controlSignalSentInfo;
-    private ByteBufAllocator byteBufAllocator;
-    private ByteBuf byteBuf;
-    private Channel channel;
     private LocalApiStatus localApiStatus;
-    //global timeout rule
-    @Rule
-    public Timeout globalTimeout = Timeout.millis(100000l);
-
-    @Before
+    private MockedStatic<StatusReporter> statusReporterMockedStatic;
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+    private MockedStatic<WebsocketUtil> websocketUtilMockedStatic;
+    @BeforeEach
     public void setUp() throws Exception {
         MODULE_NAME = "Local API";
-        context = PowerMockito.mock(ChannelHandlerContext.class);
-        channel = PowerMockito.mock(Channel.class);
-        byteBufAllocator = PowerMockito.mock(ByteBufAllocator.class);
-        controlSignalSentInfo = PowerMockito.mock(ControlSignalSentInfo.class);
-        localApiStatus = PowerMockito.mock(LocalApiStatus.class);
-        PowerMockito.mockStatic(LoggingService.class);
-        PowerMockito.mockStatic(StatusReporter.class);
-        PowerMockito.mockStatic(WebsocketUtil.class);
-        controlWebsocketWorker = PowerMockito.spy(new ControlWebsocketWorker());
-        byteBuf = PowerMockito.mock(ByteBuf.class);
-        PowerMockito.when(context.alloc()).thenReturn(byteBufAllocator);
-        PowerMockito.when(byteBufAllocator.buffer()).thenReturn(byteBuf);
-        PowerMockito.when(context.channel()).thenReturn(channel);
-        PowerMockito.when(StatusReporter.setLocalApiStatus()).thenReturn(localApiStatus);
+        context = Mockito.mock(ChannelHandlerContext.class);
+        Channel channel = Mockito.mock(Channel.class);
+        ByteBufAllocator byteBufAllocator = Mockito.mock(ByteBufAllocator.class);
+        controlSignalSentInfo = Mockito.mock(ControlSignalSentInfo.class);
+        localApiStatus = Mockito.mock(LocalApiStatus.class);
+        loggingServiceMockedStatic = Mockito.mockStatic(LoggingService.class);
+        statusReporterMockedStatic = Mockito.mockStatic(StatusReporter.class);
+        websocketUtilMockedStatic = Mockito.mockStatic(WebsocketUtil.class);
+        controlWebsocketWorker = Mockito.spy(new ControlWebsocketWorker());
+        ByteBuf byteBuf = Mockito.mock(ByteBuf.class);
+        Mockito.when(context.alloc()).thenReturn(byteBufAllocator);
+        Mockito.when(byteBufAllocator.buffer()).thenReturn(byteBuf);
+        Mockito.when(context.channel()).thenReturn(channel);
+        Mockito.when(StatusReporter.setLocalApiStatus()).thenReturn(localApiStatus);
 
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         Mockito.reset(controlWebsocketWorker, controlSignalSentInfo);
         WebSocketMap.unackControlSignalsMap.remove(context);
+        statusReporterMockedStatic.close();
+        loggingServiceMockedStatic.close();
+        websocketUtilMockedStatic.close();
     }
 
     /**
      * Test run when WebSocketMap.unackControlSignalsMap is empty
      */
     @Test
-    public void testRunWhenUnackControlSignalsMapIsEmpty() {
+    public void testRunWhenUnAckControlSignalsMapIsEmpty() {
         controlWebsocketWorker.run();
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Initiating control signals for unacknowledged signals");
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logInfo(MODULE_NAME,"Finished Initiating control signals for unacknowledged signals");
+        Mockito.verify(LoggingService.class);
+        LoggingService.logDebug(MODULE_NAME,"Initiating control signals for unacknowledged signals");
+        Mockito.verify(LoggingService.class);
+        LoggingService.logDebug(MODULE_NAME,"Finished Initiating control signals for unacknowledged signals");
     }
 
     /**
@@ -91,12 +91,11 @@ public class ControlWebsocketWorkerTest {
      * controlSignalSentInfo.getSendTryCount() < 10
      */
     @Test
-    public void testRunWhenUnackControlSignalsMapIsNotEmpty() {
+    public void testRunWhenUnAckControlSignalsMapIsNotEmpty() {
         try {
             WebSocketMap.unackControlSignalsMap.put(context, controlSignalSentInfo);
             controlWebsocketWorker.run();
             Mockito.verify(controlSignalSentInfo, Mockito.atLeastOnce()).getSendTryCount();
-            PowerMockito.verifyPrivate(controlWebsocketWorker).invoke("initiateControlSignal", Mockito.eq(context));
             Mockito.verify(context).alloc();
             Mockito.verify(context).channel();
         } catch (Exception e) {
@@ -109,14 +108,13 @@ public class ControlWebsocketWorkerTest {
      * controlSignalSentInfo.getSendTryCount() > 10
      */
     @Test
-    public void testRunWhenUnackControlSignalsMapIsNotEmptyAndSendTryCountIsGreaterThan10() {
+    public void testRunWhenUnAckControlSignalsMapIsNotEmptyAndSendTryCountIsGreaterThan10() {
         try {
             WebSocketMap.unackControlSignalsMap.put(context, controlSignalSentInfo);
-            PowerMockito.when(controlSignalSentInfo.getSendTryCount()).thenReturn(11);
+            Mockito.when(controlSignalSentInfo.getSendTryCount()).thenReturn(11);
             controlWebsocketWorker.run();
             Mockito.verify(controlSignalSentInfo, Mockito.atLeastOnce()).getSendTryCount();
-            PowerMockito.verifyPrivate(controlWebsocketWorker, Mockito.never()).invoke("initiateControlSignal", Mockito.eq(context));
-            PowerMockito.verifyStatic(WebsocketUtil.class);
+            Mockito.verify(WebsocketUtil.class);
             WebsocketUtil.removeWebsocketContextFromMap(Mockito.eq(context), Mockito.eq(WebSocketMap.controlWebsocketMap));
             Mockito.verify(localApiStatus).setOpenConfigSocketsCount(Mockito.eq(WebSocketMap.controlWebsocketMap.size()));
         } catch (Exception e) {

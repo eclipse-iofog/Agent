@@ -113,7 +113,7 @@ public class Supervisor implements IOFogModule {
         logInfo(" Started " + ioFogModule.getModuleName());
     }
 
-    private void operationDuration(){
+    protected void operationDuration(){
     	logDebug(" Start checking operation duration ");
         while (true) {
 			StatusReporter.setSupervisorStatus()

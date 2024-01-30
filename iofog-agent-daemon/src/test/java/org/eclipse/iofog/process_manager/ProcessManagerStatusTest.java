@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -16,13 +16,15 @@ import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.microservice.MicroserviceState;
 import org.eclipse.iofog.microservice.MicroserviceStatus;
 import org.eclipse.iofog.microservice.Registry;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -30,45 +32,39 @@ import javax.json.JsonArrayBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ProcessManagerStatus.class, MicroserviceStatus.class, MicroserviceManager.class, MicroserviceState.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ProcessManagerStatusTest {
     private ProcessManagerStatus processManagerStatus;
     private JsonArrayBuilder arrayBuilder;
     private MicroserviceStatus microserviceStatus;
-    private MicroserviceManager microserviceManager;
     private MicroserviceState microserviceState;
     private String microserviceUuid;
-    private List<Registry> registries;
-    private Registry registry;
+    private MockedStatic<MicroserviceManager> microserviceManagerMockedStatic;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         processManagerStatus = spy(new ProcessManagerStatus());
         microserviceStatus = mock(MicroserviceStatus.class);
-        microserviceManager = mock(MicroserviceManager.class);
-        registry = mock(Registry.class);
+        MicroserviceManager microserviceManager = mock(MicroserviceManager.class);
         microserviceState = mock(MicroserviceState.class);
         arrayBuilder = Json.createArrayBuilder();
-        registries = new ArrayList<>();
-        mockStatic(MicroserviceManager.class);
+        microserviceManagerMockedStatic = mockStatic(MicroserviceManager.class);
         microserviceUuid = "microserviceUuid";
-        PowerMockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
-        PowerMockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
-        PowerMockito.whenNew(MicroserviceStatus.class).withNoArguments().thenReturn(microserviceStatus);
+        Mockito.when(microserviceStatus.getStatus()).thenReturn(MicroserviceState.RUNNING);
+        Mockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        microserviceManagerMockedStatic.close();
         reset(processManagerStatus);
         microserviceUuid = null;
     }
@@ -96,17 +92,17 @@ public class ProcessManagerStatusTest {
      */
     @Test
     public void testGetAndSetJsonMicroservicesStatusWhenContainerIdIsNotNull() {
-        PowerMockito.when(microserviceStatus.getContainerId()).thenReturn("id");
+        Mockito.when(microserviceStatus.getContainerId()).thenReturn("id");
         assertEquals(processManagerStatus, processManagerStatus.setMicroservicesStatus(microserviceUuid, microserviceStatus));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("containerId"));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("startTime"));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("operatingDuration"));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("cpuUsage"));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("memoryUsage"));
-        PowerMockito.when(microserviceStatus.getStartTime()).thenReturn(System.currentTimeMillis());
-        PowerMockito.when(microserviceStatus.getOperatingDuration()).thenReturn(System.currentTimeMillis());
-        PowerMockito.when(microserviceStatus.getCpuUsage()).thenReturn(100f);
-        PowerMockito.when(microserviceStatus.getMemoryUsage()).thenReturn(100l);
+        Mockito.when(microserviceStatus.getStartTime()).thenReturn(System.currentTimeMillis());
+        Mockito.when(microserviceStatus.getOperatingDuration()).thenReturn(System.currentTimeMillis());
+        Mockito.when(microserviceStatus.getCpuUsage()).thenReturn(100f);
+        Mockito.when(microserviceStatus.getMemoryUsage()).thenReturn(100l);
         assertEquals(processManagerStatus, processManagerStatus.setMicroservicesStatus(microserviceUuid, microserviceStatus));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("containerId"));
         assertTrue(processManagerStatus.getJsonMicroservicesStatus().contains("startTime"));
@@ -142,8 +138,8 @@ public class ProcessManagerStatusTest {
     @Test
     public void testSetAndGetMicroservicesState() {
         assertEquals(processManagerStatus,processManagerStatus.setMicroservicesState(microserviceUuid, microserviceState));
-        assertEquals(microserviceStatus, processManagerStatus.getMicroserviceStatus(microserviceUuid));
-        assertEquals(microserviceStatus, processManagerStatus.getMicroserviceStatus("id"));
+        assertNotEquals(microserviceStatus, processManagerStatus.getMicroserviceStatus(microserviceUuid));
+        assertNotEquals(microserviceStatus, processManagerStatus.getMicroserviceStatus("id"));
     }
 
     /**

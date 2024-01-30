@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -13,36 +13,40 @@
 package org.eclipse.iofog.utils;
 
 import org.eclipse.iofog.command_line.CommandLineConfigParam;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import static org.junit.Assert.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({CmdProperties.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CmdPropertiesTest {
+    private MockedStatic<CmdProperties> cmdPropertiesMockedStatic;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        mockStatic(CmdProperties.class, Mockito.CALLS_REAL_METHODS);
+        cmdPropertiesMockedStatic = Mockito.mockStatic(CmdProperties.class, Mockito.CALLS_REAL_METHODS);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        cmdPropertiesMockedStatic.close();
     }
 
     @Test
     public void getVersionMessage() {
-        assertEquals("ioFog %s \nCopyright (C) 2022 Edgeworx, Inc. \nEclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \nhttps://www.eclipse.org/legal/epl-v20.html",
+        assertEquals("ioFog %s \nCopyright (C) 2018-2024 Edgeworx, Inc. \nEclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \nhttps://www.eclipse.org/legal/epl-v20.html",
                 CmdProperties.getVersionMessage());
     }
 

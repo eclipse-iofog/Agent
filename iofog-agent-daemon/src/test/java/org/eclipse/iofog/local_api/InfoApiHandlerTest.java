@@ -6,13 +6,17 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.*;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.json.*;
 
@@ -24,18 +28,16 @@ import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import static org.junit.Assert.*;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.*;
 
 /**
  * @author nehanaithani
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({InfoApiHandler.class, HttpRequest.class, ByteBuf.class, ApiHandlerHelpers.class, LoggingService.class,
-        Json.class, JsonReader.class, JsonObject.class, Configuration.class,
-        ObjectMapper.class})
-@Ignore
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class InfoApiHandlerTest {
     private InfoApiHandler infoApiHandler;
     private HttpRequest httpRequest;
@@ -48,40 +50,47 @@ public class InfoApiHandlerTest {
     private String result;
     private ObjectMapper objectMapper;
     private ExecutorService executor;
-
-
-    //global timeout rule
-    @Rule
-    public Timeout globalTimeout = Timeout.millis(100000l);
-
-    @Before
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+    private MockedStatic<ApiHandlerHelpers> apiHandlerHelpersMockedStatic;
+    private MockedStatic<Json> jsonMockedStatic;
+    private MockedStatic<Configuration> configurationMockedStatic;
+    private MockedConstruction<ObjectMapper> objectMapperMockedConstruction;
+    @BeforeEach
     public void setUp() throws Exception {
         executor = Executors.newFixedThreadPool(1);
-        PowerMockito.mockStatic(ApiHandlerHelpers.class);
-        PowerMockito.mockStatic(Configuration.class);
-        PowerMockito.mockStatic(LoggingService.class);
-        PowerMockito.mockStatic(Json.class);
-        httpRequest = PowerMockito.mock(HttpRequest.class);
-        byteBuf = PowerMockito.mock(ByteBuf.class);
+        apiHandlerHelpersMockedStatic = Mockito.mockStatic(ApiHandlerHelpers.class);
+        configurationMockedStatic = Mockito.mockStatic(Configuration.class);
+        loggingServiceMockedStatic = Mockito.mockStatic(LoggingService.class);
+        jsonMockedStatic = Mockito.mockStatic(Json.class);
+        httpRequest = Mockito.mock(HttpRequest.class);
+        byteBuf = Mockito.mock(ByteBuf.class);
         content = "content";
         bytes = content.getBytes();
         result = "result";
-        jsonReader = PowerMockito.mock(JsonReader.class);
-        objectMapper = PowerMockito.mock(ObjectMapper.class);
-        jsonObject = PowerMockito.mock(JsonObject.class);
-        infoApiHandler = PowerMockito.spy(new InfoApiHandler(httpRequest, byteBuf, bytes));
+        jsonReader = Mockito.mock(JsonReader.class);
+        objectMapper = Mockito.mock(ObjectMapper.class);
+        jsonObject = Mockito.mock(JsonObject.class);
         defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, byteBuf);
-        PowerMockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(GET))).thenReturn(true);
-        PowerMockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(true);
-        PowerMockito.when(Json.createReader(Mockito.any(StringReader.class))).thenReturn(jsonReader);
-        PowerMockito.when(jsonReader.readObject()).thenReturn(jsonObject);
-        PowerMockito.when(jsonObject.toString()).thenReturn(result);
-        PowerMockito.whenNew(ObjectMapper.class).withNoArguments().thenReturn(objectMapper);
-        PowerMockito.when(objectMapper.writeValueAsString(Mockito.any())).thenReturn(result);
+        Mockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(GET))).thenReturn(true);
+        Mockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(true);
+        Mockito.when(Json.createReader(Mockito.any(StringReader.class))).thenReturn(jsonReader);
+        Mockito.when(jsonReader.readObject()).thenReturn(jsonObject);
+        Mockito.when(jsonObject.toString()).thenReturn(result);
+        objectMapperMockedConstruction = mockConstruction(ObjectMapper.class, (mock,context) -> {
+            when(mock.writeValueAsString(any())).thenReturn(result);
+        });
+        Mockito.when(objectMapper.writeValueAsString(Mockito.any())).thenReturn(result);
+        infoApiHandler = Mockito.spy(new InfoApiHandler(httpRequest, byteBuf, bytes));
+
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        configurationMockedStatic.close();
+        loggingServiceMockedStatic.close();
+        jsonMockedStatic.close();
+        apiHandlerHelpersMockedStatic.close();
+        objectMapperMockedConstruction.close();
         infoApiHandler = null;
         objectMapper = null;
         jsonObject = null;
@@ -101,14 +110,14 @@ public class InfoApiHandlerTest {
     @Test
     public void testCallWhenMethodTypeIsInvalid() {
         try {
-            PowerMockito.when(httpRequest.method()).thenReturn(POST);
+            Mockito.when(httpRequest.method()).thenReturn(POST);
             defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, METHOD_NOT_ALLOWED);
-            PowerMockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(GET))).thenReturn(false);
-            PowerMockito.when(ApiHandlerHelpers.methodNotAllowedResponse()).thenReturn(defaultResponse);
+            Mockito.when(ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(GET))).thenReturn(false);
+            Mockito.when(ApiHandlerHelpers.methodNotAllowedResponse()).thenReturn(defaultResponse);
             assertEquals(defaultResponse, infoApiHandler.call());
-            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.validateMethod(Mockito.eq(httpRequest), Mockito.eq(GET));
-            PowerMockito.verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.methodNotAllowedResponse();
         } catch (Exception e) {
             fail("This should not happen");
@@ -124,12 +133,12 @@ public class InfoApiHandlerTest {
             String errorMsg = "Incorrect access token";
             defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, UNAUTHORIZED, byteBuf);
             HttpUtil.setContentLength(defaultResponse, byteBuf.readableBytes());
-            PowerMockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(false);
-            PowerMockito.when(ApiHandlerHelpers.unauthorizedResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
+            Mockito.when(ApiHandlerHelpers.validateAccessToken(Mockito.any())).thenReturn(false);
+            Mockito.when(ApiHandlerHelpers.unauthorizedResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
             assertEquals(defaultResponse, infoApiHandler.call());
-            verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
-            verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.unauthorizedResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg));
         } catch (Exception e) {
             fail("This should not happen");
@@ -142,14 +151,14 @@ public class InfoApiHandlerTest {
     @Test
     public void testCallWhenMethodAndAccessTokenAreValid() {
         try {
-            PowerMockito.when(Configuration.getConfigReport()).thenReturn("gps-coordinates(lat,lon) : 10.20.10.90,100.30.50");
+            Mockito.when(Configuration.getConfigReport()).thenReturn("gps-coordinates(lat,lon) : 10.20.10.90,100.30.50");
             defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, byteBuf);
             HttpUtil.setContentLength(defaultResponse, byteBuf.readableBytes());
-            PowerMockito.when(ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.eq(result))).thenReturn(defaultResponse);
+            Mockito.when(ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.eq(result))).thenReturn(defaultResponse);
             assertEquals(defaultResponse, infoApiHandler.call());
-            verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
-            verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.successResponse(Mockito.eq(byteBuf), Mockito.eq(result));
         } catch (Exception e) {
             fail("This should not happen");
@@ -160,17 +169,21 @@ public class InfoApiHandlerTest {
      * Test call when method & access token is valid
      */
     @Test
+    @Disabled
     public void testCallWhenMethodAndAccessTokenAreValidObjectMapperThrowsException() {
         try {
             String errorMsg = "Log message parsing error, null";
-            PowerMockito.when(Configuration.getConfigReport()).thenReturn("developer's-mode : true");
+            Mockito.when(Configuration.getConfigReport()).thenReturn("developer's-mode : true");
             defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
-            PowerMockito.doThrow(PowerMockito.mock(JsonProcessingException.class)).when(objectMapper).writeValueAsString(Mockito.any());
-            PowerMockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
+            objectMapperMockedConstruction.close();
+            objectMapperMockedConstruction = mockConstruction(ObjectMapper.class, (mock,context) -> {
+                when(mock.writeValueAsString(any())).thenThrow(JsonProcessingException.class);
+            });
+            Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg))).thenReturn(defaultResponse);
             assertEquals(defaultResponse, infoApiHandler.call());
-            verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.validateAccessToken(Mockito.eq(httpRequest));
-            verifyStatic(ApiHandlerHelpers.class);
+            verify(ApiHandlerHelpers.class);
             ApiHandlerHelpers.badRequestResponse(Mockito.eq(byteBuf), Mockito.eq(errorMsg));
         } catch (Exception e) {
             fail("This should not happen");

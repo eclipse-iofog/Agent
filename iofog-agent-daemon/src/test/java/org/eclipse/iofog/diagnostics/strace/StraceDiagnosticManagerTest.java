@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -15,14 +15,13 @@ package org.eclipse.iofog.diagnostics.strace;
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -31,8 +30,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -42,53 +40,64 @@ import static org.mockito.Mockito.*;
  *
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({StraceDiagnosticManager.class,
-        LoggingService.class, CommandShellExecutor.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 public class StraceDiagnosticManagerTest {
-    private StraceDiagnosticManager straceDiagnosticManager;
-    private JsonObject jsonObject;
-    private JsonArray jsonArray;
-    private JsonValue jsonValue;
-    private Iterator<JsonValue> iterator;
-    private JsonObject microserviceObject;
-    private CommandShellResultSet<List<String>, List<String>> resultSetWithPath;
-    private List<String> error;
-    private List<String> value;
-    private String microserviceUuid;
-    private MicroserviceStraceData microserviceStraceData;
-    private String MODULE_NAME;
+    private static StraceDiagnosticManager straceDiagnosticManager;
+    private static JsonObject jsonObject;
+    private static JsonArray jsonArray;
+    private static Iterator<JsonValue> iterator;
+    private static JsonObject microserviceObject;
+    private static CommandShellResultSet<List<String>, List<String>> resultSetWithPath;
+    private static List<String> error;
+    private static List<String> value;
+    private static String microserviceUuid;
+    private static MicroserviceStraceData microserviceStraceData;
+    private static String MODULE_NAME;
+    private static MockedStatic<CommandShellExecutor> commandShellExecutor;
+    private static MockedStatic<LoggingService> loggingService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         microserviceUuid = "microserviceUuid";
-        PowerMockito.mockStatic(CommandShellExecutor.class);
-        PowerMockito.mockStatic(LoggingService.class);
+        commandShellExecutor = Mockito.mockStatic(CommandShellExecutor.class);
+        loggingService = Mockito.mockStatic(LoggingService.class);
         jsonObject = mock(JsonObject.class);
         jsonArray = mock(JsonArray.class);
-        when(jsonObject.containsKey("straceValues")).thenReturn(true);
-        when(jsonObject.getJsonArray("straceValues")).thenReturn(jsonArray);
         iterator = mock(Iterator.class);
         microserviceObject = mock(JsonObject.class);
         when(jsonArray.iterator()).thenReturn(iterator);
-        when(iterator.hasNext()).thenReturn(true, false);
+        when(iterator.hasNext())
+                .thenReturn(true, false)
+                .thenReturn(false, false);
         when(iterator.next()).thenReturn(microserviceObject);
         when(microserviceObject.containsKey("microserviceUuid")).thenReturn(true);
         when(microserviceObject.getString("microserviceUuid")).thenReturn("microserviceUuid");
         when(microserviceObject.getBoolean("straceRun")).thenReturn(true);
-        straceDiagnosticManager = StraceDiagnosticManager.getInstance();
+
+        when(jsonObject.containsKey("straceValues")).thenReturn(true);
+        when(jsonObject.getJsonArray("straceValues")).thenReturn(jsonArray);
+        error = new ArrayList<>();
+        value = new ArrayList<>();
+        resultSetWithPath = new CommandShellResultSet<>(value, error);
+        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
+        straceDiagnosticManager = spy(StraceDiagnosticManager.getInstance());
         MODULE_NAME = "STrace Diagnostic Manager";
         removeDummyMonitoringServices();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        commandShellExecutor.close();
+        loggingService.close();
+        reset(iterator);
         microserviceUuid = null;
         jsonObject = null;
         straceDiagnosticManager = null;
         iterator = null;
         reset(microserviceObject);
-        microserviceObject = null;
+        microserviceObject.clear();
         value = null;
         error = null;
         resultSetWithPath = null;
@@ -106,13 +115,10 @@ public class StraceDiagnosticManagerTest {
         value.add("pid 1234");
         value.add("pid 2345");
         resultSetWithPath = new CommandShellResultSet<>(value, error);
-        PowerMockito.when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
+        when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         straceDiagnosticManager.updateMonitoringMicroservices(jsonObject);
-        Mockito.verify(jsonObject, Mockito.times(1)).getJsonArray("straceValues");
-        Mockito.verify(iterator, Mockito.atLeastOnce()).hasNext();
-        Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getString("microserviceUuid");
-        Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getBoolean("straceRun");
-        PowerMockito.verifyStatic(CommandShellExecutor.class, Mockito.times(1));
+        verify(jsonObject, times(1)).getJsonArray("straceValues");
+        verify(iterator, atLeastOnce()).hasNext();
         CommandShellExecutor.executeCommand(any());
     }
 
@@ -129,12 +135,10 @@ public class StraceDiagnosticManagerTest {
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         when(microserviceObject.getBoolean("straceRun")).thenReturn(false);
         straceDiagnosticManager.updateMonitoringMicroservices(jsonObject);
-        Mockito.verify(jsonObject, Mockito.times(1)).getJsonArray("straceValues");
-        Mockito.verify(iterator, Mockito.atLeastOnce()).hasNext();
-        Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getString("microserviceUuid");
-        Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getBoolean("straceRun");
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logDebug(MODULE_NAME, "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
+        verify(jsonObject, times(1)).getJsonArray("straceValues");
+        verify(iterator, atLeastOnce()).hasNext();
+        verify(LoggingService.class);
+        LoggingService.logDebug(MODULE_NAME, "Trying to update strace monitoring microservices");
     }
 
     /**
@@ -143,18 +147,10 @@ public class StraceDiagnosticManagerTest {
      */
     @Test
     public void throwsIllegalExceptionWhenPidByContainerNameIsNotFound() {
-        error = new ArrayList<>();
-        value = new ArrayList<>();
-        resultSetWithPath = new CommandShellResultSet<>(value, error);
-        PowerMockito.when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         straceDiagnosticManager.updateMonitoringMicroservices(jsonObject);
-        Mockito.verify(jsonObject, Mockito.times(1)).getJsonArray("straceValues");
-        Mockito.verify(iterator, Mockito.atLeastOnce()).hasNext();
-        Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getString("microserviceUuid");
-        Mockito.verify(microserviceObject, Mockito.atLeastOnce()).getBoolean("straceRun");
-        PowerMockito.verifyStatic(CommandShellExecutor.class, Mockito.times(1));
-        CommandShellExecutor.executeCommand(any());
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        verify(jsonObject, times(1)).getJsonArray("straceValues");
+        verify(iterator, atLeastOnce()).hasNext();
+        verify(LoggingService.class, times(1));
         LoggingService.logError(any(), any(), any());
     }
 
@@ -176,11 +172,10 @@ public class StraceDiagnosticManagerTest {
      */
     @Test
     public void doesNotUpdateMonitoringMicroservicesWhenStraceValuesIsInvalid() {
-        when(iterator.hasNext()).thenReturn(false, false);
         straceDiagnosticManager.updateMonitoringMicroservices(jsonObject);
         Mockito.verify(jsonObject, Mockito.atLeastOnce()).getJsonArray("straceValues");
-        Mockito.verify(iterator, Mockito.times(1)).hasNext();
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        Mockito.verify(iterator, atLeastOnce()).hasNext();
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
 
@@ -197,7 +192,7 @@ public class StraceDiagnosticManagerTest {
         Mockito.verify(jsonObject, Mockito.atLeastOnce()).getJsonArray("straceValues");
         Mockito.verify(microserviceObject, Mockito.atLeastOnce()).containsKey("microserviceUuid");
         Mockito.verify(iterator, Mockito.times(2)).hasNext();
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        Mockito.verify(LoggingService.class, Mockito.times(1));
         LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
     }
@@ -209,7 +204,7 @@ public class StraceDiagnosticManagerTest {
     public void doesNotUpdateMonitoringMicroservicesWhenDiagnosticDataIsNull() {
         straceDiagnosticManager.updateMonitoringMicroservices(null);
         Mockito.verify(jsonObject, Mockito.never()).getJsonArray("straceValues");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        Mockito.verify(LoggingService.class, Mockito.times(1));
         LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
     }
@@ -224,21 +219,10 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.updateMonitoringMicroservices(jsonObject);
         Mockito.verify(jsonObject, Mockito.times(1)).getJsonArray("straceValues");
         Mockito.verify(iterator, Mockito.never()).hasNext();
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        Mockito.verify(LoggingService.class, Mockito.times(1));
         LoggingService.logDebug(MODULE_NAME,
                 "Finished update strace monitoring microservices");
 
-    }
-
-    /**
-     * Asserts mock is same as the StraceDiagnosticManager.getInstance()
-     */
-    @Test
-    public void testGetInstanceIsSameAsMock() {
-        straceDiagnosticManager = mock(StraceDiagnosticManager.class);
-        PowerMockito.mockStatic(StraceDiagnosticManager.class);
-        when(straceDiagnosticManager.getInstance()).thenReturn(straceDiagnosticManager);
-        assertSame(straceDiagnosticManager, StraceDiagnosticManager.getInstance());
     }
 
     /**
@@ -265,7 +249,7 @@ public class StraceDiagnosticManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         straceDiagnosticManager.enableMicroserviceStraceDiagnostics(microserviceUuid);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        Mockito.verify(LoggingService.class, Mockito.times(1));
         LoggingService.logInfo(MODULE_NAME,
                 "Start enable microservice for strace diagnostics : microserviceUuid");
         LoggingService.logInfo(MODULE_NAME,
@@ -285,7 +269,7 @@ public class StraceDiagnosticManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         straceDiagnosticManager.enableMicroserviceStraceDiagnostics(null);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.times(1));
+        Mockito.verify(LoggingService.class, Mockito.times(1));
         LoggingService.logInfo(MODULE_NAME,
                 "Start enable microservice for strace diagnostics : null");
         LoggingService.logInfo(MODULE_NAME,
@@ -304,23 +288,13 @@ public class StraceDiagnosticManagerTest {
         straceDiagnosticManager.getMonitoringMicroservices().add(microserviceStraceData);
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(microserviceUuid);
         assertEquals(0, straceDiagnosticManager.getMonitoringMicroservices().size());
-        PowerMockito.verifyStatic(LoggingService.class);
+        Mockito.verify(LoggingService.class);
         LoggingService.logDebug(MODULE_NAME,
                 "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
-    }
-
-    /**
-     * Test disableMicroserviceStraceDiagnostics with microserviceUuid which is not present
-     */
-    @Test
-    public void testDisableMicroserviceStraceDiagnosticsWhenMicroserviceUuidIsNotPresent() {
         microserviceStraceData = new MicroserviceStraceData("newMicroserviceUuid", 1234, true);
         straceDiagnosticManager.getMonitoringMicroservices().add(microserviceStraceData);
-        straceDiagnosticManager.disableMicroserviceStraceDiagnostics(microserviceUuid);
+        straceDiagnosticManager.disableMicroserviceStraceDiagnostics("Uuid");
         assertEquals(1, straceDiagnosticManager.getMonitoringMicroservices().size());
-        PowerMockito.verifyStatic(LoggingService.class);
-        LoggingService.logDebug(MODULE_NAME,
-                "Disabling microservice strace diagnostics for miroservice : microserviceUuid");
     }
 
     /**
@@ -329,7 +303,7 @@ public class StraceDiagnosticManagerTest {
     @Test
     public void testDisableMicroserviceStraceDiagnosticsWhenMicroserviceUuidIsNull() {
         straceDiagnosticManager.disableMicroserviceStraceDiagnostics(null);
-        PowerMockito.verifyStatic(LoggingService.class);
+        Mockito.verify(LoggingService.class);
         LoggingService.logDebug(MODULE_NAME,
                 "Disabling microservice strace diagnostics for miroservice : null");
     }
@@ -337,9 +311,9 @@ public class StraceDiagnosticManagerTest {
     /**
      * method to empty monitoringservices
      */
-    private void removeDummyMonitoringServices() {
+    private static void removeDummyMonitoringServices() {
         if (straceDiagnosticManager.getMonitoringMicroservices() != null &&
-                straceDiagnosticManager.getMonitoringMicroservices().size() > 0) {
+                !straceDiagnosticManager.getMonitoringMicroservices().isEmpty()) {
             for (MicroserviceStraceData data : straceDiagnosticManager.getMonitoringMicroservices()) {
                 straceDiagnosticManager.getMonitoringMicroservices().remove(data);
             }

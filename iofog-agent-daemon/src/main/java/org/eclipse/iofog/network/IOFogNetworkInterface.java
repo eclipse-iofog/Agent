@@ -13,7 +13,7 @@
 
 package org.eclipse.iofog.network;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.utils.configuration.Configuration;
@@ -90,7 +90,7 @@ public class IOFogNetworkInterface {
             NetworkInterface networkInterface = NetworkInterface.getByName(configNetworkInterface);
             return getConnectedAddress(controllerUrl, networkInterface);
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to get Network Interface : " + ExceptionUtils.getFullStackTrace(e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to get Network Interface : " + ExceptionUtils.getStackTrace(e));
             throw e;
         }
     }
@@ -109,7 +109,7 @@ public class IOFogNetworkInterface {
         try {
             future.get(1, TimeUnit.SECONDS);
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name : " + ExceptionUtils.getFullStackTrace(e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to set Docker Bridge Interface Name : " + ExceptionUtils.getStackTrace(e));
             dockerBridgeInterfaceName = null;
         }
     }
@@ -144,7 +144,7 @@ public class IOFogNetworkInterface {
 
             return null;
         } catch (Exception e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + ExceptionUtils.getFullStackTrace(e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to Get OS Network Interface : " + ExceptionUtils.getStackTrace(e));
             return null;
         }
     }
@@ -174,7 +174,7 @@ public class IOFogNetworkInterface {
                 soc.close();
                 return Pair.of(networkInterface, nifAddress);
             } catch (Exception e) {
-                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " + ExceptionUtils.getFullStackTrace(e));
+                LoggingService.logWarning(MODULE_NAME, "Unable to Get Connected Address : " + ExceptionUtils.getStackTrace(e));
             }
         }
 
@@ -186,7 +186,7 @@ public class IOFogNetworkInterface {
             InetAddress ip = InetAddress.getLocalHost();
             hostname = ip.getHostName();
         } catch (UnknownHostException e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " + ExceptionUtils.getFullStackTrace(e));
+            LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " + ExceptionUtils.getStackTrace(e));
         }
         return hostname;
     }

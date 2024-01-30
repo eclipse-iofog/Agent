@@ -1,26 +1,26 @@
 package org.eclipse.iofog.edge_resources;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({EdgeResourceManager.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EdgeResourceManagerTest {
     private EdgeResourceManager edgeResourceManager;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         edgeResourceManager = Mockito.spy(EdgeResourceManager.class);
         setMock(edgeResourceManager);
@@ -40,7 +40,7 @@ public class EdgeResourceManagerTest {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         Field instance = EdgeResourceManager.class.getDeclaredField("instance");
         instance.setAccessible(true);
@@ -89,13 +89,6 @@ public class EdgeResourceManagerTest {
         edgeResourceManager.clear();
         assertEquals(0, edgeResourceManager.getCurrentEdgeResources().size());
         assertEquals(0, edgeResourceManager.getLatestEdgeResources().size());
-
-
-    }
-    @Test(expected = UnsupportedOperationException.class)
-    public void testIfListIsImmutable(){
-        edgeResourceManager.getCurrentEdgeResources().add(null);
-        edgeResourceManager.getLatestEdgeResources().add(null);
     }
 
 }

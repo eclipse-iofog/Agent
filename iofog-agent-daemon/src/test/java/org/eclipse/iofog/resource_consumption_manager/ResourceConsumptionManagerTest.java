@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2018-2024 Edgeworx, Inc.
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,19 +14,19 @@ package org.eclipse.iofog.resource_consumption_manager;
 
 import org.eclipse.iofog.command_line.util.CommandShellExecutor;
 import org.eclipse.iofog.command_line.util.CommandShellResultSet;
-import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -34,18 +34,17 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 /**
  * Agent Exception
  *
  * @author nehanaithani
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ResourceConsumptionManager.class, LoggingService.class,
-        Configuration.class, CommandShellExecutor.class, StatusReporter.class, Thread.class})
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ResourceConsumptionManagerTest {
     private ResourceConsumptionManager resourceConsumptionManager;
     private static final String MODULE_NAME = "Resource Consumption Manager";
@@ -55,42 +54,33 @@ public class ResourceConsumptionManagerTest {
     private List<String> error;
     private List<String> value;
     private Method method = null;
-    private Thread thread;
+    private MockedStatic<LoggingService> loggingServiceMockedStatic;
+    private MockedStatic<Configuration> configurationMockedStatic;
+    private MockedStatic<CommandShellExecutor> commandShellExecutorMockedStatic;
+    private MockedStatic<StatusReporter> statusReporterMockedStatic;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         resourceConsumptionManager = spy(ResourceConsumptionManager.class);
         setMock(resourceConsumptionManager);
-        PowerMockito.mockStatic(LoggingService.class);
-        PowerMockito.mockStatic(Configuration.class);
-        PowerMockito.mockStatic(CommandShellExecutor.class);
-        PowerMockito.mockStatic(StatusReporter.class);
-        PowerMockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
-        PowerMockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
-        PowerMockito.when(Configuration.getCpuLimit()).thenReturn(1.0f);
-        PowerMockito.when(Configuration.getDiskLimit()).thenReturn(1.0f);
-        PowerMockito.when(Configuration.getDiskDirectory()).thenReturn("");
-        thread = PowerMockito.mock(Thread.class);
-        whenNew(Thread.class).withParameterTypes(Runnable.class,String.class).withArguments(Mockito.any(Runnable.class), Mockito.anyString()).thenReturn(thread);
-        PowerMockito.doNothing().when(thread).start();
+        loggingServiceMockedStatic = Mockito.mockStatic(LoggingService.class);
+        configurationMockedStatic = Mockito.mockStatic(Configuration.class);
+        commandShellExecutorMockedStatic = Mockito.mockStatic(CommandShellExecutor.class);
+        statusReporterMockedStatic = Mockito.mockStatic(StatusReporter.class);
+        Mockito.when(Configuration.getGetUsageDataFreqSeconds()).thenReturn(1l);
+        Mockito.when(Configuration.getMemoryLimit()).thenReturn(1.0f);
+        Mockito.when(Configuration.getCpuLimit()).thenReturn(1.0f);
+        Mockito.when(Configuration.getDiskLimit()).thenReturn(1.0f);
+        Mockito.when(Configuration.getDiskDirectory()).thenReturn("");
+        Thread thread = Mockito.mock(Thread.class);
+        Mockito.doNothing().when(thread).start();
     }
-    /**
-     * Set a mock to the {@link ResourceConsumptionManager} instance
-     * Throws {@link RuntimeException} in case if reflection failed, see a {@link Field#set(Object, Object)} method description.
-     * @param mock the mock to be inserted to a class
-     */
-    private void setMock(ResourceConsumptionManager mock) {
-        try {
-            Field instance = ResourceConsumptionManager.class.getDeclaredField("instance");
-            instance.setAccessible(true);
-            instance.set(instance, mock);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        loggingServiceMockedStatic.close();
+        configurationMockedStatic.close();
+        commandShellExecutorMockedStatic.close();
+        statusReporterMockedStatic.close();
         if(tagFile != null && tagFile.exists()){
             tagFile.delete();
         }
@@ -106,6 +96,22 @@ public class ResourceConsumptionManagerTest {
         instance.setAccessible(true);
         instance.set(null, null);
     }
+
+    /**
+     * Set a mock to the {@link ResourceConsumptionManager} instance
+     * Throws {@link RuntimeException} in case if reflection failed, see a {@link Field#set(Object, Object)} method description.
+     * @param mock the mock to be inserted to a class
+     */
+    private void setMock(ResourceConsumptionManager mock) {
+        try {
+            Field instance = ResourceConsumptionManager.class.getDeclaredField("instance");
+            instance.setAccessible(true);
+            instance.set(instance, mock);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     /**
      * Asserts module index of resource manager is equal to constant value
@@ -146,7 +152,7 @@ public class ResourceConsumptionManagerTest {
         privateCpuLimitField.setAccessible(true);
         privateMemoryLimitField.setAccessible(true);
         resourceConsumptionManager.instanceConfigUpdated();
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logInfo(MODULE_NAME,
                 "Start Configuration instance updated");
         LoggingService.logInfo(MODULE_NAME,
@@ -166,10 +172,10 @@ public class ResourceConsumptionManagerTest {
     @Test
     public void testStartThread() {
         resourceConsumptionManager.start();
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Starting");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "started");
     }
@@ -183,7 +189,7 @@ public class ResourceConsumptionManagerTest {
         method.setAccessible(true);
         long output = (long) method.invoke(resourceConsumptionManager, "file");
         assertEquals(0f, output,0f);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Inside get directory size");
     }
@@ -201,7 +207,7 @@ public class ResourceConsumptionManagerTest {
         fw.close();
         long output = (long) method.invoke(resourceConsumptionManager, "file");
         assertEquals(5f, output,0f);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Inside get directory size");
     }
@@ -232,10 +238,10 @@ public class ResourceConsumptionManagerTest {
         tagFile.createNewFile();
         long output = (long) method.invoke(resourceConsumptionManager, "emptyDir");
         assertEquals(0f, output,0f);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Inside get directory size");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished directory size : " + output);
 
@@ -257,10 +263,10 @@ public class ResourceConsumptionManagerTest {
         fw.close();
         long output = (long) method.invoke(resourceConsumptionManager, "dir");
         assertEquals(5f, output,0f);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Inside get directory size");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished directory size : " + output);
     }
@@ -274,13 +280,13 @@ public class ResourceConsumptionManagerTest {
         method = ResourceConsumptionManager.class.getDeclaredMethod("removeArchives", float.class);
         method.setAccessible(true);
         method.invoke(resourceConsumptionManager, amount);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start remove archives : " + amount);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished remove archives : ");
-        PowerMockito.verifyStatic(Configuration.class, Mockito.atLeastOnce());
+        Mockito.verify(Configuration.class, Mockito.atLeastOnce());
         Configuration.getDiskDirectory();
     }
 
@@ -292,10 +298,10 @@ public class ResourceConsumptionManagerTest {
         method = ResourceConsumptionManager.class.getDeclaredMethod("getMemoryUsage");
         method.setAccessible(true);
         float memoryUsage = (float) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get memory usage");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get memory usage : " + memoryUsage);
     }
@@ -308,10 +314,10 @@ public class ResourceConsumptionManagerTest {
         method = ResourceConsumptionManager.class.getDeclaredMethod("getCpuUsage");
         method.setAccessible(true);
         float response = (float) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get cpu usage");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get cpu usage : " + response);
     }
@@ -328,10 +334,10 @@ public class ResourceConsumptionManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         long output = (long) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get system available memory");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get system available memory : " + output);
     }
@@ -349,10 +355,10 @@ public class ResourceConsumptionManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         long output = (long) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get system available memory");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get system available memory : " + output);
     }
@@ -370,10 +376,10 @@ public class ResourceConsumptionManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         long output = (long) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get system available memory");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get system available memory : " + output);
     }
@@ -391,10 +397,10 @@ public class ResourceConsumptionManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         float output = (float) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get total cpu");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get total cpu : " + output);
     }
@@ -412,10 +418,10 @@ public class ResourceConsumptionManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         float output = (float) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get total cpu");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get total cpu : " + output);
     }
@@ -433,10 +439,10 @@ public class ResourceConsumptionManagerTest {
         resultSetWithPath = new CommandShellResultSet<>(value, error);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         float output = (float) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get total cpu");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get total cpu : " + output);
     }
@@ -450,10 +456,10 @@ public class ResourceConsumptionManagerTest {
         method.setAccessible(true);
         when(CommandShellExecutor.executeCommand(any())).thenReturn(resultSetWithPath);
         float output = (float) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get total cpu");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get total cpu : " + output);
     }
@@ -466,10 +472,10 @@ public class ResourceConsumptionManagerTest {
         method = ResourceConsumptionManager.class.getDeclaredMethod("getAvailableDisk");
         method.setAccessible(true);
         long output = (long) method.invoke(resourceConsumptionManager);
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Start get available disk");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Finished get available disk : " + output);
     }
@@ -482,11 +488,11 @@ public class ResourceConsumptionManagerTest {
         method = ResourceConsumptionManager.class.getDeclaredMethod("parseStat", String.class);
         method.setAccessible(true);
         method.invoke(resourceConsumptionManager, "");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME,
                 "Inside parse Stat");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
-        LoggingService.logError(any(), any(),  anyObject());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
+        LoggingService.logError(any(), any(),  any());
     }
 
     /**
@@ -497,7 +503,7 @@ public class ResourceConsumptionManagerTest {
         method = ResourceConsumptionManager.class.getDeclaredMethod("parseStat", String.class);
         method.setAccessible(true);
         method.invoke(resourceConsumptionManager, "1111");
-        PowerMockito.verifyStatic(LoggingService.class, Mockito.atLeastOnce());
+        Mockito.verify(LoggingService.class, Mockito.atLeastOnce());
         LoggingService.logDebug(MODULE_NAME, "Inside parse Stat");
     }
 

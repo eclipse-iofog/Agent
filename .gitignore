@@ -13,3 +13,4 @@ iofog-agent-client/bin
 iofog-version-controller/bin
 .vscode
 bats-core
+*.iml
