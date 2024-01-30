@@ -233,6 +233,26 @@ jobs:
           PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
           PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
 
+      - name: Publish tagged deb package to packagecloud
+        if: contains(github.ref_name, '^v.*')
+        uses: danielmundi/upload-packagecloud@v1
+        with:
+          PACKAGE-NAME: iofog-agent_${{ steps.pkg_version.outputs.version }}_all.deb
+          PACKAGECLOUD-USERNAME: iofog
+          PACKAGECLOUD-REPO: iofog-agent
+          PACKAGECLOUD-DISTRIB: any/any
+          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
+
+      - name: Publish tagged rpm package to packagecloud
+        if: contains(github.ref_name, '^v.*')
+        uses: danielmundi/upload-packagecloud@v1
+        with:
+          PACKAGE-NAME: packaging/iofog-agent/iofog-agent-${{ steps.sub.outputs.result }}-1.noarch.rpm
+          PACKAGECLOUD-USERNAME: iofog
+          PACKAGECLOUD-REPO: iofog-agent
+          PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
+          PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
+
       - name: Upload Agent Artifact
         uses: actions/upload-artifact@v3
         with:

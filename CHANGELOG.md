@@ -1,6 +1,10 @@
 # Changelog
 
 ## [unreleased]
+## [v3.1.0] - 30 -June 2024
+* Migrated junit4 to junit5
+* Support for java17
+* Upgraded gradle to v8.4
 
 ## [v3.0.1] - 16- May 2022
 * Declared Agent dependency i.e. java and docker. 
