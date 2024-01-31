@@ -73,22 +73,15 @@ jobs:
       if: always()
       run: sudo bash test/deploy_ecn.bash deleteECN
 
-  Publish_dev:
+  Publish:
     runs-on: ubuntu-20.04
     needs: [Build, Integration]
     permissions:
       contents: 'read'
       id-token: 'write'
       packages: 'write'
-    outputs:
-      version: ${{ steps.step1.outputs.pkg_version }}
-    name: Publish_dev
+    name: Publish
     steps:
-      - name: Test
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
-        run: |
-          echo "I am the tag"
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -240,36 +233,6 @@ jobs:
           PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
           PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
 
-      - name: Upload Agent Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: agent
-          path: packaging/**/*
-
-  Publish_prod:
-    runs-on: ubuntu-20.04
-    needs: [ Build, Integration, Publish_dev ]
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-      packages: 'write'
-    name: Publish_prod
-    steps:
-      - run: echo  ${{needs.Publish_dev.outputs.version}}
-      - name : Test
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
-        run: |
-          echo "I am in the tag"
-      - uses: actions/download-artifact@v2
-        with:
-          name: deb-package
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: rpm-package
-
       - name: Publish tagged deb package to packagecloud
         if: startsWith(github.ref, 'refs/tags/v')
         uses: danielmundi/upload-packagecloud@v1
@@ -290,6 +253,11 @@ jobs:
           PACKAGECLOUD-DISTRIB: rpm_any/rpm_any
           PACKAGECLOUD-TOKEN: ${{ secrets.packagecloud_token }}
 
+      - name: Upload Agent Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: agent
+          path: packaging/**/*
 
 
 
