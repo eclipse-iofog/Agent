@@ -116,7 +116,7 @@ jobs:
              echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
           fi
       - name: Build and Push to GCR
-        if: (github.ref == 'refs/heads/develop') || contains(github.ref_name, '^v.*')
+        if: ${{ github.ref_name == 'develop' || startsWith(github.ref, 'refs/tags/v') }}
         id: build_push_gcr
         uses: RafikFarhad/push-to-gcr-github-action@v5-beta
         with:
