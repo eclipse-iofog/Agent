@@ -147,7 +147,7 @@ public class ConfigurationTest {
             initializeConfiguration();
             assertEquals(60,  Configuration.getPingControllerFreqSeconds());
             assertEquals(1,  Configuration.getSpeedCalculationFreqMinutes());
-            assertEquals("1.23",  Configuration.getDockerApiVersion());
+            assertEquals("1.24",  Configuration.getDockerApiVersion());
             assertEquals(60,  Configuration.getSetSystemTimeFreqSeconds());
             assertEquals("/etc/iofog-agent/cert.crt", Configuration.getControllerCert());
             assertEquals("http://localhost:54421/api/v3/",Configuration.getControllerUrl());
