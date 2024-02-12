@@ -36,6 +36,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -422,7 +423,18 @@ public final class Configuration {
     private static void updateConfigFile(String filePath, Document newFile) throws Exception {
         try {
             LoggingService.logInfo(MODULE_NAME, "Start updating configuration data to config.xml");
-            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            TransformerFactory secureFactory = TransformerFactory.newInstance();
+
+            try {
+                secureFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                secureFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                secureFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            Transformer transformer = secureFactory.newTransformer();
+
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             StreamResult result = new StreamResult(new File(filePath));
             DOMSource source = new DOMSource(newFile);
@@ -1092,6 +1104,15 @@ public final class Configuration {
 
         DOMSource source = new DOMSource(configFile);
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
+
+        try {
+                transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        } catch (Exception e) {
+                throw new RuntimeException(e);
+        }
+        
         Transformer transformer = transformerFactory.newTransformer();
         StreamResult result = new StreamResult(getCurrentConfigPath());
         transformer.transform(source, result);
