@@ -95,11 +95,11 @@ Go to [iofog.org](https://iofog.org/docs/) to learn how to deploy the ioFog Cont
 
 &ensp;- ioFog Agent Update:
 
-        sudo service iofog-agent stop       
+        sudo systemctl stop iofog-agent       
         sudo apt-get install --only-upgrade iofog-agent
-        sudo service iofog-agent start
+        sudo systemctl start iofog-agent
         or
-        sudo service iofog-agent stop
+        sudo systemctl stop iofog-agent
         sudo apt-get install --only-upgrade iofog-agent-dev (developer's version)
-        sudo service iofog-agent stop        
+        sudo systemctl stop iofog-agent        
 

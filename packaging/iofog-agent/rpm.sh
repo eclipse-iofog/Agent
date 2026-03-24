@@ -1,5 +1,15 @@
 #!/bin/bash
 
+if ! command -v docker &> /dev/null && ! command -v podman &> /dev/null; then
+    echo "================================================"
+    echo "WARNING: No container runtime detected!"
+    echo "Please install either:"
+    echo "  - docker-ce (Docker)"
+    echo "  - podman (Podman)"
+    echo "This package requires a container runtime to function."
+    echo "================================================"
+fi
+
 # killing old running processes
 for KILLPID in `ps ax | grep 'iofog-agentd' | awk ' { print $1;}'`; do
   kill -9 $KILLPID;
@@ -13,37 +23,13 @@ groupadd -r iofog-agent
 useradd -r -g iofog-agent iofog-agent
 #echo "Added iofog-agent user and group"
 
-if [ -f /etc/iofog-agent/config.xml ];
+if [ -f /etc/iofog-agent/config.yaml ];
 then
-  rm /etc/iofog-agent/config_new.xml
+  rm /etc/iofog-agent/config_new.yaml
 else
-  mv /etc/iofog-agent/config_new.xml /etc/iofog-agent/config.xml
+  mv /etc/iofog-agent/config_new.yaml /etc/iofog-agent/config.yaml
 fi
-#echo "Check for config.xml"
-
-if [ -f /etc/iofog-agent/config-development.xml ];
-then
-  rm /etc/iofog-agent/config-development_new.xml
-else
-  mv /etc/iofog-agent/config-development_new.xml /etc/iofog-agent/config-development.xml
-fi
-#echo "Check for config-development.xml"
-
-if [ -f /etc/iofog-agent/config-production.xml ];
-then
-  rm /etc/iofog-agent/config-production_new.xml
-else
-  mv /etc/iofog-agent/config-production_new.xml /etc/iofog-agent/config-production.xml
-fi
-#echo "Check for config-production.xml"
-
-if [ -f /etc/iofog-agent/config-switcher.xml ];
-then
-  rm /etc/iofog-agent/config-switcher_new.xml
-else
-  mv /etc/iofog-agent/config-switcher_new.xml /etc/iofog-agent/config-switcher.xml
-fi
-#echo "Check for config-switcher.xml"
+#echo "Check for config.yaml"
 
 if [ -f /etc/iofog-agent/cert.crt ];
 then
@@ -51,15 +37,7 @@ then
 else
   mv /etc/iofog-agent/cert_new.crt /etc/iofog-agent/cert.crt
 fi
-#echo "Check for config.xml"
-
-if [ -f /etc/iofog-agent/config-bck.xml ];
-then
-   rm /etc/iofog-agent/config-bck_new.xml
-else
-   mv /etc/iofog-agent/config-bck_new.xml /etc/iofog-agent/config-bck.xml
-fi
-#echo "Check for config-bck.xml"
+#echo "Check for cert.crt"
 
 </dev/urandom tr -dc A-Za-z0-9 | head -c32 > /etc/iofog-agent/local-api
 
@@ -77,11 +55,12 @@ chown -R :iofog-agent /var/backups/iofog-agent
 chown -R :iofog-agent /usr/share/iofog-agent
 #echo "Changed ownership of directories to iofog-agent group"
 
-chmod 774 -R /etc/iofog-agent
-chmod 774 -R /var/log/iofog-agent
-chmod 774 -R /var/lib/iofog-agent
-chmod 774 -R /var/run/iofog-agent
-chmod 774 -R /var/backups/iofog-agent
+chmod 750 -R /etc/iofog-agent
+chmod 750 -R /var/log/iofog-agent
+chmod 750 -R /var/lib/iofog-agent
+chmod 750 -R /var/run/iofog-agent
+chmod 750 -R /var/backups/iofog-agent
+chmod 750 -R /var/log/iofog-microservices
 chmod 754 -R /usr/share/iofog-agent
 #echo "Changed permissions of directories"
 
@@ -89,7 +68,7 @@ mv /dev/random /dev/random.real
 ln -s /dev/urandom /dev/random
 #echo "Moved dev pipes for netty"
 
-chmod 774 /etc/init.d/iofog-agent
+chmod 750 /etc/systemd/system/iofog-agent.service
 #echo "Changed permissions on service script"
 
 chmod 754 /usr/bin/iofog-agent
@@ -98,9 +77,9 @@ chmod 754 /usr/bin/iofog-agent
 chown :iofog-agent /usr/bin/iofog-agent
 #echo "Changed ownership of command line executable file"
 
-chkconfig --add iofog-agent
-chkconfig iofog-agent on
-#echo "Registered init.d script for iofog-agent service"
+# Enable and start the service
+systemctl daemon-reload
+systemctl enable iofog-agent
 
 ln -sf /usr/bin/iofog-agent /usr/local/bin/iofog-agent
 #echo "Added symlink to iofog-agent command executable"

@@ -85,6 +85,9 @@ public class IOFogNetworkInterfaceManager {
             setNetworkInterface(IOFogNetworkInterface.getNetworkInterface());
             setInetAddress(IOFogNetworkInterface.getInetAddress());
             setHostName(IOFogNetworkInterface.getHostName());
+            if ("unknown-host".equals(getHostName())) {
+                LoggingService.logWarning(MODULE_NAME, "Unable to get hostname and it is set as unknown-host");
+            }
             setPid(getFogPid());
         } catch (SocketException | MalformedURLException exp) {
             LoggingService.logError(MODULE_NAME, "Unable to set IP address of the machine running ioFog", new AgentSystemException(exp.getMessage(), exp));

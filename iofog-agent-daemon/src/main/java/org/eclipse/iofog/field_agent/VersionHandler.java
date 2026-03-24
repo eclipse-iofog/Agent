@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -21,7 +21,7 @@ import org.eclipse.iofog.field_agent.enums.VersionCommand;
 import org.eclipse.iofog.field_agent.exceptions.UnknownVersionCommandException;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -64,25 +64,34 @@ public class VersionHandler {
 				GET_IOFOG_PACKAGE_DEV_VERSION = "(dnf --showduplicates list installed " + PACKAGE_NAME + "-dev && dnf --showduplicates list installed " + PACKAGE_NAME + ") | grep iofog | awk '{print $1}' | sed -e 's/iofog-agent\\(.*\\).noarch/\\1/')";
 				DEV = getIofogPackageDevVersion();
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "dnf --showduplicates list installed " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}'";
-				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --showduplicates list " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}' | sed -n \\$p\\";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "dnf --refresh list && dnf --showduplicates list " + PACKAGE_NAME + DEV + " | grep iofog | awk '{print $2}' | sed -n \\$p\\";
 				UPDATE_PACKAGE_REPOSITORY = "dnf update -y";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/cache/dnf/metadata_lock.pid";
-			} else if (distrName.contains("red hat")
-					|| distrName.contains("centos")
+			} else if (distrName.contains("centos")
 					|| distrName.contains("amazon")) {
 				GET_IOFOG_PACKAGE_DEV_VERSION = "(yum --showduplicates list installed " + PACKAGE_NAME + "-dev && yum --showduplicates list installed " + PACKAGE_NAME + ") | grep iofog | awk '{print $1}' | sed -e 's/iofog-agent\\(.*\\).noarch/\\1/')";
 				DEV = getIofogPackageDevVersion();
 				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "yum --showduplicates list installed | grep " + PACKAGE_NAME + DEV + " | awk '{print $2}'";
-				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --showduplicates list | grep " + PACKAGE_NAME + DEV + "| awk '{print $2}' | sed -n \\$p\\";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "yum --refresh list && yum --showduplicates list | grep " + PACKAGE_NAME + DEV + "| awk '{print $2}' | sed -n \\$p\\";
 				UPDATE_PACKAGE_REPOSITORY = "yum update -y";
 				GET_PACKAGE_MANAGER_LOCK_FILE_CONTENT = "cat /var/run/yum.pid";
-			} else {
+			} else if (distrName.equalsIgnoreCase("container")) {
+				GET_IOFOG_PACKAGE_INSTALLED_VERSION = "iofog-agent version | grep -oP 'Agent\\s+\\K[0-9]+(\\.[0-9]+){2,3}(?=\\s|$)'";
+				GET_IOFOG_PACKAGE_CANDIDATE_VERSION = "curl -s https://api.github.com/repos/eclipse-iofog/Agent/releases | grep '\"tag_name\":' | grep -v '\"latest\"' | awk -F '\"' '{print $4}' | awk '{print substr($0, 2)}' | head -n 1";
+			}else {
 				logWarning(MODULE_NAME, "it looks like your distribution is not supported");
 			}
 		}
 	}
 
 	private static String getDistributionName() {
+		// Check if IOFOG_DAEMON is set to "container"
+		String ioFogDaemon = System.getenv("IOFOG_DAEMON");
+		if ("container".equals(ioFogDaemon)) {
+			return "container";
+		}
+	
+		// Execute the command if IOFOG_DAEMON is not set to "container"
 		CommandShellResultSet<List<String>, List<String>> resultSet = CommandShellExecutor.executeCommand(GET_LINUX_DISTRIBUTION_NAME);
 		return resultSet.getValue().size() > 0 ? resultSet.getValue().get(0) : EMPTY;
 	}
@@ -130,24 +139,32 @@ public class VersionHandler {
 	 */
 	static void changeVersion(JsonObject actionData) {
 		LoggingService.logInfo(MODULE_NAME, "Start performing change version operation, received from ioFog controller");
+	
+		// Check if the environment is running inside a container
+		String ioFogDaemon = System.getenv("IOFOG_DAEMON");
+		if ("container".equalsIgnoreCase(ioFogDaemon)) {
+			LoggingService.logWarning(MODULE_NAME, "IoFog Agent daemon is running inside container, please upgrade/rollback version via `potctl`");
+			return; // Return without changing version
+		}
+	
 		if (SystemUtils.IS_OS_WINDOWS) {
 			return; // TODO implement
 		}
-
-		try{
-
+	
+		try {
 			VersionCommand versionCommand = parseJson(actionData);
 			String provisionKey = actionData.getString("provisionKey");
-
+	
 			if (isValidChangeVersionOperation(versionCommand)) {
 				executeChangeVersionScript(versionCommand, provisionKey);
 			}
-
+	
 		} catch (UnknownVersionCommandException e) {
 			logError(MODULE_NAME, "Error performing change version operation : Invalid command", e);
-		} catch (Exception e){
+		} catch (Exception e) {
 			logError(MODULE_NAME, "Error performing change version operation", new AgentSystemException(e.getMessage(), e));
 		}
+		
 		LoggingService.logInfo(MODULE_NAME, "Finished performing change version operation, received from ioFog controller");
 	}
 
@@ -182,13 +199,24 @@ public class VersionHandler {
 
 	static boolean isReadyToUpgrade() {
 		boolean isReadyToUpgrade = false;
-		try{
-			LoggingService.logDebug(MODULE_NAME, "Checking is ready to upgrade");
-			isReadyToUpgrade = isNotWindows()
-					&& isPackageRepositoryUpdated()
-					&& areNotVersionsSame();
-			LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade : " + isReadyToUpgrade);
-		} catch (Exception e){
+		try {
+			LoggingService.logDebug(MODULE_NAME, "Checking if ready to upgrade");
+	
+			String ioFogDaemon = System.getenv("IOFOG_DAEMON");
+			boolean isContainer = "container".equals(ioFogDaemon != null ? ioFogDaemon.toLowerCase() : null);
+	
+			// If IOFOG_DAEMON is "container", only check if versions are not the same
+			if (isContainer) {
+				isReadyToUpgrade = areNotVersionsSame();
+			} else {
+				// If it's not "container", check all conditions
+				isReadyToUpgrade = isNotWindows()
+						&& isPackageRepositoryUpdated()
+						&& areNotVersionsSame();
+			}
+	
+			LoggingService.logDebug(MODULE_NAME, "Is ready to upgrade: " + isReadyToUpgrade);
+		} catch (Exception e) {
 			LoggingService.logError(MODULE_NAME, "Error getting is ready to upgrade", new AgentSystemException(e.getMessage(), e));
 		}
 		return isReadyToUpgrade;

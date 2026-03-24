@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2024 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -56,6 +56,7 @@ public class ContainerManagerTest {
     private Registry registry;
     private Optional<Container> optionalContainer;
     private Optional<Microservice> optionalMicroservice;
+    private ProcessManagerStatus processManagerStatus;
     private MockedStatic<MicroserviceManager> microserviceManagerMockedStatic;
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedStatic<DockerUtil> dockerUtilMockedStatic;
@@ -77,7 +78,7 @@ public class ContainerManagerTest {
         container = mock(Container.class);
         registry = mock(Registry.class);
         IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
-        ProcessManagerStatus processManagerStatus = mock(ProcessManagerStatus.class);
+        processManagerStatus = mock(ProcessManagerStatus.class);
         optionalContainer = Optional.of(container);
         optionalMicroservice = Optional.of(microservice);
         Mockito.when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
@@ -346,7 +347,7 @@ public class ContainerManagerTest {
             Mockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             Mockito.when(registry.getUrl()).thenReturn("from_cache");
             containerManager.execute(containerTask);
-            verify(dockerUtil, never()).pullImage(any(), any(), any());
+            verify(dockerUtil, never()).pullImage(any(), any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             Mockito.verify(dockerUtil).getContainer(eq(microservice.getMicroserviceUuid()));
@@ -372,7 +373,7 @@ public class ContainerManagerTest {
             Mockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             Mockito.when(registry.getUrl()).thenReturn("url");
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             Mockito.verify(dockerUtil).getContainer(eq(microservice.getMicroserviceUuid()));
@@ -398,7 +399,7 @@ public class ContainerManagerTest {
         Mockito.when(containerTask.getMicroserviceUuid()).thenReturn("uuid");
         Mockito.when(dockerUtil.getContainer(anyString())).thenReturn(optionalContainer);
         Mockito.when(dockerUtil.findLocalImage(anyString())).thenReturn(false);
-        Mockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any(), any());
+        Mockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any(), any(), any());
         Mockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
         Mockito.when(registry.getUrl()).thenReturn("url");
         assertThrows(NotFoundException.class, () -> containerManager.execute(containerTask));
@@ -424,11 +425,11 @@ public class ContainerManagerTest {
             Mockito.when(containerTask.getMicroserviceUuid()).thenReturn("uuid");
             Mockito.when(dockerUtil.getContainer(anyString())).thenReturn(optionalContainer);
             Mockito.when(dockerUtil.findLocalImage(anyString())).thenReturn(true);
-            Mockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any(), any());
+            Mockito.doThrow(mock(AgentSystemException.class)).when(dockerUtil).pullImage(any(), any(), any(), any());
             Mockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             Mockito.when(registry.getUrl()).thenReturn("url");
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any(), any());
             verify(dockerUtil).createContainer(any(), any());
             verify(microservice).setRebuild(anyBoolean());
             Mockito.verify(LoggingService.class);
@@ -459,15 +460,30 @@ public class ContainerManagerTest {
             Mockito.when(microservice.getImageName()).thenReturn("microserviceName");
             Mockito.when(microservice.isRebuild()).thenReturn(false);
             Mockito.when(microservice.getRegistryId()).thenReturn(2);
+            Mockito.when(microservice.getPlatform()).thenReturn(null);
             Mockito.when(containerTask.getMicroserviceUuid()).thenReturn("uuid");
             Mockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
             Mockito.when(dockerUtil.getContainer(anyString())).thenReturn(optionalContainer);
+            Mockito.when(dockerUtil.findLocalImage(anyString())).thenReturn(true);
+            Mockito.when(container.getId()).thenReturn("containerId");
+            Mockito.when(container.getImageId()).thenReturn("imageId");
             Mockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             Mockito.when(registry.getUrl()).thenReturn("url");
+            Mockito.when(processManagerStatus.setMicroservicesStatePercentage(anyString(), anyFloat())).thenReturn(processManagerStatus);
+            Mockito.when(processManagerStatus.setMicroservicesStatusErrorMessage(anyString(), anyString())).thenReturn(processManagerStatus);
+            Mockito.when(dockerUtil.createContainer(any(), anyString())).thenReturn("newContainerId");
+            Mockito.when(dockerUtil.getContainerIpAddress(anyString())).thenReturn("127.0.0.1");
+            Mockito.when(dockerUtil.isContainerRunning(anyString())).thenReturn(false);
+            Mockito.when(dockerUtil.getContainerStatus(anyString())).thenReturn(Optional.of("running"));
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any(), any());
-            verify(dockerUtil).createContainer(any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any(), any());
+            verify(dockerUtil, times(2)).findLocalImage(anyString()); // Called in updateContainer and createContainer
+            verify(dockerUtil).stopContainer(anyString());
+            verify(dockerUtil).removeContainer(anyString(), anyBoolean());
+            verify(dockerUtil).createContainer(any(), anyString());
+            verify(dockerUtil).startContainer(any());
             verify(microservice).setRebuild(anyBoolean());
+            verify(microservice, times(2)).setUpdating(anyBoolean()); // Called with true and false
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -493,16 +509,30 @@ public class ContainerManagerTest {
             Mockito.when(microservice.getImageName()).thenReturn("microserviceName");
             Mockito.when(microservice.isRebuild()).thenReturn(false);
             Mockito.when(microservice.getRegistryId()).thenReturn(2);
+            Mockito.when(microservice.getPlatform()).thenReturn(null);
             Mockito.when(containerTask.getMicroserviceUuid()).thenReturn("uuid");
             Mockito.when(microservice.getMicroserviceUuid()).thenReturn("uuid");
             Mockito.when(dockerUtil.getContainer(anyString())).thenReturn(optionalContainer);
-            Mockito.doThrow(mock(NotFoundException.class)).when(dockerUtil).startContainer(any());
+            Mockito.when(dockerUtil.findLocalImage(anyString())).thenReturn(true);
+            Mockito.when(container.getId()).thenReturn("containerId");
+            Mockito.when(container.getImageId()).thenReturn("imageId");
             Mockito.when(microserviceManager.getRegistry(anyInt())).thenReturn(registry);
             Mockito.when(registry.getUrl()).thenReturn("url");
+            Mockito.when(processManagerStatus.setMicroservicesStatePercentage(anyString(), anyFloat())).thenReturn(processManagerStatus);
+            Mockito.when(processManagerStatus.setMicroservicesStatusErrorMessage(anyString(), anyString())).thenReturn(processManagerStatus);
+            Mockito.when(dockerUtil.createContainer(any(), anyString())).thenReturn("newContainerId");
+            Mockito.when(dockerUtil.getContainerIpAddress(anyString())).thenReturn("127.0.0.1");
+            Mockito.when(dockerUtil.isContainerRunning(anyString())).thenReturn(false);
+            Mockito.doThrow(mock(NotFoundException.class)).when(dockerUtil).startContainer(any());
             containerManager.execute(containerTask);
-            verify(dockerUtil).pullImage(any(), any(), any());
-            verify(dockerUtil).createContainer(any(), any());
+            verify(dockerUtil).pullImage(any(), any(), any(), any());
+            verify(dockerUtil, times(2)).findLocalImage(anyString()); // Called in updateContainer and createContainer
+            verify(dockerUtil).stopContainer(anyString());
+            verify(dockerUtil).removeContainer(anyString(), anyBoolean());
+            verify(dockerUtil).createContainer(any(), anyString());
+            verify(dockerUtil).startContainer(any());
             verify(microservice).setRebuild(anyBoolean());
+            verify(microservice, times(2)).setUpdating(anyBoolean()); // Called with true and false
             Mockito.verify(LoggingService.class);
             LoggingService.logError(eq(MODULE_NAME),
                     eq("Container \"microserviceName\" not found"),

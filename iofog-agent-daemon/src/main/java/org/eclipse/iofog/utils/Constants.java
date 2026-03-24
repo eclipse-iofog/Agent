@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -24,7 +24,7 @@ import java.io.PrintStream;
 public class Constants {
 
     public enum ModulesStatus {
-        STARTING, RUNNING, STOPPED
+        STARTING, RUNNING, STOPPED, WARNING
     }
 
     public enum DockerStatus {
@@ -67,7 +67,7 @@ public class Constants {
         }
     }
 
-    public static final int NUMBER_OF_MODULES = 8;
+    public static final int NUMBER_OF_MODULES = 9;
 
     public static final int RESOURCE_CONSUMPTION_MANAGER = 0;
     public static final int PROCESS_MANAGER = 1;
@@ -76,6 +76,7 @@ public class Constants {
     public static final int MESSAGE_BUS = 4;
     public static final int FIELD_AGENT = 5;
     public static final int RESOURCE_MANAGER = 6;
+    public static final int GPS_MANAGER = 7;
 
     public static PrintStream systemOut;
 
@@ -95,14 +96,8 @@ public class Constants {
     private static final String CONFIG_DIR = SystemUtils.IS_OS_WINDOWS ?
             WINDOWS_IOFOG_PATH : SNAP_COMMON + "/etc/iofog-agent/";
     public static final String LOCAL_API_TOKEN_PATH = CONFIG_DIR + "local-api";
-    public static final String DEFAULT_CONFIG_PATH = CONFIG_DIR + "config.xml";
-    public static final String DEVELOPMENT_CONFIG_PATH = CONFIG_DIR + "config-development.xml";
-    public static final String PRODUCTION_CONFIG_PATH = CONFIG_DIR + "config-production.xml";
-    public static String BACKUP_CONFIG_PATH = CONFIG_DIR + "config-bck.xml";
-
-    public static final String CONFIG_SWITCHER_PATH = CONFIG_DIR + "config-switcher.xml";
-    public static final String SWITCHER_ELEMENT = "switcher";
-    public static final String SWITCHER_NODE = "current_config";
+    public static final String CONFIG_YAML_PATH = CONFIG_DIR + "config.yaml";
+    public static final String BACKUP_CONFIG_YAML_PATH = CONFIG_DIR + "config-bck.yaml";
     public static final String OS_GROUP = "iofog-agent";
     public static final String IOFOG_DOCKER_CONTAINER_NAME_PREFIX = "iofog_";
 
@@ -111,8 +106,7 @@ public class Constants {
     public static final String FIELD_AGENT_PING_CONTROLLER = "FAPC";
     public static final String FIELD_AGENT_GET_CHANGE_LIST = "FACL";
     public static final String FIELD_AGENT_POST_STATUS = "FAPS";
-    public static final String FIELD_AGENT_POST_DIAGNOSTIC = "FAPD";
-	public static final String MESSAGE_BUS_CALCULATE_SPEED = "MBCS";
+	public static final String FIELD_AGENT_POST_DIAGNOSTIC = "FAPD";
 	public static final String STATUS_REPORTER_SET_STATUS_REPORTER_SYSTEM_TIME = "SRST";
 	public static final String LOCAL_API_EVENT = "LAPI";
 	public static final String RESOURCE_CONSUMPTION_MANAGER_GET_USAGE_DATA = "RCUD";
@@ -120,7 +114,6 @@ public class Constants {
 	public static final String PROCESS_MANAGER_CHECK_TASKS = "PMCT";
 	public static final String RESOURCE_MANAGER_GET_USAGE_DATA = "RMUD";
 	public static final String LOCAL_API_CONTROL_WEBSOCKET_WORKER = "LACW";
-	public static final String LOCAL_API_MESSAGE_WEBSOCKET_WORKER = "LAMW";
 
 	public static final String SHUTDOWN_HOOK = "SDHK";
 

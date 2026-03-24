@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -18,7 +18,7 @@ import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 
 
-import javax.json.*;
+import jakarta.json.*;
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -29,6 +29,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.ConsoleHandler;
 
 import static org.eclipse.iofog.utils.CmdProperties.getVersion;
 
@@ -117,6 +118,15 @@ public final class LoggingService {
 
         logDirectory.mkdirs();
 
+        if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
+            try {
+                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-x---");
+                Files.setPosixFilePermissions(logDirectory.toPath(), perms);
+            } catch (Exception e) {
+                // Log directory may have been created by packaging with correct permissions
+            }
+        }
+
         final String logFilePattern = logDirectory.getPath() + "/iofog-agent.%g.log";
 
         if (maxFileSize < Constants.MiB) {
@@ -140,24 +150,54 @@ public final class LoggingService {
 
         int intLimit = (int) limit;
 
-        Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
-
-        logFileHandler.setFormatter(new LogFormatter());
-
-        if (logger != null) {
-            for (Handler f : logger.getHandlers())
-                f.close();
+        // If logger is null, create a new one
+        if (logger == null) {
+            Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
+            logFileHandler.setFormatter(new LogFormatter());
+            
+            logger = Logger.getLogger("org.eclipse.iofog");
+            logger.addHandler(logFileHandler);
+            logger.setUseParentHandlers(false);
+        } else {
+            // Update existing handlers if needed
+            boolean hasFileHandler = false;
+            for (Handler handler : logger.getHandlers()) {
+                if (handler instanceof FileHandler) {
+                    hasFileHandler = true;
+                    break;
+                }
+            }
+            
+            if (!hasFileHandler) {
+                Handler logFileHandler = new FileHandler(logFilePattern, intLimit, logFileCount);
+                logFileHandler.setFormatter(new LogFormatter());
+                logger.addHandler(logFileHandler);
+            }
         }
 
-        logger = Logger.getLogger("org.eclipse.iofog");
-        logger.addHandler(logFileHandler);
+        // Add console handler if not already present
+        boolean hasConsoleHandler = false;
+        for (Handler handler : logger.getHandlers()) {
+            if (handler instanceof ConsoleHandler) {
+                hasConsoleHandler = true;
+                break;
+            }
+        }
+        
+        if (!hasConsoleHandler) {
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            consoleHandler.setFormatter(new LogFormatter());
+            logger.addHandler(consoleHandler);
+        }
 
-        logger.setUseParentHandlers(false);
-        // Disabling the log level off
-        logger.setLevel(Level.parse(logLevel).equals(Level.OFF) ? Level.INFO : Level.parse(logLevel));
-
-        logger.info("main, Logging Service, logger started.");
-
+        // Always update the log level
+        Level newLevel = Level.parse(logLevel).equals(Level.OFF) ? Level.INFO : Level.parse(logLevel);
+        logger.setLevel(newLevel);
+        
+        // Update all handlers' levels
+        for (Handler handler : logger.getHandlers()) {
+            handler.setLevel(newLevel);
+        }
     }
 
     /**
@@ -179,7 +219,7 @@ public final class LoggingService {
                     LinkOption.NOFOLLOW_LINKS);
             fileAttributeView.setGroup(group);
 
-            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-x---");
             Files.setPosixFilePermissions(logDirectory.toPath(), perms);
 
         } else if (SystemUtils.IS_OS_WINDOWS) {

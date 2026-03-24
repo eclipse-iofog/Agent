@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -23,29 +23,49 @@ public class Microservice {
 
     public static final Object deleteLock = new Object();
     private final String microserviceUuid; //container name
+    private final String microserviceName;
+    private final String applicationName;
     private final String imageName;
     private List<PortMapping> portMappings;
     private String config;
-    private List<String> routes;
+    private String runAsUser;
+    private String platform;
+    private String runtime;
     private String containerId;
     private int registryId;
     private String containerIpAddress;
     private boolean rebuild;
-    private boolean rootHostAccess;
+    private boolean hostNetworkMode;
+    private boolean isPrivileged;
     private long logSize;
     private List<VolumeMapping> volumeMappings;
     private boolean isUpdating;
     private List<EnvVar> envVars;
     private List<String> args;
+    private List<String> cdiDevs;
+    private String annotations;
+    private List<String> capAdd;
+    private List<String> capDrop;
     private List<String> extraHosts;
-    private boolean isConsumer;
+    private boolean isRouter;
+    private boolean isNats;
+    private String pidMode;
+    private String ipcMode;
+    private boolean execEnabled;
+    private int schedule;
+    private String cpuSetCpus;
+    private Long memoryLimit;
 
     private boolean delete;
     private boolean deleteWithCleanup;
     private boolean isStuckInRestart;
+    private Healthcheck healthcheck;
+    private ServiceAccount serviceAccount;
 
-    public Microservice(String microserviceUuid, String imageName) {
+    public Microservice(String microserviceUuid, String imageName, String microserviceName, String applicationName) {
         this.microserviceUuid = microserviceUuid;
+        this.microserviceName = microserviceName;
+        this.applicationName = applicationName;
         this.imageName = imageName;
         containerId = "";
     }
@@ -74,6 +94,14 @@ public class Microservice {
         this.registryId = registryId;
     }
 
+    public int getSchedule() {
+        return schedule;
+    }
+    
+    public void setSchedule(int schedule) {
+        this.schedule = schedule;
+    }
+
     public String getContainerId() {
         return containerId;
     }
@@ -98,20 +126,68 @@ public class Microservice {
         this.config = config;
     }
 
+    public String getRunAsUser() {
+        return runAsUser;
+    }
+
+    public void setRunAsUser(String runAsUser) {
+        this.runAsUser = runAsUser;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
+    }
+
+    public String getRuntime() {
+        return runtime;
+    }
+
+    public void setRuntime(String runtime) {
+        this.runtime = runtime;
+    }
+
     public String getMicroserviceUuid() {
         return microserviceUuid;
+    }
+
+    public String getMicroserviceName() {
+        return microserviceName;
+    }
+
+    public String getApplicationName() {
+        return applicationName;
     }
 
     public String getImageName() {
         return imageName;
     }
 
-    public boolean isRootHostAccess() {
-        return rootHostAccess;
+    public boolean isPrivileged() {
+        return isPrivileged;
     }
 
-    public void setRootHostAccess(boolean rootHostAccess) {
-        this.rootHostAccess = rootHostAccess;
+    public boolean isHostNetworkMode() {
+        return hostNetworkMode;
+    }
+
+    public void setHostNetworkMode(boolean hostNetworkMode) {
+        this.hostNetworkMode = hostNetworkMode;
+    }
+
+    public void setIsPrivileged(boolean isPrivileged) {
+        this.isPrivileged = isPrivileged;
+    }
+
+    public boolean isExecEnabled() {
+        return execEnabled;
+    }
+
+    public void setExecEnabled(boolean execEnabled) {
+        this.execEnabled = execEnabled;
     }
 
     public long getLogSize() {
@@ -162,6 +238,26 @@ public class Microservice {
 
     public void setArgs(List<String> args) { this.args = args; }
 
+    public List<String> getCdiDevs() { return cdiDevs; }
+
+    public void setCdiDevs(List<String> cdiDevs) { this.cdiDevs = cdiDevs; }
+
+    public String getAnnotations() {
+        return annotations;
+    }
+
+    public void setAnnotations(String annotations) {
+        this.annotations = annotations;
+    }
+
+    public List<String> getCapAdd() { return capAdd; }
+
+    public void setCapAdd(List<String> capAdd) { this.capAdd = capAdd; }
+
+    public List<String> getCapDrop() { return capDrop; }
+
+    public void setCapDrop(List<String> capDrop) { this.capDrop = capDrop; }
+
     @Override
     public boolean equals(Object e) {
         if (this == e) return true;
@@ -175,20 +271,36 @@ public class Microservice {
         return microserviceUuid.hashCode();
     }
 
-    public List<String> getRoutes() {
-        return routes;
+    public boolean isRouter() {
+        return isRouter;
     }
 
-    public void setRoutes(List<String> routes) {
-        this.routes = routes;
+    public void setRouter(boolean router) {
+        isRouter = router;
+    }
+    
+    public boolean isNats() {
+        return isNats;
     }
 
-    public boolean isConsumer() {
-        return isConsumer;
+    public void setNats(boolean nats) {
+        isNats = nats;
     }
 
-    public void setConsumer(boolean consumer) {
-        isConsumer = consumer;
+    public String getPidMode() {
+        return pidMode;
+    }
+
+    public void setPidMode(String pidMode) {
+        this.pidMode = pidMode;
+    }
+
+    public String getIpcMode() {
+        return ipcMode;
+    }
+
+    public void setIpcMode(String ipcMode) {
+        this.ipcMode = ipcMode;
     }
 
     public List<String> getExtraHosts() {
@@ -205,5 +317,46 @@ public class Microservice {
 
     public void setStuckInRestart(boolean stuckInRestart) {
         isStuckInRestart = stuckInRestart;
+    }
+
+    public String getCpuSetCpus() {
+        return cpuSetCpus;
+    }
+
+    public void setCpuSetCpus(String cpuSetCpus) {
+        this.cpuSetCpus = cpuSetCpus;
+    }
+
+    public Healthcheck getHealthcheck() {
+        return healthcheck;
+    }
+
+    public void setHealthcheck(Healthcheck healthcheck) {
+        this.healthcheck = healthcheck;
+    }
+
+    public Long getMemoryLimit() {
+        return memoryLimit;
+    }
+
+    /**
+     * Gets the memory limit in MB
+     * @return memory limit in MB, or null if not set
+     */
+    public Long getMemoryLimitMB() {
+        return memoryLimit != null ? memoryLimit / (1024 * 1024) : null;
+    }
+
+    public void setMemoryLimit(Long memoryLimitMB) {
+        // Convert MB to bytes (1 MB = 1024 * 1024 bytes)
+        this.memoryLimit = memoryLimitMB != null ? memoryLimitMB * 1024 * 1024 : null;
+    }
+
+    public ServiceAccount getServiceAccount() {
+        return serviceAccount;
+    }
+
+    public void setServiceAccount(ServiceAccount serviceAccount) {
+        this.serviceAccount = serviceAccount;
     }
 }

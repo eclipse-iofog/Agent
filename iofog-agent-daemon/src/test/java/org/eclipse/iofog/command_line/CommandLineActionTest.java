@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2024 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -15,25 +15,38 @@ package org.eclipse.iofog.command_line;
 
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.FieldAgent;
-import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.configuration.Configuration;
-import org.junit.jupiter.api.*;
+import org.eclipse.iofog.gps.GpsMode;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import javax.json.Json;
+
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Base64;
+import jakarta.json.Json;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
+import static org.eclipse.iofog.utils.CmdProperties.getVersion;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.*;
-
 
 /**
  * @author nehanaithani
@@ -47,7 +60,7 @@ public class CommandLineActionTest {
     private static MockedStatic<Configuration> configurationMockedStatic;
     @Mock
     private static FieldAgent fieldAgent;
-    private static List stop = new ArrayList(Collections.singleton("stop"));;
+    private static List<String> stop = new ArrayList<>(Collections.singleton("stop"));;
     private static HashMap<String, String> result;
 
     @BeforeEach
@@ -74,13 +87,13 @@ public class CommandLineActionTest {
         configurationMockedStatic.when(Configuration::getConfigReport)
                 .thenReturn("Config report");
 
-        configurationMockedStatic.when(() -> Configuration.getOldNodeValuesForParameters(anySet(), any()))
+        configurationMockedStatic.when(() -> Configuration.getOldNodeValuesForParameters(anySet()))
                 .thenReturn(result);
         configurationMockedStatic.when(() -> Configuration.setConfig(anyMap(),anyBoolean()))
                 .thenReturn(new HashMap<>())
                 .thenThrow(new Exception("item not found or defined more than once"));
 
-        Mockito.when(CmdProperties.getVersion()).thenReturn("1.2.2");
+        Mockito.when(CmdProperties.getVersion()).thenReturn("3.7.0");
         Mockito.when(CmdProperties.getVersionMessage()).thenReturn(version);
         Mockito.when(CmdProperties.getDeprovisionMessage()).thenReturn("Deprovisioning from controller ... %s");
         Mockito.when(CmdProperties.getProvisionMessage()).thenReturn("Provisioning with key \"%s\" ... Result: %s");
@@ -320,7 +333,7 @@ public class CommandLineActionTest {
 
         String[] args = {"config", "-ll", "severe"};
 //        Mockito.when(Configuration.setConfig(anyMap(), anyBoolean())).thenReturn(new HashMap<>());
-//        Mockito.when(Configuration.getOldNodeValuesForParameters(anySet(), any())).
+//        Mockito.when(Configuration.getOldNodeValuesForParameters(anySet())).
 //                thenReturn(result);
         Assertions.assertEquals("\\n\tChange accepted for Parameter : - ll, Old value was :info, New Value is : severe",
                 CommandLineAction.getActionByKey(args[0]).perform(args));
@@ -339,7 +352,7 @@ public class CommandLineActionTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
 
-    private static final String status = "ioFog daemon                : " +
+    private String status = "ioFog daemon                : " +
             "STARTING\\nMemory Usage                :" +
             " about 0.00 MiB\\nDisk Usage                  : " +
             "about 0.00 MiB\\nCPU Usage                   : " +
@@ -351,91 +364,146 @@ public class CommandLineActionTest {
             "0.00 MB\\nSystem Available Memory     : " +
             "0.00 MB\\nSystem Total CPU            : 0.00 %";
 
-    private static final String version = "ioFog 3.0.0-dev \n" +
-            "Copyright (C) 2018-2024 Edgeworx, Inc. \n" +
+    private String version = "ioFog Agent 3.7.0 \n" +
+            "Copyright (c) 2023 Contributors to the Eclipse ioFog Project \n" +
             "Eclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \n" +
             "https://www.eclipse.org/legal/epl-v20.html";
 
-    private final String helpContent = "Usage 1: iofog-agent [OPTION]\\n" +
-            "Usage 2: iofog-agent [COMMAND] <Argument>\\n" +
-            "Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\\n" +
-            "\\n" +
-            "Option           GNU long option         Meaning\\n" +
-            "======           ===============         =======\\n" +
-            "-h, -?           --help                  Show this message\\n" +
-            "-v               --version               Display the software version and\\n" +
-            "                                         license information\\n" +
-            "\\n" +
-            "\\n" +
-            "Command          Arguments               Meaning\\n" +
-            "=======          =========               =======\\n" +
-            "help                                     Show this message\\n" +
-            "version                                  Display the software version and\\n" +
-            "                                         license information\\n" +
-            "status                                   Display current status information\\n" +
-            "                                         about the software\\n" +
-            "provision        <provisioning key>      Attach this software to the\\n" +
-            "                                         configured ioFog controller\\n" +
-            "deprovision                              Detach this software from all\\n" +
-            "                                         ioFog controllers\\n" +
-            "info                                     Display the current configuration\\n" +
-            "                                         and other information about the\\n" +
-            "                                         software\\n" +
-            "switch           <dev|prod|def>          Switch to different config \\n" +
-            "config           [Parameter] [VALUE]     Change the software configuration\\n" +
-            "                                         according to the options provided\\n" +
-            "                 defaults                Reset configuration to default values\\n" +
-            "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
-            "                                         that the message archive is allowed to use\\n" +
-            "                 -dl <dir>               Set the message archive directory to use for disk\\n" +
-            "                                         storage\\n" +
-            "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
-            "                                         the software is allowed to use for\\n" +
-            "                                         messages\\n" +
-            "                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\\n" +
-            "                                         time that the software is allowed\\n" +
-            "                                         to use\\n" +
-            "                 -a <uri>                Set the uri of the fog controller\\n" +
-            "                                         to which this software connects\\n" +
-            "                 -ac <filepath>          Set the file path of the SSL/TLS\\n" +
-            "                                         certificate for validating the fog\\n" +
-            "                                         controller identity\\n" +
-            "                 -c <uri>                Set the UNIX socket or network address\\n" +
-            "                                         that the Docker daemon is using\\n" +
-            "                 -n <network adapter>    Set the name of the network adapter\\n" +
-            "                                         that holds the correct IP address of \\n" +
-            "                                         this machine\\n" +
-            "                 -l <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
-            "                                         that the log files can consume\\n" +
-            "                 -ld <dir>               Set the directory to use for log file\\n" +
-            "                                         storage\\n" +
-            "                 -lc <#log files>        Set the number of log files to evenly\\n" +
-            "                                         split the log storage limit\\n" +
-            "                 -ll <log level>         Set the standard logging levels that\\n" +
-            "                                         can be used to control logging output\\n" +
-            "                 -sf <#seconds>          Set the status update frequency\\n" +
-            "                 -cf <#seconds>          Set the get changes frequency\\n" +
-            "                 -df <#seconds>          Set the post diagnostics frequency\\n" +
-            "                 -sd <#seconds>          Set the scan devices frequency\\n" +
-            "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
-            "                 -dt <#percentage>       Set the available disk threshold\\n" +
-            "                 -idc <on/off>           Set the mode on which any not\\n" +
-            "                                         registered docker container will be\\n" +
-            "										  shut down\\n" +
-            "                 -gps <auto/off          Set gps location of fog.\\n" +
-            "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
-            "                            DD.DDD(lon)  use off to forbid gps,\\n" +
-            "                                         use GPS coordinates in DD format to set them manually\\n" +
-            "                 -ft <auto               Set fog type.\\n" +
-            "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
-            "                                         use arm or intel_amd to set it manually\\n" +
-            "                 -sec <on/off>           Set the secure mode without using ssl \\n" +
-            "                                         certificates. \\n" +
-            "                 -dev <on/off>           Set the developer's mode\\n" +
-            "                 -tz                     Set the device timeZone\\n" +
-            "\\n" +
-            "\\n" +
-            "Report bugs to: edgemaster@iofog.org\\n" +
-            "ioFog home page: http://iofog.org\\n" +
-            "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog";
+    private static final String helpContent = "\n" +
+        "  _        __                                     _   \n" +
+        " (_)      / _|                                   | |  \n" +
+        "  _  ___ | |_ ___   __ _    __ _  __ _  ___ _ __ | |_ \n" +
+        " | |/ _ \\|  _/ _ \\ / _` |  / _` |/ _` |/ _ \\ '_ \\| __|\n" +
+        " | | (_) | || (_) | (_| | | (_| | (_| |  __/ | | | |_ \n" +
+        " |_|\\___/|_| \\___/ \\__, |  \\__,_|\\__, |\\___|_| |_|\\__|\n" +
+        "                    __/ |         __/ |               \n" +
+        "                   |___/         |___/                \n" +
+        "                                                                                \n" +
+        "  Eclipse ioFog Agent v" + getVersion() + "\n" +
+        "  Command Line Interface\n" +
+        "  =====================\n\n" +
+        "Usage 1: iofog-agent [OPTION]\\n" +
+        "Usage 2: iofog-agent [COMMAND] <Argument>\\n" +
+        "Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\\n" +
+        "\\n" +
+        "Option           GNU long option         Meaning\\n" +
+        "======           ===============         =======\\n" +
+        "-h, -?           --help                  Show this message\\n" +
+        "-v               --version               Display the software version and\\n" +
+        "                                         license information\\n" +
+        "\\n" +
+        "\\n" +
+        "Command          Arguments               Meaning\\n" +
+        "=======          =========               =======\\n" +
+        "help                                     Show this message\\n" +
+        "version                                  Display the software version and\\n" +
+        "                                         license information\\n" +
+        "status                                   Display current status information\\n" +
+        "                                         about the software\\n" +
+        "provision        <provisioning key>      Attach this software to the\\n" +
+        "                                         configured ioFog controller\\n" +
+        "deprovision                              Detach this software from all\\n" +
+        "                                         ioFog controllers\\n" +
+        "info                                     Display the current configuration\\n" +
+        "                                         and other information about the\\n" +
+        "                                         software\\n" +
+        "switch           <dev|prod|def>          Switch to different config \\n" +
+        "cert            <base64encodedcert>      Set the controller CA certificate\\n" +
+        "                                         for secure communication\\n" +
+        "config           [Parameter] [VALUE]     Change the software configuration\\n" +
+        "                                         according to the options provided\\n" +
+        "                 defaults                Reset configuration to default values\\n" +
+        "                 -d <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
+        "                                         that the message archive is allowed to use\\n" +
+        "                 -dl <dir>               Set the message archive directory to use for disk\\n" +
+        "                                         storage\\n" +
+        "                 -m <#MB Limit>          Set the limit, in MiB, of RAM memory that\\n" +
+        "                                         the software is allowed to use for\\n" +
+        "                                         messages\\n" +
+        "                 -p <#cpu % Limit>       Set the limit, in percentage, of CPU\\n" +
+        "                                         time that the software is allowed\\n" +
+        "                                         to use\\n" +
+        "                 -a <uri>                Set the uri of the fog controller\\n" +
+        "                                         to which this software connects\\n" +
+        "                 -ac <filepath>          Set the file path of the SSL/TLS\\n" +
+        "                                         certificate for validating the fog\\n" +
+        "                                         controller identity\\n" +
+        "                 -c <uri>                Set the UNIX socket or network address\\n" +
+        "                                         that the Docker daemon is using\\n" +
+        "                 -n <network adapter>    Set the name of the network adapter\\n" +
+        "                                         that holds the correct IP address of \\n" +
+        "                                         this machine\\n" +
+        "                 -l <#GB Limit>          Set the limit, in GiB, of disk space\\n" +
+        "                                         that the log files can consume\\n" +
+        "                 -ld <dir>               Set the directory to use for log file\\n" +
+        "                                         storage\\n" +
+        "                 -lc <#log files>        Set the number of log files to evenly\\n" +
+        "                                         split the log storage limit\\n" +
+        "                 -ll <log level>         Set the standard logging levels that\\n"+
+        "                                         can be used to control logging output\\n" +
+        "                 -sf <#seconds>          Set the status update frequency\\n" +
+        "                 -cf <#seconds>          Set the get changes frequency\\n" +
+        "                 -df <#seconds>          Set the post diagnostics frequency\\n" +
+        "                 -sd <#seconds>          Set the scan devices frequency\\n" +
+        "                 -uf <#hours>            Set the isReadyToUpgradeScan frequency\\n" +
+        "                 -dt <#percentage>       Set the available disk threshold\\n" +
+        "                 -idc <on/off>           Set the mode on which any not\\n" +
+        "                                         registered docker container will be\\n" +
+        "										  shut down\\n" +
+        "                 -gps <auto/off          Set gps location of fog.\\n" +
+        "                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
+        "                            DD.DDD(lon)  use off to forbid gps,\\n" +
+        "                                         use GPS coordinates in DD format to set them manually\\n" +
+        "                 -gpsd <device>          Set the GPS device to use (example: /dev/ttyUSB0)\\n" +
+        "                 -gpsf <#seconds>        Set the GPS scan frequency\\n" +
+        "                 -egf <#seconds>         Set the edge guard frequency\\n" +
+        "                 -ft <auto               Set fog type.\\n" +
+        "                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
+        "                                         use arm or intel_amd to set it manually\\n" +
+        "                 -pf <#hours>            Set the docker pruning frequency.\n" +
+        "                 -sec <on/off>           Set the secure mode without using ssl \\n" +
+        "                                         certificates. \\n" +
+        "                 -dev <on/off>           Set the developer's mode\\n" +
+        "                 -tz                     Set the device timeZone\\n" +
+        "\\n" +
+        "\\n" +
+        "Report bugs to: edgemaster@iofog.org\\n" +
+        "Eclipse ioFog docs: https://iofog.org\\n" +
+        "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog";
+
+    // @Test
+    // public void testCertActionPerform() {
+    //     String[] args = {"cert", "base64encodedcert"};
+    //     try {
+    //         Assertions.assertEquals("Certificate successfully updated", 
+    //             CommandLineAction.getActionByKey(args[0]).perform(args));
+    //     } catch (AgentUserException e) {
+    //         Assertions.fail("This shall never happen");
+    //     }
+    // }
+
+    @Test
+    public void testCertActionPerformWithNoValue() {
+        String[] args = {"cert"};
+        try {
+            Assertions.assertEquals(helpContent, 
+                CommandLineAction.getActionByKey(args[0]).perform(args));
+        } catch (AgentUserException e) {
+            Assertions.fail("This shall never happen");
+        }
+    }
+
+    @Test
+    public void testCertActionPerformWithInvalidBase64() {
+        String[] args = {"cert", "invalidbase64"};
+        assertThrows(AgentUserException.class, () -> 
+            CommandLineAction.getActionByKey(args[0]).perform(args));
+    }
+
+    @Test
+    public void testCertActionPerformWithInvalidCertificate() {
+        String[] args = {"cert", Base64.getEncoder().encodeToString("invalidcert".getBytes())};
+        assertThrows(AgentUserException.class, () -> 
+            CommandLineAction.getActionByKey(args[0]).perform(args));
+    }
 }

@@ -37,14 +37,14 @@ spec:
 function deployControlPlane() {
   createControlPlaneFile;
   cat /tmp/local_controlplane.yml
-  iofogctl create namespace "${NAMESPACE}"
-  iofogctl deploy -f /tmp/local_controlplane.yml -n "${NAMESPACE}"
-  iofogctl get all -n "${NAMESPACE}"
+  potctl create namespace "${NAMESPACE}"
+  potctl deploy -f /tmp/local_controlplane.yml -n "${NAMESPACE}"
+  potctl get all -n "${NAMESPACE}"
 }
 
 function deleteECN() {
-  iofogctl delete all -n "${NAMESPACE}"
-  iofogctl disconnect -n "${NAMESPACE}"
+  potctl delete all -n "${NAMESPACE}"
+  potctl disconnect -n "${NAMESPACE}"
 }
 
 function createAgentPackage() {

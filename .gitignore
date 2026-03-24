@@ -14,3 +14,5 @@ iofog-version-controller/bin
 .vscode
 bats-core
 *.iml
+Dockerfile-test
+Dockerfile-scratch

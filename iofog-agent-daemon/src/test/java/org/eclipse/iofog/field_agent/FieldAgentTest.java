@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2024 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -19,8 +19,6 @@ import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.exception.AgentUserException;
 import org.eclipse.iofog.field_agent.enums.RequestType;
 import org.eclipse.iofog.local_api.LocalApi;
-import org.eclipse.iofog.message_bus.MessageBus;
-import org.eclipse.iofog.message_bus.MessageBusStatus;
 import org.eclipse.iofog.microservice.MicroserviceManager;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -49,10 +47,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -94,7 +92,6 @@ public class FieldAgentTest {
     private MockedStatic<Configuration> configurationMockedStatic;
     private MockedStatic<ProcessManager> processManagerMockedStatic;
     private MockedStatic<Orchestrator> orchestratorMockedStatic;
-    private MockedStatic<MessageBus> messageBusMockedStatic;
     private MockedStatic<LocalApi> localApiMockedStatic;
     private MockedStatic<VersionHandler> versionHandlerMockedStatic;
     private MockedStatic<CommandShellExecutor> commandShellExecutorMockedStatic;
@@ -116,7 +113,6 @@ public class FieldAgentTest {
         configurationMockedStatic = mockStatic(Configuration.class);
         processManagerMockedStatic = mockStatic(ProcessManager.class);
         orchestratorMockedStatic = mockStatic(Orchestrator.class);
-        messageBusMockedStatic = mockStatic(MessageBus.class);
         localApiMockedStatic = mockStatic(LocalApi.class);
         versionHandlerMockedStatic = mockStatic(VersionHandler.class);
         commandShellExecutorMockedStatic = mockStatic(CommandShellExecutor.class);
@@ -126,7 +122,6 @@ public class FieldAgentTest {
         edgeResourceManagerMockedStatic = mockStatic(EdgeResourceManager.class);
         orchestrator = Mockito.mock(Orchestrator.class);
         ProcessManager processManager = Mockito.mock(ProcessManager.class);
-        MessageBus messageBus = Mockito.mock(MessageBus.class);
         LocalApi localApi = Mockito.mock(LocalApi.class);
         ResourceManagerStatus resourceManagerStatus = Mockito.mock(ResourceManagerStatus.class);
         EdgeResourceManager edgeResourceManager = Mockito.mock(EdgeResourceManager.class);
@@ -160,7 +155,6 @@ public class FieldAgentTest {
         when(MicroserviceManager.getInstance()).thenReturn(microserviceManager);
         when(EdgeResourceManager.getInstance()).thenReturn(edgeResourceManager);
         when(ProcessManager.getInstance()).thenReturn(processManager);
-        when(MessageBus.getInstance()).thenReturn(messageBus);
         when(LocalApi.getInstance()).thenReturn(localApi);
         Mockito.doNothing().when(processManager).deleteRemainingMicroservices();
 
@@ -186,7 +180,6 @@ public class FieldAgentTest {
         configurationMockedStatic.close();
         processManagerMockedStatic.close();
         orchestratorMockedStatic.close();
-        messageBusMockedStatic.close();
         localApiMockedStatic.close();
         versionHandlerMockedStatic.close();
         commandShellExecutorMockedStatic.close();
@@ -554,7 +547,6 @@ public class FieldAgentTest {
                     .add("value", "value")
                     .build();
             JsonArray jsonRegisteryArray = Json.createArrayBuilder().add(registryObject).build();
-            JsonArray routesJson = Json.createArrayBuilder().add("route").build();
             JsonArray portMappingsJson = Json.createArrayBuilder().add(portMappingsObject).build();
             JsonArray volumeMappingsJson = Json.createArrayBuilder().add(volumeMappingsObject).build();
             JsonArray cmdJson = Json.createArrayBuilder().add("cmd").add("sh").build();
@@ -565,11 +557,14 @@ public class FieldAgentTest {
                     .add("config", "config")
                     .add("rebuild", false)
                     .add("delete", false)
-                    .add("rootHostAccess", false)
+                    .add("hostNetworkMode", false)
+                    .add("isPrivileged", false)
+                    .add("platform", "platform")
+                    .add("runtime", "runtime")
+                    .add("runAsUser", "runAsUser")
                     .add("deleteWithCleanup", false)
                     .add("registryId", 1)
                     .add("logSize", 2123l)
-                    .add("routes", routesJson)
                     .add("portMappings", portMappingsJson)
                     .add("volumeMappings", volumeMappingsJson)
                     .add("env", envJson)
@@ -1430,7 +1425,8 @@ public class FieldAgentTest {
      */
     public void mockConfiguration() {
         when(Configuration.getIofogUuid()).thenReturn("uuid");
-        when(Configuration.getAccessToken()).thenReturn("token");
+        // when(Configuration.getAccessToken()).thenReturn("token");
+        when(Configuration.getPrivateKey()).thenReturn("privateKey");
         when(Configuration.getControllerUrl()).thenReturn("http://controllerurl");
         when(Configuration.getNetworkInterface()).thenReturn("dynamic");
         when(Configuration.getDockerUrl()).thenReturn("getDockerUrl");
@@ -1458,7 +1454,6 @@ public class FieldAgentTest {
         SupervisorStatus supervisorStatus = mock(SupervisorStatus.class);
         ProcessManagerStatus processManagerStatus = mock(ProcessManagerStatus.class);
         StatusReporterStatus statusReporterStatus = mock(StatusReporterStatus.class);
-        MessageBusStatus messageBusStatus = mock(MessageBusStatus.class);
         SshProxyManagerStatus sshProxyManagerStatus = mock(SshProxyManagerStatus.class);
         IOFogNetworkInterfaceManager ioFogNetworkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
         ResourceConsumptionManagerStatus resourceConsumptionManagerStatus = mock(ResourceConsumptionManagerStatus.class);
@@ -1466,7 +1461,6 @@ public class FieldAgentTest {
         when(StatusReporter.getProcessManagerStatus()).thenReturn(processManagerStatus);
         when(processManagerStatus.getRunningMicroservicesCount()).thenReturn(2);
         when(StatusReporter.getStatusReporterStatus()).thenReturn(statusReporterStatus);
-        when(StatusReporter.getMessageBusStatus()).thenReturn(messageBusStatus);
         when(StatusReporter.getSshManagerStatus()).thenReturn(sshProxyManagerStatus);
         when(StatusReporter.getResourceConsumptionManagerStatus()).thenReturn(resourceConsumptionManagerStatus);
         when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);

@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2024 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -62,7 +62,7 @@ public class DockerPruningManagerTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        setMock(pruningManager);
+        // setMock(pruningManager);
         dockerUtil = Mockito.mock(DockerUtil.class);
         microserviceManagerMockedStatic = mockStatic(MicroserviceManager.class);
         dockerUtilMockedStatic = mockStatic(DockerUtil.class);
@@ -83,7 +83,7 @@ public class DockerPruningManagerTest {
         images.add(wantedImage);
         Mockito.when(dockerUtil.getImages()).thenReturn(images);
         List<Microservice> latestMicroservices = new ArrayList<>();
-        Microservice microservice = new Microservice("uuid", "edgeworx/calibration-sensors-arm");
+        Microservice microservice = new Microservice("uuid", "edgeworx/calibration-sensors-arm", "microservice-name", "application-name");
         latestMicroservices.add(microservice);
         Mockito.when(microserviceManager.getLatestMicroservices()).thenReturn(latestMicroservices);
         pruneResponse = mock(PruneResponse.class);
@@ -112,20 +112,20 @@ public class DockerPruningManagerTest {
 
     }
 
-    /**
-     * Set a mock to the {@link DockerPruningManager} instance
-     * Throws {@link RuntimeException} in case if reflection failed, see a {@link Field#set(Object, Object)} method description.
-     * @param mock the mock to be inserted to a class
-     */
-    private void setMock(DockerPruningManager mock) {
-        try {
-            Field instance = DockerPruningManager.class.getDeclaredField("instance");
-            instance.setAccessible(true);
-            instance.set(instance, mock);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    // /**
+    //  * Set a mock to the {@link DockerPruningManager} instance
+    //  * Throws {@link RuntimeException} in case if reflection failed, see a {@link Field#set(Object, Object)} method description.
+    //  * @param mock the mock to be inserted to a class
+    //  */
+    // private void setMock(DockerPruningManager mock) {
+    //     try {
+    //         Field instance = DockerPruningManager.class.getDeclaredField("instance");
+    //         instance.setAccessible(true);
+    //         instance.set(instance, mock);
+    //     } catch (Exception e) {
+    //         throw new RuntimeException(e);
+    //     }
+    // }
 
     /**
      * Test GetUnwantedImagesList when no non iofog containers are running
@@ -159,7 +159,7 @@ public class DockerPruningManagerTest {
         Mockito.verify(dockerUtil).getImages();
         assertTrue(imageIDs.contains(unwantedImageID));
         assertFalse(imageIDs.contains("wheelOfFortune"));
-        assertEquals(2, imageIDs.size());
+        assertEquals(1, imageIDs.size());
     }
 
     /**

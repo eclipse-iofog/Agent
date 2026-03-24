@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2024 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -89,8 +89,7 @@ public class StatusReporterTest {
 	public void testSetters() {
 		assertNotNull(statusReporter.setSupervisorStatus());
 		 assertNotNull(statusReporter.setFieldAgentStatus());
-		 assertNotNull(statusReporter.setLocalApiStatus());
-		 assertNotNull(statusReporter.setMessageBusStatus());
+		assertNotNull(statusReporter.setLocalApiStatus());
 		 assertNotNull(statusReporter.setProcessManagerStatus());
 		 assertNotNull(statusReporter.setResourceConsumptionManagerStatus());
 		 assertNotNull(statusReporter.setResourceManagerStatus());
@@ -105,7 +104,6 @@ public class StatusReporterTest {
 	public void testGetters() {
 		assertNotNull(statusReporter.getFieldAgentStatus());
 		assertNotNull(statusReporter.getLocalApiStatus());
-		assertNotNull(statusReporter.getMessageBusStatus());
 		assertNotNull(statusReporter.getProcessManagerStatus());
 		assertNotNull(statusReporter.getResourceConsumptionManagerStatus());
 		assertNotNull(statusReporter.getSshManagerStatus());

@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2024 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -57,8 +57,8 @@ public class SupervisorStatusTest {
      */
     @Test
     public void testSetModuleStatusWithInvalidValue(){
-        supervisorStatus.setModuleStatus(8, Constants.ModulesStatus.STARTING);
-        assertNull(supervisorStatus.getModuleStatus(8));
+        supervisorStatus.setModuleStatus(9, Constants.ModulesStatus.STARTING);
+        assertNull(supervisorStatus.getModuleStatus(9));
     }
 
     /**

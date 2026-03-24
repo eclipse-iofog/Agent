@@ -1,240 +1,240 @@
-#trigger:
-#  tags:
-#    include:
-#      - v*
-#  branches:
-#    include:
-#      - develop
-#      - release*
-#
-#  paths:
-#    exclude:
-#      - README.md
-#      - CHANGELOG.md
-#      - LICENSE
-#
-#variables:
-#  repository: 'focal-freedom-236620/agent'
-#  buildTag: $(Build.BuildId)
-#  ref: $(Build.SourceBranch)
-#  branchTag: $(Build.SourceBranchName)
-#  imageTag:
-#
-#jobs:
-#  - job: Agent
-#    pool:
-#      vmImage: 'Ubuntu-20.04'
-#
-#    steps:
-#      - task: Gradle@2
-#        inputs:
-#          workingDirectory: ''
-#          gradleWrapperFile: 'gradlew'
-#          gradleOptions: '-Xmx3072m'
-#          javaHomeOption: 'JDKVersion'
-#          jdkVersionOption: '1.8'
-#          jdkArchitectureOption: 'x64'
-#          publishJUnitResults: true
-#          testResultsFiles: '**/TEST-*.xml'
-#          tasks: 'build'
-#
-#      - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
-#        displayName: ReportGenerator
-#        inputs:
-#          reports: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
-#          targetdir: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
-#          reporttypes: 'HtmlInline_AzurePipelines;Badges'
-#
-#      - task: PublishCodeCoverageResults@1
-#        inputs:
-#          codeCoverageTool: 'JaCoCo'
-#          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
-#          reportDirectory: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
-#        displayName: 'Publish Code Coverage Results'
-#
-#      # We need nodejs for Snyk
-#      - task: NodeTool@0
-#        inputs:
-#          versionSpec: '12.x'
-#        displayName: 'Install Node.js'
-#
-#      - script: |
-#          ./gradlew copyJar
-#        displayName: 'copy jars'
-#
-#      - script: |
-#          npm i -g snyk
-#          snyk monitor --project-name=AgentCI
-#        env:
-#          SNYK_TOKEN: $(snykToken)
-#        displayName: 'Snyk monitor'
-#
-#      - script: |
-#          if [[ $(ref) == refs/tags* ]]; then
-#            TAG=$(echo $(ref) | sed "s|refs/tags/v||g")
-#            echo "##vso[task.setvariable variable=imageTag]$TAG"
-#          else
-#            LATESTTAG=$(git tag | tail -1)
-#            LATESTVERS=${LATESTTAG#?}
-#            if [ -z "$LATESTVERS" ]; then LATESTVERS=0.0.0; fi
-#            echo "##vso[task.setvariable variable=imageTag]$LATESTVERS-b$(buildTag)"
-#          fi
-#          echo $(imageTag)
-#        displayName: 'Setup supplementary tag for docker images'
-#        name: setvarStep
-#
-#      - script: |
-#          echo "gcr.io/$(repository):$(imageTag)" > GCR_DOCKER_IMAGE
-#        displayName: 'Save Docker image name and tag to GCR_DOCKER_IMAGE into artifacts'
-#
-#      - task: Docker@2
-#        displayName: 'build docker image'
-#        inputs:
-#          containerRegistry: 'Edgeworx GCP'
-#          repository: $(repository)
-#          command: 'build'
-#          Dockerfile: 'Dockerfile'
-#          tags: |
-#            $(imageTag)
-#            $(branchTag)
-#            latest
-#
-#      - task: Docker@2
-#        displayName: 'push docker image'
-#        inputs:
-#          containerRegistry: 'Edgeworx GCP'
-#          repository: $(repository)
-#          command: 'push'
-#          Dockerfile: 'Dockerfile'
-#          tags: |
-#            $(imageTag)
-#            $(branchTag)
-#            latest
-#        condition: or(and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/heads/release/')), and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop')), and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/')))
-#
-#
-#      - script: |
-#          echo "api test"
-#        displayName: 'api tests'
-#
-#      - task: DownloadSecureFile@1
-#        inputs:
-#          secureFile: 'package_cloud'
-#        displayName: 'download package cloud token file'
-#
-#      - task: UseRubyVersion@0
-#        inputs:
-#          versionSpec: '= 2.7'
-#          addToPath: true
-#        displayName: 'install rubygem to be used to install package_cloud cli'
-#
-#      - script: |
-#          gem install --no-document fpm
-#          fpm -h
-#          gem install package_cloud
-#          package_cloud -h
-#          echo "config file..."
-#          echo $DOWNLOADSECUREFILE_SECUREFILEPATH
-#        displayName: 'install package_cloud cli and fpm'
-#
-#      - script: |
-#          version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
-#          if [[ $(Build.SourceBranch) == refs/tags* ]]; then
-#            pkg_version=$version
-#          else
-#            pkg_version=$version-b$(Build.BuildId)
-#          fi
-#          echo $pkg_version
-#          cd packaging/iofog-agent
-#          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
-#          echo "pkg maybe created"
-#          echo $(ls | grep *.deb)
-#          echo "##vso[task.setvariable variable=pkg_version]$pkg_version"
-#        displayName: 'create deb package'
-#
-#      - script: |
-#          sudo apt-get install jq
-#        displayName: 'install jq'
-#
-#      - script: |
-#          curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
-#          sudo apt-get install iofogctl=$(iofogctl.version)
-#        displayName: 'install iofogctl'
-#
-#      - script: |
-#          sudo apt-get update -y
-#          sudo apt-get install -y bats
-#        displayName: 'install bats'
-#
-#      - script: |
-#          sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"$(controller.image)\"|g" test/resources/env.sh
-#          sudo bash test/deploy_ecn.bash deployControlPlane
-#        displayName: 'deploy local ecn'
-#
-#      - script: |
-#          sudo bash test/run.bash
-#        displayName: 'integration test'
-#
-#      - script: |
-#          sudo bash test/deploy_ecn.bash deleteECN
-#        displayName: 'delete ecn'
-#        condition: always()
-#
-#      - script: |
-#          cd packaging/iofog-agent
-#          package=$(ls | grep *.deb)
-#          echo "package..."
-#          echo $package
-#
-#          package_cloud push iofog/iofog-agent-dev/any/any $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-#        displayName: 'publish deb to package-cloud'
-#
-#      - script: |
-#          cd packaging/iofog-agent
-#          echo $(pkg_version)
-#          fpm -s dir --depends java-11-openjdk -d docker-ce -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
-#          echo "pkg maybe created"
-#          echo $(ls | grep *.rpm)
-#        displayName: 'create rpm package'
-#
-#      - script: |
-#          cd packaging/iofog-agent
-#          package=$(ls | grep *.rpm)
-#          echo "package..."
-#          echo $package
-#
-#          package_cloud push iofog/iofog-agent-dev/rpm_any/rpm_any $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-#        displayName: 'publish rpm to package-cloud'
-#
-#      - script: |
-#          cd packaging/iofog-agent
-#          sed -i.bak 's/default/dev/g'  etc/iofog-agent/config-switcher_new.xml
-#          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v 0.0.0-dev -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
-#          echo "pkg maybe created"
-#          echo $(ls | grep *.deb)
-#          echo "package..."
-#          package=$(ls | grep *.deb)
-#          echo $package
-#          package_cloud yank iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-#          package_cloud push iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
-#        displayName: 'publish deb develop package to package-cloud'
-#        condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop'))
-#
-#      - task: CopyFiles@2
-#        inputs:
-#          SourceFolder: $(System.DefaultWorkingDirectory)
-#          TargetFolder: $(Build.ArtifactStagingDirectory)
-#          Contents: |
-#            GCR_DOCKER_IMAGE
-#            **/libs/**
-#            packaging/**/*
-#            Dockerfile
-#          OverWrite: true
-#        displayName: 'copy all artefacts'
-#
-#      - task: PublishBuildArtifacts@1
-#        inputs:
-#          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-#          ArtifactName: 'agent'
-#        displayName: 'publish artefacts'
-#
+trigger:
+  tags:
+    include:
+      - v*
+  branches:
+    include:
+      - develop
+      - release*
+
+  paths:
+    exclude:
+      - README.md
+      - CHANGELOG.md
+      - LICENSE
+
+variables:
+  repository: 'focal-freedom-236620/agent'
+  buildTag: $(Build.BuildId)
+  ref: $(Build.SourceBranch)
+  branchTag: $(Build.SourceBranchName)
+  imageTag:
+
+jobs:
+  - job: Agent
+    pool:
+      vmImage: 'Ubuntu-18.04'
+
+    steps:
+      - task: Gradle@2
+        inputs:
+          workingDirectory: ''
+          gradleWrapperFile: 'gradlew'
+          gradleOptions: '-Xmx3072m'
+          javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.8'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/TEST-*.xml'
+          tasks: 'build'
+
+      - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+        displayName: ReportGenerator
+        inputs:
+          reports: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
+          targetdir: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+          reporttypes: 'HtmlInline_AzurePipelines;Badges'
+
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: 'JaCoCo'
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacoco/test/jacocoTestReport.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/iofog-agent-daemon/build/reports/jacocoHtml'
+        displayName: 'Publish Code Coverage Results'
+
+      # We need nodejs for Snyk
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '12.x'
+        displayName: 'Install Node.js'
+
+      - script: |
+          ./gradlew copyJar
+        displayName: 'copy jars'
+
+      - script: |
+          npm i -g snyk
+          snyk monitor --project-name=AgentCI
+        env:
+          SNYK_TOKEN: $(snykToken)
+        displayName: 'Snyk monitor'
+
+      - script: |
+          if [[ $(ref) == refs/tags* ]]; then
+            TAG=$(echo $(ref) | sed "s|refs/tags/v||g")
+            echo "##vso[task.setvariable variable=imageTag]$TAG"
+          else
+            LATESTTAG=$(git tag | tail -1)
+            LATESTVERS=${LATESTTAG#?}
+            if [ -z "$LATESTVERS" ]; then LATESTVERS=0.0.0; fi
+            echo "##vso[task.setvariable variable=imageTag]$LATESTVERS-b$(buildTag)"
+          fi
+          echo $(imageTag)
+        displayName: 'Setup supplementary tag for docker images'
+        name: setvarStep
+
+      - script: |
+          echo "gcr.io/$(repository):$(imageTag)" > GCR_DOCKER_IMAGE
+        displayName: 'Save Docker image name and tag to GCR_DOCKER_IMAGE into artifacts'
+
+      - task: Docker@2
+        displayName: 'build docker image'
+        inputs:
+          containerRegistry: 'Edgeworx GCP'
+          repository: $(repository)
+          command: 'build'
+          Dockerfile: 'Dockerfile'
+          tags: |
+            $(imageTag)
+            $(branchTag)
+            latest
+
+      - task: Docker@2
+        displayName: 'push docker image'
+        inputs:
+          containerRegistry: 'Edgeworx GCP'
+          repository: $(repository)
+          command: 'push'
+          Dockerfile: 'Dockerfile'
+          tags: |
+            $(imageTag)
+            $(branchTag)
+            latest
+        condition: or(and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/heads/release/')), and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop')), and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/')))
+
+
+      - script: |
+          echo "api test"
+        displayName: 'api tests'
+
+      - task: DownloadSecureFile@1
+        inputs:
+          secureFile: 'package_cloud'
+        displayName: 'download package cloud token file'
+
+      - task: UseRubyVersion@0
+        inputs:
+          versionSpec: '= 2.7'
+          addToPath: true
+        displayName: 'install rubygem to be used to install package_cloud cli'
+
+      - script: |
+          gem install --no-document fpm
+          fpm -h
+          gem install package_cloud
+          package_cloud -h
+          echo "config file..."
+          echo $DOWNLOADSECUREFILE_SECUREFILEPATH
+        displayName: 'install package_cloud cli and fpm'
+
+      - script: |
+          version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
+          if [[ $(Build.SourceBranch) == refs/tags* ]]; then
+            pkg_version=$version
+          else
+            pkg_version=$version-b$(Build.BuildId)
+          fi
+          echo $pkg_version
+          cd packaging/iofog-agent
+          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v $pkg_version -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          echo "pkg maybe created"
+          echo $(ls | grep *.deb)
+          echo "##vso[task.setvariable variable=pkg_version]$pkg_version"
+        displayName: 'create deb package'
+
+      - script: |
+          sudo apt-get install jq
+        displayName: 'install jq'
+
+      - script: |
+          curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
+          sudo apt-get install iofogctl=$(iofogctl.version)
+        displayName: 'install iofogctl'
+
+      - script: |
+          sudo apt-get update -y
+          sudo apt-get install -y bats
+        displayName: 'install bats'
+
+      - script: |
+          sed -i "s|CONTROLLER_IMAGE=.*|CONTROLLER_IMAGE=\"$(controller.image)\"|g" test/resources/env.sh
+          sudo bash test/deploy_ecn.bash deployControlPlane
+        displayName: 'deploy local ecn'
+
+      - script: |
+          sudo bash test/run.bash
+        displayName: 'integration test'
+
+      - script: |
+          sudo bash test/deploy_ecn.bash deleteECN
+        displayName: 'delete ecn'
+        condition: always()
+
+      - script: |
+          cd packaging/iofog-agent
+          package=$(ls | grep *.deb)
+          echo "package..."
+          echo $package
+
+          package_cloud push iofog/iofog-agent-dev/any/any $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+        displayName: 'publish deb to package-cloud'
+
+      - script: |
+          cd packaging/iofog-agent
+          echo $(pkg_version)
+          fpm -s dir --depends java-11-openjdk -d docker-ce -t rpm -n iofog-agent -v $(pkg_version) -a all --rpm-os 'linux' --after-install rpm.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade rpm.sh etc usr;
+          echo "pkg maybe created"
+          echo $(ls | grep *.rpm)
+        displayName: 'create rpm package'
+
+      - script: |
+          cd packaging/iofog-agent
+          package=$(ls | grep *.rpm)
+          echo "package..."
+          echo $package
+
+          package_cloud push iofog/iofog-agent-dev/rpm_any/rpm_any $package --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+        displayName: 'publish rpm to package-cloud'
+
+      - script: |
+          cd packaging/iofog-agent
+          sed -i.bak 's/default/dev/g'  etc/iofog-agent/config-switcher_new.xml
+          fpm -s dir -d 'openjdk-8-jdk | openjdk-11-jdk' -d docker -t deb -n iofog-agent -v 0.0.0-dev -a all --deb-no-default-config-files --after-install debian.sh --after-remove remove.sh --before-upgrade upgrade.sh --after-upgrade debian.sh etc usr
+          echo "pkg maybe created"
+          echo $(ls | grep *.deb)
+          echo "package..."
+          package=$(ls | grep *.deb)
+          echo $package
+          package_cloud yank iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+          package_cloud push iofog/iofog-agent-dev/any/any iofog-agent_0.0.0-dev_all.deb --config=$DOWNLOADSECUREFILE_SECUREFILEPATH
+        displayName: 'publish deb develop package to package-cloud'
+        condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/develop'))
+
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: $(System.DefaultWorkingDirectory)
+          TargetFolder: $(Build.ArtifactStagingDirectory)
+          Contents: |
+            GCR_DOCKER_IMAGE
+            **/libs/**
+            packaging/**/*
+            Dockerfile
+          OverWrite: true
+        displayName: 'copy all artefacts'
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'agent'
+        displayName: 'publish artefacts'
+

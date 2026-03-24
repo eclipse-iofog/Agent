@@ -19,14 +19,14 @@ if ! checkForInstallation "bats"; then
     git clone https://github.com/bats-core/bats-core.git && cd bats-core && git checkout tags/v1.1.0 && sudo ./install.sh /usr/local
 fi
 
-# Is iofogctl installed?
-if ! checkForInstallation "iofogctl"; then
-    echoInfo " Attempting to iofogctl"
+# Is potctl installed?
+if ! checkForInstallation "potctl"; then
+    echoInfo " Attempting to potctl"
     if [ "$(uname -s)" = "Darwin" ]; then
-        brew install iofogctl
+        brew install potctl
     else
         curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
-      sudo apt-get install iofogctl
+      sudo apt-get install potctl
     fi
 fi
 

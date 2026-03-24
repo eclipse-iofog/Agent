@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import javax.json.*;
+import jakarta.json.*;
 
 import java.io.StringReader;
 import java.util.concurrent.ExecutorService;

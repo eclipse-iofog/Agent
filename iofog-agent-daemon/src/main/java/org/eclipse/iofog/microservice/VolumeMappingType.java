@@ -2,5 +2,6 @@ package org.eclipse.iofog.microservice;
 
 public enum VolumeMappingType {
     VOLUME,
-    BIND
+    BIND,
+    VOLUME_MOUNT  // New type for volume mounts
 }

@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -15,9 +15,9 @@ package org.eclipse.iofog.process_manager;
 import org.eclipse.iofog.microservice.*;
 import org.eclipse.iofog.utils.Constants.LinkStatus;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
@@ -65,7 +65,16 @@ public class ProcessManagerStatus {
                         .add("startTime", status.getStartTime())
                         .add("operatingDuration", status.getOperatingDuration())
                         .add("cpuUsage", nf.format(status.getCpuUsage()))
-                        .add("memoryUsage", String.format("%d", status.getMemoryUsage()));
+                        .add("memoryUsage", String.format("%d", status.getMemoryUsage()))
+                        .add("ipAddress", status.getIpAddress() != null ? status.getIpAddress() : "UNKNOWN")
+                        .add("healthStatus", status.getHealthStatus() != null ? status.getHealthStatus() : "");
+
+                // Add exec session IDs as a JSON array
+                JsonArrayBuilder execIdsBuilder = Json.createArrayBuilder();
+                if (status.getExecSessionIds() != null) {
+                    status.getExecSessionIds().forEach(execIdsBuilder::add);
+                }
+                objectBuilder.add("execSessionIds", execIdsBuilder);
             }
             if (status != null && status.getErrorMessage() != null) {
                 objectBuilder.add("errorMessage", status.getErrorMessage());

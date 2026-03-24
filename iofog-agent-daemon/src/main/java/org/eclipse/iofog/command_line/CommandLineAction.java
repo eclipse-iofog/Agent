@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2018-2022 Edgeworx, Inc.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -21,10 +21,18 @@ import org.eclipse.iofog.utils.Constants.ConfigSwitcherState;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Base64;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.security.cert.CertificateFactory;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -247,8 +255,7 @@ public enum CommandLineAction {
 
 			try {
 
-				HashMap<String, String> oldValuesMap = getOldNodeValuesForParameters(config.keySet(),
-						Configuration.getCurrentConfig());
+				HashMap<String, String> oldValuesMap = Configuration.getOldNodeValuesForParameters(config.keySet());
 				HashMap<String, String> errorMap = setConfig(config, false);
 
 				for (Map.Entry<String, String> e : errorMap.entrySet())
@@ -294,6 +301,45 @@ public enum CommandLineAction {
 		public String perform(String[] args) {
 			return FieldAgent.getInstance().getCheckUpgradeReadyReport();
 		}
+	},
+	CERT_ACTION {
+		@Override
+		public List<String> getKeys() {
+			return singletonList("cert");
+		}
+
+		@Override
+		public String perform(String[] args) throws AgentUserException {
+			if (args.length < 2) {
+				return showHelp();
+			}
+
+			String base64Cert = args[1];
+			try {
+				// Decode and validate the certificate
+				byte[] certBytes = Base64.getDecoder().decode(base64Cert);
+				CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+				Certificate certificate = certificateFactory.generateCertificate(new ByteArrayInputStream(certBytes));
+
+				// Save the certificate
+				File certFile = new File(Configuration.getControllerCert());
+				try (FileOutputStream fos = new FileOutputStream(certFile)) {
+					fos.write(certBytes);
+				}
+
+				// Update the FieldAgent's configuration and Orchestrator instance
+				FieldAgent.getInstance().instanceConfigUpdated();
+				Configuration.setSecureMode(true);
+
+				return "Certificate successfully updated";
+			} catch (IllegalArgumentException e) {
+				throw new AgentUserException("Invalid base64 encoded certificate", e);
+			} catch (CertificateException e) {
+				throw new AgentUserException("Invalid certificate format", e);
+			} catch (IOException e) {
+				throw new AgentUserException("Failed to save certificate", e);
+			}
+		}
 	};
 
 	public abstract List<String> getKeys();
@@ -314,7 +360,22 @@ public enum CommandLineAction {
 	public static final String MODULE_NAME = "Command Line Parser";
 
 	private static String showHelp() {
-		return ("Usage 1: iofog-agent [OPTION]\\n" +
+		String header = "\n" +
+			"  _        __                                     _   \n" +
+			" (_)      / _|                                   | |  \n" +
+			"  _  ___ | |_ ___   __ _    __ _  __ _  ___ _ __ | |_ \n" +
+			" | |/ _ \\|  _/ _ \\ / _` |  / _` |/ _` |/ _ \\ '_ \\| __|\n" +
+			" | | (_) | || (_) | (_| | | (_| | (_| |  __/ | | | |_ \n" +
+			" |_|\\___/|_| \\___/ \\__, |  \\__,_|\\__, |\\___|_| |_|\\__|\n" +
+			"                    __/ |         __/ |               \n" +
+			"                   |___/         |___/                \n" +
+			"                                                                                \n" +
+			"  Eclipse ioFog Agent v" + getVersion() + "\n" +
+			"  Command Line Interface\n" +
+			"  =====================\n\n";
+
+		return header + 
+			"Usage 1: iofog-agent [OPTION]\\n" +
 			"Usage 2: iofog-agent [COMMAND] <Argument>\\n" +
 			"Usage 3: iofog-agent [COMMAND] [Parameter] <Value>\\n" +
 			"\\n" +
@@ -340,6 +401,8 @@ public enum CommandLineAction {
 			"                                         and other information about the\\n" +
 			"                                         software\\n" +
 			"switch           <dev|prod|def>          Switch to different config \\n" +
+			"cert            <base64encodedcert>      Set the controller CA certificate\\n" +
+			"                                         for secure communication\\n" +
 			"config           [Parameter] [VALUE]     Change the software configuration\\n" +
 			"                                         according to the options provided\\n" +
 			"                 defaults                Reset configuration to default values\\n" +
@@ -384,9 +447,13 @@ public enum CommandLineAction {
 			"                      /#GPS DD.DDD(lat), Use auto to get coordinates by IP,\\n" +
 			"                            DD.DDD(lon)  use off to forbid gps,\\n" +
 			"                                         use GPS coordinates in DD format to set them manually\\n" +
+			"                 -gpsd <device>          Set the GPS device to use (example: /dev/ttyUSB0)\\n" +
+			"                 -gpsf <#seconds>        Set the GPS scan frequency\\n" +
+			"                 -egf <#seconds>         Set the edge guard frequency\\n" +
 			"                 -ft <auto               Set fog type.\\n" +
 			"                     /intel_amd/arm>     Use auto to detect fog type by system commands,\\n" +
 			"                                         use arm or intel_amd to set it manually\\n" +
+			"                 -pf <#hours>            Set the docker pruning frequency.\n" +
 			"                 -sec <on/off>           Set the secure mode without using ssl \\n" +
 			"                                         certificates. \\n" +
 			"                 -dev <on/off>           Set the developer's mode\\n" +
@@ -394,8 +461,8 @@ public enum CommandLineAction {
 			"\\n" +
 			"\\n" +
 			"Report bugs to: edgemaster@iofog.org\\n" +
-			"ioFog home page: http://iofog.org\\n" +
-			"For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog");
+			"Eclipse ioFog docs: https://iofog.org\\n" +
+			"For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog";
 	}
 
 }
