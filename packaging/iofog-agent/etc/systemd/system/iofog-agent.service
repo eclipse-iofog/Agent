@@ -1,5 +1,5 @@
 [Unit]
-Description=Datasance PoT IoFog Agent Service
+Description=Eclipse IoFog Agent Service
 # Base dependencies that are always needed
 After=network.target
 Wants=network.target

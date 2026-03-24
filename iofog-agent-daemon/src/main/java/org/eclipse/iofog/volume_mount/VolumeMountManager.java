@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -399,10 +399,10 @@ public class VolumeMountManager {
     /**
      * Gets the type prefix for per-microservice directories
      * @param type VolumeMountType
-     * @return Type prefix (datasance.com~secret or datasance.com~configmap)
+     * @return Type prefix (iofog.org~secret or iofog.org~configmap)
      */
     private String getTypePrefix(VolumeMountType type) {
-        return type == VolumeMountType.SECRET ? "datasance.com~secret" : "datasance.com~configmap";
+        return type == VolumeMountType.SECRET ? "iofog.org~secret" : "iofog.org~configmap";
     }
     
     /**

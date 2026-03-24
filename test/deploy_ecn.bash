@@ -11,7 +11,7 @@ fi
 
 function createControlPlaneFile() {
     echo "---
-apiVersion: datasance.com/v1
+apiVersion: iofog.org/v3
 kind: LocalControlPlane
 metadata:
   name: ecn
@@ -25,7 +25,7 @@ spec:
     container:
       image: ${CONTROLLER_IMAGE}
 ---
-apiVersion: datasance.com/v1
+apiVersion: iofog.org/v3
 kind: LocalAgent
 metadata:
   name: local-agent

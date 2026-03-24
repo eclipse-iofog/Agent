@@ -17,11 +17,11 @@ on:
       - CHANGELOG.md
       - LICENSE
 env:
-  PROJECT: 'datasance-pot'
+  PROJECT: 'eclipse-iofog-agent'
   IMAGE_NAME: 'agent'
   DEBUGGER_IMAGE_NAME: 'node-debugger'
-  POTCTL_VERSION: '1.3.4'
-  CONTROLLER_IMAGE: 'ghcr.io/datasance/controller:latest'
+  IOFOGCTL_VERSION: '3.7.0'
+  CONTROLLER_IMAGE: 'ghcr.io/eclipse-iofog/controller:latest'
 
 jobs:
   build:
@@ -83,7 +83,7 @@ jobs:
       with:
         registry: "ghcr.io"
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_PAT }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and Push to ghcr
       
@@ -94,9 +94,9 @@ jobs:
         platforms: linux/amd64, linux/arm64 
         push: true
         tags: |
-          ghcr.io/datasance/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
-          ghcr.io/datasance/${{ env.IMAGE_NAME }}:latest
-          ghcr.io/datasance/${{ env.IMAGE_NAME }}:main
+          ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
+          ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
+          ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:main
 
     - name: Build and Push Debugger to ghcr
       
@@ -107,9 +107,9 @@ jobs:
         platforms: linux/amd64, linux/arm64 
         push: true
         tags: |
-          ghcr.io/datasance/${{ env.DEBUGGER_IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
-          ghcr.io/datasance/${{ env.DEBUGGER_IMAGE_NAME }}:latest
-          ghcr.io/datasance/${{ env.DEBUGGER_IMAGE_NAME }}:main
+          ghcr.io/eclipse-iofog/${{ env.DEBUGGER_IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
+          ghcr.io/eclipse-iofog/${{ env.DEBUGGER_IMAGE_NAME }}:latest
+          ghcr.io/eclipse-iofog/${{ env.DEBUGGER_IMAGE_NAME }}:main
 
     - name: Set up Ruby 3.1.4
       uses: ruby/setup-ruby@v1

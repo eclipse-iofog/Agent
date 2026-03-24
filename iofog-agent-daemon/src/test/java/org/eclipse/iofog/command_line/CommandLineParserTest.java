@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -69,7 +69,7 @@ public class CommandLineParserTest {
         "                    __/ |         __/ |               \n" +
         "                   |___/         |___/                \n" +
         "                                                                                \n" +
-        "  Datasance PoT ioFog Agent v" + getVersion() + "\n" +
+        "  Eclipse ioFog Agent v" + getVersion() + "\n" +
         "  Command Line Interface\n" +
         "  =====================\n\n" +
         "Usage 1: iofog-agent [OPTION]\\n" +
@@ -157,7 +157,7 @@ public class CommandLineParserTest {
         "                 -tz                     Set the device timeZone\\n" +
         "\\n" +
         "\\n" +
-        "Report bugs to: developer@datasance.com\\n" +
-        "Datasance PoT docs: https://docs.datasance.com\\n" +
-        "For users with GitHub accounts, report bugs to: https://github.com/Datasance/Agent/issues";
+        "Report bugs to: edgemaster@iofog.org\\n" +
+        "Eclipse ioFog docs: https://iofog.org\\n" +
+        "For users with Eclipse accounts, report bugs to: https://bugs.eclipse.org/bugs/enter_bug.cgi?product=iofog";
 }

@@ -211,7 +211,7 @@ ENV LANG=C.UTF-8 \
 
 COPY LICENSE /licenses/LICENSE
 LABEL org.opencontainers.image.description=agent
-LABEL org.opencontainers.image.source=https://github.com/datasance/agent
+LABEL org.opencontainers.image.source=https://github.com/eclipse-iofog/agent
 LABEL org.opencontainers.image.licenses=EPL2.0
 
 CMD ["/etc/iofog-agent/entrypoint.sh"]

@@ -25,7 +25,7 @@ if ! checkForInstallation "potctl"; then
     if [ "$(uname -s)" = "Darwin" ]; then
         brew install potctl
     else
-        curl https://packagecloud.io/install/repositories/datasance/potctl/script.deb.sh | sudo bash
+        curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | sudo bash
       sudo apt-get install potctl
     fi
 fi

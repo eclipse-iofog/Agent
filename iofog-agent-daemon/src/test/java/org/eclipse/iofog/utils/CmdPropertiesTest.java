@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -46,7 +46,7 @@ public class CmdPropertiesTest {
 
     //@Test
     //public void getVersionMessage() {
-    //    assertEquals("ioFog Agent 3.7.0 \nCopyright (c) 2023 Datasance Teknoloji A.S. \nEclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \nhttps://www.eclipse.org/legal/epl-v20.html",
+    //    assertEquals("ioFog Agent 3.7.0 \nCopyright (c) 2023 Contributors to the Eclipse ioFog Project \nEclipse ioFog is provided under the Eclipse Public License 2.0 (EPL-2.0) \nhttps://www.eclipse.org/legal/epl-v20.html",
     //            CmdProperties.getVersionMessage());
     //}
 

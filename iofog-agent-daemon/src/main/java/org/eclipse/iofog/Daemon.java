@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -128,7 +128,7 @@ public class Daemon {
             "                    __/ |         __/ |               \n" +
             "                   |___/         |___/                \n" +
             "                                                                                \n" +
-            "  Datasance PoT ioFog Agent v" + CmdProperties.getVersion() + "\n" +
+            "  Eclipse ioFog Agent v" + CmdProperties.getVersion() + "\n" +
             "  Logging Service Started\n" +
             "  Log Level: " + Configuration.getLogLevel() + "\n" +
             "  Log Directory: " + Configuration.getLogDiskDirectory() + "\n";
