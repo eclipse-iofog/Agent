@@ -24,21 +24,14 @@ public class Registry {
 	private final int id;
 	private final String url;
 	private final boolean isPublic;
-	private final boolean secure;
-	private final String certificate;
-	private final boolean requiresCertificate;
 	private final String userName;
 	private final String password;
 	private final String userEmail;
 
-	private Registry(final int id, final String url, final boolean isPublic, final boolean secure, final String certificate, final boolean requiresCertificate,
-	                 final String userName, final String password, final String userEmail) {
+	private Registry(final int id, final String url, final boolean isPublic, final String userName, final String password, final String userEmail) {
 		this.id = id;
 		this.url = url;
 		this.isPublic = isPublic;
-		this.secure = secure;
-		this.certificate = certificate;
-		this.requiresCertificate = requiresCertificate;
 		this.userName = userName;
 		this.password = password;
 		this.userEmail = userEmail;
@@ -54,18 +47,6 @@ public class Registry {
 
 	public boolean getIsPublic() {
 		return isPublic;
-	}
-
-	public boolean isSecure() {
-		return secure;
-	}
-
-	public String getCertificate() {
-		return certificate;
-	}
-
-	public boolean isRequiresCertificate() {
-		return requiresCertificate;
 	}
 
 	public String getUserName() {
@@ -100,9 +81,6 @@ public class Registry {
 		private int id;
 		private String url;
 		private boolean isPublic;
-		private boolean secure;
-		private String certificate;
-		private boolean requiresCertificate;
 		private String userName;
 		private String password;
 		private String userEmail;
@@ -122,21 +100,6 @@ public class Registry {
 			return this;
 		}
 
-		public RegistryBuilder setSecure(boolean secure) {
-			this.secure = secure;
-			return this;
-		}
-
-		public RegistryBuilder setCertificate(String certificate) {
-			this.certificate = certificate;
-			return this;
-		}
-
-		public RegistryBuilder setRequiresCertificate(boolean requiresCertificate) {
-			this.requiresCertificate = requiresCertificate;
-			return this;
-		}
-
 		public RegistryBuilder setUserName(String userName) {
 			this.userName = userName;
 			return this;
@@ -153,7 +116,7 @@ public class Registry {
 		}
 
 		public Registry build() {
-			return new Registry(id, url, isPublic, secure, certificate, requiresCertificate, userName, password, userEmail);
+			return new Registry(id, url, isPublic, userName, password, userEmail);
 		}
 	}
 }

@@ -5,7 +5,6 @@ import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
 import org.eclipse.iofog.local_api.LocalApiStatus;
-import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.DockerUtil;
 import org.eclipse.iofog.process_manager.ProcessManager;
@@ -40,7 +39,6 @@ public class SupervisorTest {
     private MockedStatic<ResourceConsumptionManager> resourceConsumptionManager;
     private MockedStatic<FieldAgent> fieldAgentMockedStatic;
     private MockedStatic<ProcessManager> processManagerMockedStatic;
-    private MockedStatic<MessageBus> messageBusMockedStatic;
     private MockedStatic<LocalApi> localApiMockedStatic;
     private MockedStatic<LoggingService> loggingService;
     private MockedStatic<IOFogNetworkInterfaceManager> iOFogNetworkInterfaceManagerMockedStatic;
@@ -61,7 +59,6 @@ public class SupervisorTest {
             resourceConsumptionManager = mockStatic(ResourceConsumptionManager.class);
             fieldAgentMockedStatic = mockStatic(FieldAgent.class);
             processManagerMockedStatic = mockStatic(ProcessManager.class);
-            messageBusMockedStatic = mockStatic(MessageBus.class);
             localApiMockedStatic = mockStatic(LocalApi.class);
             loggingService = mockStatic(LoggingService.class);
             iOFogNetworkInterfaceManagerMockedStatic = mockStatic(IOFogNetworkInterfaceManager.class);
@@ -75,7 +72,6 @@ public class SupervisorTest {
             FieldAgent fieldAgent = mock(FieldAgent.class);
             scheduledExecutorService = mock(ScheduledExecutorService.class);
             runtime = mock(Runtime.class);
-            MessageBus messageBus = mock(MessageBus.class);
             LocalApi localApi = mock(LocalApi.class);
             ProcessManager processManager = mock(ProcessManager.class);
             Mockito.when(Executors.newScheduledThreadPool(anyInt())).thenReturn(scheduledExecutorService);
@@ -92,9 +88,6 @@ public class SupervisorTest {
 
             Mockito.when(ProcessManager.getInstance()).thenReturn(processManager);
             Mockito.doNothing().when(processManager).start();
-            
-            Mockito.when(MessageBus.getInstance()).thenReturn(messageBus);
-            Mockito.doNothing().when(messageBus).start();
 
             Mockito.when(IOFogNetworkInterfaceManager.getInstance()).thenReturn(ioFogNetworkInterfaceManager);
             Mockito.doNothing().when(ioFogNetworkInterfaceManager).start();
@@ -132,7 +125,6 @@ public class SupervisorTest {
         fieldAgentMockedStatic.close();
         statusReporterMockedStatic.close();
         processManagerMockedStatic.close();
-        messageBusMockedStatic.close();
         localApiMockedStatic.close();
         loggingService.close();
         iOFogNetworkInterfaceManagerMockedStatic.close();

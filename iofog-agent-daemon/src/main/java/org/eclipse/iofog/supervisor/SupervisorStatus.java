@@ -26,6 +26,7 @@ public class SupervisorStatus {
 	private final ModulesStatus[] modulesStatus;
 	private long daemonLastStart;
 	private long operationDuration;
+	private String warningMessage;
 	
 	
 	public SupervisorStatus() {
@@ -58,7 +59,15 @@ public class SupervisorStatus {
 	public long getDaemonLastStart() {
 		return daemonLastStart;
 	}
+
+	public String getWarningMessage() {
+		return warningMessage;
+	}
 	
+	public SupervisorStatus setWarningMessage(String warningMessage) {
+		this.warningMessage = warningMessage;
+		return this;
+	}
 	public SupervisorStatus setDaemonLastStart(long daemonLastStart) {
 		this.daemonLastStart = daemonLastStart;
 		return this;

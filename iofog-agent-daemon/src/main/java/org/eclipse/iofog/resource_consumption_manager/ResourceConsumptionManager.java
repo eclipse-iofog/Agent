@@ -82,7 +82,9 @@ public class ResourceConsumptionManager implements IOFogModule {
 
 				float memoryUsage = getMemoryUsage();
 				float cpuUsage = getCpuUsage();
-				float diskUsage = directorySize(Configuration.getDiskDirectory() + "messages/archive/");
+				float archiveDiskUsage = directorySize(Configuration.getDiskDirectory() + "messages/archive/");
+				float volumesDiskUsage = directorySize(Configuration.getDiskDirectory() + "volumes/");
+				float diskUsage = archiveDiskUsage + volumesDiskUsage;
 
 				long availableMemory = getSystemAvailableMemory();
 				float totalCpu = getTotalCpu();
@@ -100,7 +102,6 @@ public class ResourceConsumptionManager implements IOFogModule {
 						.setAvailableDisk(availableDisk)
 						.setTotalCpu(totalCpu)
 						.setTotalDiskSpace(totalDiskSpace);
-
 
 				if (diskUsage > diskLimit) {
 					float amount = diskUsage - (diskLimit * 0.75f);
@@ -155,11 +156,17 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 */
 	private float getMemoryUsage() {
 		logDebug("Start get memory usage");
-		Runtime runtime = Runtime.getRuntime();
-		long allocatedMemory = runtime.totalMemory();
-		long freeMemory = runtime.freeMemory();
-		logDebug("Finished get memory usage : "+ (float)(allocatedMemory - freeMemory));
-		return (allocatedMemory - freeMemory);
+		try {
+			Runtime runtime = Runtime.getRuntime();
+			long allocatedMemory = runtime.totalMemory();
+			long freeMemory = runtime.freeMemory();
+			float memoryUsage = (float)(allocatedMemory - freeMemory);
+			logDebug("Finished get memory usage : " + memoryUsage);
+			return memoryUsage;
+		} catch (Exception e) {
+			logError("Error getting memory usage", new AgentSystemException(e.getMessage(), e));
+			return 0f;
+		}
 	}
 
 	/**
@@ -169,56 +176,141 @@ public class ResourceConsumptionManager implements IOFogModule {
 	 */
 	private float getCpuUsage() {
 		logDebug("Start get cpu usage");
-		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		String processId = processName.split("@")[0];
+		try {
+			String processName = ManagementFactory.getRuntimeMXBean().getName();
+			String processId = processName.split("@")[0];
+			float cpuUsage = 0f;
 
-		if (SystemUtils.IS_OS_LINUX) {
+			if (SystemUtils.IS_OS_LINUX) {
+				Pair<Long, Long> before = parseStat(processId);
+				waitForSecond();
+				Pair<Long, Long> after = parseStat(processId);
+				if (after._2() != before._2()) { // Avoid division by zero
+					cpuUsage = 100f * (after._1() - before._1()) / (after._2() - before._2());
+				}
+			} else if (SystemUtils.IS_OS_WINDOWS) {
+				String response = getWinCPUUsage(processId);
+				if (response != null && !response.isEmpty()) {
+					try {
+						cpuUsage = Float.parseFloat(response);
+					} catch (NumberFormatException e) {
+						logError("Error parsing Windows CPU usage", new AgentSystemException(e.getMessage(), e));
+					}
+				}
+			}
 
-			Pair<Long, Long> before = parseStat(processId);
-			waitForSecond();
-			Pair<Long, Long> after = parseStat(processId);
-			logDebug("Finished get cpu usage : " + 100f * (after._1() - before._1()) / (after._2() - before._2()));
-			return 100f * (after._1() - before._1()) / (after._2() - before._2());
-		} else if (SystemUtils.IS_OS_WINDOWS) {
-			String response = getWinCPUUsage(processId);
-			logInfo("Finished get cpu usage : " + response);
-			return Float.parseFloat(response);
-		} else {
-			logDebug("Finished get cpu usage : " + 0f);
+			logDebug("Finished get cpu usage : " + cpuUsage);
+			return cpuUsage;
+		} catch (Exception e) {
+			logError("Error getting CPU usage", new AgentSystemException(e.getMessage(), e));
 			return 0f;
 		}
 	}
 
 	private long getSystemAvailableMemory() {
 		logDebug("Start get system available memory");
-	    if (SystemUtils.IS_OS_WINDOWS) {
-	    	logDebug("Finished get system available memory : " + 0);
-	        return 0;
-        }
-		final String MEM_AVAILABLE = "grep 'MemAvailable' /proc/meminfo | awk '{print $2}'";
-		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(MEM_AVAILABLE);
-		long memInKB = 0L;
-		if(resultSet != null && !parseOneLineResult(resultSet).isEmpty()){
-			memInKB = Long.parseLong(parseOneLineResult(resultSet));
+		try {
+			if (SystemUtils.IS_OS_WINDOWS) {
+				// Use Windows Management Instrumentation (WMI) for Windows
+				return getWindowsAvailableMemory();
+			} else {
+				// Read /proc/meminfo directly for Linux/Unix
+				return getUnixAvailableMemory();
+			}
+		} catch (Exception e) {
+			logError("Error getting system available memory", new AgentSystemException(e.getMessage(), e));
+			return 0L;
 		}
-		logDebug("Finished get system available memory : " + memInKB * 1024);
-		return memInKB * 1024;
+	}
+
+	private long getWindowsAvailableMemory() {
+		try {
+			// Use WMI to get available physical memory
+			final String WMI_CMD = "wmic OS get FreePhysicalMemory /Value";
+			CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(WMI_CMD);
+			if (resultSet != null && !resultSet.getError().isEmpty()) {
+				String result = parseOneLineResult(resultSet);
+				if (!result.isEmpty()) {
+					// Extract the numeric value from "FreePhysicalMemory=123456"
+					String value = result.split("=")[1].trim();
+					long memInKB = Long.parseLong(value);
+					logDebug("Finished get system available memory : " + memInKB * 1024);
+					return memInKB * 1024; // Convert KB to bytes
+				}
+			}
+		} catch (Exception e) {
+			logError("Error getting Windows available memory", new AgentSystemException(e.getMessage(), e));
+		}
+		return 0L;
+	}
+
+	private long getUnixAvailableMemory() {
+		try {
+			File memInfoFile = new File("/proc/meminfo");
+			if (!memInfoFile.exists()) {
+				return 0L;
+			}
+
+			try (BufferedReader reader = new BufferedReader(new FileReader(memInfoFile))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					if (line.startsWith("MemAvailable:")) {
+						String[] parts = line.split("\\s+");
+						if (parts.length >= 2) {
+							long memInKB = Long.parseLong(parts[1]);
+							logDebug("Finished get system available memory : " + memInKB * 1024);
+							return memInKB * 1024; // Convert KB to bytes
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			logError("Error reading memory info", new AgentSystemException(e.getMessage(), e));
+		}
+		return 0L;
 	}
 
 	private float getTotalCpu() {
 		logDebug("Start get total cpu");
-        if (SystemUtils.IS_OS_WINDOWS) {
-            return 0;
-        }
-        // @see https://github.com/Leo-G/DevopsWiki/wiki/How-Linux-CPU-Usage-Time-and-Percentage-is-calculated
-		final String CPU_USAGE = "LC_NUMERIC=en_US.UTF-8 && grep 'cpu' /proc/stat | awk '{usage=($2+$3+$4)*100/($2+$3+$4+$5+$6+$7+$8+$9)} END {printf (\"%d\", usage)}'";
-		CommandShellResultSet<List<String>, List<String>> resultSet = executeCommand(CPU_USAGE);
-		float totalCpu = 0f;
-		if(resultSet != null && !parseOneLineResult(resultSet).isEmpty()){
-			totalCpu = Float.parseFloat(parseOneLineResult(resultSet));
+		if (SystemUtils.IS_OS_WINDOWS) {
+			return 0;
 		}
-		logDebug("Finished get total cpu : " + totalCpu);
-		return totalCpu;
+		
+		try {
+			File statFile = new File("/proc/stat");
+			if (!statFile.exists()) {
+				return 0f;
+			}
+
+			try (BufferedReader reader = new BufferedReader(new FileReader(statFile))) {
+				String line = reader.readLine();
+				if (line != null && line.startsWith("cpu ")) {
+					String[] parts = line.split("\\s+");
+					if (parts.length >= 8) {
+						long user = Long.parseLong(parts[1]);
+						long nice = Long.parseLong(parts[2]);
+						long system = Long.parseLong(parts[3]);
+						long idle = Long.parseLong(parts[4]);
+						long iowait = Long.parseLong(parts[5]);
+						long irq = Long.parseLong(parts[6]);
+						long softirq = Long.parseLong(parts[7]);
+						long steal = parts.length >= 9 ? Long.parseLong(parts[8]) : 0;
+						
+						long totalTime = user + nice + system + idle + iowait + irq + softirq + steal;
+						long idleTime = idle + iowait;  // iowait is included in idle time
+						
+						if (totalTime > 0) {  // Avoid division by zero
+							float cpuUsage = ((float)(totalTime - idleTime) / totalTime) * 100;
+							logDebug("Finished get total cpu : " + cpuUsage);
+							return cpuUsage;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			logError("Error getting total CPU usage", new AgentSystemException(e.getMessage(), e));
+		}
+		return 0f;
 	}
 
 	private static String parseOneLineResult(CommandShellResultSet<List<String>, List<String>> resultSet) {
@@ -227,13 +319,35 @@ public class ResourceConsumptionManager implements IOFogModule {
 
 	private long getAvailableDisk() {
 		logDebug("Start get available disk");
-		File[] roots = File.listRoots();
-		long freeSpace = 0;
-		for (File f : roots) {
-			freeSpace += f.getUsableSpace();
+		try {
+			File[] roots = File.listRoots();
+			if (roots == null || roots.length == 0) {
+				logError("No root filesystems found", new AgentSystemException("No root filesystems found"));
+				return 0L;
+			}
+
+			long freeSpace = 0;
+			for (File root : roots) {
+				try {
+					long space = root.getUsableSpace();
+					if (space < 0) {
+						logError("Invalid disk space for root: " + root.getPath(), 
+							new AgentSystemException("Invalid disk space value"));
+						continue;
+					}
+					freeSpace += space;
+				} catch (Exception e) {
+					logError("Error getting space for root: " + root.getPath(), 
+						new AgentSystemException(e.getMessage(), e));
+				}
+			}
+
+			logDebug("Finished get available disk : " + freeSpace);
+			return freeSpace;
+		} catch (Exception e) {
+			logError("Error getting available disk space", new AgentSystemException(e.getMessage(), e));
+			return 0L;
 		}
-		logDebug("Finished get available disk : " + freeSpace);
-		return freeSpace;
 	}
 
 	private void waitForSecond() {
@@ -338,13 +452,35 @@ public class ResourceConsumptionManager implements IOFogModule {
 	}
 
 	private long getTotalDiskSpace() {
-		logDebug("Start get available disk");
-		File[] roots = File.listRoots();
-		long totalDiskSpace = 0;
-		for (File f : roots) {
-			totalDiskSpace += f.getTotalSpace();
+		logDebug("Start get total disk space");
+		try {
+			File[] roots = File.listRoots();
+			if (roots == null || roots.length == 0) {
+				logError("No root filesystems found", new AgentSystemException("No root filesystems found"));
+				return 0L;
+			}
+
+			long totalSpace = 0;
+			for (File root : roots) {
+				try {
+					long space = root.getTotalSpace();
+					if (space < 0) {
+						logError("Invalid total space for root: " + root.getPath(), 
+							new AgentSystemException("Invalid total space value"));
+						continue;
+					}
+					totalSpace += space;
+				} catch (Exception e) {
+					logError("Error getting total space for root: " + root.getPath(), 
+						new AgentSystemException(e.getMessage(), e));
+				}
+			}
+
+			logDebug("Finished get total disk space : " + totalSpace);
+			return totalSpace;
+		} catch (Exception e) {
+			logError("Error getting total disk space", new AgentSystemException(e.getMessage(), e));
+			return 0L;
 		}
-		logDebug("Finished get available disk : " + totalDiskSpace);
-		return totalDiskSpace;
 	}
 }

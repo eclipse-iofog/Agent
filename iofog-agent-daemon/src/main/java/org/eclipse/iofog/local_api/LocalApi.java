@@ -73,7 +73,7 @@ public class LocalApi implements Runnable {
 		StatusReporter.setSupervisorStatus().setModuleStatus(Constants.LOCAL_API, ModulesStatus.STARTING);
 
 		StatusReporter.setLocalApiStatus().setOpenConfigSocketsCount(WebSocketMap.controlWebsocketMap.size());
-		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(WebSocketMap.messageWebsocketMap.size());
+		StatusReporter.setLocalApiStatus().setOpenMessageSocketsCount(0);
 		retrieveContainerConfig();
 
 		server = new LocalApiServer();

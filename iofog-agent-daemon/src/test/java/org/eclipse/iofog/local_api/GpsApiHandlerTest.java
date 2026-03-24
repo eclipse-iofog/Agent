@@ -89,7 +89,7 @@ public class GpsApiHandlerTest {
         Mockito.when(Json.createReader(Mockito.any(StringReader.class))).thenReturn(jsonReader);
         Mockito.when(jsonReader.readObject()).thenReturn(jsonObject);
         configurationMockedStatic.when(Configuration::writeGpsToConfigFile).thenAnswer((Answer<Void>) invocation -> null);
-        configurationMockedStatic.when(Configuration::saveConfigUpdates).thenAnswer((Answer<Void>) invocation -> null);
+        configurationMockedStatic.when(Configuration::saveGpsConfigUpdates).thenAnswer((Answer<Void>) invocation -> null);
         configurationMockedStatic.when(() -> Configuration.setGpsDataIfValid(any(), any())).thenAnswer((Answer<Void>) invocation -> null);
         Mockito.when(Json.createBuilderFactory(Mockito.eq(null))).thenReturn(jsonBuilderFactory);
         Mockito.when(jsonBuilderFactory.createObjectBuilder()).thenReturn(jsonObjectBuilder);
@@ -167,14 +167,14 @@ public class GpsApiHandlerTest {
         try {
             Exception exp = new Exception("Error");
             Mockito.when(httpRequest.method()).thenReturn(HttpMethod.POST);
-            configurationMockedStatic.when(Configuration::saveConfigUpdates).thenThrow(exp);
+            configurationMockedStatic.when(Configuration::saveGpsConfigUpdates).thenThrow(exp);
             defaultResponse = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, byteBuf);
             Mockito.when(ApiHandlerHelpers.badRequestResponse(Mockito.any(), Mockito.anyString())).thenReturn(defaultResponse);
             assertEquals(defaultResponse, gpsApiHandler.call());
             Mockito.verify(Configuration.class);
             Configuration.writeGpsToConfigFile();
             Mockito.verify(Configuration.class);
-            Configuration.saveConfigUpdates();
+            Configuration.saveGpsConfigUpdates();
         } catch (Exception e) {
             fail("This should not happen");
         }
@@ -195,7 +195,7 @@ public class GpsApiHandlerTest {
             Mockito.verify(Configuration.class);
             Configuration.writeGpsToConfigFile();
             Mockito.verify(Configuration.class);
-            Configuration.saveConfigUpdates();
+            Configuration.saveGpsConfigUpdates();
         } catch (Exception e) {
             fail("This should not happen");
         }

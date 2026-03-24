@@ -14,6 +14,7 @@ package org.eclipse.iofog;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.iofog.utils.Constants;
+import org.eclipse.iofog.utils.CmdProperties;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
 
@@ -116,6 +117,23 @@ public class Daemon {
      * starts logging service
      */
     private static void startLoggingService() {
+        // Print ASCII logo first
+        String logo = "\n" +
+            "  _        __                                     _   \n" +
+            " (_)      / _|                                   | |  \n" +
+            "  _  ___ | |_ ___   __ _    __ _  __ _  ___ _ __ | |_ \n" +
+            " | |/ _ \\|  _/ _ \\ / _` |  / _` |/ _` |/ _ \\ '_ \\| __|\n" +
+            " | | (_) | || (_) | (_| | | (_| | (_| |  __/ | | | |_ \n" +
+            " |_|\\___/|_| \\___/ \\__, |  \\__,_|\\__, |\\___|_| |_|\\__|\n" +
+            "                    __/ |         __/ |               \n" +
+            "                   |___/         |___/                \n" +
+            "                                                                                \n" +
+            "  Datasance PoT ioFog Agent v" + CmdProperties.getVersion() + "\n" +
+            "  Logging Service Started\n" +
+            "  Log Level: " + Configuration.getLogLevel() + "\n" +
+            "  Log Directory: " + Configuration.getLogDiskDirectory() + "\n";
+        System.out.println(logo);
+
         try {
             LoggingService.setupLogger();
         } catch (IOException e) {
@@ -125,7 +143,6 @@ public class Daemon {
             System.exit(1);
         }
         LoggingService.logInfo(MODULE_NAME, "Configuration loaded.");
-
     }
 
     /**
@@ -155,6 +172,8 @@ public class Daemon {
     }
 
     public static void main(String[] args) throws ParseException {
+        // Set LogManager system property FIRST, before any other code
+        System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
 
         try {
             Configuration.load();

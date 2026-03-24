@@ -1,0 +1,35 @@
+[Unit]
+Description=Datasance PoT IoFog Agent Service
+# Base dependencies that are always needed
+After=network.target
+Wants=network.target
+
+[Service]
+# Root user requirement
+User=root
+Group=root
+
+# Environment variables
+Environment=SERVICE_NAME=iofog-agentd
+Environment=PATH_TO_JAR=/usr/bin
+Environment=JAR_FILE_NAME=/usr/bin/iofog-agentd.jar
+
+# Working directory
+WorkingDirectory=/usr/bin
+
+# Pre-execution setup
+ExecStartPre=/bin/sh -c 'if [ -e /dev/random.real ]; then rm -f /dev/random; mv /dev/random.real /dev/random; fi'
+ExecStartPre=/bin/sh -c 'if [ ! -L /dev/random ]; then mv /dev/random /dev/random.real; ln -sf /dev/urandom /dev/random; fi'
+# Java version logging
+ExecStartPre=/bin/sh -c 'java -version 2>&1 | head -1 && echo "Java found at: $(command -v java)"'
+
+ExecStart=/usr/bin/java -jar /usr/bin/iofog-agentd.jar start
+ExecStop=/usr/bin/java -jar /usr/bin/iofog-agentd.jar stop
+TimeoutStartSec=60
+TimeoutStopSec=30
+Restart=always
+RestartSec=10
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target 

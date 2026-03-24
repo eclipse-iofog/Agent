@@ -24,7 +24,7 @@ get_distribution() {
 	cp "$ORIGINAL" "$BACKUP"
 
 	# Stop agent
-	service iofog-agent stop
+	systemctl stop iofog-agent
 
 	# Create backup for rollback
 	cd /var/backups/iofog-agent
@@ -60,7 +60,7 @@ get_distribution() {
 
 	cp "$BACKUP" "$ORIGINAL"
 	starttimestamp=$(date +%s)
-	service iofog-agent start
+	systemctl start iofog-agent
 	sleep 1
 
 	# Wait for agent

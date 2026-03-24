@@ -54,7 +54,6 @@ public class LocalApiServerTest {
     private MockedConstruction<SelfSignedCertificate> selfSignedCertificateMockedConstruction;
     private MockedConstruction<LocalApiServerPipelineFactory> localApiServerPipelineFactoryMockedConstruction;
     private MockedConstruction<ServerBootstrap> serverBootstrapMockedConstruction;
-    private MockedConstruction<MessageWebsocketWorker> messageWebsocketWorkerMockedConstruction;
     private MockedConstruction<ControlWebsocketWorker> controlWebsocketWorkerMockedConstruction;
 
 
@@ -72,7 +71,6 @@ public class LocalApiServerTest {
         selfSignedCertificateMockedConstruction = Mockito.mockConstruction(SelfSignedCertificate.class);
         localApiServerPipelineFactoryMockedConstruction = Mockito.mockConstruction(LocalApiServerPipelineFactory.class,
                 withSettings().defaultAnswer((Answer<Void>) invocation -> null));
-        messageWebsocketWorkerMockedConstruction = Mockito.mockConstruction(MessageWebsocketWorker.class);
         controlWebsocketWorkerMockedConstruction = Mockito.mockConstruction(ControlWebsocketWorker.class);
         serverBootstrapMockedConstruction = Mockito.mockConstruction(ServerBootstrap.class, (mock, context)->{
             when(mock.group(Mockito.any(NioEventLoopGroup.class), Mockito.any(NioEventLoopGroup.class))).thenReturn(serverBootstrap);
@@ -89,7 +87,6 @@ public class LocalApiServerTest {
     public void tearDown() throws Exception {
         controlWebsocketWorkerMockedConstruction.close();
         localApiServerPipelineFactoryMockedConstruction.close();
-        messageWebsocketWorkerMockedConstruction.close();
         nioEventLoopGroupMockedConstruction.close();
         selfSignedCertificateMockedConstruction.close();
         serverBootstrapMockedConstruction.close();

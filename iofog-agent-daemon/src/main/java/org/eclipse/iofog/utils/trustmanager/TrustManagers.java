@@ -21,6 +21,8 @@ import java.util.List;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.SSLContext;
+import java.security.SecureRandom;
 
 public final class TrustManagers {
 
@@ -96,16 +98,110 @@ public final class TrustManagers {
                     }
                 }
 
-                throw new CertificateException("Unable to validate server certificate", last);
+                throw new CertificateException("Unable to validate server certificate for controller connection", last);
             }
 
             @Override
             public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                throw new CertificateException("Client certificates validation is not supported");
+                throw new CertificateException("Client certificates validation for controller is not supported");
             }
         };
 
         return new javax.net.ssl.TrustManager[]{combinedTrustManager};
+    }
+
+    public static javax.net.ssl.TrustManager[] createWebSocketTrustManager(final Certificate webSocketCert) throws Exception {
+
+        // the final list of trust managers
+
+        final List<X509TrustManager> trustManagers = new ArrayList<>();
+
+        // add the default system trust anchors
+
+        {
+
+            // create the trust manager factory using he default
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+
+            // add the trust managers
+
+            addAllX509(trustManagers, tmf.getTrustManagers());
+        }
+
+        // now add the specific web socket certificate
+
+        if (webSocketCert != null) {
+
+            // create the keystore
+
+            KeyStore webSocketCertStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            webSocketCertStore.load(null, null);
+            webSocketCertStore.setCertificateEntry("cert", webSocketCert);
+
+            // create the trust manager factory
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(webSocketCertStore);
+
+            // add the trust managers
+
+            addAllX509(trustManagers, tmf.getTrustManagers());
+
+        }
+
+        X509TrustManager combinedTrustManager = new X509TrustManager() {
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+
+                CertificateException last = null;
+
+                for (X509TrustManager tm : trustManagers) {
+                    try {
+                        tm.checkServerTrusted(chain, authType);
+                        return;
+                    } catch (CertificateException ex) {
+                        last = ex;
+                    }
+                }
+
+                throw new CertificateException("Unable to validate server certificate for websocket connection", last);
+            }
+
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                throw new CertificateException("Client certificates validation for web socket is not supported");
+            }
+        };
+
+        return new javax.net.ssl.TrustManager[]{combinedTrustManager};
+    }
+
+    /**
+     * Creates an SSL socket factory that skips certificate verification
+     * This is used when we need to make an insecure connection to get a new certificate
+     * 
+     * @return SSLConnectionSocketFactory configured to skip verification
+     * @throws Exception if SSL context creation fails
+     */
+    public static org.apache.http.conn.ssl.SSLConnectionSocketFactory getInsecureSocketFactory() throws Exception {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, new TrustManager[] { new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+            public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+            public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+        }}, new SecureRandom());
+        
+        return new org.apache.http.conn.ssl.SSLConnectionSocketFactory(
+            sslContext,
+            new org.apache.http.conn.ssl.NoopHostnameVerifier()
+        );
     }
 
 }

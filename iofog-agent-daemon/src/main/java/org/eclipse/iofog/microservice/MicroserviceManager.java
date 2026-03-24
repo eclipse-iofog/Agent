@@ -26,7 +26,6 @@ public class MicroserviceManager {
 
 	private List<Microservice> latestMicroservices = new ArrayList<>();
 	private List<Microservice> currentMicroservices = new ArrayList<>();
-	private Map<String, Route> routes = new HashMap<>();
 	private Map<String, String> configs = new HashMap<>();
 	private List<Registry> registries = new ArrayList<>();
 	private static final String MODULE_NAME = "MicroserviceManager";
@@ -53,13 +52,6 @@ public class MicroserviceManager {
 		LoggingService.logDebug(MODULE_NAME ,"get list of current microservices ");
 		synchronized (MicroserviceManager.class) {
 			return Collections.unmodifiableList(currentMicroservices);
-		}
-	}
-
-	public Map<String, Route> getRoutes() {
-		LoggingService.logDebug(MODULE_NAME ,"get map of routes ");
-		synchronized (MicroserviceManager.class) {
-			return Collections.unmodifiableMap(routes);
 		}
 	}
 
@@ -109,13 +101,6 @@ public class MicroserviceManager {
 		}
 	}
 
-	public void setRoutes(Map<String, Route> routes) {
-		LoggingService.logDebug(MODULE_NAME ,"set Routes ");
-		synchronized (MicroserviceManager.class) {
-			this.routes = new HashMap<>(routes);
-		}
-	}
-
 	public void setRegistries(List<Registry> registries) {
 		LoggingService.logDebug(MODULE_NAME ,"set Registries ");
 		synchronized (MicroserviceManager.class) {
@@ -153,7 +138,6 @@ public class MicroserviceManager {
 		synchronized (MicroserviceManager.class) {
 			latestMicroservices.clear();
 			currentMicroservices.clear();
-			routes.clear();
 			configs.clear();
 			registries.clear();
 		}

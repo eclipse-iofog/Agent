@@ -64,7 +64,6 @@ public final class LocalApiServer {
 			
 			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 			scheduler.scheduleAtFixedRate(new ControlWebsocketWorker(), 10, 10, TimeUnit.SECONDS);
-			scheduler.scheduleAtFixedRate(new MessageWebsocketWorker(), 10, 10, TimeUnit.SECONDS);
 			ch.closeFuture().sync();
 		}finally{
 			bossGroup.shutdownGracefully();

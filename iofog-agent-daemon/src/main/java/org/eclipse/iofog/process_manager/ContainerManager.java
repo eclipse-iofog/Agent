@@ -17,6 +17,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import org.eclipse.iofog.microservice.*;
+import org.eclipse.iofog.volume_mount.VolumeMountManager;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.status_reporter.StatusReporter;
@@ -25,6 +26,11 @@ import org.eclipse.iofog.utils.logging.LoggingService;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import static org.eclipse.iofog.microservice.Microservice.deleteLock;
+import com.github.dockerjava.api.model.Frame;
+import org.eclipse.iofog.process_manager.ExecSessionCallback;
+import java.util.concurrent.CompletableFuture;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 
 /**
  * provides methods to manage Docker containers
@@ -67,6 +73,8 @@ public class ContainerManager {
 
 	/**
 	 * removes an existing {@link Container} and creates a new one
+	 * Improved flow: Pull image first while old container is still running (minimizes downtime),
+	 * then stop old container (releases ports), then create and start new container.
 	 *
 	 * @param withCleanUp if true then removes old image and volumes
 	 * @throws Exception exception
@@ -74,8 +82,42 @@ public class ContainerManager {
 	private void updateContainer(Microservice microservice, boolean withCleanUp) throws Exception {
 		LoggingService.logInfo(MODULE_NAME, "Start update container for microservice : " + microservice.getImageName());
 		microservice.setUpdating(true);
+		docker = DockerUtil.getInstance();
+		
+		// Step 1: Pull new image while old container is still running
+		// This keeps the service available during the slow image pull operation
+		setMicroserviceStatus(microservice.getMicroserviceUuid(), MicroserviceState.PULLING);
+		Registry registry = getRegistry(microservice);
+		if (!registry.getUrl().equals("from_cache")) {
+			try {
+				docker.pullImage(microservice.getImageName(), microservice.getMicroserviceUuid(), 
+						microservice.getPlatform(), registry);
+				StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(
+						microservice.getMicroserviceUuid(), Constants.PERCENTAGE_COMPLETION);
+				LoggingService.logInfo(MODULE_NAME, "Successfully pulled image \"" + microservice.getImageName() + "\" while old container was running");
+			} catch (Exception e) {
+				LoggingService.logError(MODULE_NAME, 
+						"unable to pull \"" + microservice.getImageName() + "\" from registry. trying local cache",
+						new AgentSystemException(e.getMessage(), e));
+				// Continue with local cache if pull fails
+			}
+		}
+		
+		// Verify image exists (either pulled or in cache)
+		if (!docker.findLocalImage(microservice.getImageName())) {
+			microservice.setUpdating(false);
+			throw new NotFoundException("Image not found: " + microservice.getImageName() + 
+					". Pull failed and image not in local cache.");
+		}
+		
+		// Step 2: Now stop and remove old container (releases ports)
+		// Downtime starts here, but it's brief compared to pull time
 		removeContainerByMicroserviceUuid(microservice.getMicroserviceUuid(), withCleanUp);
-		createContainer(microservice);
+		
+		// Step 3: Create and start new container (can use same ports now)
+		// Pass false to createContainer to skip pulling since we already pulled
+		createContainer(microservice, false);
+		
 		microservice.setUpdating(false);
 		LoggingService.logDebug(MODULE_NAME, "Finished update container for microservice : " + microservice.getImageName());
 	}
@@ -89,7 +131,7 @@ public class ContainerManager {
 		Registry registry = getRegistry(microservice);
 		if (!registry.getUrl().equals("from_cache") && pullImage){
 			try {
-				docker.pullImage(microservice.getImageName(), microservice.getMicroserviceUuid(), registry);
+				docker.pullImage(microservice.getImageName(), microservice.getMicroserviceUuid(), microservice.getPlatform(), registry);
 				StatusReporter.setProcessManagerStatus().setMicroservicesStatePercentage(microservice.getMicroserviceUuid(),
 						Constants.PERCENTAGE_COMPLETION);
 			} catch (Exception e) {
@@ -195,6 +237,13 @@ public class ContainerManager {
 				setMicroserviceStatus(microserviceUuid, MicroserviceState.DELETED);
 			}
 		}
+		// Clean up per-microservice volume mounts
+		try {
+			VolumeMountManager.getInstance().cleanupMicroserviceVolumes(microserviceUuid);
+		} catch (Exception e) {
+			LoggingService.logWarning(MODULE_NAME, "Error cleaning up microservice volumes: " + e.getMessage());
+			// Continue with container removal even if cleanup fails
+		}
 		LoggingService.logInfo(MODULE_NAME, "Finished remove container with microserviceuuid : " + microserviceUuid);
 	}
 
@@ -253,6 +302,63 @@ public class ContainerManager {
 				case STOP:
 					stopContainerByMicroserviceUuid(task.getMicroserviceUuid());
 					break;
+				case CREATE_EXEC:
+					if (microserviceOptional.isPresent()) {
+						ExecSessionCallback pmCallback = task.getCallback();
+						// Get both pipes from ProcessManager.ExecSessionCallback
+						PipedInputStream stdinPipe = pmCallback.getStdinPipe();
+						PipedOutputStream stdinOutputStream = pmCallback.getStdin();
+						if (stdinPipe == null || stdinOutputStream == null) {
+							throw new AgentSystemException("Failed to get stdin pipes from callback", null);
+						}
+						
+						// Create a new DockerUtil.ExecSessionCallback that forwards to the ProcessManager callback
+						DockerUtil.ExecSessionCallback dockerCallback = docker.new ExecSessionCallback(
+							"iofog_" + task.getMicroserviceUuid(), // Use a unique ID for the exec session
+							30, // 30 minutes timeout
+							stdinPipe,
+							stdinOutputStream  // Pass the output stream
+						) {
+							@Override
+							public void onNext(Frame frame) {
+								if (frame != null) {
+									try {
+										// Let the ProcessManager callback handle the frame
+										pmCallback.onNext(frame);
+									} catch (Exception e) {
+										LoggingService.logError(MODULE_NAME, "Error processing frame", e);
+									}
+								}
+							}
+
+							@Override
+							public void onError(Throwable throwable) {
+								LoggingService.logError(MODULE_NAME, "Exec session error", throwable);
+								pmCallback.onError(throwable);
+							}
+
+							@Override
+							public void onComplete() {
+								pmCallback.onComplete();
+							}
+						};
+						String execId = createExecSession(task.getMicroserviceUuid(), task.getCommand(), dockerCallback);
+						task.setExecId(execId);
+						LoggingService.logDebug(MODULE_NAME, "Task created exec session: " + task.getExecId());
+						
+						// Complete the future with the exec ID
+						CompletableFuture<String> future = task.getFuture();
+						if (future != null) {
+							future.complete(execId);
+						}
+					}
+					break;
+				case KILL_EXEC:
+					killExecSession(task.getExecId());
+					break;
+				case GET_EXEC_STATUS:
+					getExecSessionStatus(task.getExecId());
+					break;
 			}
 		} else {
 			LoggingService.logError(MODULE_NAME, "Container Task cannot be null",
@@ -267,5 +373,52 @@ public class ContainerManager {
 
 	private void setMicroserviceStatus(String uuid, MicroserviceState state) {
 		StatusReporter.setProcessManagerStatus().setMicroservicesState(uuid, state);
+	}
+
+	/**
+	 * Creates and starts an exec session in a container
+	 * 
+	 * @param microserviceUuid - UUID of the microservice
+	 * @param command - Command to execute
+	 * @param callback - Callback to handle session I/O
+	 * @return String - Exec session ID
+	 * @throws Exception if session creation fails
+	 */
+	public String createExecSession(String microserviceUuid, String[] command, DockerUtil.ExecSessionCallback callback) throws Exception {
+		LoggingService.logInfo(MODULE_NAME, "Creating exec session for microservice: " + microserviceUuid);
+		Optional<Container> containerOptional = docker.getContainer(microserviceUuid);
+		if (!containerOptional.isPresent()) {
+			throw new Exception("Container not found for microservice: " + microserviceUuid);
+		}
+		String execId = docker.createExecSession(containerOptional.get().getId(), command);
+		docker.startExecSession(execId, callback);
+		LoggingService.logDebug(MODULE_NAME, "Started exec session: " + execId);
+		return execId;
+	}
+
+	/**
+	 * Gets the status of an exec session
+	 * 
+	 * @param execId - ID of the exec session
+	 * @return ExecSessionStatus - Status of the exec session
+	 * @throws Exception if status check fails
+	 */
+	public ExecSessionStatus getExecSessionStatus(String execId) throws Exception {
+		LoggingService.logDebug(MODULE_NAME, "Getting status for exec session: " + execId);
+		ExecSessionStatus status = docker.getExecSessionStatus(execId);
+		LoggingService.logDebug(MODULE_NAME, "Exec session status: " + (status != null ? status.toString() : "null"));
+		return status;
+	}
+
+	/**
+	 * Kills an exec session
+	 * 
+	 * @param execId - ID of the exec session to kill
+	 * @throws Exception if session kill fails
+	 */
+	public void killExecSession(String execId) throws Exception {
+		LoggingService.logDebug(MODULE_NAME, "Killing exec session: " + execId);
+		docker.killExecSession(execId);
+		LoggingService.logDebug(MODULE_NAME, "Successfully killed exec session: " + execId);
 	}
 }

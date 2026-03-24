@@ -57,8 +57,8 @@ public class SupervisorStatusTest {
      */
     @Test
     public void testSetModuleStatusWithInvalidValue(){
-        supervisorStatus.setModuleStatus(8, Constants.ModulesStatus.STARTING);
-        assertNull(supervisorStatus.getModuleStatus(8));
+        supervisorStatus.setModuleStatus(9, Constants.ModulesStatus.STARTING);
+        assertNull(supervisorStatus.getModuleStatus(9));
     }
 
     /**

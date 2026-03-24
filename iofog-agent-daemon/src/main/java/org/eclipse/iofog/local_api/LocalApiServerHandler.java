@@ -95,9 +95,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
                     if (mapName != null && mapName.equals("control")) {
                         ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
                         controlSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-                    } else if (mapName != null && mapName.equals("message")) {
-                        MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
-                        messageSocket.handleWebSocketFrame(ctx, (WebSocketFrame) msg);
                     } else {
                         LoggingService.logError(MODULE_NAME, "Cannot initiate real-time service: Context not found", 
                         		new AgentSystemException("Cannot initiate real-time service: Context not found"));
@@ -156,30 +153,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
-        if (request.uri().equals("/v2/messages/next")) {
-        	LoggingService.logInfo(MODULE_NAME, "Start Processing messages/next request");
-            Callable<FullHttpResponse> callable = new MessageReceiverHandler(request, ctx.alloc().buffer(), content);
-            runTask(callable, ctx, request);
-            LoggingService.logInfo(MODULE_NAME, "Finished Processing messages/next request");
-            return;
-        }
-
-        if (request.uri().equals("/v2/messages/new")) {
-        	LoggingService.logInfo(MODULE_NAME, "Start Processing messages/new request");
-            Callable<FullHttpResponse> callable = new MessageSenderHandler(request, ctx.alloc().buffer(), content);
-            runTask(callable, ctx, request);
-            LoggingService.logInfo(MODULE_NAME, "Finished Processing messages/new request");
-            return;
-        }
-
-        if (request.uri().equals("/v2/messages/query")) {
-        	LoggingService.logInfo(MODULE_NAME, "Start Processing messages/query request");
-            Callable<FullHttpResponse> callable = new QueryMessageReceiverHandler(request, ctx.alloc().buffer(), content);
-            runTask(callable, ctx, request);
-            LoggingService.logInfo(MODULE_NAME, "Finished Processing messages/query request");
-            return;
-        }
-
         if (request.uri().startsWith("/v2/restblue")) {
         	LoggingService.logInfo(MODULE_NAME, "Start Processing restblue request");
             Callable<FullHttpResponse> callable = new BluetoothApiHandler((FullHttpRequest) request, ctx.alloc().buffer(), content);
@@ -217,14 +190,6 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
             ControlWebsocketHandler controlSocket = new ControlWebsocketHandler();
             controlSocket.handle(ctx, request);
             LoggingService.logInfo(MODULE_NAME, "Finished Processing control/socket request");
-            return;
-        }
-
-        if (request.uri().startsWith("/v2/message/socket")) {
-        	LoggingService.logInfo(MODULE_NAME, "Start Processing message/socket request");
-            MessageWebsocketHandler messageSocket = new MessageWebsocketHandler();
-            messageSocket.handle(ctx, request);
-            LoggingService.logInfo(MODULE_NAME, "finished Processing message/socket request");
             return;
         }
 
@@ -294,21 +259,12 @@ public class LocalApiServerHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private String findContextMapName(ChannelHandlerContext ctx) {
-
         if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.controlWebsocketMap)) {
         	LoggingService.logDebug(MODULE_NAME, "Context map name : control");
         	return "control";
-        }          
-        else if (WebsocketUtil.hasContextInMap(ctx, WebSocketMap.messageWebsocketMap)) {
-        	LoggingService.logDebug(MODULE_NAME, "Context map name : message");
-        	return "message";
         }
-            
-        else {
-        	LoggingService.logDebug(MODULE_NAME, "Context map name : null");
-        	return null;
-        }
-            
+        LoggingService.logDebug(MODULE_NAME, "Context map name : null");
+        return null;
     }
 
     /**

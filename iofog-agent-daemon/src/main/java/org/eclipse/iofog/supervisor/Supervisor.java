@@ -16,7 +16,6 @@ import org.eclipse.iofog.IOFogModule;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.local_api.LocalApi;
-import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.pruning.DockerPruningManager;
@@ -26,6 +25,7 @@ import org.eclipse.iofog.status_reporter.StatusReporter;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
+import org.eclipse.iofog.gps.GpsManager;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import static java.lang.System.currentTimeMillis;
@@ -34,6 +34,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.eclipse.iofog.utils.Constants.*;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.RUNNING;
 import static org.eclipse.iofog.utils.Constants.ModulesStatus.STARTING;
+import org.eclipse.iofog.edge_guard.EdgeGuardManager;
 
 /**
  * Supervisor module
@@ -45,7 +46,6 @@ public class Supervisor implements IOFogModule {
 
 	private static final String MODULE_NAME = "Supervisor";
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	private MessageBus messageBus;
 	private Thread localApiThread;
 	private LocalApi localApi;
 
@@ -91,8 +91,7 @@ public class Supervisor implements IOFogModule {
 		startModule(FieldAgent.getInstance());
 		startModule(ProcessManager.getInstance());
 		startModule(new ResourceManager());
-        messageBus = MessageBus.getInstance();
-        startModule(messageBus);
+        startModule(GpsManager.getInstance());
 
         localApi = LocalApi.getInstance();
         localApiThread = new Thread(localApi, Constants.LOCAL_API_EVENT);
@@ -102,6 +101,9 @@ public class Supervisor implements IOFogModule {
         StatusReporter.setSupervisorStatus().setDaemonStatus(RUNNING);
 		logDebug("Started Supervisor");
 		DockerPruningManager.getInstance().start();
+		EdgeGuardManager.getInstance().start();
+        
+        
         operationDuration();
     }
 
@@ -129,7 +131,7 @@ public class Supervisor implements IOFogModule {
     }
 
 	/**
-	 * shutdown hook to stop {@link MessageBus} and {@link LocalApi}
+	 * shutdown hook to stop {@link LocalApi}
 	 *
 	 */
 	private final Runnable shutdownHook = () -> {
@@ -137,10 +139,8 @@ public class Supervisor implements IOFogModule {
 			scheduler.shutdownNow();
 			if (localApi != null)
 				localApi.stopServer();
-			if (messageBus != null)
-				messageBus.stop();
 		} catch (Exception e) {
-			LoggingService.logError(MODULE_NAME, "Error in shutdown hook to stop message bus and local api",
+			LoggingService.logError(MODULE_NAME, "Error in shutdown hook to stop local api",
 					new AgentSystemException(e.getMessage(), e));
 		}
 	};

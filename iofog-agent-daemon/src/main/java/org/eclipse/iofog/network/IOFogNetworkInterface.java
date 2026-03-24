@@ -155,6 +155,18 @@ public class IOFogNetworkInterface {
 
     private static Pair<NetworkInterface, InetAddress> getConnectedAddress(URL controllerUrl, NetworkInterface networkInterface, boolean checkConnection) {
         int controllerPort = controllerUrl.getPort();
+        // Handle default ports when getPort() returns -1
+        if (controllerPort == -1) {
+            String protocol = controllerUrl.getProtocol().toLowerCase();
+            if ("https".equals(protocol)) {
+                controllerPort = 443;
+            } else if ("http".equals(protocol)) {
+                controllerPort = 80;
+            } else {
+                // Fallback to 80 for unknown protocols
+                controllerPort = 80;
+            }
+        }
         String controllerHost = controllerUrl.getHost();
         Enumeration<InetAddress> nifAddresses = networkInterface.getInetAddresses();
         for (InetAddress nifAddress: Collections.list(nifAddresses)) {
@@ -181,13 +193,14 @@ public class IOFogNetworkInterface {
         return null;
     }
     public static String getHostName() {
-        String hostname = "";
+        // String hostname = "";
         try {
             InetAddress ip = InetAddress.getLocalHost();
-            hostname = ip.getHostName();
+            return ip.getHostName();
         } catch (UnknownHostException e) {
-            LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " + ExceptionUtils.getStackTrace(e));
+            // LoggingService.logWarning(MODULE_NAME, "Unable to get hostname : " + ExceptionUtils.getStackTrace(e));
+            return "unknown-host";
         }
-        return hostname;
+        // return hostname;
     }
 }

@@ -15,7 +15,6 @@ package org.eclipse.iofog.utils.configuration;
 import org.eclipse.iofog.field_agent.FieldAgent;
 import org.eclipse.iofog.gps.GpsMode;
 import org.eclipse.iofog.gps.GpsWebHandler;
-import org.eclipse.iofog.message_bus.MessageBus;
 import org.eclipse.iofog.network.IOFogNetworkInterfaceManager;
 import org.eclipse.iofog.process_manager.ProcessManager;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManager;
@@ -54,7 +53,6 @@ import static org.testng.AssertJUnit.assertTrue;
 @MockitoSettings(strictness = Strictness.LENIENT)
 @Disabled
 public class ConfigurationTest {
-    private MessageBus messageBus;
     private FieldAgent fieldAgent;
     private ProcessManager processManager;
     private String MODULE_NAME;
@@ -65,7 +63,6 @@ public class ConfigurationTest {
     private MockedStatic<LoggingService> loggingServiceMockedStatic;
     private MockedStatic<FieldAgent> fieldAgentMockedStatic;
     private MockedStatic<ResourceConsumptionManager> resourceConsumptionManagerMockedStatic;
-    private MockedStatic<MessageBus> messageBusMockedStatic;
     private MockedStatic<ProcessManager> processManagerMockedStatic;
     private MockedStatic<TransformerFactory> transformerFactoryMockedStatic;
     private MockedConstruction<DOMSource> domSourceMockedConstruction;
@@ -82,11 +79,9 @@ public class ConfigurationTest {
         loggingServiceMockedStatic = mockStatic(LoggingService.class);
         fieldAgentMockedStatic = mockStatic(FieldAgent.class);
         resourceConsumptionManagerMockedStatic = mockStatic(ResourceConsumptionManager.class);
-        messageBusMockedStatic = mockStatic(MessageBus.class);
         processManagerMockedStatic = mockStatic(ProcessManager.class);
         transformerFactoryMockedStatic = mockStatic(TransformerFactory.class);
         IOFogNetworkInterfaceManager networkInterfaceManager = mock(IOFogNetworkInterfaceManager.class);
-        messageBus = mock(MessageBus.class);
         fieldAgent = mock(FieldAgent.class);
         processManager =mock(ProcessManager.class);
         ResourceConsumptionManager resourceConsumptionManager = mock(ResourceConsumptionManager.class);
@@ -98,7 +93,6 @@ public class ConfigurationTest {
         doNothing().when(transformer).transform(any(),any());
         Mockito.when(FieldAgent.getInstance()).thenReturn(fieldAgent);
         Mockito.when(ResourceConsumptionManager.getInstance()).thenReturn(resourceConsumptionManager);
-        Mockito.when(MessageBus.getInstance()).thenReturn(messageBus);
         Mockito.when(ProcessManager.getInstance()).thenReturn(processManager);
         domSourceMockedConstruction = Mockito.mockConstruction(DOMSource.class);
         streamResultMockedConstruction = Mockito.mockConstruction(StreamResult.class);
@@ -120,7 +114,6 @@ public class ConfigurationTest {
         loggingServiceMockedStatic.close();
         fieldAgentMockedStatic.close();
         resourceConsumptionManagerMockedStatic.close();
-        messageBusMockedStatic.close();
         processManagerMockedStatic.close();
         domSourceMockedConstruction.close();
         streamResultMockedConstruction.close();
@@ -151,6 +144,7 @@ public class ConfigurationTest {
             assertEquals(60,  Configuration.getSetSystemTimeFreqSeconds());
             assertEquals("/etc/iofog-agent/cert.crt", Configuration.getControllerCert());
             assertEquals("http://localhost:54421/api/v3/",Configuration.getControllerUrl());
+            assertEquals("ws://localhost:54421/api/v3/",Configuration.getControllerWSUrl());
             assertEquals("unix:///var/run/docker.sock", Configuration.getDockerUrl());
             assertEquals("/var/lib/iofog-agent/", Configuration.getDiskDirectory());
             assertEquals(10, Configuration.getDiskLimit(), 0);
@@ -194,8 +188,8 @@ public class ConfigurationTest {
             assertEquals(10, Configuration.getPostDiagnosticsFreq());
             Configuration.setPostDiagnosticsFreq(60);
             assertEquals(60, Configuration.getPostDiagnosticsFreq());
-            Configuration.setFogType(ArchitectureType.ARM);
-            assertEquals(ArchitectureType.ARM, Configuration.getFogType());
+            Configuration.setArch(ArchitectureType.ARM);
+            assertEquals(ArchitectureType.ARM, Configuration.getArch());
             assertEquals(false, Configuration.isSecureMode());
             Configuration.setSecureMode(false);
             assertEquals( false, Configuration.isSecureMode());
@@ -211,9 +205,12 @@ public class ConfigurationTest {
             assertEquals("", Configuration.getIofogUuid());
             Configuration.setIofogUuid("uuid");
             assertEquals( "uuid", Configuration.getIofogUuid());
-            assertEquals("", Configuration.getAccessToken());
-            Configuration.setAccessToken("token");
-            assertEquals( "token", Configuration.getAccessToken());
+            // assertEquals("", Configuration.getAccessToken());
+            // Configuration.setAccessToken("token");
+            // assertEquals( "token", Configuration.getAccessToken());
+            assertEquals("", Configuration.getPrivateKey());
+            Configuration.setPrivateKey("privateKey");
+            assertEquals( "privateKey", Configuration.getPrivateKey());
             Assertions.assertFalse(Configuration.isDevMode());
             Configuration.setDevMode(true);
             Assertions.assertTrue(Configuration.isDevMode());
@@ -231,7 +228,7 @@ public class ConfigurationTest {
             initializeConfiguration();
             Set<String> config = new HashSet<>();
             config.add("ll");
-            HashMap<String, String> oldValuesMap = Configuration.getOldNodeValuesForParameters(config, Configuration.getCurrentConfig());
+            HashMap<String, String> oldValuesMap = Configuration.getOldNodeValuesForParameters(config);
             for (HashMap.Entry element : oldValuesMap.entrySet()) {
                 assertEquals( Configuration.getLogLevel(), element.getValue());
             }
@@ -250,7 +247,6 @@ public class ConfigurationTest {
             Configuration.saveConfigUpdates();
             Mockito.verify(processManager, Mockito.atLeastOnce()).instanceConfigUpdated();
             Mockito.verify(fieldAgent, Mockito.atLeastOnce()).instanceConfigUpdated();
-            Mockito.verify(messageBus, Mockito.atLeastOnce()).instanceConfigUpdated();
             Mockito.verify(processManager, Mockito.atLeastOnce()).instanceConfigUpdated();
         } catch (Exception e) {
             fail("This should not happen");
@@ -280,8 +276,8 @@ public class ConfigurationTest {
             assertEquals(GpsMode.DYNAMIC, Configuration.getGpsMode());
             Configuration.setPostDiagnosticsFreq(60);
             assertEquals(60, Configuration.getPostDiagnosticsFreq());
-            Configuration.setFogType(ArchitectureType.ARM);
-            assertEquals(ArchitectureType.ARM, Configuration.getFogType());
+            Configuration.setArch(ArchitectureType.ARM);
+            assertEquals(ArchitectureType.ARM, Configuration.getArch());
             Configuration.setSecureMode(false);
             Assertions.assertFalse(Configuration.isSecureMode());
             Configuration.setIpAddressExternal("ipExternal");
@@ -1347,10 +1343,10 @@ public class ConfigurationTest {
     }
 
     /**
-     * Test setConfig when FOG_TYPE with invalid value
+     * Test setConfig when ARCH with invalid value
      */
     @Test
-    public void testSetConfigForFogTypeWithInValidValue() {
+    public void testSetConfigForArchWithInValidValue() {
         try {
             String value = "value";
             initializeConfiguration();
@@ -1368,10 +1364,10 @@ public class ConfigurationTest {
     }
 
     /**
-     * Test setConfig when FOG_TYPE with valid value
+     * Test setConfig when ARCH with valid value
      */
     @Test
-    public void testSetConfigForFogTypeWithValidValue() {
+    public void testSetConfigForArchWithValidValue() {
         try {
             String value = "auto";
             initializeConfiguration();

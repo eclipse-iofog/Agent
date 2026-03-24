@@ -80,7 +80,7 @@ public class GpsApiHandler implements Callable<FullHttpResponse> {
 		try {
 			Configuration.setGpsDataIfValid(GpsMode.DYNAMIC, gpsCoordinates);
 			Configuration.writeGpsToConfigFile();
-			Configuration.saveConfigUpdates();
+			Configuration.saveGpsConfigUpdates();
 		} catch (Exception e) {
 			String errorMsg = " Error with setting GPS";
 			LoggingService.logError(MODULE_NAME, errorMsg, new AgentSystemException(e.getMessage(), e));

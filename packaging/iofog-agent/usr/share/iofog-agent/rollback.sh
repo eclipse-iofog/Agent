@@ -17,7 +17,7 @@ get_distribution() {
 	cd /var/backups/iofog-agent
 
 	# Stop agent
-	service iofog-agent stop
+	systemctl stop iofog-agent
 
 	# Perform rollback
 	lsb_dist=$( get_distribution )
@@ -48,7 +48,7 @@ get_distribution() {
 
 	# Start agent
 	starttimestamp=$(date +%s)
-	service iofog-agent start
+	systemctl start iofog-agent
 	sleep 1
 
 	# Wait for agent

@@ -15,12 +15,12 @@ package org.eclipse.iofog.status_reporter;
 import org.eclipse.iofog.exception.AgentSystemException;
 import org.eclipse.iofog.field_agent.FieldAgentStatus;
 import org.eclipse.iofog.local_api.LocalApiStatus;
-import org.eclipse.iofog.message_bus.MessageBusStatus;
 import org.eclipse.iofog.process_manager.ProcessManagerStatus;
 import org.eclipse.iofog.proxy.SshProxyManagerStatus;
 import org.eclipse.iofog.resource_consumption_manager.ResourceConsumptionManagerStatus;
 import org.eclipse.iofog.resource_manager.ResourceManagerStatus;
 import org.eclipse.iofog.supervisor.SupervisorStatus;
+import org.eclipse.iofog.volume_mount.VolumeMountManagerStatus;
 import org.eclipse.iofog.utils.Constants;
 import org.eclipse.iofog.utils.configuration.Configuration;
 import org.eclipse.iofog.utils.logging.LoggingService;
@@ -47,8 +47,8 @@ public final class StatusReporter {
 	private static final StatusReporterStatus statusReporterStatus = new StatusReporterStatus();
 	private static final ProcessManagerStatus processManagerStatus = new ProcessManagerStatus();
 	private static final LocalApiStatus localApiStatus = new LocalApiStatus();
-	private static final MessageBusStatus messageBusStatus = new MessageBusStatus();
 	private static final SshProxyManagerStatus sshManagerStatus = new SshProxyManagerStatus();
+	private static final VolumeMountManagerStatus volumeMountManagerStatus = new VolumeMountManagerStatus();
 
 	private final static String MODULE_NAME = "Status Reporter";
 
@@ -114,7 +114,6 @@ public final class StatusReporter {
 		result.append("\\nCPU Usage                   : about ").append(String.format("%.2f %%", resourceConsumptionManagerStatus.getCpuUsage()));
 		result.append("\\nRunning Microservices       : ").append(processManagerStatus.getRunningMicroservicesCount());
 		result.append("\\nConnection to Controller    : ").append(connectionStatus);
-		result.append(String.format(Locale.US, "\\nMessages Processed          : about %,d", messageBusStatus.getProcessedMessages()));
 		result.append("\\nSystem Time                 : ").append(dateFormat.format(cal.getTime()));
 
 		result.append("\\nSystem Available Disk       : ").append(String.format("%.2f MB (%.2f %%)", availableDisk, ((availableDisk * Constants.MiB) / getTotalDisk()) * 100.0f));
@@ -143,12 +142,6 @@ public final class StatusReporter {
 		return resourceManagerStatus;
 	}
 
-	public static MessageBusStatus setMessageBusStatus() {
-		LoggingService.logDebug(MODULE_NAME, "set Message Bus Status");
-		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
-		return messageBusStatus;
-	}
-
 	public static FieldAgentStatus setFieldAgentStatus() {
 		LoggingService.logDebug(MODULE_NAME, "set Field Agent Status");
 		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
@@ -173,6 +166,14 @@ public final class StatusReporter {
 		return sshManagerStatus;
 	}
 
+	public static VolumeMountManagerStatus setVolumeMountManagerStatus(int activeMounts, long lastUpdate) {
+		LoggingService.logDebug(MODULE_NAME, "set VolumeMount Manager Status");
+		volumeMountManagerStatus.setActiveMounts(activeMounts);
+		volumeMountManagerStatus.setLastUpdate(lastUpdate);
+		statusReporterStatus.setLastUpdate(System.currentTimeMillis());
+		return volumeMountManagerStatus;
+	}
+
 	public static ProcessManagerStatus getProcessManagerStatus() {
 		return processManagerStatus;
 	}
@@ -185,10 +186,6 @@ public final class StatusReporter {
 
 	public static SupervisorStatus getSupervisorStatus() {
 		return supervisorStatus;
-	}
-
-	public static MessageBusStatus getMessageBusStatus() {
-		return messageBusStatus;
 	}
 
 	public static ResourceConsumptionManagerStatus getResourceConsumptionManagerStatus() {
@@ -213,6 +210,10 @@ public final class StatusReporter {
 
 	public static SshProxyManagerStatus getSshManagerStatus() {
 		return sshManagerStatus;
+	}
+
+	public static VolumeMountManagerStatus getVolumeMountManagerStatus() {
+		return volumeMountManagerStatus;
 	}
 
 	/**

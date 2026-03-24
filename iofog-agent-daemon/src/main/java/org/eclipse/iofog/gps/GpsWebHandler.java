@@ -18,13 +18,21 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.eclipse.iofog.utils.logging.LoggingService.logError;
 
 public class GpsWebHandler {
 
 	private static final String MODULE_NAME = "GPS Web Handler";
+	private static final int DNS_RESOLUTION_TIMEOUT_SECONDS = 10; // Total timeout including DNS resolution
+	private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
 	/**
 	 * gets GPS coordinates by external ip from  http://ip-api.com/
@@ -71,10 +79,25 @@ public class GpsWebHandler {
 	 * @return JsonObject
 	 */
 	private static JsonObject getGeolocationData() throws Exception {
-		BufferedReader ipReader = new BufferedReader(
-				new InputStreamReader(new URL("http://ip-api.com/json").openStream()));
-		JsonReader jsonReader = Json.createReader(ipReader);
-		return jsonReader.readObject();
+		// Wrap the HTTP request in a Future with timeout to handle DNS resolution hangs
+		Future<JsonObject> future = executorService.submit(() -> {
+			URL url = new URL("http://ip-api.com/json");
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setConnectTimeout(3000); // 3 seconds
+			connection.setReadTimeout(3000);    // 3 seconds
+			BufferedReader ipReader = new BufferedReader(
+					new InputStreamReader(connection.getInputStream()));
+			JsonReader jsonReader = Json.createReader(ipReader);
+			return jsonReader.readObject();
+		});
+		
+		try {
+			// Wait for the request with a total timeout that includes DNS resolution
+			return future.get(DNS_RESOLUTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			future.cancel(true);
+			throw new Exception("Timeout while getting geolocation data (DNS resolution or connection timeout)", e);
+		}
 	}
 
 }
